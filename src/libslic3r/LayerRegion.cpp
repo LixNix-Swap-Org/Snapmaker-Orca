@@ -296,6 +296,7 @@ void LayerRegion::make_perimeters(const SurfaceCollection &slices, const LayerRe
         g.ext_overhang_flow     = this->bridging_flow(frPerimeter, object_config.thick_bridges,
                                                       (unsigned int)std::max(0, perimeter_config.outer_wall_filament_id.value), height);
         g.solid_infill_flow     = this->flow(frSolidInfill, height);
+        g.sparse_infill_flow    = this->flow(frInfill, height);
         // Gap fill dispatches to the outer wall filament (LayerTools::extruder()); resolve its width against its nozzle.
         g.gap_fill_flow         = this->flow(frSolidInfill, height, (unsigned int)std::max(0, perimeter_config.outer_wall_filament_id.value));
 

@@ -313,13 +313,6 @@ enum EnsureVerticalShellThickness {
     evstAll,
 };
 
-// ORCA: per-extruder layer height ("extruder_layer_height").
-enum ExtruderLayerHeightMode {
-    elhmConsistent,
-    elhmAdaptive,
-    elhmFixed,
-};
-
 // ORCA: split wall layer heights - which wall class gets its wall-only layer height adjusted
 // when the two wall filaments' preferred heights do not divide evenly, and in which direction.
 enum WallSplitFilament {
@@ -394,6 +387,8 @@ enum SupportLayerHeightStep : int {
     slhsWholeLayer = 0,
     slhsHalfLayer,
     slhsQuarterLayer,
+    slhsAuto,      // the coarsest step whose ladder reaches the support nozzle's maximum layer height
+    slhsMaxHeight, // like auto, and support pieces run through contact layers (gap rounded to pieces)
 };
 
 enum SkirtType {
@@ -698,7 +693,6 @@ extern std::vector<std::string> save_extruder_nozzle_stats_to_string(const std::
     template<> const t_config_enum_values& ConfigOptionEnum<NAME>::get_enum_values();
 
 CONFIG_OPTION_ENUM_DECLARE_STATIC_MAPS(PrinterTechnology)
-CONFIG_OPTION_ENUM_DECLARE_STATIC_MAPS(ExtruderLayerHeightMode)
 CONFIG_OPTION_ENUM_DECLARE_STATIC_MAPS(WallSplitFilament)
 CONFIG_OPTION_ENUM_DECLARE_STATIC_MAPS(WallSplitDirection)
 CONFIG_OPTION_ENUM_DECLARE_STATIC_MAPS(GCodeFlavor)
@@ -1160,9 +1154,6 @@ PRINT_CONFIG_CLASS_DEFINE(
     // Force the generation of solid shells between adjacent materials/volumes.
     ((ConfigOptionBool,                interface_shells))
     ((ConfigOptionFloat,               layer_height))
-    // ORCA: per-extruder layer height ("extruder_layer_height").
-    ((ConfigOptionEnum<ExtruderLayerHeightMode>, extruder_layer_height_mode))
-    ((ConfigOptionPercent,             extruder_layer_height_tolerance))
     ((ConfigOptionBool,                split_wall_adjust))
     ((ConfigOptionEnum<WallSplitFilament>,  split_wall_adjust_filament))
     ((ConfigOptionEnum<WallSplitDirection>, split_wall_adjust_direction))

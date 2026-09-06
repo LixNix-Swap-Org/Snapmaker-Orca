@@ -663,16 +663,22 @@ void ToolOrdering::sort_and_build_data(const Print& print, unsigned int first_ex
     }
     if (object_bottom_z == std::numeric_limits<double>::max())
         object_bottom_z = 0.;
+    // Top of the tallest raft: raft layers always carry the tower base, while fractional
+    // support layers under a floating part above it follow the same rule as anywhere else.
+    double raft_top_z = 0.;
+    for (const auto& object : print.objects())
+        if (object->slicing_parameters().raft_layers() > 0)
+            raft_top_z = std::max(raft_top_z, object->slicing_parameters().raft_contact_top_z);
 
     max_layer_height = calc_max_layer_height(print.config(), max_layer_height);
 
-    this->fill_wipe_tower_partitions(print.config(), object_bottom_z, max_layer_height);
+    this->fill_wipe_tower_partitions(print.config(), object_bottom_z, raft_top_z, max_layer_height);
     if (this->insert_wipe_tower_extruder()) {
         reorder_extruders_for_minimum_flush_volume(reorder_first_layer);
         // Orca reorders a second time here (BBS has no such path); re-enforce so the
         // mixed sub-layer component order survives the extra pass.
         this->enforce_mixed_component_order();
-        this->fill_wipe_tower_partitions(print.config(), object_bottom_z, max_layer_height);
+        this->fill_wipe_tower_partitions(print.config(), object_bottom_z, raft_top_z, max_layer_height);
     }
 
     this->collect_extruder_statistics(prime_multi_material);
@@ -690,13 +696,13 @@ void ToolOrdering::sort_and_build_data(const PrintObject& object , unsigned int 
 
     double max_layer_height = calc_max_layer_height(object.print()->config(), object.config().layer_height);
 
-    this->fill_wipe_tower_partitions(object.print()->config(), object.layers().front()->print_z - object.layers().front()->height, max_layer_height);
+    this->fill_wipe_tower_partitions(object.print()->config(), object.layers().front()->print_z - object.layers().front()->height, object.slicing_parameters().raft_layers() > 0 ? object.slicing_parameters().raft_contact_top_z : 0., max_layer_height);
     if (this->insert_wipe_tower_extruder()) {
         reorder_extruders_for_minimum_flush_volume(reorder_first_layer);
         // Orca reorders a second time here (BBS has no such path); re-enforce so the
         // mixed sub-layer component order survives the extra pass.
         this->enforce_mixed_component_order();
-        this->fill_wipe_tower_partitions(object.print()->config(), object.layers().front()->print_z - object.layers().front()->height, max_layer_height);
+        this->fill_wipe_tower_partitions(object.print()->config(), object.layers().front()->print_z - object.layers().front()->height, object.slicing_parameters().raft_layers() > 0 ? object.slicing_parameters().raft_contact_top_z : 0., max_layer_height);
     }
 
     this->collect_extruder_statistics(prime_multi_material);
@@ -1377,7 +1383,7 @@ static std::vector<unsigned int> rotate_extruders_to_start_with(const std::vecto
     return rotated;
 }
 
-void ToolOrdering::fill_wipe_tower_partitions(const PrintConfig &config, coordf_t object_bottom_z, coordf_t max_layer_height)
+void ToolOrdering::fill_wipe_tower_partitions(const PrintConfig &config, coordf_t object_bottom_z, coordf_t raft_top_z, coordf_t max_layer_height)
 {
     if (m_layer_tools.empty())
         return;
@@ -1441,9 +1447,10 @@ void ToolOrdering::fill_wipe_tower_partitions(const PrintConfig &config, coordf_
     for (LayerTools &lt : m_layer_tools)
         lt.has_wipe_tower |= ((lt.has_object || lt.has_support) && !support_only_off_grid(lt) &&
                               (config.timelapse_type == TimelapseType::tlSmooth || lt.wipe_tower_partitions > 0))
-            // Below the object bottom (raft layers, support under a floating part) the tower
-            // always needs its base, fractional support Zs included.
-            || lt.print_z < object_bottom_z + EPSILON;
+            // Below the object bottom the tower needs its base: on every raft layer, and on the
+            // object-grid layers under a floating part. Fractional support-only layers there are
+            // left slab-less like anywhere else, so the slabs stay whole grid steps.
+            || (lt.print_z < object_bottom_z + EPSILON && (lt.print_z < raft_top_z + EPSILON || !tower_skippable(lt)));
 
     // Test for a raft, insert additional wipe tower layer to fill in the raft separation gap.
     for (size_t i = 0; i + 1 < m_layer_tools.size(); ++ i) {

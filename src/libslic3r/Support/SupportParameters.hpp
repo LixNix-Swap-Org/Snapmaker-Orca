@@ -199,12 +199,30 @@ struct SupportParameters {
         grid_aligned_layer_height = independent_layer_height && print_config.enable_prime_tower;
         // Sub-layer step for grid-aligned heights: 1 = whole object layers, 2/4 allow
         // boundaries on half/quarter subdivisions (thin tower layers appear there).
-        grid_height_step = 1;
+        grid_height_step         = 1;
+        grid_max_height_priority = false;
         if (grid_aligned_layer_height && !print_config.single_extruder_multi_material) {
-            if (print_config.support_layer_height_step.value == slhsHalfLayer)
+            const SupportLayerHeightStep step = print_config.support_layer_height_step.value;
+            if (step == slhsHalfLayer)
                 grid_height_step = 2;
-            else if (print_config.support_layer_height_step.value == slhsQuarterLayer)
+            else if (step == slhsQuarterLayer)
                 grid_height_step = 4;
+            else if (step == slhsAuto || step == slhsMaxHeight) {
+                // The coarsest step whose ladder reaches the tallest support layer the support
+                // nozzle allows: whole layers when they do, else half, else quarter (a 0.14 mm
+                // maximum on a 0.08 mm grid needs quarter steps: 1.75 layers).
+                grid_max_height_priority = step == slhsMaxHeight;
+                const double h          = object_config.layer_height.value;
+                const double max_height = std::max(slicing_params.max_suport_layer_height, h);
+                double       best       = 0.;
+                for (int s : {1, 2, 4}) {
+                    const double reach = std::floor(max_height / (h / s) + EPSILON) * (h / s);
+                    if (reach > best + EPSILON) {
+                        best             = reach;
+                        grid_height_step = s;
+                    }
+                }
+            }
         }
 
         // force double walls everywhere if wall count is larger than 1        
@@ -339,6 +357,8 @@ struct SupportParameters {
     bool grid_aligned_layer_height = false;
     // 1 = whole object layers; 2/4 = half/quarter sub-layer boundaries allowed.
     int  grid_height_step = 1;
+    // ORCA: support pieces run through overhang contact layers; the gap rounds to support layers.
+    bool grid_max_height_priority = false;
     const double thresh_big_overhang = Slic3r::sqr(scale_(10));
 
 	bool          ironing;

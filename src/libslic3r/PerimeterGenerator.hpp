@@ -87,6 +87,9 @@ public:
     // Overhangs of external / fully overhanging loops print with the outer wall filament (GCode::process_layer() splits mixed perimeters by filament), whose nozzle may differ.
     Flow                         ext_overhang_flow;
     Flow                         solid_infill_flow;
+    // Sparse infill may print with a coarser nozzle than the walls (sparse_infill_filament_id): the
+    // infill boundary must keep its wider bead inside the walls.
+    Flow                         sparse_infill_flow;
     // Gap fill prints with the outer wall filament (LayerTools::extruder()), whose nozzle may differ from the internal solid infill filament's.
     Flow                         gap_fill_flow;
     const PrintRegionConfig     *config;
@@ -133,7 +136,7 @@ public:
         ExPolygons*                 fill_no_overlap)
         : slices(slices), compatible_regions(compatible_regions), upper_slices(nullptr), lower_slices(nullptr), layer_height(layer_height),
             slice_z(slice_z), layer_id(-1), perimeter_flow(flow), ext_perimeter_flow(flow),
-            overhang_flow(flow), ext_overhang_flow(flow), solid_infill_flow(flow), gap_fill_flow(flow),
+            overhang_flow(flow), ext_overhang_flow(flow), solid_infill_flow(flow), sparse_infill_flow(flow), gap_fill_flow(flow),
             config(config), object_config(object_config), print_config(print_config),
             m_spiral_vase(spiral_mode),
             m_scaled_resolution(scaled<double>(print_config->resolution.value > EPSILON ? print_config->resolution.value : EPSILON)),

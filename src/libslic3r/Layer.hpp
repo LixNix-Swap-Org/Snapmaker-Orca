@@ -128,6 +128,7 @@ public:
     const Layer* combined_lower_layer() const;
     // Shape of this layer that its combined group does not print; classifies exposed step faces.
     const ExPolygons& combined_away_exposed() const { return m_combined_away_exposed; }
+    const ExPolygons& void_fill() const { return m_void_fill; }
 
     // ORCA: walls-only pitch (PrintObject::wall_layer_height_multiplier()). Number of object
     // layers whose walls this region's perimeters cover here: > 1 on the top layer of a wall run
@@ -172,6 +173,9 @@ private:
     unsigned short     m_combined_layer_count { 1 };
     double             m_combined_height { 0. };
     ExPolygons         m_combined_away_exposed;
+    // ORCA: set by PrintObject::apply_extruder_layer_heights(): area of this layer given to this
+    // region to fill the void under a neighbor's run (see void_fill()); prints as solid infill.
+    ExPolygons         m_void_fill;
     // ORCA: set by PrintObject::apply_extruder_layer_heights(), see wall_combined_count() / wall_combined_height().
     unsigned short     m_wall_combined_count { 1 };
     double             m_wall_combined_height { 0. };

@@ -108,10 +108,6 @@ static DynamicPrintConfig two_extruder_config(double second_extruder_layer_heigh
     // The default G-code flavor rejects relative extruder addressing without a G92 E0 layer-change
     // reset; this suite does not exercise the G-code writer, keep validation quiet.
     config.set_key_value("use_relative_e_distances", new ConfigOptionBool(false));
-    // The scenarios build on consistent-mode expectations with a tight drift tolerance; the
-    // shipping defaults are fixed mode with a generous tolerance.
-    config.option<ConfigOptionEnum<ExtruderLayerHeightMode>>("extruder_layer_height_mode", true)->value = elhmConsistent;
-    config.set_key_value("extruder_layer_height_tolerance", new ConfigOptionPercent(10));
     return config;
 }
 
@@ -243,20 +239,24 @@ SCENARIO("Per-extruder layer height combines region layers", "[MultiNozzleLayerH
     }
 }
 
-SCENARIO("Fixed mode always prints the extruder layer height", "[MultiNozzleLayerHeight]") {
+SCENARIO("A drifting outline still prints the extruder layer height", "[MultiNozzleLayerHeight]") {
     // A 10 mm tall pyramid on the coarse extruder: its outline drifts by 0.2 mm per edge on every
-    // 0.2 mm layer, far past the suite's 10 % thick layer tolerance (of the 0.6 mm nozzle), so
-    // consistent mode falls back to the object layer height everywhere.
-    GIVEN("A pyramid part whose outline drifts past the thick layer tolerance on every layer") {
+    // 0.2 mm layer. Runs print the shape common to their layers (the boundary turns into steps),
+    // so the part keeps the extruder layer height instead of falling back to the object layer height.
+    GIVEN("A pyramid part whose outline drifts on every layer") {
         DynamicPrintConfig config = two_extruder_config(0.4);
-        // Count coarse extrusion heights well below the apex, where slices stay large enough to print.
-        auto coarse_height_counts = [](Print &print, size_t &at_pitch, size_t &at_base, size_t &odd_layers) {
+        Print print;
+        Model model;
+        init_two_part_print(print, model, config, 0.25f, TestMesh::pyramid);
+        THEN("every coarse extrusion above the first layer keeps the extruder layer height") {
+            REQUIRE(print.validate().string.empty());
             print.process();
             const PrintObject &object = *print.objects().front();
             int fine_region, coarse_region;
             find_regions(object, fine_region, coarse_region);
             REQUIRE(coarse_region >= 0);
-            at_pitch = at_base = odd_layers = 0;
+            // Count coarse extrusion heights well below the apex, where slices stay large enough to print.
+            size_t at_pitch = 0, at_base = 0, odd_layers = 0;
             for (size_t idx = 1; idx <= 40; ++ idx) {
                 const std::vector<float> heights = region_path_heights(object.get_layer(int(idx))->get_region(coarse_region));
                 if (idx % 2 == 1 && ! heights.empty())
@@ -268,45 +268,20 @@ SCENARIO("Fixed mode always prints the extruder layer height", "[MultiNozzleLaye
                         ++ at_base;
                 }
             }
-        };
-        WHEN("thick layer regions are Consistent") {
-            Print print;
-            Model model;
-            init_two_part_print(print, model, config, 0.25f, TestMesh::pyramid);
-            THEN("the drift keeps the coarse part at the object layer height") {
-                REQUIRE(print.validate().string.empty());
-                size_t at_pitch, at_base, odd_layers;
-                coarse_height_counts(print, at_pitch, at_base, odd_layers);
-                CHECK(at_pitch == 0);
-                CHECK(at_base > 0);
-                CHECK(odd_layers == 20);
-            }
-        }
-        WHEN("thick layer regions are Fixed") {
-            config.option<ConfigOptionEnum<ExtruderLayerHeightMode>>("extruder_layer_height_mode", true)->value = elhmFixed;
-            Print print;
-            Model model;
-            init_two_part_print(print, model, config, 0.25f, TestMesh::pyramid);
-            THEN("every coarse extrusion above the first layer keeps the extruder layer height") {
-                REQUIRE(print.validate().string.empty());
-                size_t at_pitch, at_base, odd_layers;
-                coarse_height_counts(print, at_pitch, at_base, odd_layers);
-                CHECK(at_pitch > 0);
-                CHECK(at_base == 0);
-                CHECK(odd_layers == 0);
-            }
+            CHECK(at_pitch > 0);
+            CHECK(at_base == 0);
+            CHECK(odd_layers == 0);
         }
     }
 }
 
-SCENARIO("Fixed mode keeps top surfaces on combined steps", "[MultiNozzleLayerHeight]") {
+SCENARIO("Combining keeps top surfaces on combined steps", "[MultiNozzleLayerHeight]") {
     // A shoulder that ends mid-run: the wide cube's exposed ring is combined away with its layer
     // (the run prints only the common shape), so it must reappear as a top surface on the printed
     // layer below it - otherwise the step carries bare sparse infill.
     GIVEN("A wide cube ending mid-run with a narrower cube on top") {
-        auto top_area = [](ExtruderLayerHeightMode mode) {
-            DynamicPrintConfig config = two_extruder_config(0.4);
-            config.option<ConfigOptionEnum<ExtruderLayerHeightMode>>("extruder_layer_height_mode", true)->value = mode;
+        auto top_area = [](double coarse_layer_height) {
+            DynamicPrintConfig config = two_extruder_config(coarse_layer_height);
             Print print;
             Model model;
             TriangleMesh base = mesh(TestMesh::cube_20x20x20);
@@ -341,8 +316,8 @@ SCENARIO("Fixed mode keeps top surfaces on combined steps", "[MultiNozzleLayerHe
             return area;
         };
         THEN("the combined print keeps most of the per-layer top surface area") {
-            const double per_layer = top_area(elhmConsistent);
-            const double combined  = top_area(elhmFixed);
+            const double per_layer = top_area(0.2);  // the object layer height: no combining
+            const double combined  = top_area(0.4);
             CAPTURE(per_layer, combined);
             REQUIRE(per_layer > 100.);
             REQUIRE(combined > 0.7 * per_layer);
@@ -350,11 +325,10 @@ SCENARIO("Fixed mode keeps top surfaces on combined steps", "[MultiNozzleLayerHe
     }
 }
 
-SCENARIO("Fixed mode bridges lids that start inside a run", "[MultiNozzleLayerHeight]") {
+SCENARIO("Lids that start inside a run bridge", "[MultiNozzleLayerHeight]") {
     // The runs spanning the lid's first layers print nothing there; it must still bridge.
     GIVEN("A hollow tube capped by a lid whose bottom starts in the middle of a run") {
         DynamicPrintConfig config = two_extruder_config(0.4);
-        config.option<ConfigOptionEnum<ExtruderLayerHeightMode>>("extruder_layer_height_mode", true)->value = elhmFixed;
         Print print;
         Model model;
         TriangleMesh tube = mesh(TestMesh::cube_with_hole);   // 20 x 20 x 10 mm, 10 mm hole through z
@@ -393,56 +367,104 @@ SCENARIO("Fixed mode bridges lids that start inside a run", "[MultiNozzleLayerHe
     }
 }
 
-SCENARIO("A bottom over another region's combined-away geometry bridges", "[MultiNozzleLayerHeight]") {
-    // At a filament boundary the support below a region's bottom can belong to a neighboring
-    // region whose run commits only its common shape: that support never prints even though the
-    // object's slices still cover the area, so the bottom must classify as an unsupported bridge.
-    GIVEN("A coarse slab whose top layer is a pocket rim holding a fine-filament insert") {
-        DynamicPrintConfig config = two_extruder_config(0.4);
-        config.option<ConfigOptionEnum<ExtruderLayerHeightMode>>("extruder_layer_height_mode", true)->value = elhmFixed;
-        Print print;
-        Model model;
-        // One coarse volume: a full slab plus a one-layer pocket rim on top. The run pairing the
-        // slab's top layer with the rim commits only the rim and drops the pocket footprint.
-        TriangleMesh slab = mesh(TestMesh::cube_20x20x20);
-        slab.scale(Vec3f(1.f, 1.f, 0.07f));                  // 20 x 20 x 1.4 mm
-        TriangleMesh rim = mesh(TestMesh::cube_with_hole);   // 20 x 20, 10 mm hole
-        rim.scale(Vec3f(1.f, 1.f, 0.02f));                   // one 0.2 mm layer
-        rim.translate(0.f, 0.f, 1.4f);
+// Area of a region's slices on the layer at print_z, optionally of one surface type only. The
+// types come from detect_surfaces_type() and stay on the slices, so parts too narrow for any fill
+// count as well.
+static double region_slices_area(const PrintObject &po, int region, double print_z, int surface_type = -1)
+{
+    double area = 0.;
+    for (size_t idx = 0; idx < po.layer_count(); ++ idx) {
+        const Layer *layer = po.get_layer(int(idx));
+        if (std::abs(layer->print_z - print_z) > EPSILON || region >= layer->region_count())
+            continue;
+        for (const Surface &surface : layer->get_region(region)->slices.surfaces)
+            if (surface_type < 0 || surface.surface_type == SurfaceType(surface_type))
+                area += unscale<double>(unscale<double>(surface.expolygon.area()));
+    }
+    return area;
+}
+
+static void place_and_apply(Print &print, Model &model, const DynamicPrintConfig &config)
+{
+    // This fork's arrangement engine rejects positions outside the (unset) plate even for
+    // an InfiniteBed; place the object at a fixed bed spot like init_two_part_print().
+    for (ModelObject *mo : model.objects) {
+        mo->center_around_origin();
+        mo->translate(120., 120., 0.);
+        mo->ensure_on_bed();
+    }
+    print.apply(model, config);
+    print.set_status_silent();
+}
+
+// A coarse volume: a full 20 x 20 slab of slab_height starting at base_z, plus a rim of
+// rim_layers 0.2 mm layers on top of it leaving a pocket_width x 8 mm pocket, which holds a
+// fine-filament insert of the pocket's footprint, 0.8 mm tall, starting at the rim's bottom.
+// extra_coarse (e.g. a tube below the slab) is merged into the coarse volume.
+static void add_pocketed_slab(Model &model, float base_z, float slab_height, float pocket_width, float rim_layers = 1.f,
+                              TriangleMesh extra_coarse = TriangleMesh())
+{
+    TriangleMesh slab = mesh(TestMesh::cube_20x20x20);
+    slab.scale(Vec3f(1.f, 1.f, slab_height / 20.f));
+    slab.translate(0.f, 0.f, base_z);
+    const float rim_dims[4][4] = {{6.f, 20.f, 0.f, 0.f}, {14.f - pocket_width, 20.f, 6.f + pocket_width, 0.f},
+                                  {pocket_width, 6.f, 6.f, 0.f}, {pocket_width, 6.f, 6.f, 14.f}};
+    for (const auto &d : rim_dims) {
+        TriangleMesh rim = mesh(TestMesh::cube_20x20x20);
+        rim.scale(Vec3f(d[0] / 20.f, d[1] / 20.f, 0.01f * rim_layers));
+        rim.translate(d[2], d[3], base_z + slab_height);
         slab.merge(rim);
-        TriangleMesh insert = mesh(TestMesh::cube_20x20x20);
-        insert.scale(Vec3f(0.4f, 0.4f, 0.04f));              // 8 x 8 x 0.8 mm in the pocket
-        insert.translate(6.f, 6.f, 1.4f);
-        ModelObject *object = model.add_object();
-        object->name = "pocketed_slab";
-        ModelVolume *coarse_volume = object->add_volume(std::move(slab));
-        coarse_volume->config.set("extruder", 2);
-        object->add_volume(std::move(insert));
-        object->add_instance();
-        // This fork's arrangement engine rejects positions outside the (unset) plate even for
-        // an InfiniteBed; place the object at a fixed bed spot like init_two_part_print().
-        for (ModelObject *mo : model.objects) {
-            mo->center_around_origin();
-            mo->translate(120., 120., 0.);
-            mo->ensure_on_bed();
-        }
-        print.apply(model, config);
-        print.set_status_silent();
-        THEN("the insert's first layer is classified as an unsupported bottom") {
-            REQUIRE(print.validate().string.empty());
-            print.process();
-            const PrintObject &po = *print.objects().front();
-            int fine_region = -1, coarse_region = -1;
-            find_regions(po, fine_region, coarse_region);
-            REQUIRE(fine_region >= 0);
-            double bridge_area = 0.;
-            for (size_t idx = 0; idx < po.layer_count(); ++ idx)
-                if (const Layer *layer = po.get_layer(int(idx)); fine_region < layer->region_count())
-                    for (const Surface &surface : layer->get_region(fine_region)->fill_surfaces.surfaces)
-                        if (surface.surface_type == stBottomBridge)
-                            bridge_area += unscale<double>(unscale<double>(surface.expolygon.area()));
-            CAPTURE(bridge_area);
-            REQUIRE(bridge_area > 30.);
+    }
+    if (! extra_coarse.empty())
+        slab.merge(extra_coarse);
+    TriangleMesh insert = mesh(TestMesh::cube_20x20x20);
+    insert.scale(Vec3f(pocket_width / 20.f, 0.4f, 0.04f));
+    insert.translate(6.f, 6.f, base_z + slab_height);
+    ModelObject *object = model.add_object();
+    object->name = "pocketed_slab";
+    ModelVolume *coarse_volume = object->add_volume(std::move(slab));
+    coarse_volume->config.set("extruder", 2);
+    object->add_volume(std::move(insert));
+    object->add_instance();
+}
+
+SCENARIO("A pocket floor a run drops under another region's insert is taken over by the run", "[MultiNozzleLayerHeight]") {
+    // At a filament boundary the support below a region's bottom can belong to a neighboring
+    // region whose run commits only its common shape: the pocket floor (the slab's top layer)
+    // falls out of the run spanning it and the rim above, even though the object's slices still
+    // cover the area. The run keeps its pitch and takes the floor over together with the insert's
+    // first layer above it (which would otherwise bridge the dropped row), so the insert resumes
+    // fully supported on top of the pass.
+    GIVEN("A 1.4 mm coarse slab whose top layer is a pocket rim holding a fine-filament insert") {
+        DynamicPrintConfig config = two_extruder_config(0.4);
+        for (float pocket_width : { 8.f, 1.f }) {
+            WHEN("the pocket is " + std::to_string(int(pocket_width)) + " mm wide") {
+                Print print;
+                Model model;
+                add_pocketed_slab(model, 0.f, 1.4f, pocket_width);
+                place_and_apply(print, model, config);
+                THEN("the run prints the pocket floor with the rim and the insert resumes on top of it") {
+                    REQUIRE(print.validate().string.empty());
+                    print.process();
+                    const PrintObject &po = *print.objects().front();
+                    int fine_region = -1, coarse_region = -1;
+                    find_regions(po, fine_region, coarse_region);
+                    REQUIRE(fine_region >= 0);
+                    REQUIRE(coarse_region >= 0);
+                    const double pocket_area   = 8. * double(pocket_width);
+                    const double pass_area     = region_slices_area(po, coarse_region, 1.6);
+                    const double insert_1_6    = region_slices_area(po, fine_region, 1.6);
+                    const double resumed_area  = region_slices_area(po, fine_region, 1.8);
+                    const double resumed_bottom = region_slices_area(po, fine_region, 1.8, stBottom) + region_slices_area(po, fine_region, 1.8, stBottomBridge);
+                    CAPTURE(pocket_width, pass_area, insert_1_6, resumed_area, resumed_bottom);
+                    CHECK(pass_area > 398.);                    // rim and pocket floor in one pass
+                    CHECK(insert_1_6 < 0.1);                    // the insert gives its first layer up
+                    CHECK(resumed_area > 0.7 * pocket_area);    // and continues on top of the pass
+                    CHECK(resumed_bottom < 0.1);                // supported, no bridge
+                    CHECK(region_slices_area(po, coarse_region, 1.4) < 0.1);   // combined away into the rim layer
+                    CHECK(po.get_layer(6)->get_region(coarse_region)->combined_layer_count() == 2);   // z 1.6: the rim run
+                }
+            }
         }
     }
 }
@@ -450,48 +472,82 @@ SCENARIO("A bottom over another region's combined-away geometry bridges", "[Mult
 SCENARIO("A floating insert below its covering run is filled by the run and resumes on top", "[MultiNozzleLayerHeight]") {
     // Geometry whose covering run commits above it would print into thin air before any support
     // exists: its floating layers are dropped, the covering run's pass fills the object volume
-    // they occupied, and the region resumes fully supported on top of the pass.
+    // they occupied, and the region resumes fully supported on top of the pass. The pocket floor
+    // the run drops lies over the tube's cavity, not on another region, so the run keeps its pitch.
+    auto pocketed_roof = [](Model &model, float pocket_width) {
+        // Coarse volume: tube walls, a full roof slab over the cavity, and a two-layer pocket rim
+        // above it holding the fine insert.
+        TriangleMesh tube = mesh(TestMesh::cube_with_hole);   // 20 x 20, 10 mm hole
+        tube.scale(Vec3f(1.f, 1.f, 0.1f));                    // 1 mm tall
+        add_pocketed_slab(model, 1.f, 0.2f, pocket_width, 2.f, std::move(tube));
+        model.objects.front()->name = "pocketed_roof";
+    };
     GIVEN("A hollow tube capped by a pocketed coarse roof with a fine insert starting mid-run") {
         DynamicPrintConfig config = two_extruder_config(0.6);
         config.set_key_value("max_layer_height", new ConfigOptionFloats({0.3, 0.6}));
-        config.option<ConfigOptionEnum<ExtruderLayerHeightMode>>("extruder_layer_height_mode", true)->value = elhmFixed;
+        for (float pocket_width : { 8.f, 1.f }) {
+            WHEN("the pocket is " + std::to_string(int(pocket_width)) + " mm wide") {
+                Print print;
+                Model model;
+                pocketed_roof(model, pocket_width);
+                place_and_apply(print, model, config);
+                THEN("the covering run fills the floating layers and the insert resumes on top") {
+                    REQUIRE(print.validate().string.empty());
+                    print.process();
+                    const PrintObject &po = *print.objects().front();
+                    int fine_region = -1, coarse_region = -1;
+                    find_regions(po, fine_region, coarse_region);
+                    REQUIRE(fine_region >= 0);
+                    REQUIRE(coarse_region >= 0);
+                    const double pocket_area        = 8. * double(pocket_width);
+                    const double floating_area      = region_slices_area(po, fine_region, 1.4) + region_slices_area(po, fine_region, 1.6);
+                    const double pass_area          = region_slices_area(po, coarse_region, 1.6);
+                    const double filled_bridge_area = region_slices_area(po, coarse_region, 1.6, stBottomBridge);
+                    const double resumed_area       = region_slices_area(po, fine_region, 1.8);
+                    CAPTURE(pocket_width, floating_area, pass_area, filled_bridge_area, resumed_area);
+                    CHECK(floating_area < 0.1);                 // nothing of the insert prints in the air
+                    CHECK(pass_area > 398.);                    // the pass fills the pocket footprint too
+                    CHECK(filled_bridge_area > 60.);            // and bridges the cavity, pocket included
+                    CHECK(resumed_area > 0.7 * pocket_area);    // the insert continues on top of the pass
+                    CHECK(po.get_layer(6)->get_region(coarse_region)->combined_layer_count() == 3);
+                }
+            }
+        }
+    }
+}
+
+SCENARIO("A run never drops a band lying on another region", "[MultiNozzleLayerHeight]") {
+    // The solid layers under a painted top face over another filament's core: the coarse frame
+    // continues past the band, so a run spanning the band would commit the frame alone, drop the
+    // band and let the core print the visible top in its own colour. The run has to end below
+    // the band (the frame prints one layer thinner there) and the band's own run ends at its top.
+    GIVEN("A coarse frame around a fine core, capped by a two-layer coarse band over the core") {
+        DynamicPrintConfig config = two_extruder_config(0.4);
         Print print;
         Model model;
-        // Coarse volume: tube walls, a full roof slab over the cavity, and a one-run pocket rim
-        // above it. The run pairs the slab with the rim and drops the slab's pocket footprint.
-        TriangleMesh roof = mesh(TestMesh::cube_with_hole);   // 20 x 20, 10 mm hole
-        roof.scale(Vec3f(1.f, 1.f, 0.1f));                    // 1 mm tall tube
-        TriangleMesh slab = mesh(TestMesh::cube_20x20x20);
-        slab.scale(Vec3f(1.f, 1.f, 0.01f));                   // 20 x 20 x 0.2 mm
-        slab.translate(0.f, 0.f, 1.f);
-        roof.merge(slab);
-        const float rim_dims[4][4] = {{0.3f, 1.f, 0.f, 0.f}, {0.3f, 1.f, 14.f, 0.f},
-                                      {0.4f, 0.3f, 6.f, 0.f}, {0.4f, 0.3f, 6.f, 14.f}};
-        for (const auto &d : rim_dims) {
-            TriangleMesh rim = mesh(TestMesh::cube_20x20x20);
-            rim.scale(Vec3f(d[0], d[1], 0.02f));              // rim pieces around an 8 x 8 pocket
-            rim.translate(d[2], d[3], 1.2f);
-            roof.merge(rim);
+        TriangleMesh frame;
+        const float frame_dims[4][4] = {{3.f, 20.f, 0.f, 0.f}, {3.f, 20.f, 17.f, 0.f}, {14.f, 3.f, 3.f, 0.f}, {14.f, 3.f, 3.f, 17.f}};
+        for (const auto &d : frame_dims) {
+            TriangleMesh piece = mesh(TestMesh::cube_20x20x20);
+            piece.scale(Vec3f(d[0] / 20.f, d[1] / 20.f, 0.15f));   // 3 mm tall frame pieces around a 14 x 14 core
+            piece.translate(d[2], d[3], 0.f);
+            frame.merge(piece);
         }
-        TriangleMesh insert = mesh(TestMesh::cube_20x20x20);
-        insert.scale(Vec3f(0.4f, 0.4f, 0.04f));               // 8 x 8 x 0.8 mm in the pocket
-        insert.translate(6.f, 6.f, 1.2f);
+        TriangleMesh band = mesh(TestMesh::cube_20x20x20);
+        band.scale(Vec3f(0.7f, 0.7f, 0.02f));                     // 14 x 14 x 0.4 mm: layers 1.2 and 1.4
+        band.translate(3.f, 3.f, 1.f);
+        frame.merge(band);
+        TriangleMesh core = mesh(TestMesh::cube_20x20x20);
+        core.scale(Vec3f(0.7f, 0.7f, 0.05f));                     // 14 x 14 x 1 mm fine core under the band
+        core.translate(3.f, 3.f, 0.f);
         ModelObject *object = model.add_object();
-        object->name = "pocketed_roof";
-        ModelVolume *coarse_volume = object->add_volume(std::move(roof));
+        object->name = "banded_frame";
+        ModelVolume *coarse_volume = object->add_volume(std::move(frame));
         coarse_volume->config.set("extruder", 2);
-        object->add_volume(std::move(insert));
+        object->add_volume(std::move(core));
         object->add_instance();
-        // This fork's arrangement engine rejects positions outside the (unset) plate even for
-        // an InfiniteBed; place the object at a fixed bed spot like init_two_part_print().
-        for (ModelObject *mo : model.objects) {
-            mo->center_around_origin();
-            mo->translate(120., 120., 0.);
-            mo->ensure_on_bed();
-        }
-        print.apply(model, config);
-        print.set_status_silent();
-        THEN("the covering run fills the floating layers and the insert resumes on top") {
+        place_and_apply(print, model, config);
+        THEN("the band prints in full over the core, which gets no top surface") {
             REQUIRE(print.validate().string.empty());
             print.process();
             const PrintObject &po = *print.objects().front();
@@ -499,24 +555,76 @@ SCENARIO("A floating insert below its covering run is filled by the run and resu
             find_regions(po, fine_region, coarse_region);
             REQUIRE(fine_region >= 0);
             REQUIRE(coarse_region >= 0);
-            double floating_area = 0., filled_bridge_area = 0., resumed_area = 0.;
-            for (size_t idx = 0; idx < po.layer_count(); ++ idx) {
-                const Layer *layer = po.get_layer(int(idx));
-                for (int r = 0; r < layer->region_count(); ++ r)
-                    for (const Surface &surface : layer->get_region(r)->fill_surfaces.surfaces) {
-                        const double area = unscale<double>(unscale<double>(surface.expolygon.area()));
-                        if (r == fine_region && layer->print_z < 1.7)
-                            floating_area += area;
-                        else if (r == coarse_region && std::abs(layer->print_z - 1.6) < EPSILON && surface.surface_type == stBottomBridge)
-                            filled_bridge_area += area;
-                        else if (r == fine_region && std::abs(layer->print_z - 1.8) < EPSILON)
-                            resumed_area += area;
-                    }
-            }
-            CAPTURE(floating_area, filled_bridge_area, resumed_area);
-            REQUIRE(floating_area < 0.1);       // nothing of the insert prints in the air
-            REQUIRE(filled_bridge_area > 60.);  // the coarse pass bridges rim and pocket alike
-            REQUIRE(resumed_area > 25.);        // the insert continues on top of the pass
+            double fine_top = 0.;
+            for (size_t idx = 0; idx < po.layer_count(); ++ idx)
+                fine_top += region_slices_area(po, fine_region, po.get_layer(int(idx))->print_z, stTop);
+            const double band_layer = region_slices_area(po, coarse_region, 1.4);
+            const double band_top   = region_slices_area(po, coarse_region, 1.4, stTop);
+            const double frame_top  = region_slices_area(po, coarse_region, 1.0);
+            CAPTURE(fine_top, band_layer, band_top, frame_top);
+            CHECK(fine_top < 0.1);                     // the core is covered by the band
+            CHECK(band_layer > 380.);                  // frame and band together at the band's top
+            CHECK(band_top > 150.);                    // the band is the top surface there
+            CHECK(po.get_layer(5)->get_region(coarse_region)->combined_layer_count() == 2);   // z 1.4: the band's run
+            CHECK(frame_top > 190.);                   // z 1.0 prints the frame on its own below the band
+            CHECK(po.get_layer(3)->get_region(coarse_region)->combined_layer_count() == 1);
+        }
+    }
+}
+
+SCENARIO("A colour hand-off inside a run leaves no void", "[MultiNozzleLayerHeight]") {
+    // A fine part standing on a coarse base whose top lies inside one of the coarse runs (the
+    // coarse region continues beside it, so the run keeps going): the run's intersection drops
+    // the base's last rows under the fine part, and the part would bridge a void of those rows
+    // over the run below. The run takes the rows over instead, together with the part's first
+    // layer above them (a fine region's rows, which it gives up), and the part resumes fully
+    // supported on top of the pass - the colour boundary moves by less than a pitch, no row is
+    // left unprinted and no extra toolchange is needed.
+    GIVEN("A coarse base capped mid-run by a fine block, beside a coarse pillar") {
+        DynamicPrintConfig config = two_extruder_config(0.6);   // runs of three 0.2 mm layers
+        config.set_key_value("max_layer_height", new ConfigOptionFloats({0.3, 0.6}));
+        Print print;
+        Model model;
+        TriangleMesh base = mesh(TestMesh::cube_20x20x20);
+        base.scale(Vec3f(1.f, 1.f, 0.07f));                     // 20 x 20 x 1.4 mm: layers 0.4 .. 1.4 (rows 0-5)
+        TriangleMesh pillar = mesh(TestMesh::cube_20x20x20);
+        pillar.scale(Vec3f(1.f, 1.f, 0.2f));                    // 4 mm tall, keeps the coarse runs going
+        pillar.translate(30.f, 0.f, 0.f);
+        base.merge(pillar);
+        TriangleMesh block = mesh(TestMesh::cube_20x20x20);
+        block.scale(Vec3f(1.f, 1.f, 0.08f));                    // 1.6 mm fine block on the base: rows 6-13
+        block.translate(0.f, 0.f, 1.4f);
+        ModelObject *object = model.add_object();
+        object->name = "hand_off";
+        ModelVolume *coarse_volume = object->add_volume(std::move(base));
+        coarse_volume->config.set("extruder", 2);
+        object->add_volume(std::move(block));
+        object->add_instance();
+        place_and_apply(print, model, config);
+        THEN("the coarse run takes the dropped rows and the block's first layer over, the block resumes on it") {
+            REQUIRE(print.validate().string.empty());
+            print.process();
+            const PrintObject &po = *print.objects().front();
+            int fine_region = -1, coarse_region = -1;
+            find_regions(po, fine_region, coarse_region);
+            REQUIRE(fine_region >= 0);
+            REQUIRE(coarse_region >= 0);
+            // Coarse runs: rows 1-3 (top z 1.0) and 4-6 (top z 1.6). The base's rows 4 and 5
+            // (z 1.2, 1.4) fall out of the second run; the run prints them with the block's row 6.
+            const double run_top      = region_slices_area(po, coarse_region, 1.6);
+            const double block_1_6    = region_slices_area(po, fine_region, 1.6);
+            const double block_1_8    = region_slices_area(po, fine_region, 1.8);
+            const double block_bottom = region_slices_area(po, fine_region, 1.8, stBottom) + region_slices_area(po, fine_region, 1.8, stBottomBridge);
+            const double buried_top   = region_slices_area(po, coarse_region, 1.0, stTop);
+            const double filled_1_2   = region_slices_area(po, fine_region, 1.2) + region_slices_area(po, fine_region, 1.4);
+            CAPTURE(run_top, block_1_6, block_1_8, block_bottom, buried_top, filled_1_2);
+            CHECK(po.get_layer(6)->get_region(coarse_region)->combined_layer_count() == 3);
+            CHECK(run_top > 780.);                     // base footprint and pillar in one pass
+            CHECK(block_1_6 < 0.1);                    // the block gives its first layer up
+            CHECK(filled_1_2 < 0.1);                   // and prints nothing below it either
+            CHECK(block_1_8 > 380.);                   // it continues on top of the pass
+            CHECK(block_bottom < 1.);                  // supported: no bridge
+            CHECK(buried_top < 1.);                    // and the run below is not a top surface
         }
     }
 }
@@ -1111,11 +1219,37 @@ SCENARIO("Per-extruder layer height validation rejects invalid configurations", 
         REQUIRE(! err.string.empty());
         REQUIRE(err.opt_key == "extruder_layer_height");
     };
+    // The rejection names the coarsest object layer height every preferred height is a whole
+    // multiple of (capped by the smallest nozzle); that value must validate cleanly.
+    auto expect_error_with_remedy = [](double second_extruder_layer_height, const char *remedy, double remedy_value) {
+        DynamicPrintConfig config = two_extruder_config(second_extruder_layer_height);
+        {
+            Print print;
+            Model model;
+            init_two_part_print(print, model, config);
+            const StringObjectException err = print.validate();
+            REQUIRE(! err.string.empty());
+            REQUIRE(err.opt_key == "extruder_layer_height");
+            INFO(err.string);
+            REQUIRE(err.string.find(remedy) != std::string::npos);
+        }
+        config.set_key_value("layer_height", new ConfigOptionFloat(remedy_value));
+        Print print;
+        Model model;
+        init_two_part_print(print, model, config);
+        const StringObjectException err = print.validate();
+        INFO(err.string);
+        REQUIRE(err.string.empty());
+    };
     GIVEN("An extruder layer height that is no integer multiple of the object layer height") {
-        THEN("validation fails") { expect_error(0.5); }
+        // gcd(0.5) = 0.5 exceeds the 0.4 mm nozzle: the next divisor, 0.25, is recommended.
+        THEN("validation fails and its recommended object layer height validates") { expect_error_with_remedy(0.5, "0.25 mm", 0.25); }
     }
     GIVEN("An extruder layer height smaller than the object layer height") {
-        THEN("validation fails") { expect_error(0.1); }
+        THEN("validation fails and its recommended object layer height validates") { expect_error_with_remedy(0.1, "0.1 mm", 0.1); }
+    }
+    GIVEN("An extruder layer height off the 5 um grid") {
+        THEN("the recommendation is the height itself") { expect_error_with_remedy(0.123, "0.123 mm", 0.123); }
     }
     GIVEN("An extruder layer height exceeding the nozzle diameter") {
         THEN("validation fails") { expect_error(0.8); }
@@ -1687,6 +1821,88 @@ SCENARIO("Adjusting a wall layer height reconciles non-divisible wall preference
                                                                {0.36f, 0.24f, 0.12f}, {0.36f, 0.24f, 0.12f});
             CHECK(counts.outer_tall >= 15);
             CHECK(counts.bad == 0);
+        }
+    }
+}
+
+
+// Two extruders, tree supports on the second one, prime tower on: the support planner may close
+// support pieces on half / quarter sub-positions of the object layers (support_layer_height_step)
+// while every prime tower slab stays a whole object layer.
+static DynamicPrintConfig fractional_support_config(SupportLayerHeightStep step)
+{
+    DynamicPrintConfig config = two_extruder_config(0.);
+    config.set_key_value("initial_layer_print_height", new ConfigOptionFloat(0.2));
+    config.set_key_value("enable_prime_tower",         new ConfigOptionBool(true));
+    // The stock default is single-extruder multi-material, which keeps whole steps.
+    config.set_key_value("single_extruder_multi_material", new ConfigOptionBool(false));
+    config.set_key_value("enable_support",             new ConfigOptionBool(true));
+    config.option<ConfigOptionEnum<SupportType>>("support_type", true)->value            = stTreeAuto;
+    config.option<ConfigOptionEnum<SupportMaterialStyle>>("support_style", true)->value  = smsTreeStrong;
+    config.set_key_value("support_filament",           new ConfigOptionInt(2));
+    config.set_key_value("support_interface_filament", new ConfigOptionInt(2));
+    config.set_key_value("independent_support_layer_height", new ConfigOptionBool(true));
+    config.option<ConfigOptionEnum<SupportLayerHeightStep>>("support_layer_height_step", true)->value = step;
+    // The support extruder's maximum sits just above a fractional multiple of the 0.2 mm object
+    // grid (2.5 layers for the half step, 2.25 for the quarter step), so the planner closes
+    // pieces on sub-positions instead of rounding down to whole layers.
+    config.set_key_value("max_layer_height", new ConfigOptionFloats({0.3, step == slhsQuarterLayer ? 0.46 : 0.56}));
+    config.set_key_value("support_top_z_distance", new ConfigOptionFloat(0.2));
+    // The tower needs relative extruder addressing, which in turn needs the per-layer reset.
+    config.set_key_value("use_relative_e_distances", new ConfigOptionBool(true));
+    config.set_key_value("layer_change_gcode",       new ConfigOptionString("G92 E0"));
+    // Inside the default 200 x 200 test bed, clear of the centered object.
+    config.set_key_value("prime_tower_width", new ConfigOptionFloat(35));
+    config.set_key_value("wipe_tower_x",      new ConfigOptionFloats({50.}));
+    config.set_key_value("wipe_tower_y",      new ConfigOptionFloats({50.}));
+    return config;
+}
+
+SCENARIO("Fractional support layers keep the prime tower on whole object layers", "[MultiNozzleLayerHeight][Support][WipeTower]") {
+    for (const SupportLayerHeightStep step : { slhsHalfLayer, slhsQuarterLayer }) {
+        const int    divisions = step == slhsQuarterLayer ? 4 : 2;
+        const double quantum   = 0.2 / divisions;
+        GIVEN(std::string("An overhang on tree supports with the prime tower and a ") + (divisions == 4 ? "quarter" : "half") + " step") {
+            Print print;
+            Model model;
+            Slic3r::Test::init_print({ TestMesh::overhang }, print, model, fractional_support_config(step));
+            {
+                const StringObjectException err = print.validate();
+                INFO(err.string);
+                REQUIRE(err.string.empty());
+            }
+            print.process();
+            THEN("every support layer lies on the sub-step ladder of the object layers") {
+                size_t support_layers = 0, fractional_layers = 0;
+                for (const PrintObject *object : print.objects())
+                    for (const SupportLayer *layer : object->support_layers()) {
+                        const double z = layer->print_z;
+                        INFO("support layer at z=" << z);
+                        REQUIRE(std::abs(z / quantum - std::round(z / quantum)) < 1e-3);
+                        ++ support_layers;
+                        if (std::abs(z / 0.2 - std::round(z / 0.2)) > 1e-3)
+                            ++ fractional_layers;
+                    }
+                REQUIRE(support_layers > 0);
+                // Pieces of 2.5 / 2.25 object layers end off the object grid.
+                REQUIRE(fractional_layers > 0);
+            }
+            THEN("every prime tower slab is a whole object layer on the object grid") {
+                REQUIRE(print.has_wipe_tower());
+                size_t slabs = 0;
+                for (const LayerTools &lt : print.get_tool_ordering().layer_tools())
+                    if (lt.has_wipe_tower) {
+                        INFO("tower slab at z=" << lt.print_z << " height=" << lt.wipe_tower_layer_height);
+                        REQUIRE(lt.wipe_tower_layer_height > 0.2 - 1e-3);
+                        REQUIRE(std::abs(lt.print_z / 0.2 - std::round(lt.print_z / 0.2)) < 1e-3);
+                        ++ slabs;
+                    }
+                REQUIRE(slabs > 0);
+            }
+            THEN("the G-code exports") {
+                const std::string gcode = Slic3r::Test::gcode(print);
+                REQUIRE(! gcode.empty());
+            }
         }
     }
 }

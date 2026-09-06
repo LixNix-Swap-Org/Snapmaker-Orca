@@ -1911,6 +1911,15 @@ void PerimeterGenerator::process_classic()
             }
             inset -= infill_peri_overlap;
         }
+        // ORCA: an infill bead wider than the wall band (a coarse infill nozzle behind the walls of
+        // a fine one) would poke through the walls out of the part; keep the boundary at least
+        // half the widest infill bead inside the outline.
+        {
+            const coord_t wall_band        = loop_number < 0 ? 0 : ext_perimeter_width + coord_t(loop_number) * perimeter_spacing - infill_peri_overlap;
+            const coord_t half_infill_bead = std::max(this->sparse_infill_flow.scaled_width(), this->solid_infill_flow.scaled_width()) / 2;
+            if (loop_number >= 0 && wall_band < half_infill_bead)
+                inset += half_infill_bead - wall_band;
+        }
         // simplify infill contours according to resolution
         Polygons pp;
         for (ExPolygon &ex : last)
@@ -2788,6 +2797,13 @@ void PerimeterGenerator::process_arachne()
             inset = coord_t(scale_(this->config->top_bottom_infill_wall_overlap.get_abs_value(unscale<double>(inset))));
         else
             inset = coord_t(scale_(this->config->infill_wall_overlap.get_abs_value(unscale<double>(inset))));
+        // ORCA: keep an infill bead wider than the wall band inside the walls (see the classic path).
+        {
+            const coord_t wall_band        = loop_number < 0 ? 0 : ext_perimeter_width + coord_t(loop_number) * perimeter_spacing;
+            const coord_t half_infill_bead = std::max(this->sparse_infill_flow.scaled_width(), this->solid_infill_flow.scaled_width()) / 2;
+            if (loop_number >= 0 && wall_band - half_infill_bead < inset)
+                inset = wall_band - half_infill_bead;
+        }
         
         // simplify infill contours according to resolution
         Polygons pp;

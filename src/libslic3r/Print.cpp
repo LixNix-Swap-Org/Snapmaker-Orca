@@ -546,6 +546,17 @@ bool Print::has_tpu_filament() const
 
 // Called by Print::apply().
 // This method only accepts PrintConfig option keys.
+// The raft -> object gap is rounded to whole object layers unless support heights are free
+// (SlicingParameters::create_from_config: independent support heights without the prime tower),
+// and it positions every object layer: toggling that regime must re-slice raft objects.
+bool Print::raft_gap_rounding_moves_objects() const
+{
+    for (const PrintObject *object : m_objects)
+        if (object->config().raft_layers.value > 0 && object->config().raft_contact_distance.value > EPSILON)
+            return true;
+    return false;
+}
+
 bool Print::invalidate_state_by_config_options(const ConfigOptionResolver & /* new_config */, const std::vector<t_config_option_key> &opt_keys)
 {
     if (opt_keys.empty())
@@ -877,6 +888,8 @@ bool Print::invalidate_state_by_config_options(const ConfigOptionResolver & /* n
                 osteps.emplace_back(posSupportMaterial);
                 osteps.emplace_back(posSimplifySupportPath);
             }
+            if (opt_key == "enable_prime_tower" && this->raft_gap_rounding_moves_objects())
+                osteps.emplace_back(posSlice);
         } else if (opt_key == "timelapse_type") {
             // Print-level: everything (the key used to reach the catch-all below); object-level:
             // the support layer plan gates fractional boundaries on smooth timelapse.
@@ -890,6 +903,8 @@ bool Print::invalidate_state_by_config_options(const ConfigOptionResolver & /* n
                 || opt_key == "independent_support_layer_height"
                 || opt_key == "support_layer_height_step") {
             steps.emplace_back(psWipeTower);
+            if (opt_key == "independent_support_layer_height" && this->raft_gap_rounding_moves_objects())
+                osteps.emplace_back(posSlice);
             // Soluble support interface / non-soluble base interface produces non-soluble interface layers below soluble interface layers.
             // Thus switching between soluble / non-soluble interface layer material may require recalculation of supports.
             //FIXME Killing supports on any change of "filament_soluble" is rough. We should check for each object whether that is necessary.
@@ -2052,6 +2067,12 @@ StringObjectException Print::validate(std::vector<StringObjectException> *warnin
         if (m_objects.size() > 1) {
             const SlicingParameters &slicing_params0 = m_objects.front()->slicing_parameters();
             size_t                  tallest_object_idx = 0;
+            // Printing by object with a tower emits the print by layer from the print-wide tool
+            // ordering, but the dynamic filament map publishes per-layer nozzle groups stitched
+            // per object: the two would disagree layer by layer.
+            if (m_config.print_sequence == PrintSequence::ByObject && this->is_dynamic_group_reorder() && m_objects.size() > 1)
+                return { L("A prime tower with printing by object is not supported together with the dynamic filament map. "
+                           "Print by layer, or disable the dynamic filament map."), nullptr, "print_sequence" };
             for (size_t i = 1; i < m_objects.size(); ++ i) {
                 const PrintObject       *object         = m_objects[i];
                 const SlicingParameters &slicing_params = object->slicing_parameters();
@@ -2066,7 +2087,18 @@ StringObjectException Print::validate(std::vector<StringObjectException> *warnin
                     slicing_params0.gap_support_object != slicing_params.gap_support_object)
                     return {L("The prime tower is only supported for multiple objects if they are printed with the same support_top_z_distance."), object};
 #endif
-                if (!equal_layering(slicing_params, slicing_params0))
+                // equal_layering() also compares the per-object min/max layer height limits, which
+                // differ with the objects' support extruders but leave a fixed layering identical.
+                auto equal_fixed_layering = [](const SlicingParameters &a, const SlicingParameters &b) {
+                    return a.base_raft_layers == b.base_raft_layers && a.interface_raft_layers == b.interface_raft_layers &&
+                           a.base_raft_layer_height == b.base_raft_layer_height && a.interface_raft_layer_height == b.interface_raft_layer_height &&
+                           a.contact_raft_layer_height == b.contact_raft_layer_height && a.layer_height == b.layer_height &&
+                           a.first_print_layer_height == b.first_print_layer_height && a.first_object_layer_height == b.first_object_layer_height &&
+                           a.first_object_layer_bridging == b.first_object_layer_bridging && a.raft_base_top_z == b.raft_base_top_z &&
+                           a.raft_interface_top_z == b.raft_interface_top_z && a.raft_contact_top_z == b.raft_contact_top_z &&
+                           a.object_print_z_min == b.object_print_z_min;
+                };
+                if (!equal_fixed_layering(slicing_params, slicing_params0))
                     return  { L("A prime tower requires that all objects are sliced with the same layer height."), object };
                 if (has_custom_layering) {
                     auto &lh         = layer_height_profile(i);
@@ -2348,13 +2380,27 @@ StringObjectException Print::validate(std::vector<StringObjectException> *warnin
                                 continue;
                             }
                             // The wall filaments dictate the part's layer pitch, their preferences are strict.
-                            if (extruder_height < layer_height - EPSILON)
-                                return { Slic3r::format(_u8L("The layer height of extruder %1% (%2% mm) is smaller than the object layer height (%3% mm). "
-                                                             "Lower the object layer height to the finest extruder layer height."),
-                                                        extruder_idx + 1, extruder_height, layer_height), object, "extruder_layer_height" };
-                            if (std::abs(extruder_height - std::lround(extruder_height / layer_height) * layer_height) > EPSILON)
-                                return { Slic3r::format(_u8L("The layer height of extruder %1% (%2% mm) must be an integer multiple of the object layer height (%3% mm)."),
-                                                        extruder_idx + 1, extruder_height, layer_height), object, "extruder_layer_height" };
+                            // The GUI keeps the global configuration conforming; a per-object layer
+                            // height override is the usual way here, so name the value that conforms.
+                            if (extruder_height < layer_height - EPSILON || std::abs(extruder_height - std::lround(extruder_height / layer_height) * layer_height) > EPSILON) {
+                                // The coarsest object layer height (1 um quanta) every preferred height is a whole
+                                // multiple of that still fits through the smallest nozzle.
+                                long common = 0;
+                                for (double h : m_config.extruder_layer_height.values)
+                                    if (h > EPSILON)
+                                        common = std::gcd(common, std::lround(h / 0.001));
+                                double conforming = 0.;
+                                for (long k = 1; common > 0 && k <= common; ++ k)
+                                    if (common % k == 0 && (common / k) * 0.001 <= min_nozzle_diameter + EPSILON) {
+                                        conforming = std::round((common / k) * 0.001 * 1e6) / 1e6;
+                                        break;
+                                    }
+                                return { Slic3r::format(_u8L("The preferred layer height of extruder %1% (%2% mm) is not a whole multiple of the object layer "
+                                                             "height (%3% mm). Set the object layer height (for this object: its own layer height in the object "
+                                                             "settings) to %4% mm, the coarsest value every preferred layer height is a whole multiple of, or "
+                                                             "change the preferred layer heights."),
+                                                        extruder_idx + 1, extruder_height, layer_height, conforming), object, "extruder_layer_height" };
+                            }
                             return { Slic3r::format(_u8L("The layer height of extruder %1% (%2% mm) cannot exceed its nozzle diameter."),
                                                     extruder_idx + 1, extruder_height), object, "extruder_layer_height" };
                         }
@@ -2420,7 +2466,8 @@ StringObjectException Print::validate(std::vector<StringObjectException> *warnin
                     // the solid interior is the combined infill instead). Geometry decides per
                     // area, so this gates warnings only.
                     unsigned int solid_candidate = 1;
-                    if (! solid_combined_infill) {
+                    if (! solid_combined_infill &&
+                        std::max(0, region_config.internal_solid_filament_id.value - 1) < (int)m_config.filament_diameter.size()) {
                         const size_t       solid_extruder_idx = selector_extruder_idx(region_config.internal_solid_filament_id.value);
                         const unsigned int m = conforming_multiplier(m_config.extruder_layer_height.get_at(solid_extruder_idx), solid_extruder_idx);
                         if (m > 1)
@@ -2465,6 +2512,11 @@ StringObjectException Print::validate(std::vector<StringObjectException> *warnin
                     // 0-based indices of all filaments printing this region's features.
                     std::vector<unsigned int> used_filaments;
                     PrintRegion::collect_object_printing_extruders(m_config, region_config, false /* has_brim */, used_filaments);
+                    // Inner-wall loops also print at a single wall loop (alternate / extra walls):
+                    // the upstream collector only lists that filament above one loop.
+                    if (PrintObject::region_prints_inner_walls(region_config) &&
+                        std::find(used_filaments.begin(), used_filaments.end(), feature_filament_idx(region_config.inner_wall_filament_id.value)) == used_filaments.end())
+                        used_filaments.push_back(feature_filament_idx(region_config.inner_wall_filament_id.value));
                     if (region_multiplier > 1)
                         // Only a nozzle that physically cannot extrude the part's pitch vetoes it;
                         // exceeding a max layer height keeps the pitch and is warned about below
@@ -2562,6 +2614,8 @@ StringObjectException Print::validate(std::vector<StringObjectException> *warnin
                         // With a walls-only or split pitch only the wall filaments print it, the
                         // others stay at the object layer height.
                         for (const unsigned int filament : used_filaments) {
+                            if (prints_nothing(filament))
+                                continue; // the inert 100%-density sparse selector prints nothing
                             double pitch = region_pitch;
                             if (region_multiplier == 1) {
                                 if (! prints_walls(filament))
@@ -2676,7 +2730,8 @@ StringObjectException Print::validate(std::vector<StringObjectException> *warnin
                                 continue;
                             warned_below_min_heights = true;
                             warn(Slic3r::format(_u8L("Some object parts print %1% mm layers with filament %2% whose minimum layer "
-                                                     "height is %3% mm. Raise the object layer height, use a filament with a finer "
+                                                     "height is %3% mm. Raise the object layer height (with preferred layer heights: "
+                                                     "choose heights that share a coarser common divisor), use a filament with a finer "
                                                      "nozzle for these features, or accept printing below the extruder's minimum."),
                                                 pitch_below_min ? lowest : layer_height,
                                                 filament + 1, min_lh),
@@ -2765,7 +2820,9 @@ StringObjectException Print::validate(std::vector<StringObjectException> *warnin
                         std::vector<coordf_t> profile;
                         PrintObject::update_layer_height_profile(*object->model_object(), object->slicing_parameters(), profile, object);
                         if (! check_object_layers_fixed(object->slicing_parameters(), profile))
-                            return { _u8L("Per-extruder layer heights are not supported together with variable layer height."),
+                            return { _u8L("Per-extruder layer heights are not supported together with variable layer height or "
+                                          "height range modifiers that change the layer height. Remove them for this object or "
+                                          "set the extruders' preferred layer heights to Default."),
                                      object, "extruder_layer_height" };
                     }
                 }

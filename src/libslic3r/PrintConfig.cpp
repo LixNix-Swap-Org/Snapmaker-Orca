@@ -410,14 +410,6 @@ static t_config_enum_values s_keys_map_EnsureVerticalShellThickness{
 };
 CONFIG_OPTION_ENUM_DEFINE_STATIC_MAPS(EnsureVerticalShellThickness)
 
-// ORCA: per-extruder layer height ("extruder_layer_height").
-static t_config_enum_values s_keys_map_ExtruderLayerHeightMode{
-    { "consistent", int(ExtruderLayerHeightMode::elhmConsistent) },
-    { "adaptive",   int(ExtruderLayerHeightMode::elhmAdaptive) },
-    { "fixed",      int(ExtruderLayerHeightMode::elhmFixed) },
-};
-CONFIG_OPTION_ENUM_DEFINE_STATIC_MAPS(ExtruderLayerHeightMode)
-
 // ORCA: split wall layer heights ("split_wall_adjust").
 static t_config_enum_values s_keys_map_WallSplitFilament{
     { "outer_wall", int(WallSplitFilament::wsfOuterWall) },
@@ -495,7 +487,9 @@ CONFIG_OPTION_ENUM_DEFINE_STATIC_MAPS(TimelapseType)
 static const t_config_enum_values s_keys_map_SupportLayerHeightStep = {
     {"whole",   slhsWholeLayer},
     {"half",    slhsHalfLayer},
-    {"quarter", slhsQuarterLayer}
+    {"quarter", slhsQuarterLayer},
+    {"auto",    slhsAuto},
+    {"max",     slhsMaxHeight}
 };
 CONFIG_OPTION_ENUM_DEFINE_STATIC_MAPS(SupportLayerHeightStep)
 
@@ -5494,57 +5488,20 @@ void PrintConfigDef::init_fff_params()
     def = this->add("extruder_layer_height", coFloats);
     def->label = L("Preferred layer height");
     def->tooltip = L("Layer height this extruder should print with, used for printers whose extruders have "
-                     "different nozzle sizes. It must be an integer multiple of the object layer height. "
+                     "different nozzle sizes. Any value can be entered: the finest preferred layer height becomes "
+                     "the object layer height and the other preferred heights are rounded to its whole multiples. "
                      "A part whose features all follow this extruder prints only on every Nth layer with "
                      "correspondingly thicker extrusions, wherever its geometry allows it; elsewhere it "
                      "falls back to the object layer height. When the rest of the part cannot follow, "
                      "walls assigned to this extruder still combine to this height on their own, "
                      "full-density top surfaces absorb the solid layers below them, and sparse or 100% "
-                     "dense infill combines to this height independently. 0 means to use the object "
-                     "layer height.");
+                     "dense infill combines to this height where the part prints every layer; inside a "
+                     "part printing on every Nth layer the infill follows that part's layers. 0 means to "
+                     "use the object layer height.");
     def->sidetext = "mm";	// milimeters, don't need translation
     def->min = 0;
     def->mode = comAdvanced;
     def->set_default_value(new ConfigOptionFloats { 0. });
-
-    def = this->add("extruder_layer_height_mode", coEnum);
-    def->label = L("Thick layer regions");
-    def->category = L("Quality");
-    def->tooltip = L("How aggressively object parts assigned to an extruder with a thicker preferred layer "
-                     "height are combined into thick layers.\n"
-                     "Consistent: parts print with at most two layer heights, the extruder layer height "
-                     "wherever whole runs of layers fit and the object layer height everywhere else. This "
-                     "gives the most uniform walls.\n"
-                     "Adaptive: runs may also be combined at intermediate multiples of the object layer "
-                     "height, so more of the part prints with thicker layers, at the price of bands of "
-                     "varying layer heights on curved part boundaries.\n"
-                     "Fixed: parts always print at the extruder layer height, even where the shape changes "
-                     "across the combined layers or overhangs; curved boundaries turn into steps and detail "
-                     "finer than the thick layers is lost. Only geometry too short for a whole thick layer "
-                     "(part tops and the first layer) prints thinner.");
-    def->enum_keys_map = &ConfigOptionEnum<ExtruderLayerHeightMode>::get_enum_values();
-    def->enum_values.push_back("consistent");
-    def->enum_values.push_back("adaptive");
-    def->enum_values.push_back("fixed");
-    def->enum_labels.push_back(L("Consistent"));
-    def->enum_labels.push_back(L("Adaptive"));
-    def->enum_labels.push_back(L("Fixed"));
-    def->mode = comAdvanced;
-    def->set_default_value(new ConfigOptionEnum<ExtruderLayerHeightMode>(elhmFixed));
-
-    def = this->add("extruder_layer_height_tolerance", coPercent);
-    def->label = L("Thick layer tolerance");
-    def->category = L("Quality");
-    def->tooltip = L("How far the outline of an object part assigned to an extruder with a thicker preferred "
-                     "layer height may drift sideways across the layers of one thick run and still be combined, "
-                     "as a percentage of that extruder's nozzle diameter. Higher values combine more of curved "
-                     "part boundaries into thick layers, at the price of rougher boundary walls: deviations up "
-                     "to this fraction of the nozzle diameter are swallowed by the thick extrusions.");
-    def->sidetext = "%";
-    def->min = 0;
-    def->max = 100;
-    def->mode = comAdvanced;
-    def->set_default_value(new ConfigOptionPercent(80));
 
     def = this->add("slow_down_min_speed", coFloats);
     def->label = L("Min print speed");
@@ -7528,7 +7485,14 @@ void PrintConfigDef::init_fff_params()
     def = this->add("support_layer_height_step", coEnum);
     def->label = L("Support layer height step");
     def->category = L("Support");
-    def->tooltip = L("Step granularity for independent support layer heights while the prime tower is enabled. "
+    def->tooltip = L("Step granularity for independent tree support layer heights while the prime tower is enabled "
+                     "(classic supports print on the object's layers with the prime tower). "
+                     "Automatic picks the coarsest step whose multiples reach the tallest support layer the support "
+                     "nozzle allows (e.g. quarter steps for a 0.14 mm maximum on a 0.08 mm object layer height); "
+                     "every support layer under an overhang contact still ends exactly one support gap below it. "
+                     "Maximum uses the same step but lets every support layer be as tall as possible: the support "
+                     "top under each contact is then the nearest support layer, so the gap varies by up to half a "
+                     "support layer above the configured value. "
                      "With whole layers, support layer heights are multiples of the object layer height. "
                      "Half or quarter steps also allow multiples like 1.5x or 1.25x, which helps when the support "
                      "nozzle's maximum layer height sits between two whole multiples. Support boundaries may then "
@@ -7539,21 +7503,26 @@ void PrintConfigDef::init_fff_params()
                      "above the nozzles' minimum layer height. Not used with single-extruder multi-material, which "
                      "keeps whole layers.");
     def->enum_keys_map = &ConfigOptionEnum<SupportLayerHeightStep>::get_enum_values();
+    // Entry order must follow the enum's numeric order: the choice field maps by position.
     def->enum_values.emplace_back("whole");
     def->enum_values.emplace_back("half");
     def->enum_values.emplace_back("quarter");
+    def->enum_values.emplace_back("auto");
+    def->enum_values.emplace_back("max");
     def->enum_labels.emplace_back(L("100% (whole layers)"));
     def->enum_labels.emplace_back(L("50%"));
     def->enum_labels.emplace_back(L("25%"));
+    def->enum_labels.emplace_back(L("Automatic (exact gap)"));
+    def->enum_labels.emplace_back(L("Maximum (gap rounded to support layers)"));
     def->mode = comAdvanced;
-    def->set_default_value(new ConfigOptionEnum<SupportLayerHeightStep>(slhsWholeLayer));
+    def->set_default_value(new ConfigOptionEnum<SupportLayerHeightStep>(slhsMaxHeight));
 
     def = this->add("independent_support_layer_height", coBool);
     def->label = L("Independent support layer height");
     def->category = L("Support");
     def->tooltip = L("Support layer uses layer height independent with object layer. This is to support customizing Z-gap and save print time. "
-                     "With the prime tower enabled, support layer heights stay aligned to the object layer grid "
-                     "(see Support layer height step).");
+                     "With the prime tower enabled, tree supports keep independent heights aligned to the object layer grid "
+                     "(see Support layer height step); classic supports then print on the object's layers.");
     def->mode = comAdvanced;
     // Mainline default. The Snapmaker process profiles either set this to 1
     // explicitly or (U1) leave it unset; with the old false default, loading a
@@ -12314,7 +12283,13 @@ std::map<std::string, std::string> validate(const FullPrintConfig &cfg, bool und
         for (size_t i = 0; i < sizeof(widths) / sizeof(widths[i]); ++ i) {
             std::string key(widths[i]);
             double abs_width = cfg.get_abs_value(key, max_nozzle_diameter);
-            double allowed_max = (key == "bridge_line_width") ? min_nozzle_diameter : MAX_LINE_WIDTH_MULTIPLIER * max_nozzle_diameter;
+            // A percentage bridge width is relative to the nozzle it prints with, so it fits every
+            // nozzle of a multi-nozzle printer as long as it stays within 100 %; an absolute width
+            // has to fit the smallest nozzle.
+            const ConfigOptionFloatOrPercent *bridge_width_opt = key == "bridge_line_width" ? cfg.option<ConfigOptionFloatOrPercent>(key) : nullptr;
+            double allowed_max = (key == "bridge_line_width") ?
+                ((bridge_width_opt != nullptr && bridge_width_opt->percent) ? max_nozzle_diameter : min_nozzle_diameter) :
+                MAX_LINE_WIDTH_MULTIPLIER * max_nozzle_diameter;
             if (abs_width > allowed_max) {
                 if (key == "bridge_line_width")
                     error_message.emplace(key, L("Bridge line width must not exceed nozzle diameter: ") + std::to_string(abs_width));

@@ -3695,6 +3695,17 @@ void GCode::_do_export(Print& print, GCodeOutputStream& file, ThumbnailsGenerato
     this->placeholder_parser().set("close_additional_fan_first_x_layers", new ConfigOptionInts(m_config.close_additional_fan_first_x_layers));
     this->placeholder_parser().set("additional_fan_full_speed_layer", new ConfigOptionInts(m_config.additional_fan_full_speed_layer));
 
+    // Layers with nothing to extrude are not emitted (process_layer() returns before its layer
+    // change), e.g. object grid layers a coarser per-extruder pitch prints at their run top.
+    // Count the emitted layers only, so the progress total matches the layer changes.
+    if (!count_layers_by_object) {
+        unsigned int emitted_layers = 0;
+        for (const LayerTools &lt : tool_ordering.layer_tools())
+            if (!lt.extruders.empty())
+                ++ emitted_layers;
+        if (emitted_layers > 0)
+            m_layer_count = emitted_layers;
+    }
     //Set variable for total layer count so it can be used in custom gcode.
     this->placeholder_parser().set("total_layer_count", m_layer_count);
     // Useful for sequential prints.

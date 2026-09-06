@@ -2262,7 +2262,18 @@ void Tab::on_value_change(const std::string& opt_key, const boost::any& value)
     if (opt_key == "layer_height") {
         // ORCA: the range check lives in ConfigManipulation now; it returns true when it adjusted
         // the value (and already showed a dialog for it).
-        const bool layer_height_adjusted = m_config_manipulation.check_layer_height(m_config);
+        bool layer_height_adjusted = m_config_manipulation.check_layer_height(m_config);
+        // ORCA multi-nozzle-size: the extruders' preferred layer heights must stay whole multiples
+        // of the object layer height. Global: adjust them or go back to the derived object layer
+        // height; per object / plate: offer the coarsest value they all are a multiple of. Not
+        // while a preset is rolled back to its saved values (m_postpone_update_ui).
+        if (!m_postpone_update_ui) {
+            if (m_type == Preset::TYPE_PRINT) {
+                if (wxGetApp().plater()->sidebar().confirm_object_layer_height_edit())
+                    layer_height_adjusted = true;
+            } else if (m_config_manipulation.check_layer_height_divides_extruder_heights(m_config))
+                layer_height_adjusted = true;
+        }
         if (layer_height_adjusted)
             wxGetApp().plater()->update();
 
@@ -2832,8 +2843,6 @@ void TabPrint::build()
         auto optgroup = page->new_optgroup(L("Layer height"), L"param_layer_height");
         optgroup->append_single_option_line("layer_height","quality_settings_layer_height");
         optgroup->append_single_option_line("initial_layer_print_height","quality_settings_layer_height");
-        optgroup->append_single_option_line("extruder_layer_height_mode","quality_settings_layer_height");
-        optgroup->append_single_option_line("extruder_layer_height_tolerance","quality_settings_layer_height");
         optgroup->append_single_option_line("enable_mixed_color_sublayer");
 
         optgroup = page->new_optgroup(L("Line width"), L"param_line_width");
@@ -3951,8 +3960,14 @@ void TabPrintModel::on_value_change(const std::string& opt_id, const boost::any&
     if (inull != m_null_keys.end())
         m_null_keys.erase(inull);
     if (m_back_to_sys || set) update_changed_ui();
+    const bool applied_to_objects = set && !m_back_to_sys && opt_key == opt_id;
     m_back_to_sys = false;
     TabPrint::on_value_change(opt_id, value);
+    // A range or divisor dialog in TabPrint::on_value_change may have adjusted the layer height
+    // in m_config after it was copied above: mirror the adjusted value into the object configs.
+    if (applied_to_objects && opt_key == "layer_height")
+        for (auto config : m_object_configs)
+            config.second->apply_only(*m_config, {opt_key});
     for (auto config : m_object_configs) {
         config.second->touch();
         notify_changed(config.first);
@@ -6790,6 +6805,11 @@ void TabPrinter::on_value_change(const std::string& opt_key, const boost::any& v
 {
     if (wxGetApp().plater() == nullptr || m_config_manipulation.is_applying())
         return;
+
+    // ORCA multi-nozzle-size: a preferred layer height edited here must be made printable the
+    // same way as one entered in the sidebar (object layer height derived, defaults pinned).
+    if (boost::starts_with(opt_key, "extruder_layer_height") && !boost::starts_with(opt_key, "extruder_layer_height_"))
+        wxGetApp().plater()->sidebar().derive_object_layer_height();
 
     const int pos = opt_key.find("#");
 

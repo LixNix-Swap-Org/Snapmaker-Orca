@@ -1281,8 +1281,6 @@ bool PrintObject::invalidate_state_by_config_options(
         } else if (
                opt_key == "layer_height"
             // ORCA: per-extruder layer height: the layer combining happens at the slicing step.
-            || opt_key == "extruder_layer_height_mode"
-            || opt_key == "extruder_layer_height_tolerance"
             || opt_key == "split_wall_adjust"
             || opt_key == "split_wall_adjust_filament"
             || opt_key == "split_wall_adjust_direction"
@@ -1951,7 +1949,14 @@ void PrintObject::detect_surfaces_type()
                     {
                         Polygons topbottom = to_polygons(top);
                         polygons_append(topbottom, to_polygons(bottom));
-                        surfaces_append(surfaces_out, diff_ex(surfaces_prev_expolys, topbottom), stInternal);
+                        // ORCA: area given to this region to fill the void under a neighbor's
+                        // combined run prints solid, so that run rests on solid material.
+                        ExPolygons internal = diff_ex(surfaces_prev_expolys, topbottom);
+                        if (const ExPolygons &fill = layerm->void_fill(); ! fill.empty()) {
+                            surfaces_append(surfaces_out, intersection_ex(internal, fill), stInternalSolid);
+                            internal = diff_ex(internal, fill);
+                        }
+                        surfaces_append(surfaces_out, std::move(internal), stInternal);
                     }
 
                     surfaces_append(surfaces_out, std::move(top));
@@ -4252,6 +4257,11 @@ unsigned int PrintObject::region_layer_height_multiplier(const PrintRegion &regi
     const double pitch = multiplier * m_config.layer_height.value;
     std::vector<unsigned int> used_filaments; // 0-based filament indices
     PrintRegion::collect_object_printing_extruders(print_config, config, false /* has_brim */, used_filaments);
+    // Inner-wall loops also print at a single wall loop (alternate / extra walls): the upstream
+    // collector only lists that filament above one loop.
+    if (region_prints_inner_walls(config) &&
+        std::find(used_filaments.begin(), used_filaments.end(), feature_filament_idx(config.inner_wall_filament_id.value)) == used_filaments.end())
+        used_filaments.push_back(feature_filament_idx(config.inner_wall_filament_id.value));
     for (unsigned int filament : used_filaments) {
         // An inert 100%-density sparse infill selector must not veto the pitch.
         if (region_filament_prints_nothing(config, filament))
@@ -5554,17 +5564,29 @@ void PrintObject::combine_surface_runs(size_t region_id, SurfaceType surface_typ
                 shrunk = intersection_ex(leftover(m_layers[layer_idx - m]), combined);
                 if (! shrunk.empty() && layer_idx > m)
                     shrunk = diff_ex(shrunk, leftover(m_layers[layer_idx - m - 1]));
-                if (! shrunk.empty())
+                if (! shrunk.empty()) {
                     combined = diff_ex(combined, shrunk);
+                    // Both runs commit on this layer. commit_run() keeps only the uncombined
+                    // pieces clear of a committed area, so the two committed areas must be kept
+                    // apart here by the same clearance, or the fills - grown later to overlap
+                    // the walls - re-converge and the same line extrudes twice.
+                    LayerRegion *top_layerm = m_layers[layer_idx]->regions()[region_id];
+                    const float  clearance  = 0.5f * top_layerm->flow(frPerimeter).scaled_width() +
+                                              fill_clearance_factor * top_layerm->flow(frSolidInfill).scaled_width();
+                    shrunk = diff_ex(shrunk, offset_ex(combined, clearance));
+                    remove_small_expolygons(combined, top_layerm->infill_area_threshold());
+                    remove_small_expolygons(shrunk, top_layerm->infill_area_threshold());
+                }
             }
             commit_run(layer_idx, m, std::move(combined));
             commit_run(layer_idx, m - 1, std::move(shrunk));
         }
     };
     combine_runs(mult, grid_aligned);
-    if (min_mult > 1)
-        for (unsigned int m = mult - 1; m >= min_mult; -- m)
-            combine_runs(m, false);
+    // Leftover bands re-group over shorter runs down to the minimum (never a single layer here:
+    // that is the object layer height the leftovers already print at).
+    for (unsigned int m = mult - 1, lo = std::max(2u, min_mult); m >= lo; -- m)
+        combine_runs(m, false);
 }
 
 // Per-extruder layer height: print the internal solid infill left over after

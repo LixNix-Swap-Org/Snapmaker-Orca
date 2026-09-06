@@ -1290,8 +1290,6 @@ static std::vector<std::string> s_Preset_print_options{
     "infill_combination",
     "infill_combination_max_layer_height", /*"adaptive_layer_height",*/
     // ORCA: per-extruder layer height ("extruder_layer_height").
-    "extruder_layer_height_mode",
-    "extruder_layer_height_tolerance",
     "split_wall_adjust",
     "split_wall_adjust_filament",
     "split_wall_adjust_direction",

@@ -1,7 +1,10 @@
 // #include "libslic3r/GCodeSender.hpp"
 #include "ConfigManipulation.hpp"
+#include <numeric>
+#include <limits>
 #include "I18N.hpp"
 #include "GUI_App.hpp"
+#include "GUI.hpp"
 #include "format.hpp"
 #include "libslic3r/Config.hpp"
 #include "libslic3r/Model.hpp"
@@ -300,6 +303,62 @@ bool ConfigManipulation::check_layer_height(DynamicPrintConfig* config)
     if (min_layer_height > EPSILON && layer_height < min_layer_height - EPSILON)
         return layer_height_out_of_range_dialog(config, min_layer_height);
     return false;
+}
+
+bool ConfigManipulation::check_layer_height_divides_extruder_heights(DynamicPrintConfig* config)
+{
+    const double layer_height = config->opt_float("layer_height");
+    if (layer_height <= EPSILON)
+        return false;
+    const DynamicPrintConfig &printer_config = GUI::wxGetApp().preset_bundle->printers.get_edited_preset().config;
+    const auto *heights = printer_config.option<ConfigOptionFloats>("extruder_layer_height");
+    if (heights == nullptr)
+        return false;
+    bool        nonconforming = false;
+    long        common        = 0;
+    std::string list;
+    for (double h : heights->values) {
+        if (h <= EPSILON)
+            continue;
+        common = std::gcd(common, std::lround(h / 0.005));
+        const double n = std::round(h / layer_height);
+        if (n < 1. || std::abs(h - n * layer_height) > 1e-4)
+            nonconforming = true;
+        list += (list.empty() ? "" : " / ") + into_u8(wxString::Format("%g", h));
+    }
+    if (!nonconforming || common == 0)
+        return false;
+    // The object layer height also prints the Default extruders: it must fit through every nozzle.
+    double min_bore = std::numeric_limits<double>::max();
+    if (const auto *nd = printer_config.option<ConfigOptionFloats>("nozzle_diameter"))
+        for (double d : nd->values)
+            if (d > EPSILON)
+                min_bore = std::min(min_bore, d);
+    double suggested = 0.;
+    for (long k = 1; k <= common; ++k)
+        if (common % k == 0 && (common / k) * 0.005 <= min_bore + EPSILON) {
+            suggested = std::round((common / k) * 0.005 * 1e6) / 1e6;
+            break;
+        }
+    if (suggested <= EPSILON)
+        return false;
+
+    wxString msg_text = wxString::Format(_L("A layer height of %g mm is not a divisor of the extruders' preferred layer heights (%s mm); "
+                                            "parts printed by those extruders need whole multiples of the object layer height."),
+                                         layer_height, wxString::FromUTF8(list.c_str()));
+    msg_text += "\n\n" + wxString::Format(_L("Adjust it to %g mm, the coarsest layer height every preferred height is a whole multiple of?"), suggested);
+    MessageDialog dialog(wxGetApp().plater(), msg_text, "", wxICON_WARNING | wxYES | wxNO);
+    dialog.SetButtonLabel(wxID_YES, _L("Adjust"));
+    dialog.SetButtonLabel(wxID_NO, _L("Ignore"));
+    is_msg_dlg_already_exist = true;
+    const bool adjust = dialog.ShowModal() == wxID_YES;
+    if (adjust) {
+        DynamicPrintConfig new_conf = *config;
+        new_conf.set_key_value("layer_height", new ConfigOptionFloat(suggested));
+        apply(config, &new_conf);
+    }
+    is_msg_dlg_already_exist = false;
+    return adjust;
 }
 
 bool ConfigManipulation::layer_height_out_of_range_dialog(DynamicPrintConfig* config, double clamp_to)
@@ -749,11 +808,6 @@ void ConfigManipulation::toggle_print_fff_options(DynamicPrintConfig *config, in
         apply(config, &new_conf);
     }
 
-    // ORCA: per-extruder layer height: the thick layer tolerance only drives the consistent /
-    // adaptive drift checks; fixed mode ignores it.
-    toggle_field("extruder_layer_height_tolerance",
-                 config->opt_enum<ExtruderLayerHeightMode>("extruder_layer_height_mode") != elhmFixed);
-
     bool have_perimeters = config->opt_int("wall_loops") > 0;
     for (auto el : { "extra_perimeters_on_overhangs", "ensure_vertical_shell_thickness", "detect_thin_wall", "detect_overhang_wall",
         "seam_position", "staggered_inner_seams", "wall_sequence", "outer_wall_line_width" })
@@ -977,6 +1031,9 @@ void ConfigManipulation::toggle_print_fff_options(DynamicPrintConfig *config, in
     // ORCA: Independent support layer height is not compatible with organic tree supports,
     // as they rely on the support layers being the same as the object layers to determine where to place branches.
     toggle_line("independent_support_layer_height", have_support_material && !support_is_organic);
+    // With the prime tower only tree supports keep independent (grid-aligned) heights; the classic
+    // generator synchronizes to the object layers (SupportMaterial::synchronize_layers()).
+    toggle_field("independent_support_layer_height", have_support_material && (support_is_tree || !config->opt_bool("enable_prime_tower")));
     // The step only has an effect for non-organic tree supports with independent layer heights
     // under the prime tower; single-extruder multi-material keeps whole steps.
     toggle_line("support_layer_height_step", support_is_normal_tree && config->opt_bool("independent_support_layer_height") &&

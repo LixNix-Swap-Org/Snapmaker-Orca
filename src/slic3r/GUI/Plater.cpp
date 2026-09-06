@@ -105,6 +105,7 @@
 #include "libslic3r/SLA/ReprojectPointsOnMesh.hpp"
 #include "libslic3r/Polygon.hpp"
 #include "libslic3r/Print.hpp"
+#include "libslic3r/Slicing.hpp"
 #include "libslic3r/PrintConfig.hpp"
 #include "libslic3r/SLAPrint.hpp"
 #include "libslic3r/Utils.hpp"
@@ -1662,7 +1663,9 @@ struct Sidebar::priv
     // nozzle notebook  and related controls
     CustomNotebook*                  m_nozzle_notebook{nullptr};
     std::vector<ComboBox*>       m_nozzle_diameter_lists;
-    std::vector<ComboBox*>       m_nozzle_layer_height_lists;
+    std::vector<TextInput*>      m_nozzle_layer_height_lists;
+    bool                         layer_height_reconcile_pending{false};
+    bool                         layer_height_dialog_open{false};
     std::vector<ScalableButton*> m_nozzle_edit_btns;
     bool                         m_nozzle_rebuild_scheduled{false};
 
@@ -11010,67 +11013,341 @@ static void select_nozzle_diameter_label(ComboBox *diameter_combo, double this_n
     diameter_combo->SetValue(this_label);
 }
 
-// ORCA multi-nozzle-size: (re)fill one sidebar "Preferred layer height" combo with the target
-// heights extruder `extruder_idx` may use: "Default" (= 0, follow the object layer height) plus
-// every integer multiple of the object layer height that fits through the nozzle bore and lies
-// within the extruder's layer height limits.
-static void fill_nozzle_layer_height_combo(ComboBox *combo, size_t extruder_idx)
+// ORCA multi-nozzle-size: show extruder `extruder_idx`'s preferred layer height ("Default" =
+// 0, follow the object layer height) in its sidebar field.
+static void fill_nozzle_layer_height_field(TextInput *field, size_t extruder_idx)
 {
     const DynamicPrintConfig &printer_config = wxGetApp().preset_bundle->printers.get_edited_preset().config;
-    const DynamicPrintConfig &print_config   = wxGetApp().preset_bundle->prints.get_edited_preset().config;
-
-    const auto  *nozzle_diameter = printer_config.option<ConfigOptionFloats>("nozzle_diameter");
-    const auto  *preferred       = printer_config.option<ConfigOptionFloats>("extruder_layer_height");
-    const auto  *min_lh          = printer_config.option<ConfigOptionFloats>("min_layer_height");
-    const auto  *max_lh          = printer_config.option<ConfigOptionFloats>("max_layer_height");
-    const auto  *base_opt        = print_config.option<ConfigOptionFloat>("layer_height");
-    const double base_height     = base_opt != nullptr ? base_opt->value : 0.;
-
-    combo->Clear();
-    combo->AppendString(_L("Default"));
-
-    const double bore = (nozzle_diameter != nullptr && extruder_idx < nozzle_diameter->values.size()) ?
-        nozzle_diameter->values[extruder_idx] : 0.;
-    double cap = bore;
-    if (max_lh != nullptr && !max_lh->values.empty() && max_lh->get_at(extruder_idx) > EPSILON)
-        cap = std::min(cap, max_lh->get_at(extruder_idx));
-    const double floor_lh = (min_lh != nullptr && !min_lh->values.empty()) ? min_lh->get_at(extruder_idx) : 0.;
-    const double current  = (preferred != nullptr && !preferred->values.empty()) ?
+    const auto  *preferred = printer_config.option<ConfigOptionFloats>("extruder_layer_height");
+    const double current   = (preferred != nullptr && !preferred->values.empty()) ?
         std::max(0., preferred->get_at(extruder_idx)) : 0.;
+    field->GetTextCtrl()->SetValue(current > 0. ? nozzle_combo_label(current) : _L("Default"));
+}
 
-    wxString current_label;
-    if (base_height > EPSILON) {
-        // Fractions of the object layer height for finer nozzles: selecting one lowers the
-        // object layer height to it and pins the other extruders to their current effective
-        // height, so the printed result is unchanged and the configuration stays valid.
-        for (int d = 4; d >= 2; d /= 2) {
-            const double height = base_height / d;
-            if (height + EPSILON < floor_lh || height > cap + EPSILON)
-                continue;
-            if (std::abs(height * 1000. - std::round(height * 1000.)) > 1e-6)
-                continue; // only cleanly representable heights
-            const wxString label = nozzle_combo_label(height);
-            combo->AppendString(label);
-            if (current > 0. && std::abs(height - current) < EPSILON)
-                current_label = label;
-        }
-        for (int n = 1; n * base_height <= cap + EPSILON; ++n) {
-            const double height = n * base_height;
-            if (height + EPSILON < floor_lh)
-                continue;
-            const wxString label = nozzle_combo_label(height);
-            combo->AppendString(label);
-            if (current > 0. && std::abs(height - current) < EPSILON)
-                current_label = label;
+// ORCA multi-nozzle-size: formats a list of per-extruder layer heights ("0.12 / Default / 0.36 mm").
+static std::string extruder_heights_list(const std::vector<double> &heights)
+{
+    std::string list;
+    for (double h : heights)
+        list += (list.empty() ? "" : " / ") + (h > EPSILON ? GUI::format("%1%", h) : _u8L("Default"));
+    return list + " mm";
+}
+
+// ORCA multi-nozzle-size: the coarsest object layer height (5 um quanta) every explicit extruder
+// layer height is a whole multiple of; with `include_base` the given base joins in, so the result
+// can only be finer than it. The object layer height also prints the Default extruders, so it is
+// capped to the smallest nozzle diameter (largest divisor that fits). 0 when nothing constrains it.
+static double conforming_object_layer_height(const std::vector<double> &heights, double base, bool include_base, double max_height)
+{
+    auto quanta = [](double height) { return std::lround(height / 0.005); };
+    long common = 0;
+    for (double height : heights)
+        if (height > EPSILON)
+            common = std::gcd(common, quanta(height));
+    if ((include_base || common == 0) && base > EPSILON)
+        common = std::gcd(common, quanta(base));
+    for (long k = 1; common > 0 && k <= common; ++k)
+        if (common % k == 0 && (max_height <= EPSILON || (common / k) * 0.005 <= max_height + EPSILON))
+            return std::round((common / k) * 0.005 * 1e6) / 1e6;
+    return 0.;
+}
+
+// ORCA multi-nozzle-size: the smallest nozzle diameter of the edited printer (0 when unknown).
+static double smallest_nozzle_diameter()
+{
+    double min_bore = 0.;
+    if (const auto *nd = wxGetApp().preset_bundle->printers.get_edited_preset().config.option<ConfigOptionFloats>("nozzle_diameter"))
+        for (double d : nd->values)
+            if (d > EPSILON && (min_bore <= 0. || d < min_bore))
+                min_bore = d;
+    return min_bore;
+}
+
+// ORCA multi-nozzle-size: the object layer height for a set of preferred layer heights, and the
+// heights made whole multiples of it. The finest preferred height becomes the object layer height
+// (a grid that fine is what the user asked for; the gcd of free values would be arbitrarily fine
+// and print the prime tower and supports in unprintable slabs); the other preferred heights are
+// rounded to its nearest whole multiple within their nozzle bore. When the finest height does not
+// fit through the smallest nozzle (Default extruders and the fallback areas of every part print
+// at the object layer height), the coarsest divisor that does is used. Default extruders keep
+// their current height (rounded to the grid) when the grid gets finer than it, so they do not
+// suddenly print the finest extruder's layers. Returns the grid (0 = nothing to derive).
+struct LayerHeightPlan
+{
+    double              grid = 0.;
+    std::vector<double> heights;             // adjusted preferred heights (0 = Default)
+    std::vector<size_t> rounded;             // extruders whose preferred height was rounded
+    std::vector<size_t> pinned;              // Default extruders pinned to the previous height
+};
+static LayerHeightPlan plan_layer_heights(std::vector<double> heights, double base, const std::vector<double> &nozzles)
+{
+    LayerHeightPlan plan;
+    const double    min_nozzle = smallest_nozzle_diameter();
+    double          finest     = 0.;
+    for (double h : heights)
+        if (h > EPSILON && (finest <= 0. || h < finest))
+            finest = h;
+    if (finest <= 0.) {
+        plan.heights = std::move(heights);
+        return plan;
+    }
+    double grid = finest;
+    if (min_nozzle > EPSILON && grid > min_nozzle + EPSILON)
+        grid = conforming_object_layer_height(heights, base, false, min_nozzle);
+    if (grid <= EPSILON) {
+        plan.heights = std::move(heights);
+        return plan;
+    }
+    auto multiple_of_grid = [&](double h, double bore) {
+        long n = std::max(1L, std::lround(h / grid));
+        while (n > 1 && n * grid > bore + EPSILON)
+            --n;
+        return std::round(n * grid * 1e6) / 1e6;
+    };
+    for (size_t j = 0; j < heights.size(); ++j) {
+        const double bore = j < nozzles.size() ? nozzles[j] : std::numeric_limits<double>::max();
+        if (heights[j] > EPSILON) {
+            const double snapped = multiple_of_grid(heights[j], bore);
+            if (std::abs(snapped - heights[j]) > 1e-6)
+                plan.rounded.push_back(j);
+            heights[j] = snapped;
+        } else if (base > EPSILON && grid < base - EPSILON && bore >= grid - EPSILON) {
+            heights[j] = multiple_of_grid(base, bore);
+            plan.pinned.push_back(j);
         }
     }
-    if (current_label.empty() && current > 0.) {
-        // An explicit preference no longer among the valid values (the object layer height or
-        // the limits changed after it was set) is still displayed truthfully; slicing warns.
-        current_label = nozzle_combo_label(current);
-        combo->AppendString(current_label);
+    plan.grid    = grid;
+    plan.heights = std::move(heights);
+    return plan;
+}
+
+// ORCA multi-nozzle-size: whether an explicit extruder layer height is a whole multiple of the
+// object layer height (not below it).
+static bool extruder_height_conforms(double height, double base)
+{
+    if (height <= EPSILON)
+        return true;
+    if (base <= EPSILON)
+        return false;
+    const double n = std::round(height / base);
+    return n >= 1. && std::abs(height - n * base) <= 1e-4;
+}
+
+// ORCA multi-nozzle-size: makes a set of per-extruder layer heights printable. The engine needs
+// every explicit extruder layer height to be a whole multiple of the object layer height, so
+// the object layer height is derived as the coarsest grid (in 5 um quanta) all explicit heights
+// share. While some extruder still follows the object layer height, that height is part of the
+// set: the grid can then only get finer and those extruders are pinned to the previous height;
+// with every extruder explicit the grid may also get coarser. Heights above their nozzle
+// diameter are clamped to it first. With `only_if_nonconforming` (the automatic reconcile after
+// a project load, preset switch or nozzle change) a configuration that already conforms is left
+// alone. Writes the print preset's layer height and the printer preset's heights when they
+// change; returns true when anything changed.
+static bool derive_object_layer_height_from_extruder_heights(std::vector<double> heights, bool only_if_nonconforming = false)
+{
+    Tab* printer_tab = wxGetApp().get_tab(Preset::TYPE_PRINTER);
+    if (printer_tab == nullptr || wxGetApp().plater() == nullptr)
+        return false;
+    DynamicPrintConfig new_conf   = wxGetApp().preset_bundle->printers.get_edited_preset().config;
+    const auto*        height_opt = static_cast<const ConfigOptionFloats*>(new_conf.option("extruder_layer_height"));
+    const auto*        nd_opt     = static_cast<const ConfigOptionFloats*>(new_conf.option("nozzle_diameter"));
+    if (height_opt == nullptr || nd_opt == nullptr)
+        return false;
+    heights.resize(nd_opt->values.size(), 0.);
+    NotificationManager *notifications = wxGetApp().plater()->get_notification_manager();
+
+    // Layer heights are meaningful to 5 um: the Printer tab accepts any value, so snap here (the
+    // sidebar already does), and a preferred layer height above the extruder's nozzle diameter
+    // cannot print (Print::validate rejects it) - clamp it, as the sidebar refuses such input.
+    for (size_t j = 0; j < heights.size(); ++j) {
+        if (heights[j] <= EPSILON) {
+            heights[j] = 0.;
+            continue;
+        }
+        heights[j] = std::round(std::round(heights[j] / 0.005) * 0.005 * 1e6) / 1e6;
+        const double bore = nd_opt->values[j];
+        if (heights[j] > bore + EPSILON) {
+            heights[j] = std::round(std::floor(bore / 0.005 + EPSILON) * 0.005 * 1e6) / 1e6;
+            if (notifications != nullptr)
+                notifications->push_notification(
+                    NotificationType::CustomNotification, NotificationManager::NotificationLevel::WarningNotificationLevel,
+                    GUI::format(_u8L("The preferred layer height of extruder %1% cannot exceed its nozzle diameter and was set to %2% mm."), j + 1, heights[j]));
+        }
     }
-    combo->SetValue(current_label.empty() ? _L("Default") : current_label);
+
+    bool         print_changed = false;
+    const auto*  base_opt      = wxGetApp().preset_bundle->prints.get_edited_preset().config.option<ConfigOptionFloat>("layer_height");
+    const double base_height   = base_opt != nullptr ? base_opt->value : 0.;
+    // An object layer height off the 5 um grid cannot be a divisor of snapped heights: derive.
+    bool         all_conform   = base_height > EPSILON && std::abs(base_height - std::round(base_height / 0.005) * 0.005) <= 1e-6;
+    for (double height : heights)
+        all_conform = all_conform && extruder_height_conforms(height, base_height);
+    if (base_height > EPSILON && !(only_if_nonconforming && all_conform)) {
+        LayerHeightPlan plan = plan_layer_heights(heights, base_height, nd_opt->values);
+        if (plan.grid > EPSILON) {
+            std::string notice;
+            if (std::abs(plan.grid - base_height) > EPSILON) {
+                if (Tab* print_tab = wxGetApp().get_tab(Preset::TYPE_PRINT); print_tab != nullptr) {
+                    DynamicPrintConfig print_conf = wxGetApp().preset_bundle->prints.get_edited_preset().config;
+                    print_conf.set_key_value("layer_height", new ConfigOptionFloat(plan.grid));
+                    print_tab->load_config(print_conf);
+                    print_changed = true;
+                }
+                notice = GUI::format(_u8L("Object layer height set to %1% mm, the finest preferred layer height."), plan.grid);
+            }
+            if (!plan.rounded.empty()) {
+                std::string list;
+                for (size_t j : plan.rounded)
+                    list += (list.empty() ? "" : ", ") + GUI::format(_u8L("extruder %1%: %2% mm"), j + 1, plan.heights[j]);
+                notice += (notice.empty() ? "" : " ") + GUI::format(_u8L("Preferred layer heights rounded to whole multiples of it: %1%."), list);
+            }
+            if (!plan.pinned.empty()) {
+                std::string list;
+                for (size_t j : plan.pinned)
+                    list += (list.empty() ? "" : ", ") + GUI::format(_u8L("extruder %1%: %2% mm"), j + 1, plan.heights[j]);
+                notice += (notice.empty() ? "" : " ") + GUI::format(_u8L("Extruders without a preference keep their height: %1%."), list);
+            }
+            heights = plan.heights;
+            if (!notice.empty() && notifications != nullptr)
+                notifications->push_notification(
+                    NotificationType::CustomNotification, NotificationManager::NotificationLevel::RegularNotificationLevel, notice);
+        }
+    }
+
+    bool printer_changed = heights.size() != height_opt->values.size();
+    for (size_t j = 0; !printer_changed && j < heights.size(); ++j)
+        printer_changed = std::abs(heights[j] - height_opt->values[j]) > EPSILON;
+    if (printer_changed) {
+        new_conf.set_key_value("extruder_layer_height", new ConfigOptionFloats(heights));
+        // As with the diameter combo: marks the printer preset modified and propagates the
+        // change without switching presets (the sidebar fields are refilled from there).
+        printer_tab->load_config(new_conf);
+    }
+
+    // Objects with their own layer height are validated on their own (Print::validate reads the
+    // object's config): set the ones the heights are no whole multiples of to the coarsest value
+    // they all are (the value the engine's message and the per-object dialog name).
+    bool        objects_changed = false;
+    std::string adjusted_objects;
+    for (ModelObject *object : wxGetApp().plater()->model().objects) {
+        if (object == nullptr || !object->config.has("layer_height"))
+            continue;
+        const double obj_base = object->config.opt_float("layer_height");
+        bool         conforms = obj_base > EPSILON;
+        for (double height : heights)
+            conforms = conforms && extruder_height_conforms(height, obj_base);
+        if (conforms)
+            continue;
+        const double obj_grid = conforming_object_layer_height(heights, obj_base, false, smallest_nozzle_diameter());
+        if (obj_grid <= EPSILON || std::abs(obj_grid - obj_base) <= EPSILON)
+            continue;
+        object->config.set_key_value("layer_height", new ConfigOptionFloat(obj_grid));
+        adjusted_objects += (adjusted_objects.empty() ? "" : ", ") + GUI::format("\"%1%\": %2% mm", object->name, obj_grid);
+        wxGetApp().plater()->changed_object(*object);
+        objects_changed = true;
+    }
+    if (objects_changed) {
+        if (notifications != nullptr)
+            notifications->push_notification(
+                NotificationType::CustomNotification, NotificationManager::NotificationLevel::RegularNotificationLevel,
+                GUI::format(_u8L("The own layer height of some objects was set so that every extruder's layer height is a whole multiple of it: %1%."), adjusted_objects));
+        if (wxGetApp().obj_list() != nullptr)
+            wxGetApp().obj_list()->update_and_show_object_settings_item();
+    }
+
+    // The configuration changed: validation errors shown for the old one are stale until the
+    // scheduled re-validation reports the current state.
+    if ((print_changed || printer_changed || objects_changed) && notifications != nullptr)
+        notifications->close_notification_of_type(NotificationType::ValidateError);
+    return print_changed || printer_changed || objects_changed;
+}
+
+void Sidebar::derive_object_layer_height()
+{
+    const auto *preferred = wxGetApp().preset_bundle->printers.get_edited_preset().config.option<ConfigOptionFloats>("extruder_layer_height");
+    derive_object_layer_height_from_extruder_heights(preferred != nullptr ? preferred->values : std::vector<double>());
+}
+
+void Sidebar::reconcile_layer_heights()
+{
+    const auto *preferred = wxGetApp().preset_bundle->printers.get_edited_preset().config.option<ConfigOptionFloats>("extruder_layer_height");
+    if (preferred == nullptr)
+        return;
+    derive_object_layer_height_from_extruder_heights(preferred->values, true /* only when the configuration does not conform */);
+}
+
+void Sidebar::schedule_layer_height_reconcile()
+{
+    if (p->layer_height_reconcile_pending)
+        return;
+    p->layer_height_reconcile_pending = true;
+    // Deferred: the change that triggered it (preset switch, project load, Printer tab edit) is
+    // still being applied, and several key changes arrive as one batch.
+    wxGetApp().CallAfter([this]() {
+        if (wxGetApp().plater() == nullptr || wxGetApp().mainframe == nullptr || &wxGetApp().plater()->sidebar() != this)
+            return;
+        // Cancelled meanwhile (a layer height question is being asked instead), or the question
+        // is still open in a nested event loop: it settles the configuration itself.
+        if (!p->layer_height_reconcile_pending || p->layer_height_dialog_open)
+            return;
+        p->layer_height_reconcile_pending = false;
+        reconcile_layer_heights();
+    });
+}
+
+bool Sidebar::confirm_object_layer_height_edit()
+{
+    const DynamicPrintConfig &print_config   = wxGetApp().preset_bundle->prints.get_edited_preset().config;
+    const DynamicPrintConfig &printer_config = wxGetApp().preset_bundle->printers.get_edited_preset().config;
+    const double base    = print_config.opt_float("layer_height");
+    const auto  *heights = printer_config.option<ConfigOptionFloats>("extruder_layer_height");
+    const auto  *nd      = printer_config.option<ConfigOptionFloats>("nozzle_diameter");
+    if (base <= EPSILON || heights == nullptr || nd == nullptr)
+        return false;
+    std::vector<double> current = heights->values;
+    current.resize(nd->values.size(), 0.);
+    bool nonconforming = false;
+    for (double h : current)
+        nonconforming = nonconforming || !extruder_height_conforms(h, base);
+    if (!nonconforming)
+        return false;
+
+    // Nearest whole multiples of the new object layer height that still fit through the nozzle.
+    std::vector<double> snapped = current;
+    for (size_t j = 0; j < snapped.size(); ++j) {
+        if (snapped[j] <= EPSILON)
+            continue;
+        long m = std::max(1L, std::lround(snapped[j] / base));
+        while (m > 1 && m * base > nd->values[j] + EPSILON)
+            --m;
+        snapped[j] = m * base > nd->values[j] + EPSILON ? 0. : std::round(m * base * 1e6) / 1e6;
+    }
+    const double derived = plan_layer_heights(current, base, nd->values).grid;
+    if (derived <= EPSILON)
+        return false;
+
+    const std::string body = GUI::format(_u8L("An object layer height of %1% mm is not a divisor of the extruders' preferred layer heights (%2%); "
+                                              "object parts printed by those extruders need whole multiples of it."), base, extruder_heights_list(current))
+        + "\n\n" + GUI::format(_u8L("Adjust the preferred layer heights to the nearest whole multiples (%1%), or use %2% mm, the finest "
+                                    "preferred layer height, as the object layer height (rounding the others to its whole multiples)?"),
+                                extruder_heights_list(snapped), derived);
+    // This question settles the configuration: a reconcile scheduled by the edit must not run
+    // underneath it (the dialog's nested event loop would deliver it).
+    p->layer_height_reconcile_pending = false;
+    p->layer_height_dialog_open       = true;
+    MessageDialog dlg(wxGetApp().plater(), wxString::FromUTF8(body.c_str()), _L("Layer height"), wxICON_WARNING | wxYES | wxNO);
+    dlg.SetButtonLabel(wxID_YES, _L("Adjust extruder heights"));
+    dlg.SetButtonLabel(wxID_NO, wxString::FromUTF8(GUI::format(_u8L("Use %1% mm"), derived).c_str()));
+    const int answer = dlg.ShowModal();
+    p->layer_height_dialog_open = false;
+    if (answer == wxID_YES) {
+        derive_object_layer_height_from_extruder_heights(snapped, true /* they conform now: only the heights are written */);
+        wxGetApp().plater()->get_notification_manager()->push_notification(
+            NotificationType::CustomNotification, NotificationManager::NotificationLevel::RegularNotificationLevel,
+            GUI::format(_u8L("Preferred layer heights adjusted to whole multiples of %1% mm: %2%."), base, extruder_heights_list(snapped)));
+    } else
+        derive_object_layer_height_from_extruder_heights(current);
+    return true;
 }
 
 void Sidebar::update_nozzle_settings(bool switch_machine)
@@ -11224,7 +11501,7 @@ void Sidebar::update_nozzle_settings(bool switch_machine)
                 notice);
             // The valid preferred layer heights of this nozzle follow its bore and limits.
             if (i < p->m_nozzle_layer_height_lists.size() && p->m_nozzle_layer_height_lists[i] != nullptr)
-                fill_nozzle_layer_height_combo(p->m_nozzle_layer_height_lists[i], i);
+                fill_nozzle_layer_height_field(p->m_nozzle_layer_height_lists[i], i);
             // Do not event.Skip(): this is a plain ComboBox; skipping would let the sidebar treat
             // it as the bed-type combo (Plater::priv::on_combobox_select) and mishandle it.
         });
@@ -11246,60 +11523,99 @@ void Sidebar::update_nozzle_settings(bool switch_machine)
         lh_label->SetForegroundColour(is_dark ? wxColor(194, 194, 194) : wxColor(0, 0, 0));
         lh_label->SetFont(Label::Body_14);
 
-        ComboBox* lh_combo = new ComboBox(nozzle_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, {-1, FromDIP(32)}, 0,
-                                          nullptr, wxCB_READONLY);
-        lh_combo->SetToolTip(_L("Layer height this extruder should print with: a multiple of the object layer "
-                                "height within this extruder's layer height limits. Default keeps the object layer "
-                                "height. Selecting a fraction of the object layer height lowers the object layer "
-                                "height to it and keeps the other extruders at their current effective height."));
-        fill_nozzle_layer_height_combo(lh_combo, i);
+        // Free entry: any layer height can be typed; the object layer height follows.
+        TextInput* lh_field = new TextInput(nozzle_panel, wxEmptyString, "", "", wxDefaultPosition, {-1, FromDIP(32)}, wxTE_PROCESS_ENTER);
+        lh_field->SetToolTip(_L("Layer height this extruder should print with: type any value, or Default to keep the "
+                                "object layer height. The finest preferred layer height becomes the object layer height "
+                                "and the other preferred heights are rounded to its whole multiples; extruders left at "
+                                "Default keep their current height."));
+        fill_nozzle_layer_height_field(lh_field, i);
 
-        lh_combo->Bind(wxEVT_COMBOBOX, [lh_combo, i](wxCommandEvent& event) {
-            // "Default" (or anything non-numeric) clears the preference: 0 = object layer height.
+        // Applies the typed height for extruder `i` (Enter or leaving the field).
+        auto apply_preferred_height = [lh_field, i]() {
+            wxString text = lh_field->GetTextCtrl()->GetValue();
+            text.Trim(true).Trim(false);
+            if (text.EndsWith("mm"))
+                text.RemoveLast(2);
+            text.Trim(true);
             double new_height = 0.;
-            if (!nozzle_combo_number(lh_combo->GetValue()).ToCDouble(&new_height) || new_height < 0.)
-                new_height = 0.;
-
-            Tab* printer_tab = wxGetApp().get_tab(Preset::TYPE_PRINTER);
-            if (printer_tab == nullptr)
-                return;
-            DynamicPrintConfig new_conf   = wxGetApp().preset_bundle->printers.get_edited_preset().config;
-            const auto*        height_opt = static_cast<const ConfigOptionFloats*>(new_conf.option("extruder_layer_height"));
-            const auto*        nd_opt     = static_cast<const ConfigOptionFloats*>(new_conf.option("nozzle_diameter"));
-            if (height_opt == nullptr || nd_opt == nullptr)
-                return;
-            std::vector<double> heights = height_opt->values;
-            heights.resize(nd_opt->values.size(), 0.);
-            if (i >= heights.size() || std::abs(heights[i] - new_height) < EPSILON)
-                return;
-            heights[i] = new_height;
-            const auto*  base_opt    = wxGetApp().preset_bundle->prints.get_edited_preset().config.option<ConfigOptionFloat>("layer_height");
-            const double base_height = base_opt != nullptr ? base_opt->value : 0.;
-            if (new_height > EPSILON && base_height > EPSILON && new_height < base_height - EPSILON) {
-                // A preference below the object layer height: the engine slices the object on
-                // the finest preferred height, so lower the object layer height to it and pin
-                // every extruder that followed the old value - the printed result is identical
-                // and the configuration stays valid.
-                for (size_t j = 0; j < heights.size(); ++j)
-                    if (j != i && heights[j] <= EPSILON)
-                        heights[j] = base_height;
-                if (Tab* print_tab = wxGetApp().get_tab(Preset::TYPE_PRINT); print_tab != nullptr) {
-                    DynamicPrintConfig print_conf = wxGetApp().preset_bundle->prints.get_edited_preset().config;
-                    print_conf.set_key_value("layer_height", new ConfigOptionFloat(new_height));
-                    print_tab->load_config(print_conf);
+            // Empty, "0" or Default (translated or not) clears the preference; anything else must
+            // be a layer height of at least 5 um.
+            if (!text.empty() && text.CmpNoCase(_L("Default")) != 0 && text.CmpNoCase("Default") != 0) {
+                const bool numeric = text.ToCDouble(&new_height) || text.ToDouble(&new_height);
+                if (!numeric || new_height < 0. || (new_height > 0. && new_height < 0.0025)) {
+                    wxGetApp().plater()->get_notification_manager()->push_notification(
+                        NotificationType::CustomNotification, NotificationManager::NotificationLevel::WarningNotificationLevel,
+                        GUI::format(_u8L("\"%1%\" is not a valid layer height for extruder %2%. Enter a height in mm, or Default."), into_u8(text), i + 1));
+                    fill_nozzle_layer_height_field(lh_field, i); // show the stored value again
+                    return;
                 }
             }
-            new_conf.set_key_value("extruder_layer_height", new ConfigOptionFloats(heights));
-            // As with the diameter combo: marks the printer preset modified and propagates the
-            // change without switching presets. Do not event.Skip() (plain ComboBox, see above).
-            printer_tab->load_config(new_conf);
+            // Layer heights are meaningful to 5 um; snapping keeps the derived object layer height sane.
+            constexpr double quantum = 0.005;
+            if (new_height > 0.)
+                new_height = std::round(std::round(new_height / quantum) * quantum * 1e6) / 1e6;
+
+            const DynamicPrintConfig &printer_config = wxGetApp().preset_bundle->printers.get_edited_preset().config;
+            const auto* height_opt = printer_config.option<ConfigOptionFloats>("extruder_layer_height");
+            const auto* nd_opt     = printer_config.option<ConfigOptionFloats>("nozzle_diameter");
+            if (height_opt == nullptr || nd_opt == nullptr || i >= nd_opt->values.size())
+                return;
+            if (new_height > nd_opt->values[i] + EPSILON) {
+                wxGetApp().plater()->get_notification_manager()->push_notification(
+                    NotificationType::CustomNotification, NotificationManager::NotificationLevel::WarningNotificationLevel,
+                    GUI::format(_u8L("The layer height of extruder %1% cannot exceed its nozzle diameter (%2% mm)."), i + 1, nd_opt->values[i]));
+                fill_nozzle_layer_height_field(lh_field, i);
+                return;
+            }
+            std::vector<double> heights = height_opt->values;
+            heights.resize(nd_opt->values.size(), 0.);
+            if (std::abs(heights[i] - new_height) < EPSILON) {
+                fill_nozzle_layer_height_field(lh_field, i); // unchanged: normalise the displayed text
+                return;
+            }
+            heights[i] = new_height;
+            // A change refills every field through the printer preset update; otherwise
+            // normalise this one's text.
+            if (!derive_object_layer_height_from_extruder_heights(heights))
+                fill_nozzle_layer_height_field(lh_field, i);
+        };
+        // "Default" is a placeholder, not text to delete first: it clears when the field is entered
+        // and comes back (from the stored value) when the field is left empty.
+        auto clear_default_placeholder = [lh_field]() {
+            wxTextCtrl *ctrl = lh_field->GetTextCtrl();
+            const wxString text = ctrl->GetValue();
+            if (text.CmpNoCase(_L("Default")) == 0 || text.CmpNoCase("Default") == 0)
+                ctrl->ChangeValue(wxEmptyString);
+        };
+        lh_field->Bind(wxEVT_TEXT_ENTER, [apply_preferred_height, clear_default_placeholder, lh_field](wxCommandEvent&) {
+            apply_preferred_height();
+            // The field keeps the focus after Enter: keep the placeholder hidden while editing.
+            if (lh_field->GetTextCtrl()->HasFocus())
+                clear_default_placeholder();
         });
-        p->m_nozzle_layer_height_lists.push_back(lh_combo);
+        lh_field->GetTextCtrl()->Bind(wxEVT_SET_FOCUS, [clear_default_placeholder](wxFocusEvent& e) {
+            clear_default_placeholder();
+            e.Skip();
+        });
+        // Also on a click into a field that already has the focus (e.g. right after Enter
+        // normalised its text to Default).
+        lh_field->GetTextCtrl()->Bind(wxEVT_LEFT_DOWN, [clear_default_placeholder](wxMouseEvent& e) {
+            clear_default_placeholder();
+            e.Skip();
+        });
+        lh_field->Bind(wxEVT_KILL_FOCUS, [apply_preferred_height, lh_field, i](wxFocusEvent& e) {
+            apply_preferred_height();
+            if (lh_field->GetTextCtrl()->GetValue().empty())
+                fill_nozzle_layer_height_field(lh_field, i); // the placeholder comes back
+            e.Skip();
+        });
+        p->m_nozzle_layer_height_lists.push_back(lh_field);
 
         lh_sizer->AddSpacer(15);
         lh_sizer->Add(lh_label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(5));
         lh_sizer->AddSpacer(10);
-        lh_sizer->Add(lh_combo, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(15));
+        lh_sizer->Add(lh_field, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(15));
 
         // 删除Flow相关控件
 
@@ -11379,7 +11695,7 @@ void Sidebar::update_nozzle_values()
                 select_nozzle_diameter_label(p->m_nozzle_diameter_lists[i], nozzle_diameter->values[i]);
     for (size_t i = 0; i < p->m_nozzle_layer_height_lists.size(); ++i)
         if (p->m_nozzle_layer_height_lists[i] != nullptr)
-            fill_nozzle_layer_height_combo(p->m_nozzle_layer_height_lists[i], i);
+            fill_nozzle_layer_height_field(p->m_nozzle_layer_height_lists[i], i);
 }
 
 ObjectList* Sidebar::obj_list()
@@ -13071,6 +13387,14 @@ struct Plater::priv
     int m_cur_slice_plate;
     //BBS: m_slice_all in .gcode.3mf file case, set true when slice all
     bool m_slice_all_only_has_gcode{ false };
+    // ORCA: the user's last answer to the "very long slice" question per plate (plate index ->
+    // {layer estimate, proceed}). The preview switch queued behind a Slice, a slice that failed to
+    // start and the auto slice reuse the answer for the same estimate instead of asking again; an
+    // explicit Slice asks anew. Cleared with the project and when a plate is deleted.
+    struct LongSliceAnswer { size_t layers = 0; bool proceed = false; };
+    std::map<int, LongSliceAnswer> long_slice_answers;
+    bool                           long_slice_prompt_open{false};
+    size_t                         auto_slice_skip_notified{0}; // estimate the skip notification was shown for
 
     bool m_need_update{false};
     int  m_batch_physical_deletion{0}; // >0: skip per-deletion painting remap in on_filaments_delete
@@ -16473,6 +16797,8 @@ void Plater::priv::reset(bool apply_presets_change)
     Plater::TakeSnapshot snapshot(q, _u8L("Reset Project"), UndoRedo::SnapshotType::ProjectSeparator);
 
     clear_warnings();
+    long_slice_answers.clear();
+    auto_slice_skip_notified = 0;
     first_enter_assemble = true;
 
     set_project_filename("");
@@ -16733,6 +17059,103 @@ void Plater::priv::schedule_auto_reslice_if_needed()
     wxGetApp().CallAfter([this]() { this->trigger_auto_reslice_now(); });
 }
 
+// ORCA: estimated slicing effort of a plate, used to ask before a very long slice.
+struct LongSliceEstimate
+{
+    size_t      layers        = 0;     // layer count of the object with the most layers
+    double      layer_height  = 0.;    // that object's layer height
+    bool        from_override = false; // that layer height is the object's own, not the print preset's
+    std::string object_name;
+};
+
+// From about this many layers in one object a slice takes minutes and the preview gets heavy.
+// A 0.01 mm object layer height, as derived from per-extruder layer heights that only share a
+// fine divisor, reaches it with any normal-sized part (a 48 mm Benchy alone is 4800 layers).
+static constexpr size_t long_slice_layer_threshold = 4000;
+
+static LongSliceEstimate estimate_plate_layers(const Model &model, PartPlate &plate)
+{
+    LongSliceEstimate        est;
+    const DynamicPrintConfig full_config         = wxGetApp().preset_bundle->full_config();
+    const double             global_layer_height = full_config.opt_float("layer_height");
+    for (ModelObject *object : plate.get_objects_on_this_plate()) {
+        if (object == nullptr)
+            continue;
+        const auto it = std::find(model.objects.begin(), model.objects.end(), object);
+        if (it == model.objects.end())
+            continue;
+        const int obj_id = int(it - model.objects.begin());
+        double    height = 0.;
+        for (size_t inst = 0; inst < object->instances.size(); ++inst) {
+            const ModelInstance *instance = object->instances[inst];
+            if (instance == nullptr || !instance->printable || !plate.contain_instance(obj_id, int(inst)))
+                continue;
+            height = std::max(height, object->instance_bounding_box(inst).size().z());
+        }
+        if (height <= EPSILON)
+            continue;
+        const bool   has_override = object->config.has("layer_height");
+        const double layer_height = has_override ? object->config.opt_float("layer_height") : global_layer_height;
+        if (layer_height <= EPSILON)
+            continue;
+        // The engine's own layer generation: the object's layer height override, its height
+        // range modifiers and a variable layer height profile count exactly as slicing will.
+        double layers = 0.;
+        try {
+            const SlicingParameters sp = PrintObject::slicing_parameters(full_config, *object, float(height), Vec3d::Ones());
+            std::vector<coordf_t>   profile;
+            PrintObject::update_layer_height_profile(*object, sp, profile);
+            const bool precise_z = object->config.has("precise_z_height") ? object->config.get().opt_bool("precise_z_height") :
+                                                                             full_config.opt_bool("precise_z_height");
+            layers = double(generate_object_layers(sp, profile, precise_z).size() / 2);
+        } catch (const std::exception &) {
+            layers = 0.;
+        }
+        if (layers <= 0.)
+            layers = std::ceil(height / layer_height);
+        if (layers > double(est.layers)) {
+            est.layers        = size_t(layers);
+            est.layer_height  = layer_height;
+            est.from_override = has_override;
+            est.object_name   = object->name;
+        }
+    }
+    return est;
+}
+
+// ORCA: body of the "would take very long" question for the given (plate index, estimate) pairs.
+static wxString long_slice_question(const std::vector<std::pair<int, LongSliceEstimate>> &plates, bool name_plates)
+{
+    std::string body        = _u8L("Slicing would take very long:") + "\n";
+    double      finest_grid = 0.;
+    bool        any_preset  = false;
+    for (const auto &[plate_idx, est] : plates) {
+        body += "\n";
+        if (name_plates)
+            body += GUI::format(_u8L("Plate %1%: "), plate_idx + 1);
+        body += GUI::format(_u8L("\"%1%\" would be sliced into about %2% layers at a layer height of %3% mm."),
+                            est.object_name, est.layers, est.layer_height);
+        if (!est.from_override) {
+            any_preset = true;
+            if (finest_grid <= 0. || est.layer_height < finest_grid)
+                finest_grid = est.layer_height;
+        }
+    }
+    // The usual cause: the object layer height follows the finest preferred layer height. Hint
+    // only when a preferred height does set the grid (not when the fine height is the user's
+    // own object layer height).
+    const auto *preferred = wxGetApp().preset_bundle->printers.get_edited_preset().config.option<ConfigOptionFloats>("extruder_layer_height");
+    if (any_preset && preferred != nullptr)
+        for (size_t j = 0; j < preferred->values.size(); ++j)
+            if (preferred->values[j] > EPSILON && std::abs(preferred->values[j] - finest_grid) <= 1e-4) {
+                body += "\n\n" + GUI::format(_u8L("The object layer height follows the finest preferred layer height (extruder %1%). "
+                                                  "A coarser preferred layer height there gives a much faster slice."), j + 1);
+                break;
+            }
+    body += "\n\n" + _u8L("Do you want to proceed?");
+    return wxString::FromUTF8(body.c_str());
+}
+
 void Plater::priv::trigger_auto_reslice_now()
 {
     this->auto_reslice_pending = false;
@@ -16753,6 +17176,23 @@ void Plater::priv::trigger_auto_reslice_now()
     PartPlate* plate = this->partplate_list.get_curr_plate();
     if (plate == nullptr || !plate->has_printable_instances())
         return;
+
+    // ORCA: a very long slice is never started from the change timer unless the user already
+    // agreed to this estimate with Slice; otherwise the user decides with Slice.
+    if (const LongSliceEstimate est = estimate_plate_layers(this->model, *plate); est.layers >= long_slice_layer_threshold) {
+        const auto answer = long_slice_answers.find(this->partplate_list.get_curr_plate_index());
+        if (answer == long_slice_answers.end() || answer->second.layers != est.layers || !answer->second.proceed) {
+            if (auto_slice_skip_notified != est.layers) {
+                auto_slice_skip_notified = est.layers;
+                notification_manager->push_notification(
+                    NotificationType::CustomNotification, NotificationManager::NotificationLevel::WarningNotificationLevel,
+                    GUI::format(_u8L("Automatic slicing skipped: \"%1%\" would be sliced into about %2% layers at a layer height of "
+                                     "%3% mm, which takes very long. Use Slice to slice anyway."),
+                                est.object_name, est.layers, est.layer_height));
+            }
+            return;
+        }
+    }
 
     this->q->reslice();
 }
@@ -18306,9 +18746,11 @@ void Plater::priv::set_current_panel(wxPanel* panel, bool no_slice)
                 //BBS: add more judge for slicing
                 if (!this->background_process.running() && !this->m_is_slicing)
                 {
-                   this->m_slice_all = false;
-                    slice_cancelled = !(this->q->reslice());
-               }
+                    this->m_slice_all = false;
+                    // ORCA: a very long slice needs the user's consent; one they just aborted from
+                    // the Slice button is skipped silently (shells only, like a cancelled slice).
+                    slice_cancelled = !this->q->confirm_long_slice_before_slice(false) || !this->q->reslice();
+                }
                 else {
                     //reset current plate to the slicing plate
                     int plate_index = this->background_process.get_current_plate()->get_index();
@@ -27506,13 +27948,88 @@ bool Plater::guard_before_slice_plate()
     sync_filament_temp_mixing_notification();
     sync_flow_ratio_zero_notification();
     sync_cold_plate_notification();
-    return confirm_filament_temp_mixing_before_slice();
+    return confirm_filament_temp_mixing_before_slice() && confirm_long_slice_before_slice(true);
 }
 
 bool Plater::guard_before_slice_all()
 {
     sync_flow_ratio_zero_notification();
-    return confirm_filament_temp_mixing_before_slice_all();
+    return confirm_filament_temp_mixing_before_slice_all() && confirm_long_slice_before_slice_all();
+}
+
+bool Plater::confirm_long_slice_before_slice(bool explicit_request)
+{
+    PartPlate *plate = p->partplate_list.get_curr_plate();
+    if (plate == nullptr)
+        return true;
+    // Re-entered from a modal of the slice flow (the queued preview switch while the question is
+    // up, or a printer sync question): nothing is started from under it; the open question decides.
+    if (p->long_slice_prompt_open || (p->main_frame != nullptr && !p->main_frame->IsEnabled())) {
+        BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << ": a modal dialog is open, not starting a slice";
+        return false;
+    }
+    const int plate_idx = p->partplate_list.get_curr_plate_index();
+    if (explicit_request)
+        p->long_slice_answers.erase(plate_idx);
+    const LongSliceEstimate est = estimate_plate_layers(p->model, *plate);
+    if (est.layers < long_slice_layer_threshold) {
+        p->long_slice_answers.erase(plate_idx);
+        return true;
+    }
+    if (auto it = p->long_slice_answers.find(plate_idx); it != p->long_slice_answers.end() && it->second.layers == est.layers) {
+        if (!it->second.proceed)
+            p->notification_manager->push_notification(
+                NotificationType::CustomNotification, NotificationManager::NotificationLevel::RegularNotificationLevel,
+                _u8L("Slicing was not started because you aborted the very long slice. Use Slice to slice anyway."));
+        return it->second.proceed;
+    }
+
+    // Provisionally an abort, so a re-entrant question stays silent until this one is answered.
+    p->long_slice_answers[plate_idx] = { est.layers, false };
+    p->long_slice_prompt_open        = true;
+    MessageDialog dlg(this, long_slice_question({{plate_idx, est}}, false), _L("Confirm slicing"), wxICON_WARNING | wxOK | wxCANCEL);
+    dlg.SetButtonLabel(wxID_OK, _L("Proceed"));
+    dlg.SetButtonLabel(wxID_CANCEL, _L("Abort slicing"));
+    const bool proceed = dlg.ShowModal() == wxID_OK;
+    p->long_slice_prompt_open        = false;
+    p->long_slice_answers[plate_idx] = { est.layers, proceed };
+    return proceed;
+}
+
+bool Plater::confirm_long_slice_before_slice_all()
+{
+    if (p->long_slice_prompt_open || (p->main_frame != nullptr && !p->main_frame->IsEnabled())) {
+        BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << ": a modal dialog is open, not starting a slice";
+        return false;
+    }
+    // The plates the slice-all will slice (find_next_sliceable_plate_for_slice_all); one whose
+    // result is still valid is skipped by reslice() and needs no question.
+    std::vector<std::pair<int, LongSliceEstimate>> long_plates;
+    for (int plate_index = 0; plate_index < p->partplate_list.get_plate_count(); ++plate_index) {
+        if (!is_plate_sliceable(plate_index))
+            continue;
+        PartPlate *plate = p->partplate_list.get_plate(plate_index);
+        if (plate == nullptr || plate->is_slice_result_valid())
+            continue;
+        LongSliceEstimate est = estimate_plate_layers(p->model, *plate);
+        if (est.layers >= long_slice_layer_threshold)
+            long_plates.emplace_back(plate_index, std::move(est));
+    }
+    p->long_slice_answers.clear();
+    if (long_plates.empty())
+        return true;
+
+    for (const auto &[plate_index, est] : long_plates)
+        p->long_slice_answers[plate_index] = { est.layers, false };
+    p->long_slice_prompt_open = true;
+    MessageDialog dlg(this, long_slice_question(long_plates, true), _L("Confirm slicing"), wxICON_WARNING | wxOK | wxCANCEL);
+    dlg.SetButtonLabel(wxID_OK, _L("Proceed"));
+    dlg.SetButtonLabel(wxID_CANCEL, _L("Abort slicing"));
+    const bool proceed = dlg.ShowModal() == wxID_OK;
+    p->long_slice_prompt_open = false;
+    for (const auto &[plate_index, est] : long_plates)
+        p->long_slice_answers[plate_index] = { est.layers, proceed };
+    return proceed;
 }
 
 bool Plater::confirm_filament_temp_mixing_before_slice()
@@ -27602,6 +28119,7 @@ void Plater::on_config_change(const DynamicPrintConfig &config)
     bool update_scheduled = false;
     bool bed_shape_changed = false;
     bool nozzle_tabs_changed = false;
+    bool layer_heights_changed = false;
     //bool print_sequence_changed = false;
     t_config_option_keys diff_keys = p->config->diff(config);
     for (auto opt_key : diff_keys) {
@@ -27696,11 +28214,17 @@ void Plater::on_config_change(const DynamicPrintConfig &config)
         else if (opt_key == "nozzle_diameter" || opt_key == "extruder_layer_height" ||
                  opt_key == "layer_height" || opt_key == "min_layer_height" || opt_key == "max_layer_height") {
             nozzle_tabs_changed = true;
+            // A preset switch, project load or nozzle change can leave preferred layer heights
+            // that are no whole multiples of the object layer height: reconcile once settled.
+            if (opt_key != "min_layer_height" && opt_key != "max_layer_height")
+                layer_heights_changed = true;
         }
     }
 
     if (nozzle_tabs_changed && p->sidebar != nullptr)
         p->sidebar->update_nozzle_values();
+    if (layer_heights_changed && p->sidebar != nullptr && p->main_frame != nullptr && p->main_frame->is_loaded())
+        p->sidebar->schedule_layer_height_reconcile();
 
     if (bed_shape_changed)
         set_bed_shape();
@@ -28491,8 +29015,12 @@ int Plater::select_plate(int plate_index, bool need_slice)
                         p->process_completed_with_error = -1;
                         p->m_slice_all = false;
                         reset_gcode_toolpaths();
-                        if (!guard_before_slice_plate())
+                        if (!guard_before_slice_plate()) {
+                            // Aborted: keep the plate visible (shells only) and the Slice button usable.
+                            p->update_fff_scene_only_shells();
+                            p->main_frame->update_slice_print_status(MainFrame::eEventPlateUpdate, true);
                             return ret;
+                        }
                         if (!reslice())
                             return ret;
                     }
@@ -28553,8 +29081,12 @@ int Plater::select_plate(int plate_index, bool need_slice)
                     reset_gcode_toolpaths();
                     if (model_fits && !validate_err)
                     {
-                        if (!guard_before_slice_plate())
+                        if (!guard_before_slice_plate()) {
+                            // Aborted: keep the plate visible (shells only) and the Slice button usable.
+                            p->update_fff_scene_only_shells();
+                            p->main_frame->update_slice_print_status(MainFrame::eEventPlateUpdate, true);
                             return ret;
+                        }
                         if (!reslice())
                             return ret;
                     }
@@ -28998,6 +29530,8 @@ int Plater::delete_plate(int plate_index)
         index = p->partplate_list.get_curr_plate_index();
 
     take_snapshot("delete partplate");
+    // Plate indices shift: the very-long-slice answers no longer belong to their plates.
+    p->long_slice_answers.clear();
 
     // CRASH FIX: Clear fff_print reference before PartPlateList::delete_plate destroys the Print,
     // preventing dangling pointer access during subsequent update calls.

@@ -656,7 +656,17 @@ TreeSupport::TreeSupport(PrintObject& object, const SlicingParameters &slicing_p
     // align with the centered object in current plate (may not be the 1st plate, so need to add the plate offset)
     m_machine_border.translate(Point(scale_(plate_offset(0)), scale_(plate_offset(1))) - m_object->instances().front().shift);
     top_z_distance                            = m_object_config->support_top_z_distance.value;
-    if (top_z_distance > EPSILON) top_z_distance = std::max(top_z_distance, float(m_slicing_params.min_layer_height));
+    if (top_z_distance > EPSILON) {
+        if (m_support_params.grid_aligned_layer_height) {
+            // Under the prime tower the gap is a whole number of object layers (as
+            // SlicingParameters rounds it): a gap on a sub-position would force a piece boundary
+            // between object layers under every contact, and where contacts follow on consecutive
+            // layers that fragments the whole support into half or quarter layers.
+            const float h  = float(m_object_config->layer_height.value);
+            top_z_distance = std::max(h, float(std::round(top_z_distance / h)) * h);
+        } else
+            top_z_distance = std::max(top_z_distance, float(m_slicing_params.min_layer_height));
+    }
 #ifdef SUPPORT_TREE_DEBUG_TO_SVG
     SVG svg(debug_out_path("machine_boarder.svg"), m_object->bounding_box());
     if (svg.is_opened()) svg.draw(m_machine_border, "yellow");
@@ -3283,7 +3293,7 @@ std::vector<LayerHeightData> TreeSupport::plan_layer_heights()
         coordf_t tower_min_slab = 0.;
         if (m_object->print()->config().timelapse_type.value == TimelapseType::tlSmooth)
             for (unsigned int extruder_id : m_object->print()->extruders()) {
-                coordf_t min_h = m_object->print()->config().min_layer_height.get_at(extruder_id);
+                coordf_t min_h = m_object->print()->config().min_layer_height.get_at(m_object->print()->extruder_index_of(extruder_id));
                 tower_min_slab = std::max(tower_min_slab, min_h == 0. ? 0.07 : min_h);
             }
         // Sub-positions of an object layer usable as piece boundaries. Fractional positions
@@ -3306,7 +3316,11 @@ std::vector<LayerHeightData> TreeSupport::plan_layer_heights()
         std::vector<char>     boundary(n + 1, 0);
         std::vector<coordf_t> forced_close_zs; // exact support tops between object layers
         std::vector<coordf_t> layer_subs;
-        for (size_t layer_nr = 1; layer_nr < contact_nodes.size() && layer_nr < n; ++layer_nr)
+        // With maximum height priority the pieces run through the contact layers: each contact
+        // is re-assigned to the nearest planned layer (see the redistribution at the end) and its
+        // gap becomes a whole number of support layers - within half a layer of the configured
+        // value - instead of splitting the support under every contact.
+        for (size_t layer_nr = 1; !m_support_params.grid_max_height_priority && layer_nr < contact_nodes.size() && layer_nr < n; ++layer_nr)
             if (!contact_nodes[layer_nr].empty()) {
                 boundary[layer_nr]     = 1;
                 boundary[layer_nr + 1] = 1;

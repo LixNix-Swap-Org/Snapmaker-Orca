@@ -1299,6 +1299,8 @@ public:
     // Per-extruder vector index of a 0-based filament: this fork's classic multi-tool printers
     // index per-extruder options by the filament directly.
     size_t extruder_index_of(unsigned int filament_idx) const { return size_t(filament_idx); }
+    // ORCA: whether re-rounding the raft -> object gap (support height regime change) moves object layers.
+    bool   raft_gap_rounding_moves_objects() const;
     WipeTowerType wipe_tower_type() const { return is_BBL_printer() ? WipeTowerType::Type1 : m_config.wipe_tower_type.value; }
     CalibMode& calib_mode() { return m_calib_params.mode; }
     const CalibMode calib_mode() const { return m_calib_params.mode; }

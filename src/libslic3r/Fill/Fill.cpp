@@ -1327,6 +1327,18 @@ void Layer::make_fills(FillAdaptive::Octree* adaptive_fill_octree, FillAdaptive:
 
         LayerRegion* layerm = this->m_regions[surface_fill.region_id];
 
+        // ORCA: sparse infill laid by another extruder than the region's walls (a coarser infill
+        // nozzle): an island narrower than one infill spacing cannot carry a line. The fillers
+        // would centre a single bead on such an island's contour, half a bead beyond it - through
+        // a wall band thinner than that (a painted skin of a fine nozzle) out of the part. Drop
+        // such islands and appendages; they lie inside the walls and stay invisible.
+        if (using_internal_flow && surface_fill.params.extruder != layerm->extruder(frExternalPerimeter) &&
+            surface_fill.params.extruder != layerm->extruder(frPerimeter)) {
+            surface_fill.expolygons = opening_ex(surface_fill.expolygons, float(scale_(0.5 * surface_fill.params.spacing)));
+            if (surface_fill.expolygons.empty())
+                continue;
+        }
+
         // Maximum length of the perimeter segment linking two infill lines.
         f->link_max_length = (coord_t)scale_(link_max_length);
         // Used by the concentric infill pattern to clip the loops to create extrusion paths.
