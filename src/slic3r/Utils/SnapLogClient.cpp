@@ -217,6 +217,42 @@ std::string sanitized_head(const std::string& value)
         --cut; // UTF-8 boundary
     return value.substr(0, cut) + u8"…[truncated]";
 }
+
+bool ascii_alpha(char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }
+bool ascii_alnum(char c) { return ascii_alpha(c) || (c >= '0' && c <= '9'); }
+
+// Masks what [A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,} matches, found from each '@': as a std::regex
+// the pattern backtracks quadratically on long runs, which MSVC stops with error_complexity.
+std::string mask_emails(const std::string& v)
+{
+    auto local  = [](char c) { return ascii_alnum(c) || c == '.' || c == '_' || c == '%' || c == '+' || c == '-'; };
+    auto domain = [](char c) { return ascii_alnum(c) || c == '.' || c == '-'; };
+    std::string out;
+    std::size_t copied = 0;
+    for (std::size_t at = v.find('@'); at != std::string::npos; at = v.find('@', at + 1)) {
+        std::size_t begin = at;
+        while (begin > copied && local(v[begin - 1]))
+            --begin;
+        std::size_t run = at + 1;
+        while (run < v.size() && domain(v[run]))
+            ++run;
+        // The domain ends at the last '.' followed by two letters, and the letters after it.
+        std::size_t end = std::string::npos;
+        for (std::size_t dot = run; dot-- > at + 2;)
+            if (v[dot] == '.' && dot + 2 < run && ascii_alpha(v[dot + 1]) && ascii_alpha(v[dot + 2])) {
+                end = dot + 1;
+                while (end < run && ascii_alpha(v[end]))
+                    ++end;
+                break;
+            }
+        if (begin == at || end == std::string::npos)
+            continue;
+        out.append(v, copied, begin - copied).append("***");
+        copied = end;
+        at     = end - 1;
+    }
+    return copied == 0 ? v : out.append(v, copied, std::string::npos);
+}
 } // namespace
 
 std::string redact_path(const std::string& home, const std::string& path)
@@ -266,12 +302,10 @@ std::string mask_secret_in_value(std::string v)
                                                  // set intentionally omits "tok" (it caused false positives on words
                                                  // like "tokenize", "tokens", "tok-model").
                                                  std::regex(R"((password|secret|token|authorization|refresh_token)\s*[=:]\s*\S+)",
-                                                            std::regex::icase),
-                                                 // Email addresses
-                                                 std::regex(R"([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})")};
+                                                            std::regex::icase)};
     for (const auto& re : deny)
         v = std::regex_replace(v, re, "***");
-    return v;
+    return mask_emails(v);
 }
 
 std::string hash_pii(const std::string& clientId, const std::string& serial)

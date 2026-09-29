@@ -908,7 +908,7 @@ TEST_CASE("worker: drains queue when handles auto-fulfill", "[snaplog][worker]")
     wf.shutdown();
 }
 
-TEST_CASE("worker: in-flight=1 — blocks while handle not done", "[snaplog][worker]")
+TEST_CASE("worker: in-flight=1 - blocks while handle not done", "[snaplog][worker]")
 {
     WorkerFake wf;
     wf.auto_fulfill = false; // handles stay not-done
@@ -3286,7 +3286,7 @@ TEST_CASE("bt upload: create body code 110004 sets auth_known_dead", "[snaplog][
     // Sealed retained.
     REQUIRE(boost::filesystem::exists(sealed));
 }
-TEST_CASE("SpoolLock: exclusive — second acquire fails, release enables retry", "[snaplog][batch]")
+TEST_CASE("SpoolLock: exclusive - second acquire fails, release enables retry", "[snaplog][batch]")
 {
     namespace fs = boost::filesystem;
     auto dir     = fs::unique_path(fs::temp_directory_path() / "snaplog-lock-%%%%.dir");
