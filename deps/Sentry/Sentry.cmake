@@ -20,6 +20,9 @@ if (WIN32)
     -DCMAKE_CXX_FLAGS_RELWITHDEBINFO:STRING=/Zi /O2
     -DCMAKE_EXE_LINKER_FLAGS:STRING=/DEBUG
     -DCMAKE_SHARED_LINKER_FLAGS:STRING=/DEBUG
+    # No warnings: sentry-native builds with -Werror under clang-cl.
+    -DCMAKE_C_FLAGS_INIT:STRING=/w
+    -DCMAKE_CXX_FLAGS_INIT:STRING=/w
   )
   # The Sentry build takes the superbuild's generator and compilers (orcaslicer_add_cmake_project); the
   # crashpad pre-build below uses the same, so both follow the Visual Studio or clang-cl the host has.

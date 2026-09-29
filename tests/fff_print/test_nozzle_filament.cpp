@@ -47,8 +47,8 @@ DynamicPrintConfig u1_mixed_project_config(PresetBundle &bundle, const std::stri
     DynamicPrintConfig config = bundle.full_config(false);
     // The application sizes the colours and the flush volumes with the filament list.
     config.set_key_value("filament_colour",      new ConfigOptionStrings({"#FF0000", "#00FF00", "#0000FF", "#FFFF00"}));
-    config.set_key_value("flush_multiplier",     new ConfigOptionFloats({1.}));
-    config.set_key_value("flush_volumes_matrix", new ConfigOptionFloats(std::vector<double>(16, 0.)));
+    config.set_key_value("flush_multiplier",     new ConfigOptionFloats({1., 1., 1., 1.}));
+    config.set_key_value("flush_volumes_matrix", new ConfigOptionFloats(std::vector<double>(64, 0.)));
     config.set_key_value("enable_support", new ConfigOptionBool(false));
     config.set_key_value("skirt_loops",    new ConfigOptionInt(0));
     // Layers both nozzle sizes can print.
