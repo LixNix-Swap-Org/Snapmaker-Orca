@@ -179,35 +179,35 @@ TEST_CASE("A filament slot prints with the values of the nozzle size preset it h
 
     SECTION("the 0.2 mm tool head holds the preset for 0.2 mm, the 0.4 mm tool head the preset for 0.4 mm") {
         const DynamicPrintConfig config = u1_mixed_project_config(*bundle, PLA_02, PLA_04);
-        const PresetValues       small  = shipped_values(*bundle, PLA_02);
+        const PresetValues       fine   = shipped_values(*bundle, PLA_02);
         const PresetValues       home   = shipped_values(*bundle, PLA_04);
         // Else the presets cannot tell the slots apart.
-        REQUIRE(home.max_flow > small.max_flow * 2.);
-        REQUIRE(home.ramming_flow > small.ramming_flow * 2.);
+        REQUIRE(home.max_flow > fine.max_flow * 2.);
+        REQUIRE(home.ramming_flow > fine.ramming_flow * 2.);
 
         std::map<int, ToolFlow> flows = sliced_tool_flows(config);
         // Walls: tool head 1 runs into the cap of the 0.2 mm preset, tool head 2 prints past it
         // and stays under its own.
         REQUIRE(flows[0].max_wall_flow > 0.);
-        CHECK(flows[0].max_wall_flow < small.max_flow * 1.05);
-        CHECK(flows[1].max_wall_flow > small.max_flow * 1.2);
+        CHECK(flows[0].max_wall_flow < fine.max_flow * 1.05);
+        CHECK(flows[1].max_wall_flow > fine.max_flow * 1.2);
         CHECK(flows[1].max_wall_flow < home.max_flow * 1.05);
         // Prime tower: each tool head rams with the flow of its own preset.
-        CHECK_THAT(flows[0].max_tower_flow, Catch::Matchers::WithinRel(small.ramming_flow, 0.05));
+        CHECK_THAT(flows[0].max_tower_flow, Catch::Matchers::WithinRel(fine.ramming_flow, 0.05));
         CHECK_THAT(flows[1].max_tower_flow, Catch::Matchers::WithinRel(home.ramming_flow, 0.05));
     }
 
     SECTION("the presets swapped: the values swap with them") {
         const DynamicPrintConfig config = u1_mixed_project_config(*bundle, PLA_04, PLA_02);
-        const PresetValues       small  = shipped_values(*bundle, PLA_02);
+        const PresetValues       fine   = shipped_values(*bundle, PLA_02);
         const PresetValues       home   = shipped_values(*bundle, PLA_04);
 
         std::map<int, ToolFlow> flows = sliced_tool_flows(config);
         REQUIRE(flows[1].max_wall_flow > 0.);
-        CHECK(flows[1].max_wall_flow < small.max_flow * 1.05);
-        CHECK(flows[0].max_wall_flow > small.max_flow * 1.2);
+        CHECK(flows[1].max_wall_flow < fine.max_flow * 1.05);
+        CHECK(flows[0].max_wall_flow > fine.max_flow * 1.2);
         CHECK(flows[0].max_wall_flow < home.max_flow * 1.05);
-        CHECK_THAT(flows[1].max_tower_flow, Catch::Matchers::WithinRel(small.ramming_flow, 0.05));
+        CHECK_THAT(flows[1].max_tower_flow, Catch::Matchers::WithinRel(fine.ramming_flow, 0.05));
         CHECK_THAT(flows[0].max_tower_flow, Catch::Matchers::WithinRel(home.ramming_flow, 0.05));
     }
 }
