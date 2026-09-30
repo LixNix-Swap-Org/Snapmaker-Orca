@@ -336,6 +336,7 @@ set(lisbslic3r_sources
     MinimumSpanningTree.hpp
     MixedFilament.cpp
     MixedFilament.hpp
+    MixedFilamentConfigRemap.hpp
     # SM Orca: filament_mixer.cpp / filament_mixer_model.h were upstreamed as
     # FilamentMixer.cpp / FilamentMixerModel.hpp (listed above), which define the
     # identical Slic3r::filament_mixer_lerp* symbols. Only the declaration header
@@ -715,6 +716,7 @@ target_link_libraries(libslic3r
         libigl
         libnest2d
         miniz
+        nanosvg
         opencv_world
         assimp::assimp
     PRIVATE

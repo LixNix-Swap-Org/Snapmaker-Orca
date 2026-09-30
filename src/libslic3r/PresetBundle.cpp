@@ -5653,6 +5653,13 @@ DynamicPrintConfig PresetBundle::full_fff_config(bool apply_extruder, std::optio
         std::string key = std::string(keys[i]);
         auto *opt = dynamic_cast<ConfigOptionInt*>(out.option(key, false));
         assert(opt != nullptr);
+        if (opt == nullptr) {
+            // A type-mismatched entry would make Print::apply throw ConfigurationError;
+            // replace it with the option default instead.
+            out.erase(key);
+            out.set_key_value(key, new ConfigOptionInt(0));
+            continue;
+        }
         opt->value = boost::algorithm::clamp<int>(opt->value, 0, int(num_filaments));
     }
 
@@ -5664,6 +5671,12 @@ DynamicPrintConfig PresetBundle::full_fff_config(bool apply_extruder, std::optio
         std::string key = std::string(keys_with_default[i]);
         auto *opt = dynamic_cast<ConfigOptionInt*>(out.option(key, false));
         assert(opt != nullptr);
+        if (opt == nullptr) {
+            // Same re-cast as above; 0 selects the object or part filament.
+            out.erase(key);
+            out.set_key_value(key, new ConfigOptionInt(0));
+            continue;
+        }
         if(opt->value < 0 || opt->value > int(num_filaments))
             opt->value = 0;
     }

@@ -2238,7 +2238,8 @@ void PerimeterGenerator::process_no_bridge(Surfaces& all_surfaces, coord_t perim
                                 unsupported_filtered = opening_ex(unsupported_filtered, bridge_anchor_offset); // remove anchor area from hole-side walls, it must remain unbridgeable
 
                                 // update 'last' only if we have a valid bridgeable area, otherwise we will lose the original unsupported area
-                                if (!unsupported_filtered.empty())
+                                // With support enabled the model surface is kept, so perimeters and overhang walls still print over the support.
+                                if (!unsupported_filtered.empty() && !this->object_config->enable_support.value)
                                     last = remaining;
                                 // TODO: Fix the case with thin outer walls around the bridge (1~2 walls) where classic wall
                                 // might generate two walls in a tiny space or non at all if "Detect thin walls" is not activated
@@ -2250,22 +2251,34 @@ void PerimeterGenerator::process_no_bridge(Surfaces& all_surfaces, coord_t perim
 
                     if (!unsupported_filtered.empty()) {
 
-                        //add this directly to the infill list.
-                        // this will avoid to throw wrong offsets into a good polygons
-                        this->fill_surfaces->append(
-                            unsupported_filtered,
-                            stInternal);
-
-                        // store the results
-                        last = diff_ex(last, unsupported_filtered, ApplySafetyOffset::Yes);
-                        //remove "thin air" polygons (note: it assumes that all polygons below will be extruded)
-                        for (int i = 0; i < last.size(); i++) {
-                            if (intersection_ex(support, ExPolygons() = { last[i] }).empty()) {
-                                this->fill_surfaces->append(
-                                    ExPolygons() = { last[i] },
-                                    stInternal);
-                                last.erase(last.begin() + i);
-                                i--;
+                        if (!this->object_config->enable_support.value) {
+                            // Support is disabled: remove the bridge area from the model surface
+                            // to prevent unsupported perimeters, and add the full area to fill_surfaces
+                            // to ensure the gap is still filled.
+                            this->fill_surfaces->append(
+                                unsupported_filtered,
+                                stInternal);
+                            last = diff_ex(last, unsupported_filtered, ApplySafetyOffset::Yes);
+                            //remove "thin air" polygons (note: it assumes that all polygons below will be extruded)
+                            for (int i = 0; i < last.size(); i++) {
+                                if (intersection_ex(support, ExPolygons() = { last[i] }).empty()) {
+                                    this->fill_surfaces->append(
+                                        ExPolygons() = { last[i] },
+                                        stInternal);
+                                    last.erase(last.begin() + i);
+                                    i--;
+                                }
+                            }
+                        } else {
+                            // Support is enabled: the model surface stays intact for the perimeters and overhang
+                            // walls; the bridge fill area is shrunk by the perimeter zone so it does not overlap them.
+                            int wall_loops = std::max(1, this->config->wall_loops.value);
+                            coord_t perimeter_zone = ext_perimeter_width / 2
+                                + perimeter_spacing * (wall_loops - 1)
+                                + perimeter_spacing / 2;
+                            ExPolygons fill_safe = offset_ex(unsupported_filtered, -perimeter_zone);
+                            if (!fill_safe.empty()) {
+                                this->fill_surfaces->append(fill_safe, stInternal);
                             }
                         }
                     }

@@ -479,7 +479,13 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
     default:
     case GUI_App::EAppMode::Editor:
         m_taskbar_icon = std::make_unique<Snapmaker_OrcaTaskBarIcon>(wxTBI_DOCK);
-        m_taskbar_icon->SetIcon(wxIcon(Slic3r::var("Snapmaker_Orca-mac_256px.ico"), wxBITMAP_TYPE_ICO), "Snapmaker Orca");
+        // Do not set a custom Dock icon: NSApp.applicationIconImage renders the
+        // raw image in the Dock tile, bypassing the macOS 26 native icon
+        // pipeline, so the legacy ico (with baked-in margins) shows a size
+        // smaller than neighboring tiles. Let the Dock use the bundle icon
+        // (layered .icon with icns fallback) instead. The right-click "New
+        // Window" menu is unaffected: it is attached by the wxTaskBarIcon
+        // constructor, not by SetIcon.
         break;
     case GUI_App::EAppMode::GCodeViewer:
         break;
@@ -2933,7 +2939,7 @@ wxMenu* MainFrame::generate_help_menu()
     // Check New Version
     append_menu_item(helpMenu, wxID_ANY, _L("Check for Updates"), _L("Check for Updates"),
         [](wxCommandEvent&) {
-            wxGetApp().check_new_version_sf(true, UPDATE_BUSER);
+            wxGetApp().request_version_from_config(true, UPDATE_BUSER);
         }, "", nullptr, []() {
             return true;
         });

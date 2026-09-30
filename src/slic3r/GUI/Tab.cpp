@@ -1998,6 +1998,39 @@ static wxString pad_combo_value_for_config(const DynamicPrintConfig &config)
 // ORCA multi-nozzle-size: defined with TabPrinter::on_value_change below.
 static bool confirm_exact_extruder_heights(wxWindow *parent, bool ask_experimental, bool ask_prime_tower);
 
+namespace {
+// Message body of the PLA/PETG support interface recommendation dialog; lists only the
+// settings in filtered_conf, with the current value taken from current_config.
+wxString build_support_recommendation_message(const std::string        &interface_filament_type,
+                                              const DynamicPrintConfig &filtered_conf,
+                                              const DynamicPrintConfig &current_config)
+{
+    const wxString model_type = (interface_filament_type == "PLA") ? "PETG" : "PLA";
+    wxString msg_text = wxString::Format(_L("Detected %s as support interface material for %s "
+                                            "models. PLA and PETG do not bond together — we "
+                                            "recommend adjusting the following parameters:"),
+                                         from_u8(interface_filament_type), model_type);
+    msg_text += "\n\n";
+    for (const t_config_option_key &key : filtered_conf.keys()) {
+        if (key == "support_top_z_distance")
+            msg_text += wxString::Format(_L("  \342\200\242 Top Z distance: %.2f \342\206\222 0 mm\n"),
+                                         current_config.opt_float("support_top_z_distance"));
+        else if (key == "support_base_pattern")
+            msg_text += _L("  \342\200\242 Base pattern \342\206\222 Default\n");
+        else if (key == "support_interface_top_layers")
+            msg_text += wxString::Format(_L("  \342\200\242 Top interface layers: %d \342\206\222 3\n"),
+                                         current_config.opt_int("support_interface_top_layers"));
+        else if (key == "support_interface_pattern")
+            msg_text += _L("  \342\200\242 Interface pattern \342\206\222 Rectilinear Interlaced\n");
+        else if (key == "support_interface_spacing")
+            msg_text += wxString::Format(_L("  \342\200\242 Interface spacing: %.2f \342\206\222 0 mm\n"),
+                                         current_config.opt_float("support_interface_spacing"));
+    }
+    msg_text += "\n" + _L("Change these settings automatically\?\nYes - Change these settings automatically.\nNo  - Do not change these settings for me.");
+    return msg_text;
+}
+} // anonymous namespace
+
 void Tab::on_value_change(const std::string& opt_key, const boost::any& value)
 {
     // Orca:
@@ -2342,7 +2375,9 @@ void Tab::on_value_change(const std::string& opt_key, const boost::any& value)
     if (opt_key == "support_filament") {
         int filament_id           = m_config->opt_int("support_filament") - 1; // the displayed id is based from 1, while internal id is based from 0
         int interface_filament_id = m_config->opt_int("support_interface_filament") - 1;
-        if (is_support_filament(filament_id, false) && !is_soluble_filament(filament_id) && !has_filaments({"TPU", "TPU-AMS"})) {
+        // The non-strict check also counts a PLA/PETG pair with the model material (mixed slots expanded).
+        const bool non_soluble_support = is_support_filament(filament_id, false) && !is_soluble_filament(filament_id);
+        if (non_soluble_support && !has_filaments({"TPU", "TPU-AMS"})) {
             wxString           msg_text = _L("Non-soluble support materials are not recommended for support base.\n"
                                                        "Are you sure to use them for support base?\n");
             MessageDialog      dialog(wxGetApp().plater(), msg_text, "", wxICON_WARNING | wxYES | wxNO);
@@ -2356,11 +2391,40 @@ void Tab::on_value_change(const std::string& opt_key, const boost::any& value)
         }
     }
 
-    // BBS popup a message to ask the user to set optimum parameters for support interface if support materials are used
-    if (opt_key == "support_interface_filament") {
+    // BBS popup a message to ask the user to set optimum parameters for support interface if support materials are used.
+    // No dialog while a reload/rollback postpones the UI update or while apply() cascades this key.
+    const t_config_option_keys &applying_keys = m_config_manipulation.applying_keys();
+    if (opt_key == "support_interface_filament" && !m_postpone_update_ui &&
+        std::find(applying_keys.begin(), applying_keys.end(), "support_interface_filament") == applying_keys.end()) {
         int filament_id           = m_config->opt_int("support_filament") - 1;
         int interface_filament_id = m_config->opt_int("support_interface_filament") - 1; // the displayed id is based from 1, while internal id is based from 0
-        if ((is_support_filament(interface_filament_id, false) &&
+        if (!is_support_filament(interface_filament_id) && check_pla_petg_support_pair(interface_filament_id)) {
+            // PLA and PETG do not bond: recommend the interface settings that differ from the current ones.
+            // A dedicated support material keeps the support-material recommendation below.
+            DynamicPrintConfig recommended_conf;
+            recommended_conf.set_key_value("support_top_z_distance", new ConfigOptionFloat(0));
+            recommended_conf.set_key_value("support_base_pattern", new ConfigOptionEnum<SupportMaterialPattern>(smpDefault));
+            recommended_conf.set_key_value("support_interface_top_layers", new ConfigOptionInt(3));
+            recommended_conf.set_key_value("support_interface_pattern", new ConfigOptionEnum<SupportMaterialInterfacePattern>(smipRectilinearInterlaced));
+            recommended_conf.set_key_value("support_interface_spacing", new ConfigOptionFloat(0));
+            DynamicPrintConfig filtered_conf;
+            for (const t_config_option_key &key : recommended_conf.keys()) {
+                const ConfigOption *current_opt = m_config->option(key);
+                const ConfigOption *new_opt     = recommended_conf.option(key);
+                if (current_opt != nullptr && new_opt != nullptr && current_opt->serialize() != new_opt->serialize())
+                    filtered_conf.set_key_value(key, new_opt->clone());
+            }
+            if (!filtered_conf.empty()) {
+                const auto   &filament_presets = wxGetApp().preset_bundle->filament_presets;
+                const Preset *filament         = wxGetApp().preset_bundle->filaments.find_preset(filament_presets[interface_filament_id]);
+                const std::string interface_filament_type = filament != nullptr ? filament->config.opt_string("filament_type", 0u) : std::string();
+                MessageDialog dialog(wxGetApp().plater(), build_support_recommendation_message(interface_filament_type, filtered_conf, *m_config),
+                                     _L("Suggestion"), wxICON_WARNING | wxYES | wxNO);
+                if (dialog.ShowModal() == wxID_YES)
+                    m_config_manipulation.apply(m_config, &filtered_conf);
+                wxGetApp().plater()->update();
+            }
+        } else if ((is_support_filament(interface_filament_id, false) &&
              !(m_config->opt_float("support_top_z_distance") == 0 && m_config->opt_float("support_interface_spacing") == 0 &&
                m_config->opt_enum<SupportMaterialInterfacePattern>("support_interface_pattern") == SupportMaterialInterfacePattern::smipRectilinearInterlaced)) ||
             (is_soluble_filament(interface_filament_id) && !is_soluble_filament(filament_id))) {
@@ -3237,6 +3301,7 @@ void TabPrint::build()
 
         optgroup->append_single_option_line("top_shell_layers", "strength_settings_top_bottom_shells#shell-layers");
         optgroup->append_single_option_line("top_shell_thickness", "strength_settings_top_bottom_shells#shell-thickness");
+        optgroup->append_single_option_line("top_color_penetration_layers");
         optgroup->append_single_option_line("top_surface_density", "strength_settings_top_bottom_shells#surface-density");
         optgroup->append_single_option_line("top_surface_pattern", "strength_settings_top_bottom_shells#surface-pattern");
         optgroup->append_single_option_line("top_surface_fill_order", "strength_settings_top_bottom_shells#fill-order");
@@ -3246,6 +3311,7 @@ void TabPrint::build()
         optgroup->append_single_option_line("top_surface_expansion_direction", "strength_settings_top_bottom_shells#surface-expansion-direction");
         optgroup->append_single_option_line("bottom_shell_layers", "strength_settings_top_bottom_shells#shell-layers");
         optgroup->append_single_option_line("bottom_shell_thickness", "strength_settings_top_bottom_shells#shell-thickness");
+        optgroup->append_single_option_line("bottom_color_penetration_layers");
         optgroup->append_single_option_line("bottom_surface_density", "strength_settings_top_bottom_shells#surface-density");
         optgroup->append_single_option_line("bottom_surface_pattern", "strength_settings_top_bottom_shells#surface-pattern");
         optgroup->append_single_option_line("bottom_surface_fill_order", "strength_settings_top_bottom_shells#fill-order");
@@ -3456,6 +3522,7 @@ void TabPrint::build()
         optgroup->append_single_option_line("support_interface_bottom_layers", "support_settings_advanced#interface-layers");
         optgroup->append_single_option_line("support_interface_pattern", "support_settings_advanced#interface-pattern");
         optgroup->append_single_option_line("support_interface_spacing", "support_settings_advanced#interface-spacing");
+        optgroup->append_single_option_line("support_interface_min_area", "support_settings_advanced#interface-min-area");
         optgroup->append_single_option_line("support_bottom_interface_spacing", "support_settings_advanced#interface-spacing");
         optgroup->append_single_option_line("support_expansion", "support_settings_advanced#normal-support-expansion");
         //optgroup->append_single_option_line("support_interface_loop_pattern", "support_settings_advanced");
@@ -11869,7 +11936,16 @@ ConfigManipulation Tab::get_config_manipulation()
         return on_value_change(opt_key, value);
     };
 
-    return ConfigManipulation(load_config, cb_toggle_field, cb_toggle_line, cb_value_change, nullptr, this, cb_set_option_label);
+    auto cb_highlight_field = [this](const t_config_option_key& opt_key, bool invalid) {
+        Page* page = nullptr;
+        Field* field = get_field(opt_key, &page);
+        if (field)
+            field->set_invalid_highlight(invalid);
+    };
+
+    ConfigManipulation config_manipulation(load_config, cb_toggle_field, cb_toggle_line, cb_value_change, nullptr, this, cb_set_option_label);
+    config_manipulation.set_highlight_field_cb(cb_highlight_field);
+    return config_manipulation;
 }
 
 

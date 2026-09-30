@@ -547,6 +547,9 @@ static bool custom_gcode_changes_tool(const std::string& custom_gcode, const std
                     oss << " ";
                     line.replace(line.find("G1 "), 3, oss.str());
                     old_pos = transformed_pos;
+                } else {
+                    // Unchanged position: drop the untransformed X/Y and keep the rest of the move.
+                    line = line_out.str();
                 }
             }
 
@@ -2524,12 +2527,8 @@ std::vector<GCode::LayerToPrint> GCode::collect_layers_to_print(const PrintObjec
         bool has_extrusions = (layer_to_print.object_layer && layer_to_print.object_layer->has_extrusions()) ||
                               (layer_to_print.support_layer && layer_to_print.support_layer->has_extrusions());
 
-        // Check that there are extrusions on the very first layer. The case with empty
-        // first layer may result in skirt/brim in the air and maybe other issues.
-        if (layers_to_print.size() == 1u) {
-            if (!has_extrusions)
-                throw Slic3r::SlicingError(_(L("One object has an empty first layer and can't be printed. Please Cut the bottom or enable supports.")), object.id().id);
-        }
+        // An empty first layer is not an error here: leading layers may be too narrow for an
+        // extrusion line (a cube standing on an edge), they are stripped after this loop.
 
         // In case there are extrusions on this layer, check there is a layer to lay it on.
         if ((layer_to_print.object_layer && layer_to_print.object_layer->has_extrusions())
@@ -2571,6 +2570,19 @@ std::vector<GCode::LayerToPrint> GCode::collect_layers_to_print(const PrintObjec
         // Remember last layer with extrusions.
         if (has_extrusions)
             last_extrusion_layer = &layers_to_print.back();
+    }
+
+    // Strip leading layers whose slices are too narrow for an extrusion line (a cube standing on
+    // an edge). A first layer without any slice geometry is an object floating above the bed.
+    auto has_extrusions_to_print = [](const LayerToPrint &ltp) {
+        return (ltp.object_layer && ltp.object_layer->has_extrusions()) || (ltp.support_layer && ltp.support_layer->has_extrusions());
+    };
+    if (!layers_to_print.empty()) {
+        while (!layers_to_print.empty() && !has_extrusions_to_print(layers_to_print.front()) &&
+               layers_to_print.front().object_layer != nullptr && !layers_to_print.front().object_layer->lslices.empty())
+            layers_to_print.erase(layers_to_print.begin());
+        if (layers_to_print.empty() || !has_extrusions_to_print(layers_to_print.front()))
+            throw Slic3r::SlicingError(_(L("One object has an empty first layer and can't be printed. Please Cut the bottom or enable supports.")), object.id().id);
     }
 
     if (!warning_ranges.empty()) {
@@ -4622,6 +4634,9 @@ void GCode::_do_export(Print& print, GCodeOutputStream& file, ThumbnailsGenerato
         print.tool_ordering()));
     print.m_print_statistics.initial_tool = initial_extruder_id;
     print.m_print_statistics.initial_no_support_tool = initial_non_support_extruder_id;
+    // The file name placeholder filament_type[initial_tool] resolves to the first extruder this plate uses.
+    BOOST_LOG_TRIVIAL(debug) << "File name initial_tool: first_extruder=" << initial_extruder_id
+                             << ", first_non_support_extruder=" << initial_non_support_extruder_id;
     if (!is_bbl_printers) {
         file.write_format("; total filament used [g] = %.2lf\n", print.m_print_statistics.total_weight);
         file.write_format("; total filament cost = %.2lf\n", print.m_print_statistics.total_cost);
@@ -7560,28 +7575,7 @@ LayerResult GCode::process_layer(
                        layer.lslices[i].contour.contains(point);
             };
             auto entity_matches_surface = [&point_inside_surface](const size_t i, const ExtrusionEntity& entity) {
-                if (point_inside_surface(i, entity.first_point()))
-                    return true;
-
-                Polylines polylines;
-                entity.collect_polylines(polylines);
-                for (const Polyline& polyline : polylines) {
-                    if (polyline.points.size() >= 2) {
-                        const Point midpoint = (polyline.points.front() + polyline.points[1]) / 2;
-                        if (point_inside_surface(i, midpoint))
-                            return true;
-                    }
-                }
-
-                Points points;
-                entity.collect_points(points);
-                if (!points.empty()) {
-                    BoundingBox bbox(points);
-                    if (bbox.defined && point_inside_surface(i, bbox.center()))
-                        return true;
-                }
-
-                return false;
+                return point_inside_surface(i, entity.first_point());
             };
             LocalZLoopSeamPlacer local_z_loop_seam_placer =
                 [this, &layer](const ExtrusionLoop& src_loop, ExtrusionLoop& seam_loop, Point& seam_anchor) -> bool {
@@ -8595,6 +8589,31 @@ LayerResult GCode::process_layer(
 
     bool has_insert_wrapping_detection_gcode = false;
 
+    // Brims of instances that no extruder visits on this layer (a first layer printed entirely by
+    // Local-Z path passes or by a mixed-color slot) are emitted with the layer's first extruder.
+    std::vector<std::pair<const PrintObject*, size_t>> brims_without_visit;
+    if (first_layer && !m_objsWithBrim.empty()) {
+        std::set<ObjectInstanceID> visited;
+        for (unsigned int extruder_id : layer_extruders)
+            if (auto plan_it = filament_to_print_instances.find(extruder_id); plan_it != filament_to_print_instances.end())
+                for (const InstanceVisit &visit : plan_it->second.second) {
+                    const InstanceToPrint &instance = plan_it->second.first[visit.instance_idx];
+                    visited.insert(ObjectInstanceID{ instance.print_object.id(), instance.instance_id });
+                }
+        for (const LayerToPrint &layer_to_print : layers) {
+            const PrintObject *brim_object = layer_to_print.original_object;
+            if (brim_object == nullptr)
+                continue;
+            for (size_t brim_instance_id = 0; brim_instance_id < brim_object->instances().size(); ++brim_instance_id) {
+                if (single_object_instance_idx != size_t(-1) && brim_instance_id != single_object_instance_idx)
+                    continue;
+                const ObjectInstanceID object_instance_id{ brim_object->id(), brim_instance_id };
+                if (m_objsWithBrim.count(object_instance_id) != 0 && visited.count(object_instance_id) == 0)
+                    brims_without_visit.emplace_back(brim_object, brim_instance_id);
+            }
+        }
+    }
+
     // Extrude the skirt, brim, support, perimeters, infill ordered by the extruders.
     m_skirt_group_done.resize(print.skirt_brim_groups().size());
     for (unsigned int extruder_id : layer_extruders)
@@ -8714,6 +8733,10 @@ LayerResult GCode::process_layer(
         if (layer_tools.has_wipe_tower && m_wipe_tower)
             m_last_processor_extrusion_role = erWipeTower;
 
+        for (const auto &[brim_object, brim_instance_id] : brims_without_visit)
+            gcode += generate_object_brim(print, *brim_object, brim_instance_id, first_layer);
+        brims_without_visit.clear();
+
         auto &filament_plan = filament_to_print_instances[extruder_id];
         std::vector<InstanceToPrint>     &instances_to_print = filament_plan.first;
         const std::vector<InstanceVisit> &instance_visits    = filament_plan.second;
@@ -8729,7 +8752,11 @@ LayerResult GCode::process_layer(
                 const auto& inst = instance_to_print.print_object.instances()[instance_to_print.instance_id];
                 const LayerToPrint &layer_to_print = layers[instance_to_print.layer_id];
                 if (visit.first_visit && print_wipe_extrusions == (is_anything_overridden ? 1 : 0)) {
-                    gcode += generate_object_skirt_group(print, instance_to_print.print_object, instance_to_print.instance_id, layer_tools, layer, extruder_id);
+                    // The object skirt goes with an extruder that prints this object on this layer.
+                    const bool extruder_prints_object = !instance_to_print.object_by_extruder.islands.empty() ||
+                        (instance_to_print.object_by_extruder.support != nullptr && !instance_to_print.object_by_extruder.support->empty());
+                    if (extruder_prints_object)
+                        gcode += generate_object_skirt_group(print, instance_to_print.print_object, instance_to_print.instance_id, layer_tools, layer, extruder_id);
                     gcode += generate_object_brim(print, instance_to_print.print_object, instance_to_print.instance_id, first_layer);
                 }
 
@@ -10042,8 +10069,10 @@ std::string GCode::extrude_support(const ExtrusionEntityCollection& support_fill
         ExtrusionEntitiesPtr extrusions;
         extrusions.reserve(support_fills.entities.size());
         for (ExtrusionEntity* ee : support_fills.entities) {
-            const auto role = ee->role();
-            if ((role == support_extrusion_role) || (support_extrusion_role == erMixed && role != erIroning)) {
+            const ExtrusionRole role = ee->role();
+            if ((role == support_extrusion_role) ||
+                (role == erSupportTransition && support_extrusion_role == erSupportMaterial) ||
+                (support_extrusion_role == erMixed && role != erIroning)) {
                 extrusions.emplace_back(ee);
             }
         }
@@ -10351,6 +10380,9 @@ std::string GCode::_extrude(const ExtrusionPath &path, std::string description, 
         _mm3_per_mm *= m_config.internal_bridge_flow;
     } else if (path.role() == erBrim) {
         _mm3_per_mm *= m_config.brim_flow_ratio;
+    } else if (path.role() == erSupportTransition) {
+        // Support transition layers have their own flow ratio.
+        _mm3_per_mm *= m_config.support_transition_flow_ratio.get_abs_value(1.);
     } else if (sloped) {
         _mm3_per_mm *= m_config.scarf_joint_flow_ratio;
     }
@@ -10408,7 +10440,10 @@ std::string GCode::_extrude(const ExtrusionPath &path, std::string description, 
             }
         } else if(path.role() == erInternalBridgeInfill) {
             speed = m_config.get_abs_value_at("internal_bridge_speed", get_nozzle_config_index(m_writer.filament()->id()));
-        } else if (path.role() == erOverhangPerimeter || path.role() == erSupportTransition || path.role() == erBridgeInfill) {
+        } else if (path.role() == erSupportTransition) {
+            // Support transition layers have their own speed, independent of bridge_speed.
+            speed = NOZZLE_CONFIG(support_transition_speed);
+        } else if (path.role() == erOverhangPerimeter || path.role() == erBridgeInfill) {
             speed = NOZZLE_CONFIG(bridge_speed);
         } else if (path.role() == erInternalInfill) {
             speed = NOZZLE_CONFIG(sparse_infill_speed);
@@ -11583,11 +11618,6 @@ std::string GCode::retract(bool toolchange, bool is_last_retraction, LiftType li
         methods even if we performed wipe, since this will ensure the entire retraction
         length is honored in case wipe path was too short.  */
 
-    // // Snapmaker U1
-    // std::string printer_model = this->m_curr_print->m_config.printer_model.value;
-    // if (printer_model == "Snapmaker U1" && toolchange) {
-    //     gcode += "M400\n";
-    // }
     if ((!this->on_first_layer() || this->config().bottom_surface_pattern != InfillPattern::ipHilbertCurve) &&
         (role != erTopSolidInfill || this->config().top_surface_pattern != InfillPattern::ipHilbertCurve)) {
         gcode += toolchange ? m_writer.retract_for_toolchange() : m_writer.retract();
@@ -12031,7 +12061,6 @@ std::string GCode::set_extruder(unsigned int new_filament_id, double print_z, bo
         dyn_config.set_key_value("filament_cooling_before_tower", new ConfigOptionFloats(filament_cooling_before_tower));
     }
     dyn_config.set_key_value("flush_length", new ConfigOptionFloat(wipe_length));
-
     int   flush_count = std::min(g_max_flush_count, (int) std::round(wipe_volume / g_purge_volume_one_time));
     float flush_unit  = wipe_length / flush_count;
     int   flush_idx   = 0;
@@ -12047,7 +12076,8 @@ std::string GCode::set_extruder(unsigned int new_filament_id, double print_z, bo
         dyn_config.set_key_value(key_value, new ConfigOptionFloat(0.f));
     }
 
-    // For Snapmaker Artisian
+    // Wipe tower entry of the upcoming toolchange, read by the Snapmaker Artisan (A400)
+    // change_filament_gcode as next_wipe_x / next_wipe_y.
     dyn_config.set_key_value("next_wipe_x", new ConfigOptionFloat(m_next_wipe_x));
     dyn_config.set_key_value("next_wipe_y", new ConfigOptionFloat(m_next_wipe_y));
 

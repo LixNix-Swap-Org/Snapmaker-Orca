@@ -210,6 +210,9 @@ public:
 
     void            hide_labels() { label_width = 0; m_labels_hidden = true; }
 
+    // Config backing this group (null for non-config groups), used when fields are (re)built.
+    virtual const DynamicPrintConfig* get_config() const { return nullptr; }
+
 	OptionsGroup(wxWindow *_parent, const wxString &title, const wxString &icon, bool is_tab_opt = false,
                     column_t extra_clmn = nullptr);
 	virtual ~OptionsGroup() { clear(true); }
@@ -296,6 +299,7 @@ public:
 	void 		set_config_category_and_type(const wxString &category, int type) { m_config_category = category; m_config_type = type; }
     void        set_config(DynamicPrintConfig* config) {
 		m_config = config; m_modelconfig = nullptr; }
+	const DynamicPrintConfig* get_config() const override { return m_config; }
 	Option		get_option(const std::string& opt_key, int opt_index = -1);
 	Line		create_single_option_line(const std::string& title, const std::string& path = std::string(), int idx = -1) /*const*/{
 		Option option = get_option(title, idx);

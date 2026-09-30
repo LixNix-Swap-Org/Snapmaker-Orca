@@ -52,10 +52,8 @@ inline int compute_colum_count(int count)
 
 
 extern const float WIPE_TOWER_DEFAULT_X_POS;
-extern const float WIPE_TOWER_DEFAULT_Y_POS;  // Max y
 
 extern const float I3_WIPE_TOWER_DEFAULT_X_POS;
-extern const float I3_WIPE_TOWER_DEFAULT_Y_POS; // Max y
 
 
 
@@ -360,7 +358,6 @@ public:
     int  get_logical_extruder_by_filament_id(const DynamicConfig& g_config, int idx) const;
     bool check_filament_printable(const DynamicPrintConfig & config, wxString& error_message);
     bool check_tpu_printable_status(const DynamicPrintConfig & config, const std::vector<int> &tpu_filaments);
-    bool check_mixture_of_pla_and_petg(const DynamicPrintConfig & config);
     // Warns when a mixed-color filament is used on a single-nozzle printer, where every
     // component switch costs a full filament change and purge.
     bool check_single_extruder_mixed_filament_risk(const DynamicPrintConfig &config, std::string &warning_text) const;

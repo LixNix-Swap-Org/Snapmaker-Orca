@@ -9,6 +9,7 @@
 #include "Thread.hpp"
 #include "format.hpp"
 #include "nlohmann/json.hpp"
+#include "common_func/common_func.hpp"
 
 #include <algorithm>
 #include <utility>
@@ -54,6 +55,11 @@ static const std::string MODELS_STR = "models";
 
 #define APP_UPDATE_URL_BASE_CN "https://meta-cfg.snapmaker.cn"
 #define APP_UPDATE_URL_BASE_EN "https://meta-cfg.snapmaker.com"
+
+// snapmaker-config gray release API (POST /config/get): the prod endpoint for release builds, the dev
+// gateway for BBL_INTERNAL_TESTING builds; the "orca_config_api_url" app setting overrides both.
+#define CONFIG_API_URL_DEV  "http://gateway.s.com/api/config/get"
+#define CONFIG_API_URL_PROD "https://api.snapmaker.com/api/config/get"
 
 #if defined(_WIN32)
 static const std::string APP_UPDATE_URL = std::string("/upgrade/orca/win/");
@@ -2025,6 +2031,19 @@ std::string AppConfig::orca_profile_update_url() const
     if (orca_updater_url.empty())
         return ORCA_PROFILE_UPDATE_URL;
     return orca_updater_url;
+}
+
+std::string AppConfig::get_config_api_url()
+{
+    std::string overrideUrl = get("orca_config_api_url");
+    if (!overrideUrl.empty())
+        return overrideUrl;
+
+#if BBL_INTERNAL_TESTING
+    return CONFIG_API_URL_DEV;
+#else
+    return CONFIG_API_URL_PROD;
+#endif
 }
 
 std::string AppConfig::version_check_url(bool stable_only/* = false*/) const

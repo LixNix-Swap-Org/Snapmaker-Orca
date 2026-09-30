@@ -131,7 +131,7 @@ std::map<std::string, std::vector<SimpleSettingData>>  SettingsFactory::OBJECT_C
                     {"support_filament", "",11},{"support_interface_filament", "",12},{"support_expansion", "",13},{"support_style", "",14},
                     {"tree_support_brim_width", "",15}, {"tree_support_branch_angle", "",16},{"tree_support_branch_angle_organic","",17}, {"tree_support_wall_count", "",18},{"tree_support_branch_diameter_angle", "",19},//tree support
                     {"support_bottom_z_distance", "",20},{"support_top_z_distance", "",21},{"support_base_pattern", "",22},{"support_base_pattern_spacing", "",23},
-                    {"support_interface_top_layers", "",24},{"support_interface_bottom_layers", "",25},{"support_interface_spacing", "",26},{"support_bottom_interface_spacing", "",27},
+                    {"support_interface_top_layers", "",24},{"support_interface_bottom_layers", "",25},{"support_interface_spacing", "",26},{"support_interface_min_area", "",26},{"support_bottom_interface_spacing", "",27},
                     {"support_object_xy_distance", "",28}, {"bridge_no_support", "",29},{"max_bridge_length", "",30},{"support_critical_regions_only", "",31},{"support_remove_small_overhang","",32},
                     {"support_object_first_layer_gap","",33}
                     }},
@@ -158,9 +158,11 @@ std::map<std::string, std::vector<SimpleSettingData>> SettingsFactory::PART_CATE
        {"top_shell_layers", L("Top solid layers"), 1},
        {"top_shell_thickness", L("Top minimum shell thickness"), 1},
        {"top_surface_density", L("Top Surface Density"), 1},
+       {"top_color_penetration_layers", L("Top paint penetration layers"), 1},
        {"bottom_shell_layers", L("Bottom solid layers"), 1},
        {"bottom_shell_thickness", L("Bottom minimum shell thickness"), 1},
        {"bottom_surface_density", L("Bottom Surface Density"), 1},
+       {"bottom_color_penetration_layers", L("Bottom paint penetration layers"), 1},
        {"sparse_infill_density", "", 1},
        {"fill_multiline", "", 1},
        {"sparse_infill_pattern", "", 1},
@@ -248,7 +250,7 @@ std::vector<SimpleSettingData> SettingsFactory::get_visible_options(const std::s
         //tree support
         "tree_support_wall_count",
         //support
-        "support_top_z_distance", "support_base_pattern", "support_base_pattern_spacing", "support_interface_top_layers", "support_interface_bottom_layers", "support_interface_spacing", "support_bottom_interface_spacing", "support_object_xy_distance",
+        "support_top_z_distance", "support_base_pattern", "support_base_pattern_spacing", "support_interface_top_layers", "support_interface_bottom_layers", "support_interface_spacing", "support_interface_min_area", "support_bottom_interface_spacing", "support_object_xy_distance",
         "support_object_first_layer_gap",
         //adhesion
         "brim_type", "brim_width", "brim_object_gap", "raft_layers"

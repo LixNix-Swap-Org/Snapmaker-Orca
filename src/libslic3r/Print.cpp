@@ -845,6 +845,7 @@ bool Print::invalidate_state_by_config_options(const ConfigOptionResolver & /* n
             || opt_key == "prime_tower_skip_points"
             || opt_key == "prime_tower_flat_ironing"
             || opt_key == "enable_tower_interface_features"
+            || opt_key == "enable_tower_interface_cooldown_during_tower"
             || opt_key == "first_layer_print_sequence"
             || opt_key == "other_layers_print_sequence"
             || opt_key == "other_layers_print_sequence_nums" 
@@ -1003,6 +1004,9 @@ bool Print::is_step_done(PrintObjectStep step) const
 std::vector<unsigned int> Print::object_extruders() const
 {
     std::vector<unsigned int> extruders;
+    if (m_objects.empty()) {
+        return extruders;
+    }
     extruders.reserve(m_print_regions.size() * m_objects.size() * 3);
 
     //Orca: Collect extruders from all regions.
@@ -1075,6 +1079,7 @@ std::vector<unsigned int> Print::extruders(bool conside_custom_gcode) const
 {
     std::vector<unsigned int> extruders = this->object_extruders();
     append(extruders, this->support_material_extruders());
+    sort_remove_duplicates(extruders);
 
     if (conside_custom_gcode) {
         //BBS
@@ -2403,6 +2408,59 @@ StringObjectException Print::validate(std::vector<StringObjectException> *warnin
         if (auto layers = generate_object_layers(print_object.slicing_parameters(), layer_height_profile(print_object_idx), print_object.config().precise_z_height.value);
             !layers.empty()) {
 
+            // Shell layers may not exceed the total layer count (halved, see Slicing.cpp).
+            const int total_layers = int(layers.size() / 2);
+            {
+                int max_top_shell = 0, max_bottom_shell = 0;
+                for (size_t region_idx = 0; region_idx < print_object.num_printing_regions(); ++ region_idx) {
+                    const PrintRegionConfig &region_config = print_object.printing_region(region_idx).config();
+                    max_top_shell    = std::max(max_top_shell, region_config.top_shell_layers.value);
+                    max_bottom_shell = std::max(max_bottom_shell, region_config.bottom_shell_layers.value);
+                }
+                if (max_top_shell > total_layers)
+                    return StringObjectException{
+                        Slic3r::format(_u8L("The shell layers (current: %1%) exceed the model layers (total: %2%). "
+                                            "Please reduce the top shell layers."),
+                            max_top_shell, total_layers),
+                        print_object.model_object(),
+                        "top_shell_layers"
+                    };
+                if (max_bottom_shell > total_layers)
+                    return StringObjectException{
+                        Slic3r::format(_u8L("The shell layers (current: %1%) exceed the model layers (total: %2%). "
+                                            "Please reduce the bottom shell layers."),
+                            max_bottom_shell, total_layers),
+                        print_object.model_object(),
+                        "bottom_shell_layers"
+                    };
+            }
+
+            // Paint penetration may not exceed the total layer count (halved, see Slicing.cpp).
+            {
+                int max_top_penetration = 0, max_bottom_penetration = 0;
+                for (size_t region_idx = 0; region_idx < print_object.num_printing_regions(); ++ region_idx) {
+                    const PrintRegionConfig &region_config = print_object.printing_region(region_idx).config();
+                    max_top_penetration    = std::max(max_top_penetration, region_config.top_color_penetration_layers.value);
+                    max_bottom_penetration = std::max(max_bottom_penetration, region_config.bottom_color_penetration_layers.value);
+                }
+                if (max_top_penetration > total_layers)
+                    return StringObjectException{
+                        Slic3r::format(_u8L("The paint penetration layers (current: %1%) exceed the model layers (total: %2%). "
+                                            "Please reduce the top paint penetration layers."),
+                            max_top_penetration, total_layers),
+                        print_object.model_object(),
+                        "top_color_penetration_layers"
+                    };
+                if (max_bottom_penetration > total_layers)
+                    return StringObjectException{
+                        Slic3r::format(_u8L("The paint penetration layers (current: %1%) exceed the model layers (total: %2%). "
+                                            "Please reduce the bottom paint penetration layers."),
+                            max_bottom_penetration, total_layers),
+                        print_object.model_object(),
+                        "bottom_color_penetration_layers"
+                    };
+            }
+
             Vec3d test =this->shrinkage_compensation();
             const double shrinkage_compensation_z = this->shrinkage_compensation().z();
             
@@ -2435,9 +2493,7 @@ StringObjectException Print::validate(std::vector<StringObjectException> *warnin
     // Custom layering is not allowed for tree supports as of now.
     for (size_t print_object_idx = 0; print_object_idx < m_objects.size(); ++ print_object_idx)
         if (const PrintObject &print_object = *m_objects[print_object_idx];
-            print_object.has_support_material() && is_tree(print_object.config().support_type.value) && (print_object.config().support_style.value == smsTreeOrganic || 
-                // Orca: use organic as default
-                print_object.config().support_style.value == smsDefault) &&
+            print_object.config().enable_support.value && is_tree(print_object.config().support_type.value) && print_object.config().support_style.value == smsTreeOrganic &&
             print_object.model_object()->has_custom_layering()) {
             if (const std::vector<coordf_t> &layers = layer_height_profile(print_object_idx); ! layers.empty())
                 if (! check_object_layers_fixed(print_object.slicing_parameters(), layers))
@@ -2721,8 +2777,10 @@ StringObjectException Print::validate(std::vector<StringObjectException> *warnin
                 // https://github.com/prusa3d/PrusaSlicer/commit/96b3ae85013ac363cd1c3e98ec6b7938aeacf46d
                 if (is_tree(object->config().support_type.value)) {
                     if (object->config().support_style == smsTreeOrganic ||
-                        // Orca: use organic as default
-                        object->config().support_style == smsDefault) {
+                        (object->config().support_style == smsDefault &&
+                         !tree_default_style_is_hybrid(object->config().support_top_z_distance.value,
+                                                       object->config().support_interface_top_layers.value,
+                                                       object->model_object()->has_custom_layering()))) {
 
                         // Orca: check the support wall count and the base pattern
                         if (object->config().tree_support_wall_count > 1 &&
@@ -2734,11 +2792,11 @@ StringObjectException Print::validate(std::vector<StringObjectException> *warnin
                         if (object->config().support_base_pattern == SupportMaterialPattern::smpLightning)
                             warn(L("The Lightning base pattern is not supported by this support type; Rectilinear will be used instead."), "support_base_pattern");
 
+                        // Only the branch diameter is checked; the tip may be narrower than the support line
+                        // (102.5% lines on a 0.8 mm nozzle around the default 0.8 mm tip).
                         float extrusion_width = std::min(
                             support_material_flow(object).width(),
                             support_material_interface_flow(object).width());
-                        if (object->config().tree_support_tip_diameter < extrusion_width - EPSILON)
-                            return { L("Organic support tree tip diameter must not be smaller than support material extrusion width."), object, "tree_support_tip_diameter" };
                         if (object->config().tree_support_branch_diameter_organic < 2. * extrusion_width - EPSILON)
                             return { L("Organic support branch diameter must not be smaller than 2x support material extrusion width."), object, "tree_support_branch_diameter_organic" };
                         if (object->config().tree_support_branch_diameter_organic < object->config().tree_support_tip_diameter)
@@ -3662,6 +3720,11 @@ StringObjectException Print::validate(std::vector<StringObjectException> *warnin
                             "top_surface_acceleration",
                         };
                    warning_key = check_motion_ability_object_setting(accel_to_check, max_accel);
+                   // The first layer travel acceleration is a print-scope option, possibly a percentage of the travel acceleration.
+                   const double first_layer_travel_accel = m_full_print_config.has("initial_layer_travel_acceleration") ?
+                       m_full_print_config.get_abs_value_at("initial_layer_travel_acceleration", extruder_id) : 0.;
+                   if (warning_key.empty() && !support_travel_acc && first_layer_travel_accel > max_accel)
+                        warning_key = "initial_layer_travel_acceleration";
                    if (!warning_key.empty()) {
                         motion_warning.string  = L("The acceleration setting exceeds the printer's maximum acceleration "
                                               "(machine_max_acceleration_extruding).\nOrca will "
@@ -3677,6 +3740,8 @@ StringObjectException Print::validate(std::vector<StringObjectException> *warnin
                                 "travel_acceleration",
                             };
                             warning_key = check_motion_ability_object_setting(accel_to_check, max_travel);
+                            if (warning_key.empty() && first_layer_travel_accel > max_travel)
+                                warning_key = "initial_layer_travel_acceleration";
                             if (!warning_key.empty()) {
                                 motion_warning.string = L(
                                     "The travel acceleration setting exceeds the printer's maximum travel acceleration "
@@ -6077,12 +6142,18 @@ void Print::_make_wipe_tower()
         for (unsigned int i = 0; i<number_of_extruders; ++i)
             wipe_volumes.push_back(std::vector<float>(flush_matrix.begin()+i*number_of_extruders, flush_matrix.begin()+(i+1)*number_of_extruders));
 
+        // A tower purge is at least the new filament's minimal purge.
+        auto tower_purge_volume = [this](unsigned int filament_id) {
+            return std::max((float) m_config.prime_volume,
+                            (float) m_config.filament_minimal_purge_on_wipe_tower.get_at(
+                                first_filament_variant_column(m_config.filament_self_index.values, filament_id)));
+        };
         // Orca: itertate over wipe_volumes and change the non-zero values to the prime_volume
         if ((!m_config.purge_in_prime_tower || !m_config.single_extruder_multi_material) && is_wipe_tower_type2) {
             for (unsigned int i = 0; i < number_of_extruders; ++i) {
                 for (unsigned int j = 0; j < number_of_extruders; ++j) {
                     if (wipe_volumes[i][j] > 0) {
-                        wipe_volumes[i][j] = m_config.prime_volume;
+                        wipe_volumes[i][j] = tower_purge_volume(j);
                     }
                 }
             }
@@ -6140,25 +6211,9 @@ void Print::_make_wipe_tower()
                 if (layers_with_same_print_z != nullptr) {
                     const std::vector<LocalZWipeTowerToolchange> local_z_toolchanges =
                         collect_local_z_wipe_tower_toolchanges(*this, *layers_with_same_print_z, int(current_extruder_id));
-                    if (!local_z_toolchanges.empty()) {
-                        std::ostringstream local_z_sequence;
-                        for (size_t toolchange_idx = 0; toolchange_idx < local_z_toolchanges.size(); ++toolchange_idx) {
-                            if (toolchange_idx != 0)
-                                local_z_sequence << ",";
-                            local_z_sequence << local_z_toolchanges[toolchange_idx].old_tool << "->"
-                                             << local_z_toolchanges[toolchange_idx].new_tool;
-                        }
-
-                        BOOST_LOG_TRIVIAL(debug) << "Local-Z wipe tower preplan"
-                                                 << " print_z=" << layer_tools.print_z
-                                                 << " start_tool=" << current_extruder_id
-                                                 << " nominal_toolchanges=" << layer_tools.extruders.size()
-                                                 << " local_z_toolchanges=" << local_z_toolchanges.size()
-                                                 << " sequence=" << local_z_sequence.str();
-                    }
                     for (const LocalZWipeTowerToolchange &toolchange : local_z_toolchanges) {
                         wipe_tower.plan_local_z_toolchange((float) layer_tools.print_z, (float) layer_tools.wipe_tower_layer_height,
-                                                           toolchange.old_tool, toolchange.new_tool, (float) m_config.prime_volume);
+                                                           toolchange.old_tool, toolchange.new_tool, tower_purge_volume(toolchange.new_tool));
                     }
                     if (!local_z_toolchanges.empty())
                         current_extruder_id = local_z_toolchanges.back().new_tool;
@@ -6174,7 +6229,7 @@ void Print::_make_wipe_tower()
                 for (const auto extruder_id : nominal_layer_extruders) {
                     if ((first_layer && extruder_id == m_wipe_tower_data.tool_ordering.all_extruders().back()) || extruder_id !=
                         current_extruder_id) {
-                        float volume_to_wipe = m_config.prime_volume;
+                        float volume_to_wipe = tower_purge_volume(extruder_id);
                         if (m_config.purge_in_prime_tower && m_config.single_extruder_multi_material) {
                             volume_to_wipe = wipe_volumes[current_extruder_id][extruder_id]; // total volume to wipe after this toolchange
                             volume_to_wipe *= m_config.flush_multiplier.get_at(0);

@@ -184,6 +184,10 @@ const std::string BBS_MODEL_CONFIG_RELS_FILE = "Metadata/_rels/model_settings.co
 const std::string SLICE_INFO_CONFIG_FILE = "Metadata/slice_info.config";
 const std::string FILAMENT_SEQUENCE_FILE = "Metadata/filament_sequence.json";
 const std::string BBS_LAYER_HEIGHTS_PROFILE_FILE = "Metadata/layer_heights_profile.txt";
+// Keys of BBS_LAYER_HEIGHTS_PROFILE_FILE entries ("object_id=N|..."): without a header line N is a
+// 1 based Model::objects index; format version 2 makes N the 3MF object id its <build> item references.
+const std::string LAYER_HEIGHTS_PROFILE_FORMAT_VERSION_KEY = "layer_heights_profile_format_version";
+const int LAYER_HEIGHTS_PROFILE_FORMAT_VERSION_OBJECT_IDS = 2;
 const std::string ORCA_CAD_RECIPE_FILE = "Metadata/orca_cad.bin";
 // Read-only: the recipe entry's pre-rename name. A reader that knows only the new one drops the
 // feature tree of every project written before the move, without a word. Never written.
@@ -376,6 +380,9 @@ static constexpr const char* SOURCE_OFFSET_Y_KEY = "source_offset_y";
 static constexpr const char* SOURCE_OFFSET_Z_KEY = "source_offset_z";
 static constexpr const char* SOURCE_IN_INCHES    = "source_in_inches";
 static constexpr const char* SOURCE_IN_METERS    = "source_in_meters";
+// Merge group id of a volume cloned by "Assemble"; consumed by "Split to objects"
+// to restore non-solid volumes (e.g. negative volumes) to the object they belonged to.
+static constexpr const char* MERGED_GROUP_ID_KEY = "merged_group_id";
 
 static constexpr const char* MESH_SHARED_KEY = "mesh_shared";
 
@@ -1203,6 +1210,9 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         IdToMetadataMap m_objects_metadata;
         IdToCutObjectInfoMap       m_cut_object_infos;
         IdToLayerHeightsProfileMap m_layer_heights_profiles;
+        // True when BBS_LAYER_HEIGHTS_PROFILE_FILE declares format version >= 2, i.e. the entries
+        // are keyed by 3MF object ids instead of 1 based Model::objects indexes.
+        bool m_layer_heights_profiles_keyed_by_object_id{false};
         IdToLayerConfigRangesMap m_layer_config_ranges;
         IdToBrimPointsMap m_brim_ear_points;
         /*IdToSlaSupportPointsMap m_sla_support_points;
@@ -1491,6 +1501,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         m_curr_config.volume_id = -1;
         m_objects_metadata.clear();
         m_layer_heights_profiles.clear();
+        m_layer_heights_profiles_keyed_by_object_id = false;
         m_layer_config_ranges.clear();
         m_brim_ear_points.clear();
         //m_sla_support_points.clear();
@@ -2197,8 +2208,10 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
                 return false;
             }*/
 
-            // m_layer_heights_profiles are indexed by a 1 based model object index.
-            IdToLayerHeightsProfileMap::iterator obj_layer_heights_profile = m_layer_heights_profiles.find(object.second + 1);
+            // Layer height profiles are keyed by 3MF object id (format version >= 2) or by 1 based model
+            // object index (legacy files); the file header alone picks the mode.
+            IdToLayerHeightsProfileMap::iterator obj_layer_heights_profile = m_layer_heights_profiles.find(
+                m_layer_heights_profiles_keyed_by_object_id ? object.first.second : object.second + 1);
             if (obj_layer_heights_profile != m_layer_heights_profiles.end())
                 model_object->layer_height_profile.set(std::move(obj_layer_heights_profile->second));
 
@@ -2966,7 +2979,19 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
             std::vector<std::string> objects;
             boost::split(objects, buffer, boost::is_any_of("\n"), boost::token_compress_off);
 
-            for (const std::string& object : objects)             {
+            // Newer files carry a format version header line ("layer_heights_profile_format_version=N")
+            // telling whether the object_id keys below are 3MF object ids (>= 2) or legacy 1 based
+            // Model::objects indexes. Legacy files start with an "object_id=" entry right away.
+            if (!objects.empty() && boost::algorithm::starts_with(objects.front(), LAYER_HEIGHTS_PROFILE_FORMAT_VERSION_KEY + "=")) {
+                std::vector<std::string> header_data;
+                boost::split(header_data, objects.front(), boost::is_any_of("="), boost::token_compress_off);
+                int format_version = (header_data.size() == 2) ? std::atoi(header_data[1].c_str()) : 0;
+                m_layer_heights_profiles_keyed_by_object_id = (format_version >= LAYER_HEIGHTS_PROFILE_FORMAT_VERSION_OBJECT_IDS);
+                objects.erase(objects.begin());
+                BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format(", layer heights profile format version %1%, keyed by 3mf object id: %2%\n")%format_version %m_layer_heights_profiles_keyed_by_object_id;
+            }
+
+            for (const std::string& object : objects) {
                 std::vector<std::string> object_data;
                 boost::split(object_data, object, boost::is_any_of("|"), boost::token_compress_off);
                 if (object_data.size() != 2) {
@@ -5323,6 +5348,8 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
                     volume->source.is_converted_from_inches = metadata.value == "1";
                 else if (metadata.key == SOURCE_IN_METERS)
                     volume->source.is_converted_from_meters = metadata.value == "1";
+                else if (metadata.key == MERGED_GROUP_ID_KEY)
+                    volume->set_merged_group_id(ObjectID((size_t) ::atoi(metadata.value.c_str())));
                 else if ((metadata.key == MATRIX_KEY) || (metadata.key == MESH_SHARED_KEY))
                     continue;
                 else
@@ -5489,6 +5516,8 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
                     volume->source.is_converted_from_inches = metadata.value == "1";
                 else if (metadata.key == SOURCE_IN_METERS)
                     volume->source.is_converted_from_meters = metadata.value == "1";
+                else if (metadata.key == MERGED_GROUP_ID_KEY)
+                    volume->set_merged_group_id(ObjectID((size_t) ::atoi(metadata.value.c_str())));
                 else
                     volume->config.set_deserialize(metadata.key, metadata.value, config_substitutions);
             }
@@ -6122,7 +6151,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         //BBS: change volume to seperate objects
         bool _add_mesh_to_object_stream(std::function<bool(std::string &, bool)> const &flush, ObjectData const &object_data) const;
         bool _add_build_to_model_stream(std::stringstream& stream, const BuildItemsList& build_items) const;
-        bool _add_layer_height_profile_file_to_archive(mz_zip_archive& archive, Model& model);
+        bool _add_layer_height_profile_file_to_archive(mz_zip_archive& archive, Model& model, const ObjectToObjectDataMap& objects_data);
         bool _add_cad_recipe_file_to_archive(mz_zip_archive& archive, Model& model);
         bool _add_layer_config_ranges_file_to_archive(mz_zip_archive& archive, Model& model);
         bool _add_brim_ear_points_file_to_archive(mz_zip_archive& archive, Model& model);
@@ -6512,10 +6541,9 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         {
             if (!_add_model_file_to_archive(filename, archive, model, objects_data, proFn, project)) { return false; }
 
-            // Adds layer height profile file ("Metadata/Slic3r_PE_layer_heights_profile.txt").
-            // All layer height profiles of all ModelObjects are stored here, indexed by 1 based index of the ModelObject in Model.
-            // The index differes from the index of an object ID of an object instance of a 3MF file!
-            if (!_add_layer_height_profile_file_to_archive(archive, model)) {
+            // Adds the layer height profile file ("Metadata/layer_heights_profile.txt"), keyed by the
+            // 3MF object id each ModelObject's <build> item references.
+            if (!_add_layer_height_profile_file_to_archive(archive, model, objects_data)) {
                 close_zip_writer(&archive);
                 return false;
             }
@@ -7756,7 +7784,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         return true;
     }
 
-    bool _BBS_3MF_Exporter::_add_layer_height_profile_file_to_archive(mz_zip_archive& archive, Model& model)
+    bool _BBS_3MF_Exporter::_add_layer_height_profile_file_to_archive(mz_zip_archive& archive, Model& model, const ObjectToObjectDataMap& objects_data)
     {
         assert(is_decimal_separator_point());
         std::string out = "";
@@ -7767,7 +7795,11 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
             ++count;
             const std::vector<double>& layer_height_profile = object->layer_height_profile.get();
             if (layer_height_profile.size() >= 4 && layer_height_profile.size() % 2 == 0) {
-                snprintf(buffer, 1024, "object_id=%d|", count);
+                // Keyed by the 3MF object id its <build> item references (filled by
+                // _add_model_file_to_archive()), which stays valid for plate exports and multi-volume objects.
+                auto object_data = objects_data.find(object);
+                int object_id = object_data != objects_data.end() ? object_data->second.object_id : count;
+                snprintf(buffer, 1024, "object_id=%d|", object_id);
                 out += buffer;
 
                 // Store the layer height profile as a single semicolon separated list.
@@ -7781,6 +7813,9 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         }
 
         if (!out.empty()) {
+            // Prepend the format version header: the object_id keys below are 3MF object ids
+            // (the ids referenced by the <build> items), not 1 based Model::objects indexes.
+            out = LAYER_HEIGHTS_PROFILE_FORMAT_VERSION_KEY + "=" + std::to_string(LAYER_HEIGHTS_PROFILE_FORMAT_VERSION_OBJECT_IDS) + "\n" + out;
             if (!mz_zip_writer_add_mem(&archive, BBS_LAYER_HEIGHTS_PROFILE_FILE.c_str(), (const void*)out.data(), out.length(), MZ_DEFAULT_COMPRESSION)) {
                 add_error("Unable to add layer heights profile file to archive");
                 BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":" << __LINE__ << boost::format("Unable to add layer heights profile file to archive\n");
@@ -8174,6 +8209,11 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
                                 else if (volume->source.is_converted_from_meters)
                                     stream << prefix << SOURCE_IN_METERS << "\" " << VALUE_ATTR << "=\"1\"/>\n";
                             }
+
+                            // stores the merge group id (set by "Assemble", consumed by "Split to objects")
+                            if (volume->merged_group_id().valid())
+                                stream << "      <" << METADATA_TAG << " " << KEY_ATTR << "=\"" << MERGED_GROUP_ID_KEY
+                                       << "\" " << VALUE_ATTR << "=\"" << volume->merged_group_id().id << "\"/>\n";
 
                             // stores volume's config data
                             for (const std::string& key : volume->config.keys()) {

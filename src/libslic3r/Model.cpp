@@ -2280,14 +2280,51 @@ static void invalidate_translations(ModelObject* object, const ModelInstance* sr
     }
 }
 
+// Volume of the intersection of two bounding boxes, 0 when they do not overlap.
+static double bbox_overlap_volume(const BoundingBoxf3& a, const BoundingBoxf3& b)
+{
+    const Vec3d size(std::min(a.max.x(), b.max.x()) - std::max(a.min.x(), b.min.x()),
+                     std::min(a.max.y(), b.max.y()) - std::max(a.min.y(), b.min.y()),
+                     std::min(a.max.z(), b.max.z()) - std::max(a.min.z(), b.min.z()));
+    return size.x() > 0. && size.y() > 0. && size.z() > 0. ? size.x() * size.y() * size.z() : 0.;
+}
+
 void ModelObject::split(ModelObjectPtrs* new_objects, const bool remap_paint)
 {
     std::vector<TriangleMesh> all_meshes;
     std::vector<Transform3d> all_transfos;
     std::vector<std::pair<int, int>> volume_mesh_counts;
     all_meshes.reserve(this->volumes.size() * 5);
-    bool is_multi_volume_object = (this->volumes.size() > 1);
+
+    // Only model parts make a multi-volume object, so a single part with a negative volume or a
+    // modifier is still split into its disconnected shells.
+    int model_part_cnt = 0;
+    for (const ModelVolume* volume : this->volumes)
+        if (volume->type() == ModelVolumeType::MODEL_PART)
+            model_part_cnt++;
+    bool is_multi_volume_object = (model_part_cnt > 1);
     std::optional<TriangleSelector::SavedPainting> saved_painting;
+
+    // Non-solid volumes (negative volumes, modifiers, support blockers and enforcers) with their
+    // bounding boxes in object coordinates; each is re-attached to exactly one new object below.
+    std::vector<std::pair<ModelVolume*, BoundingBoxf3>> non_part_volumes;
+    for (ModelVolume* volume : this->volumes) {
+        if (volume->type() == ModelVolumeType::MODEL_PART || volume->mesh().empty())
+            continue;
+        non_part_volumes.emplace_back(volume, volume->mesh().bounding_box().transformed(volume->get_matrix()));
+    }
+    // Bookkeeping of the objects created below, used to re-attach non-solid volumes.
+    struct CreatedObjectInfo
+    {
+        ModelObject*  object;
+        Vec3d         absorbed_offset; // part volume offset that was absorbed into the instances (see below)
+        BoundingBoxf3 part_bbox;       // part bounding box in the object coordinate system
+        ObjectID      group_id;        // merge-source label of the part volume, invalid if it did not come from an "Assemble"
+    };
+    std::vector<CreatedObjectInfo> created_objects;
+    // Per non-solid volume: the intersecting new objects (of the same merge group when labeled)
+    // with their bounding box overlap volume.
+    std::vector<std::vector<std::pair<double, size_t>>> reattach_candidates(non_part_volumes.size());
 
     for (int volume_idx = 0; volume_idx < this->volumes.size(); volume_idx++) {
         ModelVolume* volume = this->volumes[volume_idx];
@@ -2345,6 +2382,9 @@ void ModelObject::split(ModelObjectPtrs* new_objects, const bool remap_paint)
             if (mesh.facets_count() < 3)
                 continue;
 
+            // Part bounding box in object coordinates, taken before the mesh moves into the new volume.
+            const BoundingBoxf3 part_bbox = mesh.bounding_box().transformed(volume->get_matrix());
+
             // XXX: this seems to be the only real usage of m_model, maybe refactor this so that it's not needed?
             ModelObject* new_object = m_model->add_object();
             //BBS: refine the config logic
@@ -2401,10 +2441,67 @@ void ModelObject::split(ModelObjectPtrs* new_objects, const bool remap_paint)
                 model_instance->set_offset_to_assembly(new_vol->get_offset());
             }
 
+            // The new object is a re-attachment candidate for the non-solid volumes it intersects;
+            // a volume with a merge group label only qualifies for parts of the same group.
+            const Vec3d    absorbed_offset = new_vol->get_offset();
+            const ObjectID part_group_id   = volume->merged_group_id();
+            created_objects.push_back({new_object, absorbed_offset, part_bbox, part_group_id});
+            const size_t object_index = created_objects.size() - 1;
+            for (size_t nv_idx = 0; nv_idx < non_part_volumes.size(); ++nv_idx) {
+                const auto& [nv, nv_bbox] = non_part_volumes[nv_idx];
+                const ObjectID nv_group_id = nv->merged_group_id();
+                if (nv_group_id.valid() && nv_group_id != part_group_id)
+                    // The non-solid volume came from another source object of the assembly.
+                    continue;
+                const double overlap = bbox_overlap_volume(nv_bbox, part_bbox);
+                if (overlap > 0.)
+                    reattach_candidates[nv_idx].emplace_back(overlap, object_index);
+            }
+
             new_vol->set_offset(Vec3d::Zero());
             // reset the source to disable reload from disk
             new_vol->source = ModelVolume::Source();
             new_objects->emplace_back(new_object);
+        }
+    }
+
+    // Each non-solid volume goes to one object: the candidate with the largest overlap, else the first
+    // object of its merge group, else the largest-overlap object of any group, else the first object.
+    // translate(-offset) undoes the part offset the new instances absorbed, keeping the world position.
+    if (!created_objects.empty()) {
+        for (size_t nv_idx = 0; nv_idx < non_part_volumes.size(); ++nv_idx) {
+            auto& [nv, nv_bbox]    = non_part_volumes[nv_idx];
+            const ObjectID nv_group_id = nv->merged_group_id();
+
+            const CreatedObjectInfo* best        = nullptr;
+            double                   best_overlap = 0.;
+            for (const auto& [overlap, object_index] : reattach_candidates[nv_idx]) {
+                if (best == nullptr || overlap > best_overlap) {
+                    best         = &created_objects[object_index];
+                    best_overlap = overlap;
+                }
+            }
+            if (best == nullptr && nv_group_id.valid()) {
+                for (const CreatedObjectInfo& info : created_objects)
+                    if (info.group_id == nv_group_id) {
+                        best = &info;
+                        break;
+                    }
+            }
+            if (best == nullptr) {
+                for (const CreatedObjectInfo& info : created_objects) {
+                    const double overlap = bbox_overlap_volume(nv_bbox, info.part_bbox);
+                    if (overlap > 0. && (best == nullptr || overlap > best_overlap)) {
+                        best         = &info;
+                        best_overlap = overlap;
+                    }
+                }
+            }
+            if (best == nullptr)
+                best = &created_objects.front();
+
+            ModelVolume* new_nv = best->object->add_volume(*nv);
+            new_nv->set_transformation(Geometry::translation_transform(-best->absorbed_offset) * nv->get_matrix());
         }
     }
 }
@@ -2794,15 +2891,22 @@ std::vector<int> ModelVolume::get_extruders() const
 
             mmuseg_extruders.push_back(idx);
         }
+
+        if (its_per_type.size() > 0 && its_per_type[0].indices.size() == 0) {
+            m_mmuseg_extruders_has_0_extruder = false;
+        }
+        else {
+            m_mmuseg_extruders_has_0_extruder = true;
+        }
     }
 
     std::vector<int> volume_extruders = mmuseg_extruders;
-
     int volume_extruder_id = this->extruder_id();
-    if (volume_extruder_id > 0)
-        volume_extruders.push_back(volume_extruder_id);
-    else if (volume_extruder_id == 0)
-        volume_extruders.push_back(volume_extruder_id + 1);
+    if (m_mmuseg_extruders_has_0_extruder) {
+        // extruder_id == 0 means "default", which is equivalent to extruder 1 for statistics.
+        int effective_id = (volume_extruder_id > 0) ? volume_extruder_id : 1;
+        volume_extruders.push_back(effective_id);
+    }
 
     return volume_extruders;
 }

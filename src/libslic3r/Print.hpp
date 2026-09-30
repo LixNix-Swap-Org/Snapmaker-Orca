@@ -396,6 +396,8 @@ public:
     LayerPtrs&                   layers()               { return m_layers; }
     SupportLayerPtrs&            support_layers()       { return m_support_layers; }
 
+    // Removes the short bridges of current_layer from overhang_regions in place. A non-null
+    // overhang_regions_with_type loses the same bridges; each fragment keeps its region's type.
     template<typename PolysType>
     static void remove_bridges_from_contacts(
         const Layer* lower_layer,
@@ -403,7 +405,8 @@ public:
         float extrusion_width,
         PolysType* overhang_regions,
         float max_bridge_length = scale_(10),
-        bool break_bridge=false);
+        bool break_bridge=false,
+        std::vector<std::pair<ExPolygon, int>>* overhang_regions_with_type = nullptr);
 
     // Bounding box is used to align the object infill patterns, and to calculate attractor for the rear seam.
     // The bounding box may not be quite snug.

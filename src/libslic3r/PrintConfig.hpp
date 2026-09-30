@@ -296,6 +296,12 @@ inline bool is_auto(SupportType stype)
 {
     return std::set<SupportType>{stNormalAuto, stTreeAuto}.count(stype) != 0;
 };
+// Tree supports with the default style are Hybrid with custom layering or a zero top gap under top
+// interface layers, Organic otherwise.
+inline bool tree_default_style_is_hybrid(double support_top_z_distance, int support_interface_top_layers, bool custom_layering)
+{
+    return custom_layering || (support_top_z_distance == 0. && support_interface_top_layers > 0);
+}
 
 enum SeamPosition {
     spNearest, spAligned, spAlignedBack, spRear, spRandom
@@ -1248,6 +1254,8 @@ PRINT_CONFIG_CLASS_DEFINE(
     ((ConfigOptionInt,                 support_interface_bottom_layers))
     // Spacing between interface lines (the hatching distance). Set zero to get a solid interface.
     ((ConfigOptionFloat,               support_interface_spacing))
+    // Tree support overhangs smaller than this area (mm^2) get no support interface (roof).
+    ((ConfigOptionFloat,               support_interface_min_area))
     ((ConfigOptionFloatsNullable,      support_interface_speed))
     ((ConfigOptionEnum<SupportMaterialPattern>, support_base_pattern))
     ((ConfigOptionEnum<SupportMaterialInterfacePattern>, support_interface_pattern))
@@ -1320,6 +1328,11 @@ PRINT_CONFIG_CLASS_DEFINE(
     ((ConfigOptionPercent,            tree_support_top_rate))
     ((ConfigOptionFloat,              tree_support_branch_diameter_organic))
     ((ConfigOptionFloat,              tree_support_branch_angle_organic))
+    // Transition layers between the support interface and the support body.
+    ((ConfigOptionInt,                tree_support_transition_layers))
+    ((ConfigOptionBool,               support_transition_perimeter))
+    ((ConfigOptionFloats,             support_transition_speed))
+    ((ConfigOptionFloatOrPercent,     support_transition_flow_ratio))
     ((ConfigOptionEnum<GapFillTarget>,gap_fill_target))
     ((ConfigOptionFloat,              min_length_factor))
 
@@ -1366,6 +1379,7 @@ PRINT_CONFIG_CLASS_DEFINE(
     ((ConfigOptionStrings,  print_extruder_override))
     ((ConfigOptionInt,                  bottom_shell_layers))
     ((ConfigOptionFloat,                bottom_shell_thickness))
+    ((ConfigOptionInt,                  bottom_color_penetration_layers))
     ((ConfigOptionFloat,                bridge_angle))
     ((ConfigOptionFloat,                internal_bridge_angle)) // ORCA: Internal bridge angle override
     ((ConfigOptionBool,                 relative_bridge_angle)) // ORCA: Relative bridge angle flag
@@ -1474,6 +1488,7 @@ PRINT_CONFIG_CLASS_DEFINE(
     ((ConfigOptionFloat, top_surface_expansion_margin))
     ((ConfigOptionEnum<TopSurfaceExpansionDirection>, top_surface_expansion_direction))
     ((ConfigOptionFloatsNullable, top_surface_speed))
+    ((ConfigOptionInt, top_color_penetration_layers))
     //BBS
     ((ConfigOptionBoolsNullable,            enable_overhang_speed))
     ((ConfigOptionFloatsOrPercentsNullable, overhang_1_4_speed))

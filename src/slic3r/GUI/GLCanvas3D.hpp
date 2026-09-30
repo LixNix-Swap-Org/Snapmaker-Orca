@@ -391,7 +391,7 @@ class GLCanvas3D
         ObjectLimited,
         GCodeConflict,
         ToolHeightOutside,
-        SpiralLiftNearBoundary,  // Snapmaker: 螺旋抬升靠近边界警告
+        SpiralLiftNearBoundary,  // model too close to the bed boundary for spiral lift
         TPUPrintableError,
         FilamentPrintableError,
         LeftExtruderPrintableError, // before slice
@@ -1504,8 +1504,11 @@ private:
     void _set_warning_notification(EWarning warning, bool state);
 
     bool is_flushing_matrix_error();
+    // Per-frame PLA/PETG mix check from _render_frame(), without the full_config() merge.
+    void _update_pla_petg_mix_warning();
+
     bool _is_any_volume_outside() const;
-    // Snapmaker: 检查是否有任何 volume 靠近边界（螺旋抬升风险）
+    // Whether any volume is close enough to the bed boundary to risk a spiral-lift collision.
     bool _is_any_volume_near_boundary_for_spiral_lift() const;
 
     // updates the selection from the content of m_hover_volume_idxs

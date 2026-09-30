@@ -202,7 +202,7 @@ OBSOLETE_KEYS = {
     "tree_support_collision_resolution", "tree_support_with_infill",
     "max_volumetric_speed", "max_print_speed", "support_closing_radius",
     "remove_freq_sweep", "remove_bed_leveling", "remove_extrusion_calibration",
-    "support_transition_line_width", "support_transition_speed", "bed_temperature",
+    "support_transition_line_width", "bed_temperature",
     "bed_temperature_initial_layer", "can_switch_nozzle_type", "can_add_auxiliary_fan",
     "extra_flush_volume", "spaghetti_detector", "adaptive_layer_height",
     "z_hop_type", "z_lift_type", "bed_temperature_difference", "long_retraction_when_cut",

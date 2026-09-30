@@ -33,6 +33,7 @@ add_executable(${_TEST_NAME}_tests
     test_filament_mixer.cpp
     test_fill_plane_path.cpp
     test_geometry.cpp
+    test_icns.cpp
     test_mixed_filament.cpp
     test_mixed_filament_color_golden.cpp
     test_local_z_order_optimizer.cpp
@@ -53,6 +54,7 @@ add_executable(${_TEST_NAME}_tests
     test_step.cpp
     test_stl.cpp
     test_triangle_selector.cpp
+    test_tree_support_wall.cpp
     test_meshboolean.cpp
     test_mesh_lod.cpp # Snapmaker Orca: level rule and reduced meshes of the render LOD (upstream #737)
     test_marchingsquares.cpp

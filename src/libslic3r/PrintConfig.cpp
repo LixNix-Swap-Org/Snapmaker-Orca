@@ -1459,6 +1459,15 @@ void PrintConfigDef::init_fff_params()
     def->min = 0;
     def->set_default_value(new ConfigOptionFloat(0.));
 
+    // Default must not exceed the bottom_shell_layers default (3); the engine treats 0 as 1.
+    def = this->add("bottom_color_penetration_layers", coInt);
+    def->label = L("Bottom paint penetration layers");
+    def->category = L("Strength");
+    def->sidetext = L("layers");
+    def->tooltip = L("This is the number of layers of bottom paint penetration.");
+    def->min = 0;
+    def->set_default_value(new ConfigOptionInt(3));
+
     def = this->add("gap_fill_target", coEnum);
     def->label = L("Apply gap fill");
     def->category = L("Strength");
@@ -6207,9 +6216,9 @@ void PrintConfigDef::init_fff_params()
     def = this->add("raft_first_layer_expansion", coFloat);
     def->label = L("First layer expansion");
     def->category = L("Support");
-    def->tooltip = L("This expands the first raft or support layer to improve bed adhesion.");
+    def->tooltip = L("Expand the first raft or support layer to improve bed plate adhesion, -1 means auto");
     def->sidetext = L("mm");	// millimeters, CIS languages need translation
-    def->min = 0;
+    def->min = -1;
     def->mode = comAdvanced;
     //BBS: change from 3.0 to 2.0
     def->set_default_value(new ConfigOptionFloat(2.0));
@@ -7669,6 +7678,24 @@ void PrintConfigDef::init_fff_params()
     def->mode = comAdvanced;
     def->set_default_value(new ConfigOptionFloat(0.5));
 
+    def = this->add("support_interface_min_area", coFloat);
+    def->gui_type = ConfigOptionDef::GUIType::f_enum_open;
+    def->label    = L("Minimum Support Contact Area");
+    def->category = L("Support");
+    def->tooltip  = L("Lower values generate more support contact surfaces.");
+    def->sidetext = "mm²";	// square milimeters, don't need translation
+    def->min      = 0;
+    def->enum_values.push_back("0");
+    def->enum_values.push_back("0.25");
+    def->enum_values.push_back("0.64");
+    def->enum_values.push_back("1");
+    def->enum_labels.push_back("0");
+    def->enum_labels.push_back("0.25");
+    def->enum_labels.push_back("0.64");
+    def->enum_labels.push_back("1");
+    def->mode = comAdvanced;
+    def->set_default_value(new ConfigOptionFloat(0.25));
+
     //BBS
     def = this->add("support_bottom_interface_spacing", coFloat);
     def->label = L("Bottom interface spacing");
@@ -7879,6 +7906,43 @@ void PrintConfigDef::init_fff_params()
     def->max = 60;
     def->mode = comAdvanced;
     def->set_default_value(new ConfigOptionFloat(40.));
+
+    // Transition layers between the support interface and the support body.
+    def = this->add("tree_support_transition_layers", coInt);
+    def->label = L("Tree support transition layers");
+    def->category = L("Support");
+    def->tooltip = L("Number of transition layers between tree support interface and support body. 0 disables transition layers. Bambu Studio uses 1 layer by default; Snapmaker recommends 2 layers for better adhesion with high-shrinkage materials like ABS/PC/PA.");
+    def->sidetext = L("layers");
+    def->min = 0;
+    def->max = 3;
+    def->mode = comAdvanced;
+    def->set_default_value(new ConfigOptionInt(2));
+
+    def = this->add("support_transition_perimeter", coBool);
+    def->label = L("Support transition perimeter");
+    def->category = L("Support");
+    def->tooltip = L("Generate a perimeter loop before transition layer infill for better surface connection. Recommended to keep enabled.");
+    def->mode = comAdvanced;
+    def->set_default_value(new ConfigOptionBool(true));
+
+    def = this->add("support_transition_speed", coFloats);
+    def->label = L("Support transition speed");
+    def->category = L("Speed");
+    def->tooltip = L("Independent printing speed for support transition layers. Lower speed improves layer adhesion. Different from bridge_speed which is for bridging over gaps.");
+    def->sidetext = L("mm/s");
+    def->min = 1;
+    def->mode = comAdvanced;
+    def->set_default_value(new ConfigOptionFloats { 50. });
+
+    def = this->add("support_transition_flow_ratio", coFloatOrPercent);
+    def->label = L("Support transition flow ratio");
+    def->category = L("Support");
+    def->tooltip = L("Flow ratio for support transition layers relative to normal support flow. Slightly lower than interface flow for a more natural transition. 0.85 = 85% of normal support flow.");
+    def->sidetext = L("%");
+    def->min = 0.1;
+    def->max = 2.0;
+    def->mode = comAdvanced;
+    def->set_default_value(new ConfigOptionFloatOrPercent(1.0, false));
 
     def = this->add("tree_support_angle_slow", coFloat);
     def->label = L("Preferred Branch Angle");
@@ -8202,6 +8266,15 @@ void PrintConfigDef::init_fff_params()
     def->min = 0;
     def->set_default_value(new ConfigOptionFloat(0.6));
 
+    // Default must not exceed the top_shell_layers default (4); the engine treats 0 as 1.
+    def = this->add("top_color_penetration_layers", coInt);
+    def->label = L("Top paint penetration layers");
+    def->category = L("Strength");
+    def->sidetext = L("layers");
+    def->tooltip = L("This is  the number of layers of top paint penetration.");
+    def->min = 0;
+    def->set_default_value(new ConfigOptionInt(4));
+
     def           = this->add("separated_infills", coBool);
     def->label    = L("Separated infills");
     def->category = L("Strength");
@@ -8420,8 +8493,8 @@ void PrintConfigDef::init_fff_params()
     def->set_default_value(new ConfigOptionFloat(30.0));
     
     def = this->add("wipe_tower_max_purge_speed", coFloat);
-    def->label = L("Maximum wipe tower print speed of out wall");
-    def->tooltip = L("Maximum wipe tower print speed of out wall.");
+    def->label = L("Max speed");
+    def->tooltip = L("The maximum printing speed on the prime tower excluding ramming.");
     def->sidetext = L("mm/s");	// millimeters per second, CIS languages need translation
     def->mode = comAdvanced;
     def->min = 10;
@@ -9962,6 +10035,11 @@ void PrintConfigDef::handle_legacy(t_config_option_key &opt_key, std::string &va
         opt_key = "infill_anchor";
     } else if (opt_key == "sparse_infill_anchor_max") {
         opt_key = "infill_anchor_max";
+    } else if (opt_key == "first_layer_travel_acceleration") {
+        // Upstream Snapmaker Orca name of the first layer travel acceleration and jerk.
+        opt_key = "initial_layer_travel_acceleration";
+    } else if (opt_key == "first_layer_travel_jerk") {
+        opt_key = "initial_layer_travel_jerk";
     } else if (opt_key == "chamber_temperatures") {
         opt_key = "chamber_temperature";
     } else if (opt_key == "thumbnail_size") {
@@ -10045,7 +10123,7 @@ void PrintConfigDef::handle_legacy(t_config_option_key &opt_key, std::string &va
         "max_volumetric_speed", "max_print_speed",
         "support_closing_radius",
         "remove_freq_sweep", "remove_bed_leveling", "remove_extrusion_calibration",
-        "support_transition_line_width", "support_transition_speed", "bed_temperature", "bed_temperature_initial_layer",
+        "support_transition_line_width", "bed_temperature", "bed_temperature_initial_layer",
         "can_switch_nozzle_type", "can_add_auxiliary_fan", "extra_flush_volume", "spaghetti_detector", "adaptive_layer_height",
         "z_hop_type", "z_lift_type", "bed_temperature_difference","long_retraction_when_cut",
         "retraction_distance_when_cut",
@@ -12799,6 +12877,13 @@ std::map<std::string, std::string> validate(const FullPrintConfig &cfg, bool und
     }
     if (cfg.bottom_shell_layers < 0) {
         error_message.emplace("bottom_shell_layers", L("invalid value ") + std::to_string(cfg.bottom_shell_layers));
+    }
+    // Negative penetration wraps to SIZE_MAX in the MMU loop; reject like the shell keys.
+    if (cfg.top_color_penetration_layers < 0) {
+        error_message.emplace("top_color_penetration_layers", L("invalid value ") + std::to_string(cfg.top_color_penetration_layers));
+    }
+    if (cfg.bottom_color_penetration_layers < 0) {
+        error_message.emplace("bottom_color_penetration_layers", L("invalid value ") + std::to_string(cfg.bottom_color_penetration_layers));
     }
 
     if (cfg.use_firmware_retraction.value &&

@@ -63,6 +63,7 @@ using namespace nlohmann;
 #include "libslic3r/FilamentFlowColumns.hpp"
 #include "libslic3r/PerHeadProcess.hpp"
 #include "libslic3r/SnapmakerFlowCompat.hpp"
+#include "libslic3r/ClipperUtils.hpp"
 #include "libslic3r/Geometry.hpp"
 #include "libslic3r/GCode.hpp"
 #include "libslic3r/Model.hpp"
@@ -5386,13 +5387,15 @@ int CLI::run(int argc, char **argv)
                     float tower_brim_width = m_print_config.option<ConfigOptionFloat>("prime_tower_brim_width", true)->value;
                     if (tower_brim_width < 0.f) tower_brim_width = 8.f; // auto: object heights unknown here, 8 mm is the auto cap
                     const float tower_margin = WIPE_TOWER_MARGIN + tower_brim_width;
+                    int plate_width = 0, plate_depth = 0;
+                    double plate_height = 0.;
+                    partplate_list.get_plate_size(plate_width, plate_depth, plate_height);
 
-                    // set the default position, the same with print config(left top)
+                    // set the default position: x the same with print config(left), y at the middle of the plate
                     float x = WIPE_TOWER_DEFAULT_X_POS;
-                    float y = WIPE_TOWER_DEFAULT_Y_POS;
+                    float y = plate_depth * 0.5f;
                     if (printer_structure_opt && printer_structure_opt->value == PrinterStructure::psI3) {
                         x = I3_WIPE_TOWER_DEFAULT_X_POS;
-                        y = I3_WIPE_TOWER_DEFAULT_Y_POS;
                     }
                     if (x < tower_margin) {
                         x = tower_margin;
@@ -5539,12 +5542,14 @@ int CLI::run(int argc, char **argv)
                 {
                     //prepare the wipe tower
                     auto printer_structure_opt = m_print_config.option<ConfigOptionEnum<PrinterStructure>>("printer_structure");
-                    // set the default position, the same with print config(left top)
+                    int plate_width = 0, plate_depth = 0;
+                    double plate_height = 0.;
+                    partplate_list.get_plate_size(plate_width, plate_depth, plate_height);
+                    // set the default position: x the same with print config(left), y at the middle of the plate
                     float x = WIPE_TOWER_DEFAULT_X_POS;
-                    float y = WIPE_TOWER_DEFAULT_Y_POS;
+                    float y = plate_depth * 0.5f;
                     if (printer_structure_opt && printer_structure_opt->value == PrinterStructure::psI3) {
                         x = I3_WIPE_TOWER_DEFAULT_X_POS;
-                        y = I3_WIPE_TOWER_DEFAULT_Y_POS;
                     }
                     if (x < WIPE_TOWER_MARGIN) {
                         x = WIPE_TOWER_MARGIN;
@@ -5712,12 +5717,14 @@ int CLI::run(int argc, char **argv)
                         float tower_brim_width = m_print_config.option<ConfigOptionFloat>("prime_tower_brim_width", true)->value;
                         if (tower_brim_width < 0.f) tower_brim_width = 8.f; // auto: object heights unknown here, 8 mm is the auto cap
                         const float tower_margin          = WIPE_TOWER_MARGIN + tower_brim_width;
-                        // set the default position, the same with print config(left top)
+                        int plate_width = 0, plate_depth = 0;
+                        double plate_height = 0.;
+                        partplate_list.get_plate_size(plate_width, plate_depth, plate_height);
+                        // set the default position: x the same with print config(left), y at the middle of the plate
                         float x = WIPE_TOWER_DEFAULT_X_POS;
-                        float y = WIPE_TOWER_DEFAULT_Y_POS;
+                        float y = plate_depth * 0.5f;
                         if (printer_structure_opt && printer_structure_opt->value == PrinterStructure::psI3) {
                             x = I3_WIPE_TOWER_DEFAULT_X_POS;
-                            y = I3_WIPE_TOWER_DEFAULT_Y_POS;
                         }
 
                         if (x < tower_margin) {
@@ -5821,11 +5828,13 @@ int CLI::run(int argc, char **argv)
                         float y;
                         if (duplicate_count > 0) {
                             auto printer_structure_opt = m_print_config.option<ConfigOptionEnum<PrinterStructure>>("printer_structure");
+                            int plate_width = 0, plate_depth = 0;
+                            double plate_height = 0.;
+                            partplate_list.get_plate_size(plate_width, plate_depth, plate_height);
                             x = WIPE_TOWER_DEFAULT_X_POS;
-                            y = WIPE_TOWER_DEFAULT_Y_POS;
+                            y = plate_depth * 0.5f;
                             if (printer_structure_opt && printer_structure_opt->value == PrinterStructure::psI3) {
                                 x = I3_WIPE_TOWER_DEFAULT_X_POS;
-                                y = I3_WIPE_TOWER_DEFAULT_Y_POS;
                             }
                         }
                         else {

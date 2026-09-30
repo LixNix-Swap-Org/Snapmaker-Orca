@@ -76,12 +76,10 @@ static const int PARTPLATE_TEXT_OFFSET_Y = 1;
 static const int PARTPLATE_PLATENAME_OFFSET_Y  = 10;
 
 const float WIPE_TOWER_DEFAULT_X_POS = 13.;
-const float WIPE_TOWER_DEFAULT_Y_POS = 214.5;  // Max y
 
 const float N9_WIPE_TOWER_DEFAULT_Y_POS = 160.;
 
 const float I3_WIPE_TOWER_DEFAULT_X_POS = 0.;
-const float I3_WIPE_TOWER_DEFAULT_Y_POS = 250.; // Max y
 
 std::array<unsigned char, 4>  PlateTextureForeground = {0x0, 0xae, 0x42, 0xff};
 
@@ -1474,8 +1472,9 @@ int PartPlate::picking_id_component(int idx) const
 
 static void expand_plate_extruders(std::vector<int>& ids)
 {
-	// No GUI application on the command line (wxTheApp is null there): nothing to expand.
-	if (wxTheApp == nullptr)
+	// No GUI application or preset bundle on the command line: nothing to expand, and
+	// filaments_cnt() would dereference a null preset bundle.
+	if (wxTheApp == nullptr || wxGetApp().preset_bundle == nullptr)
 		return;
 	const size_t num_physical = static_cast<size_t>(std::max(wxGetApp().filaments_cnt(), 0));
 	if (num_physical > 0) {
@@ -1836,66 +1835,6 @@ bool PartPlate::check_single_extruder_mixed_filament_risk(const DynamicPrintConf
     }
 
     return false;
-}
-
-bool PartPlate::check_mixture_of_pla_and_petg(const DynamicPrintConfig &config)
-{
-    bool has_pla = false;
-    bool has_petg = false;
-
-    // On a toolchanger (machine_tool_change_time > 0) each filament slot maps to a
-    // separate physical nozzle: only one nozzle is ever mounted or heated at a time, so
-    // there is no cross-nozzle contamination between PLA and PETG.  Track which physical
-    // nozzle each material is on; warn only when PLA and PETG would pass through the
-    // *same* nozzle.
-    //
-    // NOTE: if MMU-on-toolchanger support is added (#10586), the nozzle-mapping logic
-    // will need to be revisited because multiple filaments may then share one tool slot.
-    bool is_toolchanger = false;
-    auto *tool_change_time = config.option<ConfigOptionFloat>("machine_tool_change_time");
-    if (tool_change_time && tool_change_time->value > 0)
-        is_toolchanger = true;
-
-    // nozzle index → whether it carries PLA / PETG
-    std::map<int, bool> nozzle_has_pla;
-    std::map<int, bool> nozzle_has_petg;
-
-    std::vector<int> used_filaments = get_extruders(true); // 1-based
-    if (!used_filaments.empty()) {
-        const auto *filament_types = config.option<ConfigOptionStrings>("filament_type");
-        for (auto filament_idx : used_filaments) {
-            int filament_id = filament_idx - 1;
-            if (filament_id < (int)filament_types->values.size()) {
-                const std::string &filament_type = filament_types->values[filament_id];
-                if (filament_type == "PLA") {
-                    has_pla = true;
-                    nozzle_has_pla[filament_id] = true;
-                }
-                if (filament_type == "PETG") {
-                    has_petg = true;
-                    nozzle_has_petg[filament_id] = true;
-                }
-            } else {
-                BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << " check error:array bound";
-            }
-        }
-    }
-
-    if (!has_pla || !has_petg)
-        return true; // no mixture — no warning
-
-    if (is_toolchanger) {
-        // Warn only if any single nozzle slot carries both PLA and PETG (e.g. future MMU
-        // on toolchanger).  On a pure toolchanger each slot is independent, so this loop
-        // will never fire and the warning is correctly suppressed. (#12073)
-        for (const auto &kv : nozzle_has_pla) {
-            if (nozzle_has_petg.count(kv.first))
-                return false; // same nozzle → warn
-        }
-        return true; // different nozzles → safe, no warning
-    }
-
-    return false; // non-toolchanger with both PLA and PETG → warn
 }
 
 bool PartPlate::check_mixture_filament_compatible(const DynamicPrintConfig &config, std::string &error_msg)
@@ -2329,6 +2268,9 @@ Vec3d PartPlate::get_center_origin()
 
 void PartPlate::generate_plate_name_texture()
 {
+    // No GUI application or GL context on the command line: texture generation would crash.
+    if (wxTheApp == nullptr)
+        return;
 	auto canvas = this->m_partplate_list->m_plater->get_view3D_canvas3D();
 	if (canvas == nullptr)
 		return;
@@ -4251,13 +4193,11 @@ void PartPlateList::set_default_wipe_tower_pos_for_plate(int plate_idx, bool ini
     wipe_tower_y->values.resize(m_plate_list.size(), wipe_tower_y->values.front());
 
     auto printer_structure_opt = wxGetApp().preset_bundle->printers.get_edited_preset().config.option<ConfigOptionEnum<PrinterStructure>>("printer_structure");
-    // set the default position, the same with print config(left top)
+    // Default position: x the same as the print config (left), y at the middle of the plate.
     float x = WIPE_TOWER_DEFAULT_X_POS;
-    float y = WIPE_TOWER_DEFAULT_Y_POS;
-    if (printer_structure_opt && printer_structure_opt->value == PrinterStructure::psI3) {
+    float y = m_plate_depth * 0.5f;
+    if (printer_structure_opt && printer_structure_opt->value == PrinterStructure::psI3)
         x = I3_WIPE_TOWER_DEFAULT_X_POS;
-        y = I3_WIPE_TOWER_DEFAULT_Y_POS;
-    }
 
     std::string printer_type = wxGetApp().preset_bundle->printers.get_edited_preset().get_printer_type(wxGetApp().preset_bundle);
     // Note: printer_type == "N9" and printer_structure_opt->value == PrinterStructure::psI3 can both be true

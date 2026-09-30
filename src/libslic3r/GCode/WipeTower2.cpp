@@ -2823,7 +2823,7 @@ static WipeTower::ToolChangeResult merge_tcr(WipeTower::ToolChangeResult& first,
     assert(first.new_tool == second.initial_tool);
     WipeTower::ToolChangeResult out = first;
     out.is_contact = first.is_contact || second.is_contact;
-    if (first.end_pos != second.start_pos)
+    if ((first.end_pos - second.start_pos).norm() > float(EPSILON))
         out.gcode += "G1 X" + Slic3r::float_to_string_decimal_point(second.start_pos.x(), 3) + " Y" +
                      Slic3r::float_to_string_decimal_point(second.start_pos.y(), 3) + " F7200\n";
     out.gcode += second.gcode;
@@ -2832,6 +2832,11 @@ static WipeTower::ToolChangeResult merge_tcr(WipeTower::ToolChangeResult& first,
     out.wipe_path    = second.wipe_path;
     out.initial_tool = first.initial_tool;
     out.new_tool     = second.new_tool;
+    // The merged result keeps the toolchange's own entry position (the second part when the
+    // finish layer is printed first) and the purge volume of both parts.
+    if (first.is_finish_first && !second.is_finish_first)
+        out.tool_change_start_pos = second.tool_change_start_pos;
+    out.purge_volume += second.purge_volume;
     return out;
 }
 

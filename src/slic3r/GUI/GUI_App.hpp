@@ -718,6 +718,8 @@ private:
     void            check_web_version();
     void            check_preset_version();
     void            check_new_version_sf(bool show_tips = false, int by_user = 0);
+    // Gray release: POST /config/get (snapmaker-config) first, falls back to check_new_version_sf on failure
+    void            request_version_from_config(bool show_tips = false, int by_user = 0);
     bool            process_network_msg(std::string dev_id, std::string msg);
     void            enter_force_upgrade();
     void            set_skip_version(bool skip = true);
@@ -1182,8 +1184,10 @@ wxDECLARE_EVENT(EVT_UPDATE_BUNDLE_COMPLETE, wxCommandEvent);
 
 bool is_support_filament(int extruder_id, bool strict_check = true);
 bool is_soluble_filament(int extruder_id);
-// check if the filament for model is in the list
-bool has_filaments(const std::vector<std::string>& model_filaments);
+// Whether any model volume prints with one of the given filament types (mixed slots expanded).
+bool has_filaments(const std::vector<std::string>& filament_types);
+// Whether the 0-based support interface filament forms a PLA/PETG pair with a model material.
+bool check_pla_petg_support_pair(int extruder_id);
 } // namespace GUI
 } // Slic3r
 
