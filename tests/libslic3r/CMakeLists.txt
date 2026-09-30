@@ -3,6 +3,8 @@ get_filename_component(_TEST_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 add_executable(${_TEST_NAME}_tests
     ${_TEST_NAME}_tests.cpp
     test_3mf.cpp
+    # Round-trip seam metadata and active/dormant volume settings in both formats.
+    test_precise_seam_3mf.cpp
     test_aabbindirect.cpp
     test_appconfig.cpp
     test_arachne_walls.cpp
@@ -15,7 +17,10 @@ add_executable(${_TEST_NAME}_tests
     test_config.cpp
     test_config_variant_expansion.cpp
     test_custom_gcode.cpp
+    test_locales_utils.cpp
+    test_drc.cpp
     test_toolordering_nozzle_group.cpp
+    test_parallel_resolve.cpp
     test_preset_bundle_loading.cpp
     test_preset_setting_id.cpp
     test_preset_diff.cpp
@@ -44,6 +49,7 @@ add_executable(${_TEST_NAME}_tests
     test_snapmaker_flow_compat.cpp # Snapmaker Orca: older project layouts of the per flow type filament keys
     test_sswcp_protocol.cpp # Snapmaker Orca: device protocol conversion (upstream #807)
     test_snapmaker_hf_profiles.cpp # Snapmaker Orca: High Flow columns of the shipped U1 profiles
+    test_obj.cpp
     test_step.cpp
     test_stl.cpp
     test_triangle_selector.cpp
@@ -53,6 +59,7 @@ add_executable(${_TEST_NAME}_tests
     test_lay_on_face.cpp
     test_model.cpp
     test_utils.cpp
+    test_miniz_extension.cpp
     test_timeutils.cpp
     test_voronoi.cpp
     test_used_filaments.cpp # Snapmaker Orca: the filaments a plate counts before slicing
@@ -82,7 +89,9 @@ if (TARGET OpenVDB::openvdb)
     target_sources(${_TEST_NAME}_tests PRIVATE test_hollowing.cpp)
 endif()
 
-target_link_libraries(${_TEST_NAME}_tests test_common libslic3r Catch2::Catch2WithMain OpenSSL::Crypto)
+# libslic3r links Draco privately; test_drc.cpp encodes its own fixtures.
+find_package(Draco REQUIRED)
+target_link_libraries(${_TEST_NAME}_tests test_common libslic3r draco::draco Catch2::Catch2WithMain OpenSSL::Crypto)
 if (WIN32)
     target_link_libraries(${_TEST_NAME}_tests bcrypt.lib crypt32.lib)
 endif()

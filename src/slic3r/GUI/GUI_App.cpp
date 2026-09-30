@@ -1137,7 +1137,28 @@ void GUI_App::post_init()
         slow_bootup = true;
         BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << ", slow bootup, won't render gl here.";
     }
-    if (!switch_to_3d) {
+    // Starting on Home, the GL resources load at idle so Home paints first and Prepare is never
+    // shown.
+    const bool gl_at_idle = !starts_on_prepare() && is_editor();
+    if (!switch_to_3d && gl_at_idle) {
+#ifndef __linux__
+        mainframe->Freeze();
+#endif
+        // Snapmaker Orca: select_view_3D() also selects the Prepare tab. Prepare is made current without
+        // the page-changed event first, so that selection builds nothing, and Home is selected again.
+        // Rendering stays off meanwhile: a render of Prepare would load the GL resources right here.
+        plater_->canvas3D()->enable_render(false);
+        mainframe->select_prepare_for_gl_init();
+        plater_->select_view_3D("3D");
+        plater_->canvas3D()->enable_render(true);
+        if (m_url_open_pending)
+            BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << ", url open pending, staying on the 3D view";
+        else
+            mainframe->select_tab(TAB_ID_HOME);
+#ifndef __linux__
+        mainframe->Thaw();
+#endif
+    } else if (!switch_to_3d) {
         BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << ", begin load_gl_resources";
 #ifndef __linux__
         mainframe->Freeze();
@@ -1145,9 +1166,6 @@ void GUI_App::post_init()
         plater_->canvas3D()->enable_render(false);
         mainframe->select_prepare_for_gl_init();
         plater_->select_view_3D("3D");
-        // The first render happens before the queued new_project() sets the same view.
-        plater_->get_camera().select_view("topfront");
-        plater_->get_camera().requires_zoom_to_bed = true;
         //BBS init the opengl resource here
         if (!plater_->canvas3D()->get_wxglcanvas()->IsShownOnScreen() ||
             !plater_->canvas3D()->make_current_for_postinit()) {
@@ -1183,19 +1201,12 @@ void GUI_App::post_init()
                 BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << ", finished rendering a first frame for test";
             }
         }
-        // A pending URL open has already selected the 3D view; switching to the home page would undo it.
+        // A pending URL open has already selected the 3D view; a tab switch here would undo it.
         // On macOS the URL arrives later through MacOpenURL, so switch_to_3d above cannot see it.
-        if (m_url_open_pending) {
+        if (m_url_open_pending)
             BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << ", url open pending, staying on the 3D view";
-        } else {
-            // Selected synchronously: the GL init pass above went through
-            // select_prepare_for_gl_init(), which raises no page-changed event, so no
-            // EVT_GLVIEWTOOLBAR_3D is pending that could undo this selection.
-            if (starts_on_prepare())
-                mainframe->select_tab(TAB_ID_PREPARE);
-            else if (is_editor())
-                mainframe->select_tab(TAB_ID_HOME);
-        }
+        else if (starts_on_prepare())
+            mainframe->select_tab(TAB_ID_PREPARE);
 #ifndef __linux__
         mainframe->Thaw();
 #endif
@@ -1803,11 +1814,33 @@ int GUI_App::install_plugin(std::string name, std::string package_name, InstallP
                     size_t n = mz_zip_reader_get_extra(&archive, stat.m_file_index, extra.data(), extra.size());
                     dest_file = decode(extra.substr(0, n), stat.m_filename);
                 }
+                if (!is_path_within_root(dest_file, plugin_folder)) {
+                    BOOST_LOG_TRIVIAL(error) << "[install_plugin] entry " << dest_file << " resolves outside " << plugin_folder.string();
+                    close_zip_reader(&archive);
+                    if (pro_fn) { pro_fn(InstallStatusUnzipFailed, 0, cancel); }
+                    return InstallStatusUnzipFailed;
+                }
                 auto dest_path = plugin_folder / dest_file;
-                boost::filesystem::create_directories(dest_path.parent_path());
                 std::string dest_zip_file = encode_path(dest_path.string().c_str());
+#ifndef WIN32
+                // Validate a symlink's target before anything at the destination is replaced.
+                const bool is_link = S_ISLNK(stat.m_external_attr >> 16);
+                std::string link;
+                if (is_link) {
+                    link.assign(stat.m_uncomp_size, 0);
+                    if (!mz_zip_reader_extract_to_mem(&archive, stat.m_file_index, link.data(), stat.m_uncomp_size, 0) ||
+                        !is_symlink_target_within_root(dest_file, link, plugin_folder)) {
+                        BOOST_LOG_TRIVIAL(error) << "[install_plugin] link " << dest_file << " -> " << link << " is unreadable or resolves outside " << plugin_folder.string();
+                        close_zip_reader(&archive);
+                        if (pro_fn) { pro_fn(InstallStatusUnzipFailed, 0, cancel); }
+                        return InstallStatusUnzipFailed;
+                    }
+                }
+#endif
                 try {
-                    if (fs::exists(dest_path)) {
+                    boost::filesystem::create_directories(dest_path.parent_path());
+                    // symlink_status so that an existing symlink, dangling or not, is replaced rather than written through.
+                    if (fs::exists(fs::symlink_status(dest_path))) {
                         boost::system::error_code ec;
                         fs::remove(dest_path, ec);
                         if (ec) {
@@ -1835,9 +1868,8 @@ int GUI_App::install_plugin(std::string name, std::string package_name, InstallP
                     }
                     mz_bool res = 0;
 #ifndef WIN32
-                    if (S_ISLNK(stat.m_external_attr >> 16)) {
-                        std::string link(stat.m_uncomp_size + 1, 0);
-                        res = mz_zip_reader_extract_to_mem(&archive, stat.m_file_index, link.data(), stat.m_uncomp_size, 0);
+                    if (is_link) {
+                        res = 1;
                         try {
                             boost::filesystem::create_symlink(link, dest_path);
                         } catch (const std::exception &e) {
@@ -3893,6 +3925,10 @@ bool GUI_App::on_init_inner()
 
     BOOST_LOG_TRIVIAL(info) << "create the main window";
     mainframe = new MainFrame();
+    // The first render can happen as soon as the frame is shown, before the queued
+    // new_project() sets the same view.
+    plater_->get_camera().select_view("topfront");
+    plater_->get_camera().requires_zoom_to_bed = true;
     if (!m_updateDialog)
     {
         m_updateDialog = new UpdateVersionDialog(mainframe);
@@ -9003,10 +9039,12 @@ int GUI_App::input_idle_ms() const
     return int(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - m_last_input).count());
 }
 
-// Every wxCommandEvent claims the user-input category, so only real mouse and key events count.
+// Every wxCommandEvent claims the user-input category, so only real mouse and key events count,
+// plus main window resizes, since a border drag produces no mouse events.
 int GUI_App::FilterEvent(wxEvent& event)
 {
-    if (!event.IsCommandEvent() && (event.GetEventCategory() & wxEVT_CATEGORY_USER_INPUT))
+    if ((!event.IsCommandEvent() && (event.GetEventCategory() & wxEVT_CATEGORY_USER_INPUT)) ||
+        (event.GetEventType() == wxEVT_SIZE && event.GetEventObject() == mainframe))
         m_last_input = std::chrono::steady_clock::now();
     return Event_Skip;
 }

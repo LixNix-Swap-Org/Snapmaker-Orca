@@ -193,14 +193,16 @@ void ConfigManipulation::check_adaptive_pressure_advance_model(DynamicPrintConfi
         return;
 
     const auto* model = config->option<ConfigOptionStrings>("adaptive_pressure_advance_model");
-    if (model == nullptr || model->values.empty())
+    if (model == nullptr)
         return;
 
-    std::string raw_model;
-    for (const std::string& chunk : model->values)
-        raw_model += chunk;
-
-    std::string error = AdaptivePAProcessor::validate_adaptive_pa_model(raw_model);
+    // Each extruder variant holds its own model.
+    std::string error;
+    for (const std::string& variant_model : model->values) {
+        error = AdaptivePAProcessor::validate_adaptive_pa_model(variant_model);
+        if (!error.empty())
+            break;
+    }
     if (!error.empty()) {
         wxString msg_text = _L("Adaptive Pressure Advance model validation failed:\n");
         msg_text += from_u8(error);
@@ -1108,6 +1110,8 @@ void ConfigManipulation::toggle_print_fff_options(DynamicPrintConfig *config, in
 
     // Orca: both tower generators skip sparse layers, so this is not a wipe tower 2 exclusive.
     toggle_line("wipe_tower_no_sparse_layers", have_prime_tower);
+    // Dropping the sparse layers outright leaves nothing to combine, so the two are exclusive.
+    toggle_line("wipe_tower_sparse_layers_combination", have_prime_tower && !config->opt_bool("wipe_tower_no_sparse_layers"));
 
     const bool local_z_dithering_enabled =
         config->has("dithering_local_z_mode") && config->option("dithering_local_z_mode") != nullptr &&
