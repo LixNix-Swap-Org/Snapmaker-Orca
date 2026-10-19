@@ -291,6 +291,12 @@ set(lisbslic3r_sources
     GCode/WipeTowerEstimate.hpp
     GCodeWriter.cpp
     GCodeWriter.hpp
+    GPU/GPU.cpp
+    GPU/GPU.hpp
+    GPU/OpenCL.hpp
+    GPU/SliceLines.cl
+    GPU/SliceLines.cpp
+    GPU/SliceLines.hpp
     Geometry/ArcWelder.hpp
     Geometry/ArcWelder.cpp
     Geometry/Bicubic.hpp
@@ -787,6 +793,27 @@ endif ()
 
 if (SLIC3R_PCH AND NOT SLIC3R_SYNTAXONLY)
     add_precompiled_header(libslic3r pchheader.hpp FORCEINCLUDE)
+endif ()
+
+# Embedded as text, not compiled.
+set_source_files_properties(GPU/SliceLines.cl PROPERTIES HEADER_FILE_ONLY ON)
+# Only these files see the OpenCL headers; the library is loaded at run time.
+if (SLIC3R_GPU)
+    set_source_files_properties(GPU/GPU.cpp GPU/SliceLines.cpp PROPERTIES
+        COMPILE_DEFINITIONS SLIC3R_GPU
+        INCLUDE_DIRECTORIES "$<TARGET_PROPERTY:opencl_headers,INTERFACE_INCLUDE_DIRECTORIES>"
+        SKIP_PRECOMPILE_HEADERS ON)
+    # Kernel source as string literals of at most 12000 characters (MSVC takes 16 KB per literal).
+    file(READ ${CMAKE_CURRENT_SOURCE_DIR}/GPU/SliceLines.cl _cl_src)
+    string(LENGTH "${_cl_src}" _cl_len)
+    set(_cl_inc "")
+    foreach (_cl_pos RANGE 0 ${_cl_len} 12000)
+        string(SUBSTRING "${_cl_src}" ${_cl_pos} 12000 _cl_piece)
+        string(APPEND _cl_inc "R\"CLC(${_cl_piece})CLC\"\n")
+    endforeach ()
+    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/GPU/SliceLines.cl.tmp "${_cl_inc}")
+    configure_file(${CMAKE_CURRENT_BINARY_DIR}/GPU/SliceLines.cl.tmp ${CMAKE_CURRENT_BINARY_DIR}/GPU/SliceLines.cl.inc COPYONLY)
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/GPU/SliceLines.cl)
 endif ()
 
 # Sentry crash reporting integration

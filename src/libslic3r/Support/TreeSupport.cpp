@@ -914,21 +914,6 @@ void TreeSupport::detect_overhangs(bool check_support_necessity/* = false*/)
             }
         });
 
-    // Cumulative object outlines below each layer, used by the BigFlat/ThinPlate classification and the
-    // deep small-overhang check. Computed here because m_ts_data is not allocated yet.
-    std::vector<ExPolygons> layer_outlines_below;
-    layer_outlines_below.reserve(m_object->layer_count());
-    for (size_t layer_nr = 0; layer_nr < m_object->layer_count(); layer_nr++) {
-        const Layer* layer = m_object->get_layer(layer_nr);
-        ExPolygons outline;
-        for (const ExPolygon& poly : layer->lslices)
-            poly.simplify(scale_(radius_sample_resolution), &outline);
-        if (layer_nr == 0)
-            layer_outlines_below.push_back(outline);
-        else
-            layer_outlines_below.push_back(union_ex(layer_outlines_below[layer_nr - 1], outline));
-    }
-
     // Enforcers and blockers are sliced before overhang detection so that enforcer overhangs join the
     // normal overhang stream and go through the cross-layer OverhangCluster merge.
     auto enforcers = m_object->slice_support_enforcers();
@@ -1130,6 +1115,10 @@ void TreeSupport::detect_overhangs(bool check_support_necessity/* = false*/)
     BOOST_LOG_TRIVIAL(info) << "max_cantilever_dist=" << max_cantilever_dist;
     if (check_support_necessity)
         return;
+
+    // Cumulative outlines below each layer, built here and reused by generate().
+    m_ts_data = m_object->alloc_tree_support_preview_cache();
+    const std::vector<ExPolygons> &layer_outlines_below = m_ts_data->m_layer_outlines_below;
 
     // check if the sharp tails should be extended higher
     if (is_auto(stype) && config_detect_sharp_tails) {
@@ -1401,6 +1390,11 @@ void TreeSupport::detect_overhangs(bool check_support_necessity/* = false*/)
     }
 
     BOOST_LOG_TRIVIAL(info) << "Tree support overhang detection done. " << layers_with_overhangs << " layers with overhangs. nEnforced=" << layers_with_enforcers;
+    // The organic generator keeps no tree support cache.
+    if (m_support_params.support_style == smsTreeOrganic) {
+        m_ts_data.reset();
+        m_object->clear_tree_support_preview_cache();
+    }
 
 #ifdef SUPPORT_TREE_DEBUG_TO_SVG
     for (const Layer* layer : m_object->layers()) {
@@ -2110,37 +2104,13 @@ int TreeSupport::num_transition_layers() const
     return std::clamp(m_object_config->tree_support_transition_layers.value, 0, 3);
 }
 
-ExPolygons TreeSupport::get_avoidance(coordf_t radius, size_t obj_layer_nr)
+const ExPolygons& TreeSupport::get_avoidance(coordf_t radius, size_t obj_layer_nr)
 {
-#if USE_SUPPORT_3D
-    if (m_model_volumes) {
-        bool on_build_plate = m_object_config->support_on_build_plate_only.value;
-        const Polygons& avoid_polys = m_model_volumes->getAvoidance(radius, obj_layer_nr, TreeSupport3D::TreeModelVolumes::AvoidanceType::FastSafe, on_build_plate, true);
-        ExPolygons expolys;
-        for (auto& poly : avoid_polys)
-            expolys.emplace_back(std::move(poly));
-        return expolys;
-    }
-    return ExPolygons();
-#else
     return m_ts_data->get_avoidance(radius, obj_layer_nr);
-#endif
 }
-ExPolygons TreeSupport::get_collision(coordf_t radius, size_t layer_nr)
+const ExPolygons& TreeSupport::get_collision(coordf_t radius, size_t layer_nr)
 {
-#if USE_SUPPORT_3D
-    if (m_model_volumes) {
-        bool on_build_plate = m_object_config->support_on_build_plate_only.value;
-        const Polygons& collision_polys = m_model_volumes->getCollision(radius, layer_nr, true);
-        ExPolygons expolys;
-        for (auto& poly : collision_polys)
-            expolys.emplace_back(std::move(poly));
-        return expolys;
-    }
-#else
     return m_ts_data->get_collision(radius, layer_nr);
-#endif
-    return ExPolygons();
 }
 Polygons TreeSupport::get_collision_polys(coordf_t radius, size_t layer_nr)
 {
@@ -2314,6 +2284,26 @@ void TreeSupport::draw_circles()
     if (m_object->support_layer_count() <= m_raft_layers)
         return;
     BOOST_LOG_TRIVIAL(info) << "draw_circles for object: " << m_object->model_object()->name;
+
+    // Top and bottom surfaces of each object layer for the bottom contact search, with bounding boxes.
+    struct ContactSurfaces
+    {
+        Polygons                 polys;
+        std::vector<BoundingBox> bboxes;
+    };
+    std::vector<ContactSurfaces> contact_surfaces;
+    if (! on_buildplate_only && (bottom_gap_height > EPSILON || bottom_interface_layers > 0)) {
+        contact_surfaces.resize(m_object->layer_count());
+        tbb::parallel_for(tbb::blocked_range<size_t>(0, contact_surfaces.size()), [&](const tbb::blocked_range<size_t> &range) {
+            for (size_t idx = range.begin(); idx < range.end(); ++ idx) {
+                ContactSurfaces &cs = contact_surfaces[idx];
+                cs.polys = collect_region_slices_by_type(*m_object->get_layer(idx), stTop);
+                polygons_append(cs.polys, collect_region_slices_by_type(*m_object->get_layer(idx), stBottom));
+                for (const Polygon &poly : cs.polys)
+                    cs.bboxes.emplace_back(get_extents(poly));
+            }
+        });
+    }
 
     tbb::parallel_for(tbb::blocked_range<size_t>(0, m_ts_data->layer_heights.size()),
         [&](const tbb::blocked_range<size_t>& range)
@@ -2531,26 +2521,23 @@ void TreeSupport::draw_circles()
                     ExPolygons new_floor_areas;
                     struct ContactBand {
                         coordf_t z = 0.0;
-                        Polygons surfaces;
+                        const Polygons *surfaces = nullptr;
                     };
                     for (const ExPolygon& comp : base_areas) {
                         ExPolygons comp_poly { comp };
+                        const BoundingBox comp_bbox = get_extents(comp);
                         bool found_contact = false;
                         std::vector<ContactBand> bands;
 
                         // Search downward for object layers whose TOP/BOTTOM surfaces intersect this component.
                         for (size_t idx = obj_layer_nr + 1; idx-- > 0;) {
-                            const Layer* below_layer = m_object->get_layer(idx);
-                            Polygons top_surfaces = collect_region_slices_by_type(*below_layer, stTop);
-                            Polygons bottom_surfaces = collect_region_slices_by_type(*below_layer, stBottom);
-                            Polygons surf_union = top_surfaces;
-                            polygons_append(surf_union, bottom_surfaces);
-                            if (surf_union.empty())
+                            const ContactSurfaces &cs = contact_surfaces[idx];
+                            if (std::none_of(cs.bboxes.begin(), cs.bboxes.end(), [&comp_bbox](const BoundingBox &bbox) { return bbox.overlap(comp_bbox); }))
                                 continue;
 
-                            ExPolygons inter = intersection_ex(comp_poly, surf_union);
+                            ExPolygons inter = intersection_ex(comp_poly, cs.polys);
                             if (!inter.empty()) {
-                                bands.push_back(ContactBand{ below_layer->print_z, std::move(surf_union) });
+                                bands.push_back(ContactBand{ m_object->get_layer(idx)->print_z, &cs.polys });
                                 found_contact = true;
                             }
                         }
@@ -2580,7 +2567,7 @@ void TreeSupport::draw_circles()
                             // Inside the gap: remove only the part overlapping the contact surface, keep the rest.
                             if (bottom_gap_height > EPSILON && layer_bottom_z < band_gap_top - EPSILON) {
                                 any_gap_cleared = true;
-                                comp_poly = diff_ex(comp_poly, band.surfaces);
+                                comp_poly = diff_ex(comp_poly, *band.surfaces);
                             }
 
                             // Overlaps interface band
@@ -2605,7 +2592,7 @@ void TreeSupport::draw_circles()
                                     interface_id_set = true;
                                 }
 
-                                ExPolygons band_ex = union_ex(band.surfaces);
+                                ExPolygons band_ex = union_ex(*band.surfaces);
                                 if (!band_ex.empty()) {
                                     const coordf_t margin = scale_(m_support_params.support_extrusion_width);
                                     ExPolygons comp_margin = offset_ex(comp_poly, margin);
@@ -3205,7 +3192,7 @@ void TreeSupport::drop_nodes()
                     //Insert a completely new node and let both original nodes fade.
                     Point next_position = (node.position + neighbours[0]) / 2; //Average position of the two nodes.
                     coordf_t next_radius = calc_radius(node.dist_mm_to_top+height_next);
-                    auto avoid_layer = get_avoidance(next_radius, obj_layer_nr_next);
+                    const ExPolygons &avoid_layer = get_avoidance(next_radius, obj_layer_nr_next);
                     if (group_index == 0)
                     {
                         //Avoid collisions.
@@ -3439,7 +3426,7 @@ void TreeSupport::drop_nodes()
                 }
 #endif
                 coordf_t next_radius = calc_radius(node.dist_mm_to_top + height_next);
-                auto avoidance_next = get_avoidance(next_radius, obj_layer_nr_next);
+                const ExPolygons &avoidance_next = get_avoidance(next_radius, obj_layer_nr_next);
 
                 Point  to_outside         = projection_onto(avoidance_next, node.position);
                 Point  direction_to_outer = to_outside - node.position;
@@ -3505,7 +3492,7 @@ void TreeSupport::drop_nodes()
                         if (is_outside) { next_layer_vertex = candidate_vertex; }
                     }
                 }
-                auto              next_collision = get_collision(0, obj_layer_nr_next);
+                const ExPolygons &next_collision = get_collision(0, obj_layer_nr_next);
                 const bool   to_buildplate  = !is_inside_ex(m_ts_data->m_layer_outlines[obj_layer_nr_next], next_layer_vertex);
                 // don't increase radius if next node will collide partially with the object (STUDIO-7883)
                 to_outside             = projection_onto(next_collision, next_layer_vertex);
@@ -3606,8 +3593,12 @@ void TreeSupport::drop_nodes()
                     }
                     if (i_node->child) {
                         i_node->child->parent = i_node->parent;
-                        i_node->child->parents.erase(std::find(i_node->child->parents.begin(), i_node->child->parents.end(), i_node));
-                        append(i_node->child->parents, i_node->parents);
+                        // A child no longer listing this node had it pruned before.
+                        std::vector<SupportNode*> &siblings = i_node->child->parents;
+                        if (auto it = std::find(siblings.begin(), siblings.end(), i_node); it != siblings.end()) {
+                            siblings.erase(it);
+                            append(siblings, i_node->parents);
+                        }
                     }
                     i_node->is_processed = true;  // mark to be deleted later
 

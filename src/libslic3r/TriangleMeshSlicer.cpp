@@ -1,5 +1,7 @@
 #include "ClipperUtils.hpp"
 #include "Geometry.hpp"
+#include "GPU/GPU.hpp"
+#include "GPU/SliceLines.hpp"
 #include "Tesselate.hpp"
 #include "TriangleMesh.hpp"
 #include "TriangleMeshSlicer.hpp"
@@ -8,8 +10,13 @@
 #include "MeshBoolean.hpp"
 
 #include <algorithm>
+#include <atomic>
+#include <chrono>
 #include <cmath>
+#include <cstdio>
 #include <deque>
+#include <iterator>
+#include <limits>
 #include <queue>
 #include <mutex>
 #include <tuple>
@@ -18,6 +25,7 @@
 #include <boost/log/trivial.hpp>
 
 #include <tbb/parallel_for.h>
+#include <tbb/task_arena.h>
 
 #ifndef NDEBUG
 //    #define EXPENSIVE_DEBUG_CHECKS
@@ -587,6 +595,22 @@ void slice_facet_at_zs(
     }
 }
 
+static bool line_less(const IntersectionLine &l, const IntersectionLine &r)
+{
+    return std::make_tuple(l.edge_a_id, l.edge_b_id, l.a_id, l.b_id, l.a.x(), l.a.y(), l.b.x(), l.b.y(), l.edge_type, l.flags) <
+           std::make_tuple(r.edge_a_id, r.edge_b_id, r.a_id, r.b_id, r.a.x(), r.a.y(), r.b.x(), r.b.y(), r.edge_type, r.flags);
+}
+
+// Thread-independent line order: make_loops() takes island order and loop starts from it.
+static void sort_lines(std::vector<IntersectionLines> &lines)
+{
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, lines.size()),
+        [&lines](const tbb::blocked_range<size_t> &range) {
+            for (size_t i = range.begin(); i < range.end(); ++ i)
+                std::sort(lines[i].begin(), lines[i].end(), line_less);
+        });
+}
+
 template<typename TransformVertex, typename ThrowOnCancel>
 static inline std::vector<IntersectionLines> slice_make_lines(
     const std::vector<stl_vertex>                   &vertices,
@@ -608,17 +632,7 @@ static inline std::vector<IntersectionLines> slice_make_lines(
             }
         }
     );
-    // Facet processing above is parallel, so per-layer line order depends on thread scheduling,
-    // and make_loops() derives island order and loop start vertices from it. Sort canonically;
-    // edge_type and flags only break ties, std::sort being unstable.
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, lines.size()),
-        [&lines](const tbb::blocked_range<size_t> &range) {
-            for (size_t i = range.begin(); i < range.end(); ++ i)
-                std::sort(lines[i].begin(), lines[i].end(), [](const IntersectionLine &l, const IntersectionLine &r) {
-                    return std::make_tuple(l.edge_a_id, l.edge_b_id, l.a_id, l.b_id, l.a.x(), l.a.y(), l.b.x(), l.b.y(), l.edge_type, l.flags) <
-                           std::make_tuple(r.edge_a_id, r.edge_b_id, r.a_id, r.b_id, r.a.x(), r.a.y(), r.b.x(), r.b.y(), r.edge_type, r.flags);
-                });
-        });
+    sort_lines(lines);
     return lines;
 }
 
@@ -1965,6 +1979,173 @@ static std::vector<stl_vertex> transform_mesh_vertices_for_slicing(const indexed
     return out;
 }
 
+// slice_facet()'s interpolation here: 1 fused into an fma, 0 rounded first, -1 unknown (no GPU).
+static int host_fma_mode()
+{
+    static const int mode = [] {
+        // Samples whose fused and twice rounded results differ.
+        static const struct { float a, b; double t; } samples[] = {
+            { -215309536.f, 44854720.f, 0.16903409090909091 }, { 69124224.f, -134234848.f, 0.54492324050337915 },
+            { 126458976.f, -225986656.f, 0.73473053994324999 }, { 256123328.f, -168031456.f, 0.54597690568544899 },
+            { 231962112.f, -168509792.f, 0.8133055409050618 },  { 130167648.f, -125801568.f, 0.85402960526315785 },
+            { -273212928.f, 120161760.f, 0.5066964285714286 },  { -13844448.f, 161091808.f, 0.89935661764705888 } };
+        size_t fused = 0, rounded = 0;
+        for (const auto &sample : samples) {
+            const volatile float  va = sample.a, vb = sample.b;
+            const volatile double vt = sample.t;
+            const float  ax = va, bx = vb;
+            const double t  = vt;
+            // The expression of slice_facet().
+            const double    host    = double(bx) + (double(ax) - double(bx)) * t + 0.5;
+            volatile double product = (double(ax) - double(bx)) * t;
+            fused   += host == std::fma(double(ax) - double(bx), t, double(bx)) + 0.5;
+            rounded += host == double(bx) + product + 0.5;
+        }
+        return fused == std::size(samples) ? 1 : rounded == std::size(samples) ? 0 : -1;
+    }();
+    return mode;
+}
+
+// slice_make_lines() on the GPU; false leaves lines empty for the CPU.
+static bool gpu_slice_make_lines(const std::vector<stl_vertex> &vertices, const std::vector<stl_triangle_vertex_indices> &indices,
+                                 const std::vector<Vec3i32> &face_edge_ids, const std::vector<float> &zs,
+                                 std::vector<IntersectionLines> &lines, const std::function<void()> &throw_on_cancel)
+{
+    if (! gpu::enabled() || host_fma_mode() < 0 || indices.empty() || zs.empty())
+        return false;
+    // Coordinates must fit the int32 records; denormals could differ on devices flushing them.
+    auto normal = [](float f) { return std::isfinite(f) && (f == 0.f || std::abs(f) >= std::numeric_limits<float>::min()); };
+    std::atomic<bool> supported { std::all_of(zs.begin(), zs.end(), normal) };
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, vertices.size()), [&](const tbb::blocked_range<size_t> &range) {
+        for (size_t i = range.begin(); i < range.end() && supported; ++ i)
+            if (const stl_vertex &v = vertices[i]; ! (std::abs(v.x()) < 1e9f && std::abs(v.y()) < 1e9f && normal(v.x()) && normal(v.y()) && normal(v.z())))
+                supported = false;
+    });
+    if (! supported)
+        return false;
+    // The planes of each facet, as slice_facet_at_zs() finds them.
+    std::vector<uint32_t> first(indices.size()), offset(indices.size() + 1, 0);
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, indices.size()), [&](const tbb::blocked_range<size_t> &range) {
+        for (size_t f = range.begin(); f < range.end(); ++ f) {
+            const stl_triangle_vertex_indices &t = indices[f];
+            const float min_z = fminf(vertices[t(0)].z(), fminf(vertices[t(1)].z(), vertices[t(2)].z()));
+            const float max_z = fmaxf(vertices[t(0)].z(), fmaxf(vertices[t(1)].z(), vertices[t(2)].z()));
+            const auto  lo    = std::lower_bound(zs.begin(), zs.end(), min_z);
+            first[f]          = uint32_t(lo - zs.begin());
+            offset[f + 1]     = min_z == max_z ? 0 : uint32_t(std::upper_bound(lo, zs.end(), max_z) - lo);
+        }
+    });
+    uint64_t total = 0;
+    for (size_t f = 1; f < offset.size(); ++ f)
+        offset[f] = uint32_t(total += offset[f]);
+    if (total >= (uint64_t(1) << 31))
+        return false;
+    static_assert(sizeof(stl_vertex) == 12 && sizeof(stl_triangle_vertex_indices) == 12 && sizeof(Vec3i32) == 12);
+    gpu::SliceLinesJob job;
+    // Room for every record of a plane, so the chunks append without moving lines.
+    job.prepare = [&] {
+        std::vector<int64_t> planes(zs.size() + 1, 0);
+        for (size_t f = 0; f < indices.size(); ++ f) {
+            ++ planes[first[f]];
+            -- planes[first[f] + offset[f + 1] - offset[f]];
+        }
+        lines.assign(zs.size(), IntersectionLines());
+        int64_t covering = 0;
+        for (size_t i = 0; i < zs.size(); ++ i)
+            lines[i].reserve(size_t(covering += planes[i]));
+    };
+    job.vertices        = vertices.front().data();
+    job.num_vertices    = vertices.size();
+    job.indices         = indices.front().data();
+    job.num_faces       = indices.size();
+    job.zs              = zs.data();
+    job.num_zs          = zs.size();
+    job.first           = first.data();
+    job.offset          = offset.data();
+    job.host_fma        = host_fma_mode() == 1;
+    job.throw_on_cancel = throw_on_cancel;
+    // Facet ranges of equal record counts, each counting its own slots per plane: no shared counters.
+    job.decode = [&](uint32_t f0, uint32_t f1, const int32_t *pts, const uint32_t *codes) {
+        const uint32_t        step = std::max<uint32_t>(4096, (offset[f1] - offset[f0]) / uint32_t(2 * tbb::this_task_arena::max_concurrency()));
+        std::vector<uint32_t> bounds { f0 };
+        for (uint32_t b = f0; b < f1; bounds.push_back(b))
+            b = std::max(b + 1, uint32_t(std::upper_bound(offset.begin() + b + 1, offset.begin() + f1 + 1, offset[b] + step) - offset.begin()) - 1);
+        const size_t          ranges = bounds.size() - 1, planes = zs.size();
+        std::vector<uint32_t> slot(ranges * planes, 0);
+        auto for_records = [&](auto &&fn) {
+            tbb::parallel_for(size_t(0), ranges, [&](size_t t) {
+                uint32_t *row = slot.data() + t * planes;
+                for (uint32_t f = bounds[t]; f < bounds[t + 1]; ++ f)
+                    for (uint32_t r = offset[f], plane = first[f]; r < offset[f + 1]; ++ r, ++ plane)
+                        if (codes[r - offset[f0]] & 1)
+                            fn(row[plane], f, r, plane);
+            });
+        };
+        for_records([](uint32_t &n, uint32_t, uint32_t, size_t) { ++ n; });
+        std::atomic<size_t> made { 0 };
+        tbb::parallel_for(tbb::blocked_range<size_t>(0, planes), [&](const tbb::blocked_range<size_t> &range) {
+            size_t n = 0;
+            for (size_t i = range.begin(); i < range.end(); ++ i) {
+                const size_t old = lines[i].size();
+                size_t       at  = old;
+                for (size_t t = 0; t < ranges; ++ t)
+                    at += std::exchange(slot[t * planes + i], uint32_t(at));
+                lines[i].resize(at);
+                n += at - old;
+            }
+            made += n;
+        });
+        for_records([&](uint32_t &at, uint32_t f, uint32_t r, size_t slice_id) {
+            const uint32_t   code = codes[r - offset[f0]];
+            const int32_t   *p    = pts + 4 * size_t(r - offset[f0]);
+            IntersectionLine &il  = lines[slice_id][at ++];
+            il.a         = Point(p[0], p[1]);
+            il.b         = Point(p[2], p[3]);
+            il.a_id      = (code >> 2 & 3) == 3 ? -1 : indices[f](code >> 2 & 3);
+            il.b_id      = (code >> 4 & 3) == 3 ? -1 : indices[f](code >> 4 & 3);
+            il.edge_a_id = (code >> 6 & 3) == 3 ? -1 : face_edge_ids[f](code >> 6 & 3);
+            il.edge_b_id = (code >> 8 & 3) == 3 ? -1 : face_edge_ids[f](code >> 8 & 3);
+            il.edge_type = (code & 2) ? IntersectionLine::FacetEdgeType::Top : IntersectionLine::FacetEdgeType::General;
+        });
+        return made.load();
+    };
+    job.sort = [&lines] { sort_lines(lines); };
+    gpu::SliceLinesCall call;
+    if (! call.run(job)) {
+        lines.clear();
+        return false;
+    }
+    if (call.verify()) {
+        const auto t0  = std::chrono::steady_clock::now();
+        std::vector<IntersectionLines> cpu = slice_make_lines(vertices, [](const Vec3f &p) { return p; }, indices, face_edge_ids, zs, throw_on_cancel);
+        const double cpu_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
+        size_t  mismatches = 0, total_lines = 0;
+        coord_t max_diff   = 0;
+        for (size_t i = 0; i < cpu.size(); ++ i) {
+            total_lines += cpu[i].size();
+            if (cpu[i].size() != lines[i].size()) {
+                mismatches += std::max(cpu[i].size(), lines[i].size());
+                continue;
+            }
+            for (size_t j = 0; j < cpu[i].size(); ++ j) {
+                const IntersectionLine &c = cpu[i][j], &g = lines[i][j];
+                if (line_less(c, g) || line_less(g, c)) {
+                    ++ mismatches;
+                    max_diff = std::max({ max_diff, std::abs(c.a.x() - g.a.x()), std::abs(c.a.y() - g.a.y()),
+                                          std::abs(c.b.x() - g.b.x()), std::abs(c.b.y() - g.b.y()) });
+                }
+            }
+        }
+        char mismatch[128];
+        std::snprintf(mismatch, sizeof(mismatch), "%zu of %zu lines, max %lld nm", mismatches, total_lines, (long long)max_diff);
+        call.finish(mismatches, cpu_ms, mismatch);
+        if (mismatches > 0)
+            lines = std::move(cpu);
+    } else
+        call.finish(0, 0., {});
+    return true;
+}
+
 std::vector<Polygons> slice_mesh(
     const indexed_triangle_set       &mesh,
     // Unscaled Zs
@@ -1998,9 +2179,9 @@ std::vector<Polygons> slice_mesh(
             }
         } else {
             // Copy and scale vertices in XY, don't scale in Z. Possibly apply the transformation.
-            lines = slice_make_lines(
-                transform_mesh_vertices_for_slicing(mesh, params.trafo), 
-                [](const Vec3f &p) { return p; },  mesh.indices, face_edge_ids, zs, throw_on_cancel);
+            const std::vector<stl_vertex> vertices = transform_mesh_vertices_for_slicing(mesh, params.trafo);
+            if (! gpu_slice_make_lines(vertices, mesh.indices, face_edge_ids, zs, lines, throw_on_cancel))
+                lines = slice_make_lines(vertices, [](const Vec3f &p) { return p; }, mesh.indices, face_edge_ids, zs, throw_on_cancel);
         }
     }
 

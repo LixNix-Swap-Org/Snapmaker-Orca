@@ -13606,6 +13606,11 @@ CLIMiscConfigDef::CLIMiscConfigDef()
     def->cli_params = "file";
     def->set_default_value(new ConfigOptionString());
 
+    def = this->add("gpu", coBool);
+    def->label = L("GPU");
+    def->tooltip = L("Use the GPU where supported.");
+    def->set_default_value(new ConfigOptionBool(false));
+
     def = this->add("enable_timelapse", coBool);
     def->label = L("Enable timelapse for print");
     def->tooltip = L("If enabled, this slicing will be considered using timelapse.");

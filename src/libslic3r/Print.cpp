@@ -20,6 +20,7 @@
 #include "Thread.hpp"
 #include "Time.hpp"
 #include "GCode.hpp"
+#include "GPU/GPU.hpp"
 #include "GCode/WipeTower.hpp"
 #include "GCode/WipeTower2.hpp"
 #include "GCode/WipeTowerEstimate.hpp"
@@ -4062,6 +4063,7 @@ void Print::process(long long *time_cost_with_cache, bool use_cache)
     long long start_time = 0, end_time = 0;
     if (time_cost_with_cache)
         *time_cost_with_cache = 0;
+    gpu::reset_steps();
 
     {
         const auto* sp = this->config().option<ConfigOptionStrings>("slicing_pipeline_plugin");
@@ -4216,7 +4218,10 @@ void Print::process(long long *time_cost_with_cache, bool use_cache)
         for (PrintObject *obj : m_objects) {
             if (need_slicing_objects.count(obj) != 0) {
                 const bool was_done = obj->is_step_done(posPerimeters);
-                obj->make_perimeters();   // slice() inside is a no-op: posSlice already DONE
+                {
+                    gpu::StepTimer timer("perimeters");
+                    obj->make_perimeters();   // slice() inside is a no-op: posSlice already DONE
+                }
                 hook_after(obj, was_done, posPerimeters, SlicingPipelineStepPlugin::posPerimeters);
             } else {
                 if (obj->set_started(posPerimeters)) obj->set_done(posPerimeters);
@@ -4225,7 +4230,10 @@ void Print::process(long long *time_cost_with_cache, bool use_cache)
         for (PrintObject *obj : m_objects) {
             if (need_slicing_objects.count(obj) != 0) {
                 const bool was_done = obj->is_step_done(posEstimateCurledExtrusions);
-                obj->estimate_curled_extrusions();
+                {
+                    gpu::StepTimer timer("curled");
+                    obj->estimate_curled_extrusions();
+                }
                 hook_after(obj, was_done, posEstimateCurledExtrusions, SlicingPipelineStepPlugin::posEstimateCurledExtrusions);
             }
             else {
@@ -4241,10 +4249,16 @@ void Print::process(long long *time_cost_with_cache, bool use_cache)
                 // built). infill() re-invokes prepare_infill() as a no-op once posPrepareInfill
                 // is DONE, so this is a mechanical split mirroring the slice/perimeters loop.
                 const bool prepare_was_done = obj->is_step_done(posPrepareInfill);
-                obj->prepare_infill();
+                {
+                    gpu::StepTimer timer("prepare_infill");
+                    obj->prepare_infill();
+                }
                 hook_after(obj, prepare_was_done, posPrepareInfill, SlicingPipelineStepPlugin::posPrepareInfill);
                 const bool was_done = obj->is_step_done(posInfill);
-                obj->infill();
+                {
+                    gpu::StepTimer timer("infill");
+                    obj->infill();
+                }
                 hook_after(obj, was_done, posInfill, SlicingPipelineStepPlugin::posInfill);
             }
             else {
@@ -4286,20 +4300,23 @@ void Print::process(long long *time_cost_with_cache, bool use_cache)
             for (size_t i = 0; i < m_objects.size(); ++i)
                 sup_was_done[i] = m_objects[i]->is_step_done(posSupportMaterial) ? 1 : 0;
 
-        tbb::parallel_for(tbb::blocked_range<int>(0, int(m_objects.size())),
-            [this, need_slicing_objects](const tbb::blocked_range<int>& range) {
-                for (int i = range.begin(); i < range.end(); i++) {
-                    PrintObject* obj = m_objects[i];
-                    if (need_slicing_objects.count(obj) != 0) {
-                        obj->generate_support_material();
-                    }
-                    else {
-                        if (obj->set_started(posSupportMaterial))
-                            obj->set_done(posSupportMaterial);
+        {
+            gpu::StepTimer timer("support");
+            tbb::parallel_for(tbb::blocked_range<int>(0, int(m_objects.size())),
+                [this, need_slicing_objects](const tbb::blocked_range<int>& range) {
+                    for (int i = range.begin(); i < range.end(); i++) {
+                        PrintObject* obj = m_objects[i];
+                        if (need_slicing_objects.count(obj) != 0) {
+                            obj->generate_support_material();
+                        }
+                        else {
+                            if (obj->set_started(posSupportMaterial))
+                                obj->set_done(posSupportMaterial);
+                        }
                     }
                 }
-            }
-        );
+            );
+        }
 
         if (m_pipeline_plugin_active)
             for (size_t i = 0; i < m_objects.size(); ++i)
@@ -4361,6 +4378,7 @@ void Print::process(long long *time_cost_with_cache, bool use_cache)
 
 
     if (this->set_started(psWipeTower)) {
+        gpu::StepTimer timer("wipe_tower");
         {
             std::vector<std::set<int>> geometric_unprintables(m_config.nozzle_diameter.size());
             for (PrintObject* obj : m_objects) {
@@ -4701,6 +4719,7 @@ void Print::process(long long *time_cost_with_cache, bool use_cache)
         }
     }
 
+    gpu::report_steps();
     BOOST_LOG_TRIVIAL(info) << "Slicing process finished." << log_memory_info();
 
     {
@@ -4737,7 +4756,11 @@ std::string Print::export_gcode(const std::string& path_template, GCodeProcessor
     //BBS: compute plate offset for gcode-generator
     const Vec3d origin = this->get_plate_origin();
     gcode.set_gcode_offset(origin(0), origin(1));
-    gcode.do_export(this, path.c_str(), result, thumbnail_cb);
+    {
+        gpu::StepTimer timer("gcode_export");
+        gcode.do_export(this, path.c_str(), result, thumbnail_cb);
+    }
+    gpu::report_steps();
     gcode.export_layer_filaments(result);
     //BBS
     // The result is optional (the CLI and tests pass none, see Slic3r::Test::gcode()).

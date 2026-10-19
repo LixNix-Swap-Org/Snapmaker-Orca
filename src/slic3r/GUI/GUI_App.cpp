@@ -40,6 +40,7 @@
 #include "slic3r/Utils/PresetUpdater.hpp"
 #include "slic3r/Config/Version.hpp"
 #include "libslic3r/MixedFilament.hpp"
+#include "libslic3r/GPU/GPU.hpp"
 
 // Localization headers: include libslic3r version first so everything in this file
 // uses the slic3r/GUI version (the macros will take precedence over the functions).
@@ -2973,6 +2974,7 @@ void GUI_App::init_app_config()
 #endif // _WIN32
     }
     MixedFilamentManager::set_auto_generate_enabled(app_config->get_bool("auto_generate_gradients"));
+    gpu::configure(app_config->get("gpu_slicing"), app_config->get("gpu_device"));
     // Speed Dial opens on a bare Space from any page by default. Seed the flag so Preferences and the
     // MainFrame shortcut read the same value; an existing config (true or false) is left untouched.
     if (app_config->get("enable_speed_dial").empty())

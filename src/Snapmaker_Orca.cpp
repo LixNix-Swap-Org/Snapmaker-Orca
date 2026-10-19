@@ -66,6 +66,7 @@ using namespace nlohmann;
 #include "libslic3r/ClipperUtils.hpp"
 #include "libslic3r/Geometry.hpp"
 #include "libslic3r/GCode.hpp"
+#include "libslic3r/GPU/GPU.hpp"
 #include "libslic3r/Model.hpp"
 #include "libslic3r/ModelArrange.hpp"
 #include "libslic3r/Platform.hpp"
@@ -123,6 +124,8 @@ using namespace nlohmann;
 #endif /* SLIC3R_GUI */
 
 using namespace Slic3r;
+
+void attach_console_on_demand();
 
 /*typedef struct _error_message{
     int code;
@@ -1573,6 +1576,14 @@ int CLI::run(int argc, char **argv)
     const ConfigOptionString* opt_logfile = m_config.opt<ConfigOptionString>("logfile");
     if (opt_logfile) {
         set_logging_file(opt_logfile->value);
+    }
+    const ConfigOptionBool* opt_gpu = m_config.opt<ConfigOptionBool>("gpu");
+    if (opt_gpu && opt_gpu->value)
+        gpu::request_from_cli();
+    if ((opt_gpu && opt_gpu->value) || boost::nowide::getenv("SLIC3R_GPU")) {
+        // The [gpu] and [time] lines are printed to stderr.
+        attach_console_on_demand();
+        gpu::enabled();
     }
 
     global_begin_time = (long long)Slic3r::Utils::get_current_time_utc();
@@ -8250,6 +8261,11 @@ void attach_console_on_demand(){
     static bool console_attached = false;
 
     if (!console_attached) {
+        // Streams with a handle from the caller (file, pipe or console) are kept.
+        auto has_handle = [](DWORD id) { return GetFileType(GetStdHandle(id)) != FILE_TYPE_UNKNOWN; };
+        const bool keep_in = has_handle(STD_INPUT_HANDLE), keep_out = has_handle(STD_OUTPUT_HANDLE), keep_err = has_handle(STD_ERROR_HANDLE);
+        if (keep_out && keep_err)
+            return;
         // Try attaching to the parent console first
         if (AttachConsole(ATTACH_PARENT_PROCESS)) {
             console_attached = true;
@@ -8266,13 +8282,13 @@ void attach_console_on_demand(){
         if (console_attached) {
             FILE* fp = nullptr;
             // Redirect standard C streams to the console
-            if (freopen_s(&fp, "CONOUT$", "w", stdout) == 0) {
+            if (!keep_out && freopen_s(&fp, "CONOUT$", "w", stdout) == 0) {
                 setvbuf(stdout, NULL, _IONBF, 0); // Optional: Disable buffering
             }
-            if (freopen_s(&fp, "CONOUT$", "w", stderr) == 0) {
+            if (!keep_err && freopen_s(&fp, "CONOUT$", "w", stderr) == 0) {
                 setvbuf(stderr, NULL, _IONBF, 0); // Optional: Disable buffering
             }
-            if (freopen_s(&fp, "CONIN$", "r", stdin) == 0) {
+            if (!keep_in && freopen_s(&fp, "CONIN$", "r", stdin) == 0) {
                 // Input redirection successful
             }
             // Sync C++ streams with C streams after redirection

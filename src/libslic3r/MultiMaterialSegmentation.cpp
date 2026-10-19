@@ -1303,10 +1303,11 @@ static inline std::vector<std::vector<ExPolygons>> segmentation_top_and_bottom_l
     // there (own_face: the colour's face strip on the shell row). Insetting from it would trim
     // every row's strip to a sliver and leave the base colour on the visible slope.
     auto pitch_shell_row = [&inset_contours_only](const ExPolygons &face, const ExPolygons &trimmed, float offset, float width, const Polygons &own_face) {
+        const ExPolygons own = own_face.empty() ? ExPolygons() : union_ex(own_face);
         auto inset = [&](float off) {
             ExPolygons out = inset_contours_only(trimmed, off);
             if (! own_face.empty())
-                append(out, intersection_ex(offset_ex(union_ex(own_face), -off), trimmed));
+                append(out, intersection_ex(offset_ex(own, -off), trimmed));
             return union_ex(out);
         };
         ExPolygons row = intersection_ex(face, inset(offset));

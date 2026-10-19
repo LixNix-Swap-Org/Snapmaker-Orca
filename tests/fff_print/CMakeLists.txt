@@ -11,6 +11,7 @@ add_executable(${_TEST_NAME}_tests
 	test_gcode_timing.cpp
 	test_gcodeprocessor.cpp
 	test_gcodewriter.cpp
+	test_gpu.cpp
 	test_model.cpp
 	test_multifilament.cpp
 	test_multi_nozzle_layer_height.cpp

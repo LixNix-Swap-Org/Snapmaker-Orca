@@ -8,12 +8,14 @@
 #include <iomanip>
 #include <limits>
 #include <numeric>
+#include <optional>
 #include <sstream>
 #include <unordered_map>
 #include <tbb/parallel_for.h>
 #include "ClipperUtils.hpp"
 #include "ElephantFootCompensation.hpp"
 #include "Exception.hpp"
+#include "GPU/GPU.hpp"
 #include "I18N.hpp"
 #include "Layer.hpp"
 #include "MixedFilament.hpp"
@@ -899,7 +901,10 @@ void PrintObject::slice()
 
     // Per-extruder layer height: combine region slices into every Nth layer where geometry allows.
     // Must run before backup_untyped_slices() below so the combined slices survive the restore_untyped_slices*() calls in make_perimeters() / prepare_infill().
-    this->apply_extruder_layer_heights();
+    {
+        gpu::StepTimer timer("extruder_layer_heights");
+        this->apply_extruder_layer_heights();
+    }
     m_print->throw_if_canceled();
 
     // Update bounding boxes, back up raw slices of complex models.
@@ -979,7 +984,9 @@ void PrintObject::apply_extruder_layer_heights()
     // are detected against the layer below the whole run. Only geometry too short for a whole run
     // - part tops, the first layer, a column's first layer where its shape jumps - prints thinner.
     const PrintConfig &print_config = m_print->config();
-    for (size_t region_id = 0; region_id < this->num_printing_regions(); ++ region_id) {
+    // Each region reads the layer outlines and changes only its own slices.
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, this->num_printing_regions(), 1), [&](const tbb::blocked_range<size_t> &regions) {
+    for (size_t region_id = regions.begin(); region_id < regions.end(); ++ region_id) {
         // Walls-only mode marks the runs on the LayerRegions for make_perimeters() instead of
         // moving any slices: every layer keeps its geometry, fills and surfaces.
         const bool   split      = split_coarses[region_id] > 1;
@@ -1278,6 +1285,7 @@ void PrintObject::apply_extruder_layer_heights()
         }
         m_print->throw_if_canceled();
     }
+    });
 
     // ORCA: floating pieces at region boundaries. Combining defers or drops a region's layer
     // geometry (cleared run members extrude at their run top; remainders outside the committed
@@ -1338,6 +1346,7 @@ void PrintObject::apply_extruder_layer_heights()
         auto area_of = [](const ExPolygons &ex) { double a = 0.; for (const ExPolygon &e : ex) a += e.area(); return a; };
         auto count_at = [this](size_t l, size_t r) -> unsigned short { return m_layers[l]->regions()[r]->combined_layer_count(); };
         auto shape_at = [this](size_t l, size_t r) { return to_expolygons(m_layers[l]->regions()[r]->slices.surfaces); };
+        auto shape_bbox = [this](size_t l, size_t r) { return get_extents(m_layers[l]->regions()[r]->slices.surfaces); };
         // The layer a region's row l extrudes on: the row itself, or the run top above a cleared
         // run member. n_layers if none.
         auto top_of = [this, count_at, n_layers](size_t l, size_t r) {
@@ -1362,26 +1371,36 @@ void PrintObject::apply_extruder_layer_heights()
         };
         // What all regions together print on each row (a run's slab spans all its rows).
         std::vector<ExPolygons> printed(n_layers);
-        for (size_t l = 0; l < n_layers; ++ l) {
-            Polygons p;
-            for (size_t r = 0; r < num_regions; ++ r)
-                if (const size_t t = top_of(l, r); t < n_layers)
-                    polygons_append(p, to_polygons(m_layers[t]->regions()[r]->slices.surfaces));
-            printed[l] = union_ex(p);
-        }
+        tbb::parallel_for(tbb::blocked_range<size_t>(0, n_layers), [&](const tbb::blocked_range<size_t> &range) {
+            for (size_t l = range.begin(); l < range.end(); ++ l) {
+                Polygons p;
+                for (size_t r = 0; r < num_regions; ++ r)
+                    if (const size_t t = top_of(l, r); t < n_layers)
+                        polygons_append(p, to_polygons(m_layers[t]->regions()[r]->slices.surfaces));
+                printed[l] = union_ex(p);
+            }
+        });
         // Free object area per row that material covers above (directly, or through further
         // free rows): an enclosed void. Free area under air is a step and stays one.
         std::vector<ExPolygons> voids(n_layers);
-        for (size_t l = n_layers - 1; l-- > first_idx;) {
-            m_print->throw_if_canceled();
+        {
             // The opening removes hairline residue along region boundaries (lslices are
             // safety-offset unions of the region slices).
-            ExPolygons free = opening_ex(diff_ex(m_layers[l]->lslices, printed[l]), anchor_dist);
-            if (free.empty())
-                continue;
-            Polygons above = to_polygons(printed[l + 1]);
-            polygons_append(above, to_polygons(voids[l + 1]));
-            voids[l] = intersection_ex(free, union_ex(above));
+            std::vector<ExPolygons> free(n_layers);
+            tbb::parallel_for(tbb::blocked_range<size_t>(first_idx, n_layers - 1), [&](const tbb::blocked_range<size_t> &range) {
+                for (size_t l = range.begin(); l < range.end(); ++ l) {
+                    m_print->throw_if_canceled();
+                    free[l] = opening_ex(diff_ex(m_layers[l]->lslices, printed[l]), anchor_dist);
+                }
+            });
+            for (size_t l = n_layers - 1; l-- > first_idx;) {
+                m_print->throw_if_canceled();
+                if (free[l].empty())
+                    continue;
+                Polygons above = to_polygons(printed[l + 1]);
+                polygons_append(above, to_polygons(voids[l + 1]));
+                voids[l] = intersection_ex(free[l], union_ex(above));
+            }
         }
         // Single free rows accepted as they are.
         std::vector<ExPolygons> accepted(n_layers);
@@ -1416,32 +1435,38 @@ void PrintObject::apply_extruder_layer_heights()
         };
         // The region printing `area` right below row l (through further free rows), or -1.
         // The region printing most of `area` on row i, or -1 if nothing prints there.
-        auto dominant_at = [&](const ExPolygons &area, size_t i) -> int {
+        auto dominant_at = [&](const ExPolygons &area, const BoundingBox &bbox, size_t i) -> int {
             int    best      = -1;
             double best_area = 0.;
             for (size_t r = 0; r < num_regions; ++ r)
-                if (const size_t t = top_of(i, r); t < n_layers)
+                if (const size_t t = top_of(i, r); t < n_layers && shape_bbox(t, r).overlap(bbox))
                     if (const double a = area_of(intersection_ex(area, shape_at(t, r))); a > best_area) {
                         best_area = a;
                         best      = int(r);
                     }
             return best;
         };
+        // Whether area meets other: disjoint boxes need no clipping.
+        auto meets = [](const ExPolygons &area, const BoundingBox &bbox, const ExPolygons &other) {
+            return ! other.empty() && get_extents(other).overlap(bbox) && ! intersection_ex(area, other).empty();
+        };
         auto region_below = [&](const ExPolygons &area, size_t l) -> int {
+            const BoundingBox bbox = get_extents(area);
             for (size_t i = l; i-- > 0 && l - i <= 2 * max_mult;) {
-                if (const int r = dominant_at(area, i); r >= 0)
+                if (const int r = dominant_at(area, bbox, i); r >= 0)
                     return r;
-                if (intersection_ex(area, accepted[i]).empty())
+                if (! meets(area, bbox, accepted[i]))
                     break;
             }
             return -1;
         };
         // The region printing `area` right above row l (through the free rows), or -1.
         auto region_above = [&](const ExPolygons &area, size_t l) -> int {
+            const BoundingBox bbox = get_extents(area);
             for (size_t i = l + 1; i < n_layers; ++ i) {
-                if (const int r = dominant_at(area, i); r >= 0)
+                if (const int r = dominant_at(area, bbox, i); r >= 0)
                     return r;
-                if (intersection_ex(area, voids[i]).empty())
+                if (! meets(area, bbox, voids[i]))
                     break;
             }
             return -1;
@@ -1450,7 +1475,18 @@ void PrintObject::apply_extruder_layer_heights()
         const float skin_depth = 2.f * *std::max_element(beads.begin(), beads.end());
         // Does region f's material extruded on layer t touch `area`?
         auto abuts = [&](size_t f, size_t t, const ExPolygons &area) {
-            return ! intersection_ex(offset_ex(area, beads[f]), shape_at(t, f)).empty();
+            // The miter limit of offset_ex() keeps every vertex within 3 * beads[f].
+            return get_extents(area).inflated(3. * beads[f] + SCALED_EPSILON).overlap(shape_bbox(t, f)) &&
+                   ! intersection_ex(offset_ex(area, beads[f]), shape_at(t, f)).empty();
+        };
+        // chain[k]: chain[0] intersected with voids[row + 1 .. row + k].
+        std::vector<ExPolygons> chain, inner_chain;
+        auto chain_at = [&voids](std::vector<ExPolygons> &c, size_t row, size_t k) -> const ExPolygons & {
+            while (c.size() <= k) {
+                ExPolygons next = c.back().empty() ? ExPolygons() : intersection_ex(c.back(), voids[row + c.size()]);
+                c.push_back(std::move(next));
+            }
+            return c[k];
         };
         for (size_t row = first_idx; row < n_layers; ++ row) {
             if (voids[row].empty())
@@ -1464,6 +1500,22 @@ void PrintObject::apply_extruder_layer_heights()
             if (todo.empty())
                 continue;
             const ExPolygons skin = diff_ex(m_layers[row]->lslices, offset_ex(m_layers[row]->lslices, -skin_depth));
+            chain.clear();
+            inner_chain.clear();
+            auto todo_at = [&](size_t k) -> const ExPolygons & {
+                if (chain.empty())
+                    chain.push_back(todo);
+                return chain_at(chain, row, k);
+            };
+            auto inner_at = [&](size_t k) -> const ExPolygons & {
+                if (inner_chain.empty())
+                    inner_chain.push_back(diff_ex(todo, skin));
+                return chain_at(inner_chain, row, k);
+            };
+            auto todo_changed = [&]() {
+                chain.clear();
+                inner_chain.clear();
+            };
             // 1. Runs (or single layers) that already exist and start exactly on this row take
             //    what fits into the free rows they span. Longest slab first, then the region
             //    printed below the gap (its material simply continues).
@@ -1496,14 +1548,12 @@ void PrintObject::apply_extruder_layer_heights()
                     const Candidate &c = candidates[i];
                     if (todo.empty())
                         break;
-                    ExPolygons area = adjacent[i] ? todo : diff_ex(todo, skin);
-                    for (size_t l = row + 1; l <= c.top && ! area.empty(); ++ l)
-                        area = intersection_ex(area, voids[l]);
-                    area = opening_ex(area, beads[c.region]);
+                    const ExPolygons area = opening_ex(adjacent[i] ? todo_at(c.top - row) : inner_at(c.top - row), beads[c.region]);
                     if (area.empty())
                         continue;
                     give(c.region, row, c.top, area, false);
                     todo = diff_ex(todo, area);
+                    todo_changed();
                 }
             }
             if (todo.empty())
@@ -1519,10 +1569,7 @@ void PrintObject::apply_extruder_layer_heights()
                     const size_t c = std::max<unsigned short>(count_at(t, r), 1);
                     if (t + 1 - c != row + 1)
                         continue;
-                    ExPolygons area = todo;
-                    for (size_t l = row + 1; l <= t && ! area.empty(); ++ l)
-                        area = intersection_ex(area, voids[l]);
-                    area = opening_ex(area, beads[r]);
+                    ExPolygons area = opening_ex(todo_at(t - row), beads[r]);
                     if (! area.empty() && abuts(r, t, area))
                         append(stepped, std::move(area));
                 }
@@ -1535,6 +1582,7 @@ void PrintObject::apply_extruder_layer_heights()
                             layerm->m_combined_away_exposed = diff_ex(layerm->m_combined_away_exposed, stepped);
                     }
                     todo = diff_ex(todo, stepped);
+                    todo_changed();
                     if (todo.empty())
                         continue;
                 }
@@ -1549,15 +1597,8 @@ void PrintObject::apply_extruder_layer_heights()
             //    else, without a toolchange per row. Then the region above, then any other
             //    region (single-layer regions last: every row of theirs is a toolchange).
             size_t max_len = 1;
-            {
-                ExPolygons rest = todo;
-                for (size_t l = row + 1; l < n_layers && max_len < 2 * max_mult; ++ l) {
-                    rest = intersection_ex(rest, voids[l]);
-                    if (rest.empty())
-                        break;
-                    ++ max_len;
-                }
-            }
+            while (row + max_len < n_layers && max_len < 2 * max_mult && ! todo_at(max_len).empty())
+                ++ max_len;
             // A new run of region f over rows row..row+len-1, or - for a single-layer region -
             // one layer per row. Takes what fits, returns it.
             auto new_run = [&](size_t f, size_t len, const ExPolygons &area) -> ExPolygons {
@@ -1610,9 +1651,7 @@ void PrintObject::apply_extruder_layer_heights()
                 return taken;
             };
             for (size_t len = max_len; len >= 1 && ! todo.empty(); -- len) {
-                ExPolygons area = todo;
-                for (size_t l = row + 1; l < row + len && ! area.empty(); ++ l)
-                    area = intersection_ex(area, voids[l]);
+                ExPolygons area = todo_at(len - 1);
                 if (len == 1 && row + 1 < n_layers)
                     area = diff_ex(area, voids[row + 1]);   // exactly one free row: the row above is printed
                 if (area.empty())
@@ -1623,6 +1662,7 @@ void PrintObject::apply_extruder_layer_heights()
                     if (! fill.empty()) {
                         area = diff_ex(area, fill);
                         todo = diff_ex(todo, fill);
+                        todo_changed();
                     }
                 };
                 if (below >= 0 && multipliers[size_t(below)] > 1)
@@ -1672,10 +1712,12 @@ void PrintObject::apply_extruder_layer_heights()
         // An exposed remainder is what nothing prints on its row: whatever any slab spanning the
         // row covers is neither a free face for the layer below nor unsupported for the layer
         // above, whichever region dropped it.
-        for (size_t l = first_idx; l < n_layers; ++ l)
-            for (size_t r = 0; r < num_regions; ++ r)
-                if (LayerRegion *layerm = m_layers[l]->regions()[r]; ! layerm->m_combined_away_exposed.empty())
-                    layerm->m_combined_away_exposed = diff_ex(layerm->m_combined_away_exposed, printed[l]);
+        tbb::parallel_for(tbb::blocked_range<size_t>(first_idx, n_layers), [&](const tbb::blocked_range<size_t> &range) {
+            for (size_t l = range.begin(); l < range.end(); ++ l)
+                for (size_t r = 0; r < num_regions; ++ r)
+                    if (LayerRegion *layerm = m_layers[l]->regions()[r]; ! layerm->m_combined_away_exposed.empty())
+                        layerm->m_combined_away_exposed = diff_ex(layerm->m_combined_away_exposed, printed[l]);
+        });
     }
     for (size_t idx = first_idx; idx < m_layers.size(); ++ idx) {
         m_print->throw_if_canceled();
@@ -1692,6 +1734,22 @@ void PrintObject::apply_extruder_layer_heights()
         // The opening removes hairline residue along region boundaries (lslices are safety-offset
         // unions of the region slices), keeping only real deferred geometry.
         const Polygons unprinted_now = to_polygons(opening_ex(diff_ex(m_layers[idx]->lslices, printed_now), anchor_dist));
+        auto boxes = [](const Polygons &polys) {
+            std::vector<BoundingBox> out;
+            out.reserve(polys.size());
+            for (const Polygon &poly : polys)
+                out.emplace_back(get_extents(poly));
+            return out;
+        };
+        // Polygons whose boxes meet bbox; enough for emptiness tests inside bbox.
+        auto overlapping = [](const Polygons &polys, const std::vector<BoundingBox> &bboxes, const BoundingBox &bbox) {
+            Polygons out;
+            for (size_t i = 0; i < polys.size(); ++ i)
+                if (bboxes[i].overlap(bbox))
+                    out.emplace_back(polys[i]);
+            return out;
+        };
+        const std::vector<BoundingBox> unprinted_bboxes = boxes(unprinted_now);
         for (size_t region_id = 0; region_id < num_regions; ++ region_id) {
             LayerRegion *layerm = m_layers[idx]->regions()[region_id];
             // Only plain per-layer regions: run members print at their run top, and wall-combined
@@ -1703,7 +1761,8 @@ void PrintObject::apply_extruder_layer_heights()
             ExPolygons       floating = diff_ex(own, printed_below);
             if (floating.empty())
                 continue;
-            const Polygons anchors = diff(printed_now, to_polygons(floating));
+            const Polygons                 anchors        = diff(printed_now, to_polygons(floating));
+            const std::vector<BoundingBox> anchors_bboxes = boxes(anchors);
             // An anchored piece is normally a legitimate flush bridge. But when its anchor is a
             // run committing at this very layer and nothing below that run's whole span carries
             // the piece, the bridge would hang beside the pass over the run's full height of air;
@@ -1714,6 +1773,7 @@ void PrintObject::apply_extruder_layer_heights()
                 for (size_t other = 0; other < num_regions; ++ other) {
                     LayerRegion *neighbor = m_layers[idx]->regions()[other];
                     if (other == region_id || neighbor->combined_layer_count() < 2 ||
+                        ! get_extents(neighbor->slices.surfaces).overlap(get_extents(nearby)) ||
                         intersection(nearby, to_polygons(neighbor->slices.surfaces)).empty())
                         continue;
                     const size_t run_bottom = idx + 1 - size_t(neighbor->combined_layer_count());
@@ -1731,10 +1791,13 @@ void PrintObject::apply_extruder_layer_heights()
             };
             ExPolygons dropped;
             for (ExPolygon &piece : floating) {
-                const Polygons nearby = offset(piece, anchor_dist);
-                if (! intersection(nearby, anchors).empty())
+                const Polygons    nearby      = offset(piece, anchor_dist);
+                const BoundingBox nearby_bbox = get_extents(nearby);
+                const Polygons    near_anchors = overlapping(anchors, anchors_bboxes, nearby_bbox);
+                if (! near_anchors.empty() && ! intersection(nearby, near_anchors).empty())
                     fill_by_covering_run(piece, nearby);
-                else if (! intersection(nearby, unprinted_now).empty())
+                else if (const Polygons near_unprinted = overlapping(unprinted_now, unprinted_bboxes, nearby_bbox);
+                         ! near_unprinted.empty() && ! intersection(nearby, near_unprinted).empty())
                     // Beside or over deferred geometry, with no anchor: would extrude into thin air.
                     dropped.emplace_back(std::move(piece));
             }
@@ -6103,6 +6166,7 @@ void PrintObject::slice_volumes()
             layer->m_regions.emplace_back(new LayerRegion(layer, pr.get()));
     }
 
+    std::optional<gpu::StepTimer>        slice_timer(std::in_place, "slice_volumes");
     std::vector<float>                   slice_zs      = zs_from_layers(m_layers);
     std::vector<VolumeSlices> objSliceByVolume;
     if (!slice_zs.empty()) {
@@ -6142,6 +6206,7 @@ void PrintObject::slice_volumes()
     m_print->throw_if_canceled();
 
     this->apply_conical_overhang();
+    slice_timer.reset();
 
     // Is any ModelVolume multi-material painted?
     if (const auto& volumes = this->model_object()->volumes;
@@ -6159,6 +6224,7 @@ void PrintObject::slice_volumes()
         }
 
         BOOST_LOG_TRIVIAL(debug) << "Slicing volumes - MMU segmentation";
+        gpu::StepTimer timer("mmu_segmentation");
         std::vector<std::vector<ExPolygons>> mm_segmentation = multi_material_segmentation_by_painting(*this, [print]() { print->throw_if_canceled(); });
         apply_mixed_surface_indentation(*this, mm_segmentation);
         apply_mixed_component_surface_offsets(*this, mm_segmentation);

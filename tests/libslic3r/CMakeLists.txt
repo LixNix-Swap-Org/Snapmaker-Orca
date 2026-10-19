@@ -33,6 +33,7 @@ add_executable(${_TEST_NAME}_tests
     test_filament_mixer.cpp
     test_fill_plane_path.cpp
     test_geometry.cpp
+    test_gpu.cpp
     test_icns.cpp
     test_mixed_filament.cpp
     test_mixed_filament_color_golden.cpp

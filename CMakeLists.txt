@@ -126,6 +126,7 @@ option(SLIC3R_CAD               "Compile Snapmaker_Orca with the parametric Desi
 option(SLIC3R_FHS               "Assume Snapmaker_Orca is to be installed in a FHS directory structure" 0)
 option(SLIC3R_PROFILE           "Compile Snapmaker_Orca with an invasive Shiny profiler" 0)
 option(SLIC3R_PCH               "Use precompiled headers" 1)
+option(SLIC3R_GPU               "Build the OpenCL compute backend (switched on at run time)" 1)
 option(SLIC3R_WARNINGS          "Emit compiler warnings for OrcaSlicer sources" 1)
 option(SLIC3R_BUNDLED_WARNINGS  "Emit compiler warnings for bundled third-party sources" 0)
 option(SLIC3R_MSVC_COMPILE_PARALLEL "Compile on Visual Studio in parallel" 1)

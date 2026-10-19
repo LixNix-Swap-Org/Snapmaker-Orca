@@ -9,6 +9,7 @@
 #include "I18N.hpp"
 #include "libslic3r/AppConfig.hpp"
 #include "libslic3r/Format/DRC.hpp"
+#include "libslic3r/GPU/GPU.hpp"
 #ifdef SLIC3R_CAD
 // The CAD kernel headers (OCCT) are only on the include path when the Design tab is built.
 #include "libslic3r/CAD/SketchEngine.hpp"
@@ -1936,6 +1937,56 @@ void PreferencesDialog::create_items()
 
     auto item_remember_print_action = create_item_checkbox(_L("Remember last print action"), _L("If enabled, Snapmaker Orca will remember the last selected option in the print button's dropdown (e.g. Print, Export plate sliced file, Export G-code file) and use it as the default on next startup."), "remember_print_action");
     g_sizer->Add(item_remember_print_action);
+
+#if defined(__APPLE__) && defined(__aarch64__)
+    auto item_gpu_slicing = create_item_label(_L("GPU slicing"), _L("Runs part of the slicing on the graphics card."));
+    auto gpu_checkbox     = new ::CheckBox(m_parent);
+    gpu_checkbox->SetValue(app_config->get("gpu_slicing") == "on");
+    gpu_checkbox->SetToolTip(_L("Runs part of the slicing on the graphics card."));
+    gpu_checkbox->Bind(wxEVT_TOGGLEBUTTON, [this, gpu_checkbox](wxCommandEvent &e) {
+        app_config->set("gpu_slicing", gpu_checkbox->GetValue() ? "on" : "off");
+        gpu::configure(app_config->get("gpu_slicing"), app_config->get("gpu_device"));
+        e.Skip();
+    });
+    item_gpu_slicing->Add(gpu_checkbox, 0, wxALIGN_CENTER);
+    g_sizer->Add(item_gpu_slicing);
+#else
+    std::vector<wxString>    GpuModeLabels = {_L("Off"), _L("Discrete GPU only"), _L("On")};
+    std::vector<std::string> GpuModeValues = {"off", "auto", "on"};
+    const auto gpu_mode       = std::find(GpuModeValues.begin(), GpuModeValues.end(), app_config->get("gpu_slicing"));
+    const int  gpu_mode_index = gpu_mode == GpuModeValues.end() ? 0 : int(gpu_mode - GpuModeValues.begin());
+    auto [item_gpu_slicing, gpu_mode_combo] = create_item_combobox_base(_L("GPU slicing"), _L("Runs part of the slicing on the graphics card."), "gpu_slicing", GpuModeLabels, gpu_mode_index);
+    g_sizer->Add(item_gpu_slicing);
+
+    auto [item_gpu_device, gpu_device_combo] = create_item_combobox_base(_L("GPU device"), _L("Graphics card used for it."), "gpu_device", {}, 0);
+    g_sizer->Add(item_gpu_device);
+    auto list_gpu_devices = [this, combo = gpu_device_combo](bool enumerate) {
+        std::vector<std::string> names = enumerate ? gpu::device_names() : std::vector<std::string>();
+        const std::string        saved = app_config->get("gpu_device");
+        if (!saved.empty() && std::find(names.begin(), names.end(), saved) == names.end())
+            names.push_back(saved);
+        combo->Clear();
+        combo->Append(_L("Automatic"));
+        for (const std::string &name : names)
+            combo->Append(from_u8(name));
+        combo->SetSelection(saved.empty() ? 0 : 1 + int(std::find(names.begin(), names.end(), saved) - names.begin()));
+    };
+    list_gpu_devices(gpu_mode_index != 0);
+    gpu_mode_combo->GetDropDown().Bind(wxEVT_COMBOBOX, [this, GpuModeValues, list_gpu_devices, listed = gpu_mode_index != 0](wxCommandEvent &e) mutable {
+        app_config->set("gpu_slicing", GpuModeValues[e.GetSelection()]);
+        if (!listed && e.GetSelection() != 0) {
+            listed = true;
+            list_gpu_devices(true);
+        }
+        gpu::configure(app_config->get("gpu_slicing"), app_config->get("gpu_device"));
+        e.Skip();
+    });
+    gpu_device_combo->GetDropDown().Bind(wxEVT_COMBOBOX, [this, combo = gpu_device_combo](wxCommandEvent &e) {
+        app_config->set("gpu_device", e.GetSelection() > 0 ? into_u8(combo->GetString(e.GetSelection())) : std::string());
+        gpu::configure(app_config->get("gpu_slicing"), app_config->get("gpu_device"));
+        e.Skip();
+    });
+#endif
 
     //// CONTROL > Camera
     g_sizer->Add(create_item_title(_L("Camera")), 1, wxEXPAND);

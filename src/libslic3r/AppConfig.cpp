@@ -154,6 +154,10 @@ void AppConfig::set_defaults()
         if (get("auto_slice_change_delay_seconds").empty())
             set("auto_slice_change_delay_seconds", "1");
 
+        // off, auto (discrete GPU only) or on; "gpu_device" empty selects the best device.
+        if (get("gpu_slicing").empty())
+            set("gpu_slicing", "off");
+
         if (get("drop_project_action").empty())
             set_bool("drop_project_action", true);
 

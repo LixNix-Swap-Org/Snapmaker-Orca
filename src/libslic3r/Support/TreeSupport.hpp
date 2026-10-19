@@ -583,9 +583,9 @@ private:
     // Transition layers printed with the support body filament between the top interface layers and the
     // support body; none without top interface layers.
     int      num_transition_layers() const;
-    ExPolygons get_avoidance(coordf_t radius, size_t obj_layer_nr);
+    const ExPolygons& get_avoidance(coordf_t radius, size_t obj_layer_nr);
     // layer's expolygon expanded by radius+m_xy_distance
-    ExPolygons get_collision(coordf_t radius, size_t layer_nr);
+    const ExPolygons& get_collision(coordf_t radius, size_t layer_nr);
     // get Polygons instead of ExPolygons
     Polygons get_collision_polys(coordf_t radius, size_t layer_nr);
 
