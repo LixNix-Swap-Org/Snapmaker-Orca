@@ -1,6 +1,7 @@
 #ifndef slic3r_GUI_hpp_
 #define slic3r_GUI_hpp_
 
+#include <string>
 namespace boost { class any; }
 namespace boost::filesystem { class path; }
 
@@ -82,7 +83,6 @@ wxString	file_url_from_path(const boost::filesystem::path &path);
 
 // Display an About dialog
 extern void about();
-extern void login();
 // Ask the destop to open the datadir using the default file explorer.
 extern void desktop_open_datadir_folder();
 // Ask the destop to open one folder

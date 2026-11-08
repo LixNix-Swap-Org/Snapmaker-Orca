@@ -2,8 +2,15 @@
 #define slic3r_Http_App_hpp_
 
 #include <atomic>
+#include <boost/asio/ip/basic_endpoint.hpp>
+#include <functional>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/streambuf.hpp>
 #include <iostream>
+#include <map>
 #include <mutex>
+#include <sstream>
 #include <stack>
 
 #include <boost/beast/core.hpp>
@@ -16,8 +23,8 @@
 #include <memory>
 #include <utility>
 
-#define LOCALHOST_PORT      13618
-#define PAGE_HTTP_PORT      13619
+#define LOCALHOST_PORT      13628
+#define PAGE_HTTP_PORT      13629
 #define LOCALHOST_URL       "http://127.0.0.1:"
 #define WCP_DOWNLOAD_PREFIX "/wcp_download/"
 
@@ -208,8 +215,8 @@ private:
     {
     public:
         HttpServer&                        server;
-        boost::asio::io_service           io_service;
-        boost::asio::ip::tcp::acceptor    acceptor;
+        boost::asio::io_context            io_service;
+        boost::asio::ip::tcp::acceptor     acceptor;
         std::set<std::shared_ptr<session>> sessions;
 
         // 只声明构造函数，不在头文件中定义

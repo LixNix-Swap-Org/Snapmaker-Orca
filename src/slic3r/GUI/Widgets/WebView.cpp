@@ -6,9 +6,23 @@
 #include <algorithm>
 #include <boost/log/trivial.hpp>
 
+#include <cassert>
 #include <chrono>
+#include <cstddef>
+#include <exception>
 #include <thread>
 
+#include <wx/setup.h>
+#include <wx/webview.h>
+#include <wx/string.h>
+#include <wx/gdicmn.h>
+#include <wx/sharedptr.h>
+#include <wx/vector.h>
+#include <wx/event.h>
+#include <vector>
+#include <wx/object.h>
+#include <wx/log.h>
+#include <utility>
 #include <wx/webviewarchivehandler.h>
 #include <wx/webviewfshandler.h>
 #include <wx/weakref.h>
@@ -20,6 +34,15 @@
 #include <wx/uri.h>
 #include <wx/filename.h>
 #include <wx/stdpaths.h>
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/fstream.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
+#include <ios>
+#include <string>
+#include <wx/versioninfo.h>
+
+namespace fs = boost::filesystem;
 #if defined(__WIN32__) || defined(__WXMAC__)
 #include "wx/private/jsscriptwrapper.h"
 #endif
@@ -31,6 +54,7 @@
 #endif
 
 #ifdef __WIN32__
+#include <objbase.h>
 #include <WebView2.h>
 #include <Shellapi.h>
 #include <slic3r/Utils/Http.hpp>
@@ -52,6 +76,10 @@ webkit_web_view_run_javascript_finish                (WebKitWebView             
 						      GError                    **error);
 WEBKIT_API void
 webkit_javascript_result_unref              (WebKitJavascriptResult *js_result);
+WEBKIT_API guint
+webkit_get_major_version                     (void);
+WEBKIT_API guint
+webkit_get_minor_version                     (void);
 }
 #endif
 
@@ -115,6 +143,17 @@ DWORD DownloadAndInstallWV2RT() {
   return returnCode;
 }
 
+static wxString PreserveWebViewEngineUserAgent(const wxString &requestedUserAgent, const wxString &currentUserAgent)
+{
+  const int requestedMarker = requestedUserAgent.Find(" Mozilla/5.0");
+  if (!requestedUserAgent.StartsWith("SM-Slicer/") || requestedMarker == wxNOT_FOUND)
+    return requestedUserAgent;
+
+  const int        currentMarker    = currentUserAgent.Find(" Mozilla/5.0");
+  const wxString   engineUserAgent  = currentMarker == wxNOT_FOUND ? currentUserAgent : currentUserAgent.Mid(currentMarker + 1);
+  return requestedUserAgent.Left(requestedMarker) + " " + engineUserAgent;
+}
+
 class WebViewEdge : public wxWebViewEdge
 {
 public:
@@ -131,10 +170,17 @@ public:
                 ICoreWebView2Settings2 *settings2;
                 hr = settings->QueryInterface(&settings2);
                 if (hr == S_OK) {
-                    settings2->put_UserAgent(userAgent.wc_str());
+                    wchar_t *currentUserAgent = nullptr;
+                    wxString userAgentToSet   = userAgent;
+                    if (settings2->get_UserAgent(&currentUserAgent) == S_OK && currentUserAgent) {
+                        userAgentToSet = PreserveWebViewEngineUserAgent(userAgent, currentUserAgent);
+                        CoTaskMemFree(currentUserAgent);
+                    }
+                    hr = settings2->put_UserAgent(userAgentToSet.wc_str());
                     settings2->Release();
-                    return true;
                 }
+                settings->Release();
+                return hr == S_OK;
             }
             settings->Release();
             return false;
@@ -439,7 +485,8 @@ wxWebView* WebView::CreateWebView(wxWindow * parent, wxString const & url)
     url2.Replace("\\", "/");
 #endif
     if (!url2.empty()) { url2 = wxURI(url2).BuildURI(); }
-    BOOST_LOG_TRIVIAL(trace) << __FUNCTION__ << ": " << url2.ToUTF8();
+    if (!url2.empty())
+        BOOST_LOG_TRIVIAL(info) << "webview create url=" << url2.ToUTF8().data();
 
 #ifdef __WIN32__
     wxWebView* webView = new WebViewEdge;
@@ -570,6 +617,40 @@ void WebView::MarkScriptMessageHandlerAdded(wxWebView * webView)
     if (WebViewRef *ref = webview_ref(webView))
         ref->m_script_handler_added = true;
 }
+
+bool WebView::NeedsRecreateOnShow()
+{
+    const bool recreating = Slic3r::GUI::wxGetApp().is_recreating_gui();
+    BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << ": is_recreating_gui = " << recreating;
+#ifdef __WIN32__
+    return recreating;
+#else
+    return false;
+#endif
+}
+
+bool WebView::NeedsCompositingWorkaround()
+{
+#ifdef __linux__
+    const guint major = webkit_get_major_version();
+    const guint minor = webkit_get_minor_version();
+    return major < 2 || (major == 2 && minor < 42);
+#else
+    return false;
+#endif
+}
+
+bool WebView::SupportsForceSharedMemory()
+{
+#ifdef __linux__
+    const guint major = webkit_get_major_version();
+    const guint minor = webkit_get_minor_version();
+    return major > 2 || (major == 2 && minor >= 44);
+#else
+    return false;
+#endif
+}
+
 #if wxUSE_WEBVIEW_EDGE
 bool WebView::CheckWebViewRuntime()
 {
@@ -587,6 +668,12 @@ bool WebView::DownloadAndInstallWebViewRuntime()
     return DownloadAndInstallWV2RT() == 0;
 }
 #endif
+wxString WebView::RedactUrl(const wxString& url)
+{
+    const size_t cut = url.find_first_of(wxString("?#"));
+    return cut == wxString::npos ? url : url.Left(cut);
+}
+
 void WebView::LoadUrl(wxWebView * webView, wxString const &url)
 {
     auto url2  = url;
@@ -594,7 +681,8 @@ void WebView::LoadUrl(wxWebView * webView, wxString const &url)
     url2.Replace("\\", "/");
 #endif
     if (!url2.empty()) { url2 = wxURI(url2).BuildURI(); }
-    BOOST_LOG_TRIVIAL(trace) << __FUNCTION__ << url2.ToUTF8();
+    if (!url2.empty())
+        BOOST_LOG_TRIVIAL(info) << "webview load url=" << url2.ToUTF8().data();
     webView->LoadURL(url2);
 }
 

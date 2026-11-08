@@ -1,19 +1,46 @@
 #include "PresetComboBoxes.hpp"
 #include "libslic3r/FilamentFlowColumns.hpp"
 
-#include <cstddef>
+#include <climits>
+#include <boost/log/trivial.hpp>
+#include <cassert>
+#include <boost/algorithm/string/replace.hpp>
+#include <cmath>
+#include <boost/algorithm/string/predicate.hpp>
 #include <cctype>
-#include <algorithm>
+#include <cstddef>
 #include <unordered_map>
+#include "libslic3r/Preset.hpp"
+#include "libslic3r/Config.hpp"
+#include <map>
+#include <iterator>
+#include <deque>
+#include "slic3r/GUI/Gizmos/GLGizmoBase.hpp"
+#include "slic3r/GUI/Widgets/DropDown.hpp"
+#include "slic3r/GUI/Widgets/StateColor.hpp"
+#include "slic3r/GUI/GUI_Utils.hpp"
+#include "slic3r/GUI/EncodedFilament.hpp"
+#include <unordered_set>
+#include "libslic3r/Utils.hpp"
+#include "slic3r/GUI/CalibrationWizardPage.hpp"
 #include <vector>
 #include <string>
+#include <sstream>
+#include <optional>
 #include <set>
 #include <utility>
 #include <algorithm>
 #include <boost/algorithm/string.hpp>
 
+#include <wx/gdicmn.h>
+#include <wx/colour.h>
+#include <wx/event.h>
+#include <wx/image.h>
+#include <wx/anybutton.h>
+#include <wx/app.h>
 #include <wx/sizer.h>
 #include <wx/stattext.h>
+#include <wx/string.h>
 #include <wx/textctrl.h>
 #include <wx/button.h>
 #include <wx/statbox.h>
@@ -44,7 +71,7 @@
 #include "format.hpp"
 #include "Tab.hpp"
 #include "ConfigWizard.hpp"
-#include "../Utils/ASCIIFolding.hpp"
+#include "ConfigWizardTypes.hpp"
 #include "../Utils/UndoRedo.hpp"
 #include "../Utils/ColorSpaceConvert.hpp"
 #include "BitmapCache.hpp"
@@ -52,9 +79,12 @@
 #include "MsgDialog.hpp"
 #include "ParamsDialog.hpp"
 #include "FilamentPickerDialog.hpp"
+#include "ColorPickerDialog.hpp"
 #include "wxExtensions.hpp"
 
 #include "DeviceCore/DevManager.h"
+#include "slic3r/GUI/Widgets/Label.hpp"
+#include "slic3r/Utils/NetworkAgent.hpp"
 
 // A workaround for a set of issues related to text fitting into gtk widgets:
 #if defined(__WXGTK20__) || defined(__WXGTK3__)
@@ -63,10 +93,26 @@
     #include <gtk/gtk.h>
 #endif
 
-using Slic3r::GUI::format_wxstr;
-
 namespace Slic3r {
 namespace GUI {
+
+static FilamentColorPickerValue filament_color_picker_value(const DynamicPrintConfig& config, std::size_t index)
+{
+    FilamentColorPickerValue value;
+    if (const auto* primary = config.opt<ConfigOptionStrings>("filament_colour"); primary && index < primary->values.size())
+        value.primary = primary->values[index];
+    if (const auto* multi = config.opt<ConfigOptionStrings>("filament_multi_colour"); multi && index < multi->values.size()) {
+        std::istringstream stream(multi->values[index]);
+        for (std::string color; stream >> color;)
+            value.colors.push_back(std::move(color));
+    }
+    if (value.colors.empty() && !value.primary.empty())
+        value.colors.push_back(value.primary);
+    if (const auto* types = config.opt<ConfigOptionStrings>("filament_colour_type"); types && index < types->values.size())
+        value.gradient = value.colors.size() > 1 && types->values[index] == "0";
+    return value;
+}
+
 
 #define BORDER_W 10
 
@@ -346,7 +392,6 @@ int PresetComboBox::update_ams_color()
     if (m_filament_idx < 0) return -1;
     int idx = selected_ams_filament();
 
-    auto& filaments = wxGetApp().preset_bundle->machine_filaments;
     const ConnectMachineInfo* machineInfo = nullptr;
     if (idx >= 0)
     {
@@ -361,19 +406,6 @@ int PresetComboBox::update_ams_color()
     {
         real_idx = machineInfo->index;
     }
-    else if (idx >= 0)
-    {
-        int tmp = idx;
-        for (auto iter = filaments.begin(); iter != filaments.end(); ++iter) {
-            if (tmp == 0) {
-                real_idx = iter->first;
-                break;
-            }
-
-            tmp--;
-        }
-    }
-    
 
     auto& filament_extruder_map = wxGetApp().app_config->get_filament_extruder_map_ref();
     if (real_idx >= 0) {
@@ -419,33 +451,17 @@ int PresetComboBox::update_ams_color()
     }
     else
     {
-        if (wxGetApp().preset_bundle->machine_filaments.size() > 0)
-        {
-            auto iter = wxGetApp().preset_bundle->machine_filaments.begin();
-            for (size_t i = 0; iter != wxGetApp().preset_bundle->machine_filaments.end() && i < idx; ++i) {
-                ++iter;
-            }
-            if (iter == wxGetApp().preset_bundle->machine_filaments.end())
-            {
-                return -1;
-            }
-            color = iter->second.second;
+        auto& ams_list = wxGetApp().preset_bundle->filament_ams_list;
+        auto  iter     = ams_list.find(idx);
+        if (iter == ams_list.end()) {
+            BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << boost::format(": ams %1% out of range %2%") % idx % ams_list.size();
+            return -1;
         }
-        else
-        {
-            auto& ams_list = wxGetApp().preset_bundle->filament_ams_list;
-            auto  iter     = ams_list.find(idx);
-            if (iter == ams_list.end())
-            {
-                BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << boost::format(": ams %1% out of range %2%") % idx % ams_list.size();
-                return -1;
-            }
-            color = iter->second.opt_string("filament_colour", 0u);
-            // ORCA: the AMS also reports a colour type and a multi-colour pack.
-            ctype = iter->second.opt_string("filament_colour_type", 0u);
-            if (const auto *multi = iter->second.opt<ConfigOptionStrings>("filament_multi_colour"); multi != nullptr)
-                colors = multi->values;
-        }
+        color = iter->second.opt_string("filament_colour", 0u);
+        // ORCA: the AMS also reports a colour type and a multi-colour pack.
+        ctype = iter->second.opt_string("filament_colour_type", 0u);
+        if (const auto *multi = iter->second.opt<ConfigOptionStrings>("filament_multi_colour"); multi != nullptr)
+            colors = multi->values;
     }
     const std::string normalizedColor = FilamentColorUtils::NormalizeHexColor(color, "#26A69A");
     if (machineInfo != nullptr && multiColors.empty() && !normalizedColor.empty())
@@ -1193,31 +1209,37 @@ PlaterPresetComboBox::PlaterPresetComboBox(wxWindow *parent, Preset::Type preset
             EncodedFilamentColor fila_color = get_cur_color_info();
 
             // Show filament picker dialog
-            FilamentPickerDialog dialog(this, fila_id, fila_color, fila_type);
+            FilamentPickerDialog dialog(this, fila_id, fila_color, fila_type,
+                filament_color_picker_value(m_preset_bundle->project_config, m_filament_idx));
 
             if (!dialog.IsDataLoaded()) {
                 // If FilamentPicker fails, fallback to default color picker
                 show_default_color_picker();
-            } else if (dialog.ShowModal() == wxID_OK) {
-                // Get selected filament color data
-                EncodedFilamentColor fila_color = dialog.GetSelectedFilamentColor();
-
-                // Check if we have valid color data
-                if (!fila_color.m_colors.empty()) {
-                    // Convert to storage format
-                    std::vector<std::string> colors;
-                    for (const wxColour& color : fila_color.m_colors) {
-                        colors.push_back(color.GetAsString(wxC2S_HTML_SYNTAX).ToStdString());
-                    }
-
-                    bool is_gradient = (fila_color.m_color_type == EncodedFilamentColor::ColorType::GRADIENT_CLR);
-                    this->sync_colour_config(colors, is_gradient);
+            } else if (dialog.ShowModal() == wxID_OK && dialog.HasSelectionChanged()) {
+                if (const auto& custom = dialog.GetCustomColorSelection()) {
+                    const auto value = filament_color_picker_result(*custom);
+                    sync_colour_config(value.colors, value.gradient);
                 } else {
-                    // Fallback to basic color if no FilamentColor data
-                    wxColour selected_color = dialog.GetSelectedColour();
-                    if (selected_color.IsOk()) {
-                        std::vector<std::string> color = {selected_color.GetAsString(wxC2S_HTML_SYNTAX).ToStdString()};
-                        this->sync_colour_config(color, false);
+                    // Get selected filament color data
+                    EncodedFilamentColor fila_color = dialog.GetSelectedFilamentColor();
+
+                    // Check if we have valid color data
+                    if (!fila_color.m_colors.empty()) {
+                        // Convert to storage format
+                        std::vector<std::string> colors;
+                        for (const wxColour& color : fila_color.m_colors) {
+                            colors.push_back(color.GetAsString(wxC2S_HTML_SYNTAX).ToStdString());
+                        }
+
+                        bool is_gradient = (fila_color.m_color_type == EncodedFilamentColor::ColorType::GRADIENT_CLR);
+                        this->sync_colour_config(colors, is_gradient);
+                    } else {
+                        // Fallback to basic color if no FilamentColor data
+                        wxColour selected_color = dialog.GetSelectedColour();
+                        if (selected_color.IsOk()) {
+                            std::vector<std::string> color = {selected_color.GetAsString(wxC2S_HTML_SYNTAX).ToStdString()};
+                            this->sync_colour_config(color, false);
+                        }
                     }
                 }
             }
@@ -1259,9 +1281,9 @@ PlaterPresetComboBox::~PlaterPresetComboBox()
         clr_picker->Destroy();
 }
 
-static void run_wizard(ConfigWizard::StartPage sp)
+static void run_wizard(StartPage sp)
 {
-    wxGetApp().run_wizard(ConfigWizard::RR_USER, sp);
+    wxGetApp().run_wizard(RunReason::RR_USER, sp);
 }
 
 void PlaterPresetComboBox::OnSelect(wxCommandEvent &evt)
@@ -1281,11 +1303,11 @@ void PlaterPresetComboBox::OnSelect(wxCommandEvent &evt)
         //if (marker == LABEL_ITEM_WIZARD_PRINTERS)
         //    show_add_menu();
         //else {
-            ConfigWizard::StartPage sp = ConfigWizard::SP_WELCOME;
+            StartPage sp = StartPage::SP_WELCOME;
             switch (marker) {
-            case LABEL_ITEM_WIZARD_PRINTERS: sp = ConfigWizard::SP_PRINTERS; break;
-            case LABEL_ITEM_WIZARD_FILAMENTS: sp = ConfigWizard::SP_FILAMENTS; break;
-            case LABEL_ITEM_WIZARD_MATERIALS: sp = ConfigWizard::SP_MATERIALS; break;
+            case LABEL_ITEM_WIZARD_PRINTERS: sp = StartPage::SP_PRINTERS; break;
+            case LABEL_ITEM_WIZARD_FILAMENTS: sp = StartPage::SP_FILAMENTS; break;
+            case LABEL_ITEM_WIZARD_MATERIALS: sp = StartPage::SP_MATERIALS; break;
             default: break;
             }
             wxTheApp->CallAfter([sp]() { run_wizard(sp); });
@@ -1322,30 +1344,24 @@ bool PlaterPresetComboBox::switch_to_tab()
     const Preset* selected_filament_preset = nullptr;
     if (m_type == Preset::TYPE_FILAMENT)
     {
-        const std::string& selected_preset = GetString(GetSelection()).ToUTF8().data();
-        if (!boost::algorithm::starts_with(selected_preset, Preset::suffix_modified()))
+        // Reload the editor only when it has a different preset open than this slot.
+        const std::string& slot_preset_name = wxGetApp().preset_bundle->filament_presets[m_filament_idx];
+        if (slot_preset_name != wxGetApp().preset_bundle->filaments.get_selected_preset_name())
         {
-            std::string preset_name = wxGetApp().preset_bundle->filaments.get_preset_name_by_alias(selected_preset);
-            // Snapmaker Orca: the displayed alias is shared by the versions of a material for the
-            // nozzle sizes, and the lookup above returns the one of the printer preset. The editor
-            // opens the preset the slot holds.
-            if (NozzleFilament::State slot_state; this->filament_slot_state(slot_state))
-                preset_name = m_preset_bundle->filament_presets[m_filament_idx];
-            if (wxGetApp().get_tab(m_type)->select_preset(preset_name))
-                wxGetApp().get_tab(m_type)->get_combo_box()->set_filament_idx(m_filament_idx);
-            else {
+            if (!wxGetApp().get_tab(m_type)->select_preset(slot_preset_name))
                 return false;
-            }
-            // Snapmaker Orca: the Standard / High Flow column of the tool head that prints the
-            // slot, so that a High Flow tool head opens its material on its High Flow values.
-            if (m_filament_idx >= 0) {
-                const auto *volume_types = m_preset_bundle->project_config.option<ConfigOptionEnumsGeneric>("nozzle_volume_type");
-                size_t      head         = NozzleFilament::head_state(*m_preset_bundle).head_of(size_t(m_filament_idx));
-                if (head == NozzleFilament::no_head)
-                    head = size_t(m_filament_idx);
-                if (volume_types != nullptr && head < volume_types->values.size())
-                    tab->select_flow_column(NozzleVolumeType(volume_types->values[head]));
-            }
+        }
+        // Bind the editor to this slot even when its preset is already open.
+        wxGetApp().get_tab(m_type)->get_combo_box()->set_filament_idx(m_filament_idx);
+        // Snapmaker Orca: the Standard / High Flow column of the tool head that prints the
+        // slot, so that a High Flow tool head opens its material on its High Flow values.
+        if (m_filament_idx >= 0) {
+            const auto *volume_types = m_preset_bundle->project_config.option<ConfigOptionEnumsGeneric>("nozzle_volume_type");
+            size_t      head         = NozzleFilament::head_state(*m_preset_bundle).head_of(size_t(m_filament_idx));
+            if (head == NozzleFilament::no_head)
+                head = size_t(m_filament_idx);
+            if (volume_types != nullptr && head < volume_types->values.size())
+                tab->select_flow_column(NozzleVolumeType(volume_types->values[head]));
         }
     }
 
@@ -1563,7 +1579,7 @@ void PlaterPresetComboBox::show_add_menu()
 
     append_menu_item(menu, wxID_ANY, _L("Add/Remove presets"), "",
         [](wxCommandEvent&) {
-            wxTheApp->CallAfter([]() { run_wizard(ConfigWizard::SP_PRINTERS); });
+            wxTheApp->CallAfter([]() { run_wizard(StartPage::SP_PRINTERS); });
         }, "menu_edit_preset", menu, []() { return true; }, wxGetApp().plater());
 
     wxGetApp().plater()->PopupMenu(menu);
@@ -1588,7 +1604,7 @@ void PlaterPresetComboBox::show_edit_menu()
 
     append_menu_item(menu, wxID_ANY, _L("Add/Remove presets"), "",
         [](wxCommandEvent&) {
-            wxTheApp->CallAfter([]() { run_wizard(ConfigWizard::SP_PRINTERS); });
+            wxTheApp->CallAfter([]() { run_wizard(StartPage::SP_PRINTERS); });
         }, "menu_edit_preset", menu, []() { return true; }, wxGetApp().plater());
 
     wxGetApp().plater()->PopupMenu(menu);
@@ -1894,11 +1910,10 @@ void PlaterPresetComboBox::update()
         selected_in_ams = add_ams_filaments(into_u8(selected_alias), true);
     }
 
-    // Snapmaker: filaments reported by the connected machine (SSWCP sync), filtered by nozzle.
-    if (m_type == Preset::TYPE_FILAMENT && wxGetApp().preset_bundle->machine_filaments.size() > 0) {
+    if (m_type == Preset::TYPE_FILAMENT && m_preset_bundle->m_connect_machine_info_list.size() > 0) {
         set_label_marker(Append(separator(L("Machine Filament")), wxNullBitmap));
         auto& filaments         = m_collection->get_presets();
-        auto  machine_nozzles_list = wxGetApp().preset_bundle->m_connect_machine_info_list;
+        auto& machine_nozzles_list = m_preset_bundle->m_connect_machine_info_list;
         m_first_ams_filament    = GetCount();
 
         std::string currentNozzleInfo;
@@ -1917,7 +1932,7 @@ void PlaterPresetComboBox::update()
             std::string filament_name   = machine_nozzles_list[i].filament_info;
             std::string machine_nozzles = machine_nozzles_list[i].nozzle_info;
 
-            // Filter by nozzle for display only; machine_filaments / m_connect_machine_info_list stay from sync (SSWCP).
+            // Filter by nozzle for display only; slot state stays owned by device sync.
             if (currentNozzleInfo != machine_nozzles)
                 continue;
 
@@ -2080,18 +2095,7 @@ void PlaterPresetComboBox::update()
 
     //BBS: add project embedded preset logic
     add_presets(project_embedded_presets, selected_user_preset, L("Project-inside presets"), _L("Project") + " ");
-    // ORCA add sorting support for vendor / type for user presets
-    auto group_filament_presets    = wxGetApp().app_config->get("group_filament_presets");
-    auto group_filament_presets_by = group_filament_presets  == "0" ? (_L("Custom") + " ") // Append all to "Custom" sub menu
-                                   : group_filament_presets  == "2" ? "by_type"            // Create sub menus with filament type
-                                   : group_filament_presets  == "3" ? "by_vendor"          // Create sub menus with filament vendor
-                                   : "";                                                   // Use without sub menu
-    // ORCA: the by_type/by_vendor grouping is derived from filament-only attributes
-    // (filament_type/filament_vendor), which are empty for printer and material presets.
-    // Applying it to non-filament combos buckets every user preset under "Unspecified",
-    // so only group user presets by those attributes for the filament combobox.
-    add_presets(nonsys_presets, selected_user_preset, L("User presets"),
-                m_type == Preset::TYPE_FILAMENT ? group_filament_presets_by : wxString(""));
+    add_presets(nonsys_presets, selected_user_preset, L("User presets"), wxString(""));
     // ORCA: add bundle presets with sub-dropdown grouping for filament and printer
     auto bundle_group_name = (m_type == Preset::TYPE_FILAMENT || m_type == Preset::TYPE_PRINTER) ? "by_bundle" : "";
     add_presets(bundle_presets, selected_bundle_preset, L("Bundle presets"), bundle_group_name);
@@ -2565,14 +2569,14 @@ void TabPresetComboBox::OnSelect(wxCommandEvent &evt)
     if (marker >= LABEL_ITEM_DISABLED && marker < LABEL_ITEM_MAX) {
         this->SetSelection(m_last_selected);
         // BBS: Add/Remove filaments
-        ConfigWizard::StartPage sp = ConfigWizard::SP_WELCOME;
+        StartPage sp = StartPage::SP_WELCOME;
         switch (marker) {
-        case LABEL_ITEM_WIZARD_PRINTERS: sp = ConfigWizard::SP_PRINTERS; break;
-        case LABEL_ITEM_WIZARD_FILAMENTS: sp = ConfigWizard::SP_FILAMENTS; break;
-        case LABEL_ITEM_WIZARD_MATERIALS: sp = ConfigWizard::SP_MATERIALS; break;
+        case LABEL_ITEM_WIZARD_PRINTERS: sp = StartPage::SP_PRINTERS; break;
+        case LABEL_ITEM_WIZARD_FILAMENTS: sp = StartPage::SP_FILAMENTS; break;
+        case LABEL_ITEM_WIZARD_MATERIALS: sp = StartPage::SP_MATERIALS; break;
         default: break;
         }
-        if (sp != ConfigWizard::SP_WELCOME) {
+        if (sp != StartPage::SP_WELCOME) {
             wxTheApp->CallAfter([sp]() {
                 run_wizard(sp);
             });
@@ -3128,7 +3132,7 @@ void GUI::CalibrateFilamentComboBox::OnSelect(wxCommandEvent &evt)
     wxPostEvent(m_parent, e);
 }
 
-void PlaterPresetComboBox::sys_color_changed()
+void GUI::PlaterPresetComboBox::sys_color_changed()
 {
     PresetComboBox::sys_color_changed();
     if (clr_picker) {

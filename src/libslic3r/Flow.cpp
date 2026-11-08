@@ -1,10 +1,16 @@
 #include "Flow.hpp"
-#include "I18N.hpp"
+#include "Exception.hpp"
+#include "Config.hpp"
 #include "Print.hpp"
+#include "libslic3r.h"
 #include <cmath>
 #include <assert.h>
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <string>
+#include <math.h>
+#include "PrintConfig.hpp"
+#include "I18N.hpp"
 
 // Mark string for localization and translate.
 #define L(s) Slic3r::I18N::translate(s)
@@ -12,10 +18,10 @@
 namespace Slic3r {
 
 FlowErrorNegativeSpacing::FlowErrorNegativeSpacing() : 
-	FlowError("Flow::spacing() produced negative spacing. Did you set some extrusion width too small?") {}
+	FlowError(L("Flow::spacing() produced negative spacing. Did you set some extrusion width too small?")) {}
 
 FlowErrorNegativeFlow::FlowErrorNegativeFlow() :
-    FlowError("Flow::mm3_per_mm() produced negative flow. Did you set some extrusion width too small?") {}
+    FlowError(L("Flow::mm3_per_mm() produced negative flow. Did you set some extrusion width too small?")) {}
 
 // This static method returns a sane extrusion width default.
 float Flow::auto_extrusion_width(FlowRole role, float nozzle_diameter)
@@ -61,7 +67,8 @@ static inline FlowRole opt_key_to_flow_role(const std::string &opt_key)
 
 static inline void throw_on_missing_variable(const std::string &opt_key, const char *dependent_opt_key) 
 {
-	throw FlowErrorMissingVariable((boost::format("Failed to calculate line width of %1%. Cannot get value of \u201c%2%\u201d.") % opt_key % dependent_opt_key).str());
+	// TRN %1% and %2% are names of settings.
+	throw FlowErrorMissingVariable((boost::format(L("Failed to calculate line width of %1%. Cannot get value of \"%2%\".")) % opt_key % dependent_opt_key).str());
 }
 
 ConfigOptionFloatOrPercent Flow::width_at(const ConfigOptionVector<FloatOrPercent> &widths, size_t column)
@@ -196,7 +203,7 @@ Flow Flow::with_spacing(float new_spacing) const
         assert(m_width >= m_height);
         out.m_width += new_spacing - m_spacing;
         if (out.m_width < out.m_height)
-            throw Slic3r::InvalidArgument("Invalid spacing supplied to Flow::with_spacing(), check your layer height and extrusion width.");
+            throw Slic3r::InvalidArgument(L("Invalid spacing supplied to Flow::with_spacing(), check your layer height and extrusion width."));
     }
     out.m_spacing = new_spacing;
     return out;
@@ -274,7 +281,7 @@ float support_material_nozzle_diameter(const PrintObject *object, int configured
     if (configured_filament == 0 && object->config().support_nozzle_diameter.value > 0.)
         return float(object->config().support_nozzle_diameter.value);
     // for configured_filament == 0 (use the current extruder), get_at returns the 0th component.
-    return float(object->print()->config().nozzle_diameter.get_at(configured_filament - 1));
+    return float(nozzle_diameter_for_filament(object->print()->config(), configured_filament, object->print()->is_BBL_printer()));
 }
 
 size_t support_head(const PrintObject *object, int configured, bool interface_role, float *nozzle)
@@ -291,7 +298,7 @@ size_t support_head(const PrintObject *object, int configured, bool interface_ro
     // nozzle; otherwise head 1 with support_material_nozzle_diameter.
     if (const unsigned int resolved = object->resolved_default_support_filament(interface_role); resolved > 0) {
         if (nozzle != nullptr)
-            *nozzle = float(print.config().nozzle_diameter.get_at(resolved - 1));
+            *nozzle = float(nozzle_diameter_for_filament(print.config(), int(resolved), print.is_BBL_printer()));
         return print.width_slot(resolved);
     }
     if (nozzle != nullptr)

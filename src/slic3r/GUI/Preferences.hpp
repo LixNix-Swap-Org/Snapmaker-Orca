@@ -4,13 +4,20 @@
 #include "GUI.hpp"
 #include "GUI_Utils.hpp"
 
+#include <wx/chartype.h>
+#include <functional>
+#include <tuple>
 #include <wx/dialog.h>
+#include <wx/string.h>
+#include <wx/gdicmn.h>
+#include <wx/sizer.h>
 #include <wx/timer.h>
 #include <string>
 #include <vector>
 #include <functional>
 #include <list>
 #include <map>
+#include <wx/toplevel.h>
 #include "Widgets/ComboBox.hpp"
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/TextInput.hpp"
@@ -89,7 +96,6 @@ public:
 
     wxString m_developer_mode_def;
     wxString m_internal_developer_mode_def;
-    wxString m_websocket_debug_def;
     wxString m_backup_interval_def;
     wxString m_iot_environment_def;
 

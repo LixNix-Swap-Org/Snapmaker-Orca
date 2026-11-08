@@ -799,11 +799,7 @@ TEST_CASE("Standard changes the High Flow column does not follow are found again
     }
 }
 
-// ---------------------------------------------------------------------------------------------
-// Limits of the High Flow column (doc/speeds-per-tool-head.md, "High Flow values for any filament").
-// ---------------------------------------------------------------------------------------------
-
-TEST_CASE("A retraction override switched off under High Flow only follows the parent again after loading", "[FilamentFlow]")
+TEST_CASE("A retraction override switched off under High Flow only stays off after loading", "[FilamentFlow]")
 {
     ScopedTemporaryDir dir("orca_filament_override_off");
     Preset base(Preset::TYPE_FILAMENT, "My Base PETG", false);
@@ -823,13 +819,17 @@ TEST_CASE("A retraction override switched off under High Flow only follows the p
     REQUIRE(j["filament_retraction_length"].size() == 2);
     CHECK(j["filament_retraction_length"][1].get<std::string>() == "nil");
 
-    // Loaded again, nil takes the parent's value: the override is on again.
+    // Loaded again, nil stays: the override is still off.
     child.reload(base);
     const auto *retraction = child.config.option<ConfigOptionFloatsNullable>("filament_retraction_length");
     REQUIRE(retraction->values.size() == 2);
-    CHECK_FALSE(retraction->is_nil(1));
-    CHECK_THAT(retraction->values[1], Catch::Matchers::WithinAbs(0.8, 1e-9));
+    CHECK(retraction->is_nil(1));
+    CHECK_THAT(retraction->values[0], Catch::Matchers::WithinAbs(0.8, 1e-9));
 }
+
+// ---------------------------------------------------------------------------------------------
+// Limits of the High Flow column (doc/speeds-per-tool-head.md, "High Flow values for any filament").
+// ---------------------------------------------------------------------------------------------
 
 TEST_CASE("A user filament preset re-saved without its column list loads with its Standard values only", "[FilamentFlow]")
 {

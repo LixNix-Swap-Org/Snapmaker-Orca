@@ -40,6 +40,14 @@ src/Snapmaker_Orca-doc/
 **/.flatpak-builder/
 *.no-debug.yml
 resources/profiles/user/default
+
+# Snapmaker profiles are mirrored from submodules/Profiles by the
+# sync_snapmaker_profiles target.
+resources/profiles/Snapmaker/filament/
+resources/profiles/Snapmaker/machine/
+resources/profiles/Snapmaker/process/
+resources/profiles/Snapmaker.json
+
 *.code-workspace
 deps_src/build/
 test.js
@@ -59,3 +67,6 @@ ctest_results.xml
 .claude/
 .hermes/
 CLAUDE.md
+# snapmaker_connection CLI binaries are placed into resources/ locally per platform/architecture and are not tracked
+/resources/snapmaker_connection*
+/resources/snapmaker_control*

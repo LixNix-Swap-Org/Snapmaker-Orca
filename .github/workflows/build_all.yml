@@ -38,6 +38,14 @@ jobs:
         shell: powershell
         run: .\scripts\test_build_win.ps1
 
+      - name: Run the exception throw info check tests
+        shell: powershell
+        run: .\scripts\test_check_exception_throw_info.ps1
+
+      - name: Run the preset prune tests
+        shell: powershell
+        run: .\scripts\test_prune_cached_presets.ps1
+
   build_linux:
     strategy:
       fail-fast: false
@@ -88,7 +96,7 @@ jobs:
     if: ${{ !cancelled() && (github.event_name != 'schedule' || github.repository == (vars.NIGHTLY_REPO || 'LixNix-Swap-Org/Snapmaker-Orca')) }}
     uses: ./.github/workflows/build_check_cache.yml
     with:
-      os: ${{ vars.SELF_HOSTED && 'orca-macos-arm64' || 'macos-14' }}
+      os: ${{ vars.SELF_HOSTED && 'orca-macos-arm64' || 'macos-15' }}
       arch: ${{ matrix.arch }}
       build-deps-only: ${{ inputs.build-deps-only || false }}
       force-build: ${{ inputs.force-build || false }}
@@ -99,7 +107,7 @@ jobs:
     if: ${{ !cancelled() && needs.build_macos_arch.result == 'success' && !inputs.build-deps-only && (github.event_name != 'schedule' || github.repository == (vars.NIGHTLY_REPO || 'LixNix-Swap-Org/Snapmaker-Orca')) }}
     uses: ./.github/workflows/build_orca.yml
     with:
-      os: ${{ vars.SELF_HOSTED && 'orca-macos-arm64' || 'macos-14' }}
+      os: ${{ vars.SELF_HOSTED && 'orca-macos-arm64' || 'macos-15' }}
       arch: universal
       macos-combine-only: true
     secrets: inherit
@@ -159,7 +167,7 @@ jobs:
     if: ${{ !cancelled() && success() }}
     uses: ./.github/workflows/unit_tests.yml
     with:
-      os: ${{ vars.SELF_HOSTED && 'orca-macos-arm64' || 'macos-14' }}
+      os: ${{ vars.SELF_HOSTED && 'orca-macos-arm64' || 'macos-15' }}
       artifact: ${{ github.sha }}-tests-macos-arm64
       test-dir: build/arm64/tests
   # Slice a two-colour cube through every shipped printer, and through every
@@ -178,6 +186,17 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "~4.3.0"  # use most recent 4.3.x version
+      - name: Sync Snapmaker profiles
+        run: |
+          cmake -DSUB="$PWD/submodules/Profiles" \
+                -DDST="$PWD/resources/profiles" \
+                -DVERSION_STAMP="$RUNNER_TEMP/profiles-revision.txt" \
+                -P cmake/SyncSnapmakerProfiles.cmake
       - name: Download profile validator
         uses: actions/download-artifact@v8
         with:
@@ -244,14 +263,25 @@ jobs:
       date:
       ver:
       ver_pure:
-      # Belt-printer nightlies share the main nightly release but carry a `_belt`
-      # suffix so they never overwrite the main assets.
-      nightly_suffix: ${{ github.ref == 'refs/heads/belt-printer' && '_belt' || '' }}
     steps:
     - name: "Remove unneeded stuff to free disk space"
       run:
         rm -rf /usr/local/lib/android/* /usr/share/dotnet/* /opt/ghc1/* "/usr/local/share/boost1/*" /opt/hostedtoolcache1/*
     - uses: actions/checkout@v7
+      with:
+        submodules: recursive
+    - name: "Stage connect bundle"
+      shell: bash
+      run: |
+        case "${{ matrix.variant.arch }}" in
+          x86_64) platform="linux-x64" ;;
+          aarch64) platform="linux-arm64" ;;
+          *) echo "Unsupported Flatpak architecture: ${{ matrix.variant.arch }}" >&2; exit 1 ;;
+        esac
+        python3 scripts/packaging/stage_connect_bundle.py \
+          --lock .github/connect-bundle.lock.json \
+          --platform "$platform" \
+          --resources-dir resources
     - name: Get the version and date
       run: |
         ver_pure=$(grep 'set(Snapmaker_VERSION' version.inc | cut -d '"' -f2)
@@ -487,15 +517,17 @@ jobs:
         find "$d/build_flatpak/tests" -type f -perm -u+x -exec strip --strip-unneeded {} + 2>/dev/null || true
         # At runtime the tests read tests/ (TEST_DATA_DIR), scripts/, and under
         # resources/ the shipped profiles (PROFILES_DIR), the printers/ maps, the
-        # icon SVGs (NativeCommands icon names are checked against them) and the
-        # macOS app icons Icon.icns and Assets.car.
+        # icon SVGs (NativeCommands icon names are checked against them), the
+        # macOS app icons Icon.icns and Assets.car and the staged flutter_web/main.dart.js.
         find "$d" -mindepth 1 -maxdepth 1 -type d \
           ! -name tests ! -name build_flatpak ! -name scripts ! -name resources ! -name src -exec rm -rf {} +
         # Source checks read src/slic3r/GUI.
         find "$d/src" -mindepth 1 -maxdepth 1 ! -name slic3r -exec rm -rf {} +
         find "$d/src/slic3r" -mindepth 1 -maxdepth 1 ! -name GUI -exec rm -rf {} +
-        find "$d/resources" -mindepth 1 -maxdepth 1 ! -name profiles ! -name printers ! -name images \
+        find "$d/resources" -mindepth 1 -maxdepth 1 ! -name profiles ! -name printers ! -name images ! -name web \
           ! -name Icon.icns ! -name Assets.car -exec rm -rf {} +
+        find "$d/resources/web" -mindepth 1 -maxdepth 1 ! -name flutter_web -exec rm -rf {} +
+        find "$d/resources/web/flutter_web" -mindepth 1 -maxdepth 1 ! -name main.dart.js -exec rm -rf {} +
         # Only the SVGs are read; the png/ico/icns/gif assets are ~35MB of dead weight.
         find "$d/resources/images" -mindepth 1 -maxdepth 1 ! -name '*.svg' -exec rm -rf {} + 2>/dev/null || true
         tar -cf flatpak-test-asset.tar flatpak_app "$d"

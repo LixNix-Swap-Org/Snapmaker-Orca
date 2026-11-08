@@ -1,22 +1,34 @@
 #ifndef slic3r_GUI_App_hpp_
 #define slic3r_GUI_App_hpp_
 
-#include <functional>
-#include <memory>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
+#include <atomic>
+#include <boost/optional/optional.hpp>
+#include <boost/thread/thread.hpp>
 #include <chrono>
+#include <cstdint>
+#include <cstddef>
+#include <functional>
+#include <map>
+#include "libslic3r/Config.hpp"
+#include "libslic3r/PrintConfig.hpp"
+#include "libslic3r/Technologies.hpp"
+#include "libslic3r/Semver.hpp"
+#include <memory>
+#include <set>
 #include <string>
-#include "ActionRegistry.hpp"
-#include "ImGuiWrapper.hpp"
-#include "ConfigWizard.hpp"
-#include "OpenGLManager.hpp"
+#include "ConfigWizardTypes.hpp"
 #include "libslic3r/Preset.hpp"
 #include "libslic3r/PresetBundle.hpp"
+#include "libslic3r_version.h"
 #include "slic3r/GUI/UserNotification.hpp"
+#include "slic3r/Utils/CloudDeleteQueue.hpp"
 #include "slic3r/Utils/CloudProvider.hpp"
 // Snapmaker: WebViewPanel must be complete here (inline Fltviews::reload_all calls load_url);
 // fork translation units rely on these dialog headers transitively. Other Web types are forward-declared.
 #include "slic3r/GUI/WebViewDialog.hpp"
-#include "slic3r/GUI/WebSMUserLoginDialog.hpp"
+#include "slic3r/Utils/GatewayAccount.hpp"
 #include "slic3r/GUI/WebDeviceDialog.hpp"
 #include "slic3r/GUI/WebPreprintDialog.hpp"
 #include "slic3r/GUI/Jobs/UpgradeNetworkJob.hpp"
@@ -25,17 +37,29 @@
 #include "slic3r/GUI/SSWCP.hpp"
 #include "slic3r/Utils/Bonjour.hpp"
 #include "slic3r/GUI/PrinterWebView.hpp"
+#include "libslic3r/Point.hpp"
+
+#include <vector>
+#include <utility>
 #include <wx/app.h>
 #include <wx/colour.h>
+#include <wx/event.h>
 #include <wx/font.h>
+#include <wx/strconv.h>
+#include <wx/setup.h>
+#include <wx/intl.h>
+#include <wx/gdicmn.h>
 #include <wx/string.h>
 #include <wx/snglinst.h>
 #include <wx/msgdlg.h>
 
 #include <atomic>
+#include <cstdint>
 #include <mutex>
 #include <stack>
+#include <thread>
 #include <unordered_map>
+#include <vector>
 //#define BBL_HAS_FIRST_PAGE          1
 #define STUDIO_INACTIVE_TIMEOUT     15*60*1000
 #define LOG_FILES_MAX_NUM           30
@@ -55,6 +79,8 @@ class wxMenuBar;
 class wxTopLevelWindow;
 class wxDataViewCtrl;
 class wxBookCtrlBase;
+class wxGLCanvas;
+class wxGLContext;
 // BBS
 class Notebook;
 struct wxLanguageInfo;
@@ -80,9 +106,17 @@ class MachineObject;
 class NetworkAgent;
 class IPrinterAgent;
 class TaskManager;
+class GLShaderProgram;
+class PrintHostJobQueue;
 
 // Same typedef as in bambu_networking.hpp, so this header need not include it.
 typedef std::function<bool()> WasCancelledFn;
+
+namespace Gateway {
+class GatewayService;
+struct CurrentDevice;
+struct PreprintStoreResult;
+}
 
 namespace GUI{
 
@@ -113,7 +147,13 @@ class NetworkErrorDialog;
 class PluginsDialog;
 class SpeedDialWebDialog;
 class TerminalDialog;
+class ActionRegistry;
+class HttpServer;
+class ImGuiWrapper;
+class OpenGLManager;
+class UpgradeNetworkJob;
 
+typedef std::function<void(int status, int percent, bool& cancel)> InstallProgressFn;
 
 enum FileType
 {
@@ -275,8 +315,6 @@ private:
     bool            m_app_conf_exists{ false };
     EAppMode        m_app_mode{ EAppMode::Editor };
     bool            m_is_recreating_gui{ false };
-    /// Set only for the duration of `MsgUpdateConfig::ShowModal()` in load_flutter_web (atomic: safe vs updater threads + CallAfter).
-    std::atomic<bool> m_flutter_web_config_update_dlg_open{ false };
     /// Set only for the duration of profile/preset `MsgUpdateConfig::ShowModal()` (atomic: safe vs updater threads + CallAfter).
     std::atomic<bool> m_profile_config_update_dlg_open{ false };
     std::chrono::steady_clock::time_point m_last_input{ std::chrono::steady_clock::now() };
@@ -317,7 +355,7 @@ private:
     const wxLanguageInfo		 *m_language_info_best   = nullptr;
     wxString                    m_active_language_code;
 
-    OpenGLManager m_opengl_mgr;
+    std::unique_ptr<OpenGLManager> m_opengl_mgr;
     std::unique_ptr<RemovableDriveManager> m_removable_drive_manager;
 
     std::unique_ptr<ImGuiWrapper> m_imgui;
@@ -341,7 +379,7 @@ private:
     Slic3r::UserManager* m_user_manager { nullptr };
     Slic3r::TaskManager* m_task_manager { nullptr };
     NetworkAgent* m_agent { nullptr };
-    std::map<std::string, std::string> need_delete_presets;   // store setting ids of preset
+    CloudDeleteQueue m_cloud_delete_queue; // cloud deletes of synced presets, sent by the preset sync thread
     std::vector<bool> m_create_preset_blocked { false, false, false, false, false, false }; // excceed limit
     std::vector<std::string> m_pending_conflict_setting_ids; // setting_id from the most recent 409 conflict
     bool m_networking_compatible { false };
@@ -359,7 +397,6 @@ private:
 
     // login widget
     ZUserLogin*     login_dlg { nullptr };
-    SMUserLogin*    sm_login_dlg{ nullptr };
 
 
 public:
@@ -375,37 +412,59 @@ private:
     FilamentColorCodeQuery* m_filament_color_code_query{ nullptr };
 
     boost::thread    m_sync_update_thread;
+    // Startup cloud plugin sync; joined on logout, in OnExit(), CleanUp() and on macOS end session.
+    boost::thread    m_startup_cloud_plugin_fetch_thread;
+    std::function<void()> m_startup_cloud_report; // run by post_init() if the results came earlier
     std::shared_ptr<int> m_user_sync_token;
     std::atomic<bool>    m_restart_sync_pending {false};
     std::atomic<bool>    m_sync_user_preset_dlg_active {false}; // a manual "Sync Presets" progress dialog is on screen (see restart_sync_user_preset)
     std::atomic<bool>    m_sync_user_presets_now {false}; // request the sync loop to push user presets on its next tick
+    bool                 m_user_preset_pull_pending {false}; // set when a sync thread starts, cleared once its pull is applied; a failed pull or a stopped sync leaves it set
+    bool                 m_legacy_filament_check_due {false}; // the startup check waits for that pull
+    bool                 m_legacy_filament_check_running {false}; // a check is in progress, its dialog may be open
     std::atomic<bool>    m_migration_retry_pending {false};
     bool             m_is_dark_mode{ false };
     bool             m_adding_script_handler { false };
     bool             m_side_popup_status{false};
     bool             m_show_http_error_msgdlg{false};
     std::chrono::steady_clock::time_point m_last_401_error_time;
+    // OrcaCloud webview session handoff: the newest request_web_session state from the cloud pane
+    // and a generation counter so a superseded mint/login result is dropped (guide §5, "only the
+    // newest request counts").
+    std::string      m_cloud_handoff_state;
+    // The OrcaCloud path the open requests target, remembered so a login re-seed keeps the same page.
+    std::string      m_cloud_open_path;
+    uint64_t         m_cloud_handoff_gen { 0 };
     bool             m_show_error_msgdlg{false};
     wxString         m_info_dialog_content;
     // Orca auth callback http server (cloud login flows)
-    HttpServer       m_http_server;
+    std::unique_ptr<HttpServer> m_http_server;
 
 public:
     // Snapmaker: page loading http server for the embedded Flutter web UI
     HttpServer       m_page_http_server;
+    mutable std::shared_ptr<Gateway::GatewayService> m_gateway_service;
     
 private:
     bool             m_show_gcode_window{true};
     boost::thread    m_check_network_thread;
 
     std::shared_ptr<PrintHost> m_connected_host = nullptr;
-    std::mutex                 m_cnt_hst_mtx;
+    mutable std::mutex         m_cnt_hst_mtx;
     DynamicPrintConfig              m_host_config;
     std::mutex                 m_host_cfg_mtx;
 
-    wxTimer* m_machine_find_timer = nullptr;
-    std::shared_ptr<Bonjour> m_machine_find_engine = nullptr;
-    const int                m_machine_find_id     = 10086;
+    struct GatewayDeviceState
+    {
+        std::uint64_t generation{0};
+        std::string   serial_number;
+        bool          connected{false};
+        bool          objects_query_active{false};
+        bool          objects_refresh_pending{false};
+        std::string   watched_serial_number;
+    };
+    GatewayDeviceState m_gateway_device;
+    std::string m_gateway_loaded_base_url;
 
   public:
     DynamicPrintConfig*             get_host_config() {
@@ -419,10 +478,6 @@ private:
 
     void import_presets();
 
-    void import_flutter_web();
-
-    void reset_machine_find_engine() { m_machine_find_engine = nullptr; }
-
     void                       set_host_config(const DynamicPrintConfig& config)
     {
         m_host_cfg_mtx.lock();
@@ -431,6 +486,7 @@ private:
     }
     void      get_connect_host(std::shared_ptr<PrintHost>& output);
     void                       set_connect_host(const std::shared_ptr<PrintHost>& intput);
+    bool                       physical_printer_connected() const;
     wxDialog* get_web_device_dialog() { return web_device_dialog; }
     void                       set_web_preprint_dialog(WebPreprintDialog* obj) { web_preprint_dialog = obj; }
     wxDialog*                  get_web_preprint_dialog() { return web_preprint_dialog; }
@@ -440,6 +496,7 @@ private:
     std::string     get_local_models_path();
     bool            OnInit() override;
     int             OnExit() override;
+    void            CleanUp() override;
     bool            initialized() const { return m_initialized; }
     inline bool     is_enable_multi_machine() { return this->app_config&& this->app_config->get("enable_multi_machine") == "true"; }
 #ifdef SLIC3R_CAD
@@ -455,7 +512,6 @@ private:
     //explicit GUI_App(EAppMode mode = EAppMode::Editor);
     ~GUI_App() override;
 
-    void                   machine_find();
     void show_message_box(std::string msg) { wxMessageBox(msg); }
     EAppMode get_app_mode() const { return m_app_mode; }
     Slic3r::DeviceManager* getDeviceManager() { return m_device_manager; }
@@ -464,9 +520,15 @@ private:
     Slic3r::TaskManager*   getTaskManager() { return m_task_manager; }
     HMSQuery* get_hms_query() { return hms_query; }
     NetworkAgent* getAgent() { return m_agent; }
+    // Version that wrote the app config before this run; empty when there was no app config.
+    const boost::optional<Semver>& last_config_version() const { return m_last_config_version; }
 
     // Reconcile the live printer agent with the stored preset selection.
+    // No-op until the main window exists; the startup preset load installs the agent then.
     void switch_printer_agent();
+    // Install the selected preset's agent if it is registered but not live, e.g. when its plugin
+    // finishes loading after the startup preset was applied. Otherwise leave the live agent alone.
+    void switch_printer_agent_if_pending();
 
     std::string resolve_printer_agent_id(const std::string& stored_id) const;
     // ORCA TODO: in the future, bbl presets should specify "bbl" printer agent id
@@ -482,20 +544,14 @@ private:
     int  FilterEvent(wxEvent& event) override;
     // The Preferences "Default page" choice, stored as its index: 0 Home, 1 Prepare.
     bool starts_on_prepare() const;
-    bool flutter_web_config_update_dlg_open() const
-    {
-        return m_flutter_web_config_update_dlg_open.load(std::memory_order_acquire);
-    }
-    void set_flutter_web_config_update_dlg_open(bool v)
-    {
-        m_flutter_web_config_update_dlg_open.store(v, std::memory_order_release);
-    }
     bool profile_config_update_dlg_open() const { return m_profile_config_update_dlg_open.load(std::memory_order_acquire); }
     void set_profile_config_update_dlg_open(bool v) { m_profile_config_update_dlg_open.store(v, std::memory_order_release); }
     std::string logo_name() const { return is_editor() ? "Snapmaker_Orca" : "Snapmaker_Orca-gcodeviewer"; }
 
     bool is_closing() const { return m_is_closing.load(std::memory_order_acquire); }
     void set_closing(bool closing) { m_is_closing.store(closing, std::memory_order_release); }
+    // Called once closing can no longer be vetoed: ends the process if closing does not finish in time.
+    void start_exit_watchdog();
     
     // SoftFever
     bool show_gcode_window() const { return m_show_gcode_window; }
@@ -506,12 +562,17 @@ private:
 
     bool show_plate_gridlines() const { return app_config->get_bool("show_plate_gridlines"); }
     void toggle_show_plate_gridlines() const { app_config->set_bool("show_plate_gridlines", !show_plate_gridlines()); }
+    bool focus_mode() const { return app_config->get_bool("focus_mode"); }
+    void toggle_focus_mode() const { app_config->set_bool("focus_mode", !focus_mode()); }
 
     bool show_canvas_zoom_button() const { return app_config->get_bool("show_canvas_zoom_button"); }
     void toggle_canvas_zoom_button() const { app_config->set_bool("show_canvas_zoom_button", !show_canvas_zoom_button()); }
 
     bool show_outline() const { return app_config->get_bool("show_outline"); }
     void toggle_show_outline() const { app_config->set_bool("show_outline", !show_outline()); }
+
+    bool show_center_of_mass() const { return app_config->get_bool("show_center_of_mass"); }
+    void toggle_show_center_of_mass() const { app_config->set_bool("show_center_of_mass", !show_center_of_mass()); }
 
     wxString get_inf_dialog_contect () {return m_info_dialog_content;};
 
@@ -539,6 +600,9 @@ private:
 #if wxUSE_WEBVIEW_EDGE
     void            init_webview_runtime();
 #endif
+    // Switches to the Home tab and opens the OrcaCloud pane beside the homepage on `next`, a
+    // same-site OrcaCloud path (empty = the page's default). Work is deferred internally.
+    void            open_orca_cloud(const std::string& next = std::string());
     static unsigned get_colour_approx_luma(const wxColour& colour);
     static bool     dark_mode();
     const wxColour  get_label_default_clr_system();
@@ -600,7 +664,6 @@ private:
 
     void            recreate_GUI(const wxString& message);
     void            schedule_recreate_gui_when_no_modal(const wxString& message);
-    void            system_info();
     void            keyboard_shortcuts(ShortcutContext page, wxWindow* parent = nullptr);   // the main frame when null
     void            troubleshoot();
     void            load_project(wxWindow *parent, wxString& input_file) const;
@@ -622,78 +685,21 @@ private:
 
     void            request_user_login(int online_login = 0, const std::string& provider = ORCA_CLOUD_PROVIDER);
     void            request_user_handle(int online_login = 0, const std::string& provider = ORCA_CLOUD_PROVIDER);
+    // `user_initiated` distinguishes a user sign-out from the desktop losing its session on its
+    // own (refresh failed, 401). Only an explicit sign-out also ends the cloud webview's own
+    // session; an involuntary one leaves the webview alone (guide §8). Defaults to the safe
+    // direction: a new caller that forgets the flag will not silently sign the webview out.
+    void            request_user_logout(const std::string& provider = ORCA_CLOUD_PROVIDER, bool user_initiated = false);
     void            post_logout_to_webview(const std::string& provider);
     void            handle_script_message(std::string msg, const std::string& provider = ORCA_CLOUD_PROVIDER);
 
-    wxString get_international_url(const wxString& origin_url);
+    // SM login state is owned by the connection gateway. The app only mirrors
+    // GET /api/account / notify.account.changed frames for native consumers
+    // (currently SnapLog identity and the region-switch hint).
+    const Gateway::AccountSnapshot& gateway_account() const { return m_gateway_account; }
+    void                            apply_gateway_account(const Gateway::AccountSnapshot& snapshot);
+    void                            refresh_gateway_account();
 
-    // SM
-    struct SMUserInfo
-    {
-    public:
-        bool is_user_login() { return m_login; }
-        void set_user_login(bool login)
-        {
-            m_login = login;
-            notify();
-        }
-
-        std::string get_user_name() { return m_login_user_name; }
-        void     set_user_name(const std::string& name) { m_login_user_name = name; }
-
-        std::string get_user_token() { return m_login_user_token; }
-        void     set_user_token(const std::string& token) { m_login_user_token = token; }
-
-        std::string get_user_icon_url() { return m_login_user_icon_url; }
-        void     set_user_icon_url(const std::string& url) { m_login_user_icon_url = url; }
-
-        std::string get_user_id() { return m_login_user_id; }
-        void        set_user_id(const std::string& id) { m_login_user_id = id; }
-
-        std::string get_user_account() { return m_login_user_account; }
-        void        set_user_account(const std::string& account) { m_login_user_account = account; }
-
-        void clear() {
-            m_login_user_name = "";
-            m_login_user_token = "";
-            m_login_user_icon_url = "";
-            m_login_user_id       = "";
-            m_login_user_account  = "";
-            m_login               = false;
-        }
-
-        void notify();
-    private:
-        std::string m_login_user_name = "";
-        std::string m_login_user_token = "";
-        std::string m_login_user_icon_url = "";
-        std::string m_login_user_id       = "";
-        std::string m_login_user_account  = "";
-        bool     m_login = false;
-    };
-
-    SMUserInfo*     sm_get_userinfo() { return &m_login_userinfo; }
-    void            sm_get_login_info();
-    void            sm_request_login(bool show_user_info = false);
-    void            sm_ShowUserLogin(bool show  =  true);
-    void            sm_request_user_logout();
-
-    // Silent login-token maintenance: the Snapmaker access token expires after
-    // ~24 h; a hidden login webview re-runs the cookie session and picks up a
-    // fresh token without user interaction.
-    void            sm_maybe_refresh_login_token();  // due-check + guards; main thread
-    void            sm_on_token_captured(std::size_t refresh_generation); // call on every token acquisition
-    void            sm_stop_silent_token_refresh();  // drop an in-flight silent refresh
-    bool            sm_is_token_refresh_current(std::size_t refresh_generation) const;
-    std::size_t     sm_token_refresh_generation() const { return m_silent_refresh_generation; }
-
-    // Flutter run-result watch (Snapmaker upstream 5970fea62d): one report per process, success when
-    // the first WCP message of a Flutter view arrives, failure when none arrived within the timeout.
-    void            start_flutter_wcp_timeout_watch();
-    void            on_flutter_wcp_received();
-    void            report_flutter_run_result_once(bool success);
-
-    void            request_user_logout(const std::string& provider = ORCA_CLOUD_PROVIDER);
     int             request_user_unbind(std::string dev_id, const std::string& provider = ORCA_CLOUD_PROVIDER);
     std::string     handle_web_request(std::string cmd);
     void            request_model_download(wxString url);
@@ -708,6 +714,15 @@ private:
     void            on_update_machine_list(wxCommandEvent& evt);
     void            on_user_login(wxCommandEvent &evt);
     void            on_user_login_handle(wxCommandEvent& evt);
+    // OrcaCloud webview session handoff (guide §5/§7). cloud_webview_handoff builds the cloud
+    // pane's Start URL (with the desktop user_id while signed in). request_cloud_web_session is
+    // called from the pane when the page asks for a session; it opens the desktop login dialog if
+    // signed out, otherwise mints a one-time token on a worker thread and loads the Complete URL
+    // in the same webview.
+    wxString        cloud_webview_handoff(const std::string& next = std::string());
+    void            request_cloud_web_session(const std::string& state);
+    void            mint_cloud_web_session(const std::string& state, uint64_t gen);
+    void            on_cloud_web_session_minted(const std::string& state, uint64_t gen, const std::string& token_hash);
     void            enable_user_preset_folder(bool enable);
 
     // BBS
@@ -716,11 +731,15 @@ private:
     bool            m_studio_active = true;
     std::chrono::system_clock::time_point  last_active_point;
 
-    void            check_web_version();
     void            check_preset_version();
     void            check_new_version_sf(bool show_tips = false, int by_user = 0);
     // Gray release: POST /config/get (snapmaker-config) first, falls back to check_new_version_sf on failure
     void            request_version_from_config(bool show_tips = false, int by_user = 0);
+    // Offers to migrate user filament presets made against an older release that lost printers their parent
+    // listed then. At startup it asks on every start that finds such presets, unless the user chose not to be
+    // reminded; while the user presets sync with the cloud, it waits until they have been pulled. by_user also
+    // reports when there is nothing to migrate.
+    void            check_legacy_user_filament_presets(bool by_user);
     bool            process_network_msg(std::string dev_id, std::string msg);
     void            enter_force_upgrade();
     void            set_skip_version(bool skip = true);
@@ -729,7 +748,8 @@ private:
     std::string     format_IP(const std::string& ip);
     void            show_dialog(wxString msg);
     void            push_notification(const MachineObject* obj, wxString msg, wxString title = wxEmptyString, UserNotificationStyle style = UserNotificationStyle::UNS_NORMAL);
-    void            reload_settings();
+    // Returns false when the cloud presets could not be fetched, so nothing was reloaded.
+    bool            reload_settings();
     void            remove_user_presets();
 
     bool            maybe_migrate_user_presets_on_login();
@@ -758,7 +778,7 @@ private:
     PluginsDialog* m_plugins_dlg{nullptr};
     SpeedDialWebDialog* m_speed_dial_dialog{nullptr};
     TerminalDialog* m_terminal_dlg{nullptr};
-    ActionRegistry  m_action_registry;
+    std::unique_ptr<ActionRegistry> m_action_registry;
 
     void            start_http_server(const std::string& provider = ORCA_CLOUD_PROVIDER);
     void            start_http_server(int port, const std::string& provider = ORCA_CLOUD_PROVIDER);
@@ -770,11 +790,14 @@ private:
     /// Actual listen port (may differ from PAGE_HTTP_PORT if the default was in use).
     boost::asio::ip::port_type get_page_http_port() const { return m_page_http_server.get_port(); }
 
-    enum class FlutterWebCopyStatus { Ok, UpgradeFailed, InstallFailed, Other };
-    /// Copy bundled flutter_web into the user data directory. On failure, records status for deferred user notification.
-    bool            copy_bundled_flutter_web(bool upgrade);
-    void            report_flutter_web_copy_failure(FlutterWebCopyStatus status);
-    void            try_notify_flutter_web_copy_failure();
+    bool            start_gateway_service(bool restart = false);
+    void            stop_gateway_service();
+    wxString        gateway_web_url(const wxString& page_key) const;
+    std::string     gateway_localfile_url(const std::string& file_path) const;
+    Gateway::PreprintStoreResult gateway_store_preprint_context(const std::string& id, const nlohmann::json& payload) const;
+    bool            is_gateway_url(const wxString& url) const;
+    std::shared_ptr<Gateway::GatewayService> gateway_service() const { return m_gateway_service; }
+    bool            gateway_device_connected() const;
 
     void            on_show_check_privacy_dlg(int online_login = 0, const std::string& provider = ORCA_CLOUD_PROVIDER);
     void            show_check_privacy_dlg(wxCommandEvent& evt);
@@ -789,7 +812,19 @@ private:
     void            update_ui_from_settings();
 
     bool            load_language(wxString language, bool initial);
+    std::string     gateway_locale() const;
 
+private:
+    void            sync_gateway_region_after_wizard(const std::string& locale_before_wizard);
+    void            register_gateway_notifications();
+    void            query_gateway_current_device();
+    void            query_gateway_device_objects();
+    void            clear_gateway_device();
+    void            apply_gateway_machine_slots(std::vector<ConnectMachineInfo> slots);
+    void            clear_gateway_machine_slots();
+    void            refresh_gateway_machine_slots_ui();
+
+public:
     Tab*            get_tab(Preset::Type type);
     Tab*            get_plate_tab();
     Tab*            get_model_tab(bool part = false);
@@ -825,13 +860,12 @@ private:
     bool            checked_tab(Tab* tab);
     //BBS: add preset combox re-active logic
     void            load_current_presets(bool active_preset_combox = false, bool check_printer_presets = true);
-    std::map<std::string, std::string> &get_delete_cache_presets();
-    std::map<std::string, std::string> get_delete_cache_presets_lock();
     void            process_delete_presets();
-    void            delete_preset_from_cloud(std::string setting_id, std::string preset_file_path);
-    void            preset_deleted_from_cloud(std::string setting_id);
+    // Queues the cloud delete of a user preset synced to the signed-in account; any other preset is ignored.
+    void            delete_preset_from_cloud(const Preset& preset);
     void            scan_orphaned_info_files();
-    static std::string extract_setting_id_from_info(const std::string& info_file_path);
+    // Changes whenever the signed-in account whose presets are loaded changes.
+    uint64_t        user_preset_session() const { return m_cloud_delete_queue.generation(); }
 
     wxString        filter_string(wxString str);
 	wxString        current_language_code() const { return m_active_language_code.empty() && m_wxLocale ? m_wxLocale->GetCanonicalName() : m_active_language_code; }
@@ -854,7 +888,7 @@ private:
     void            install_local_plugin();
     void            open_terminal_dialog();
     void            open_speed_dial();
-    ActionRegistry& action_registry() { return m_action_registry; }
+    ActionRegistry& action_registry() { return *m_action_registry; }
     void            open_exportpresetbundledialog(size_t open_on_tab = 0, const std::string& highlight_option = std::string());
     virtual bool OnExceptionInMainLoop() override;
     // Calls wxLaunchDefaultBrowser if user confirms in dialog.
@@ -954,7 +988,7 @@ private:
 
     void            open_web_page_localized(const std::string &http_address);
     bool            may_switch_to_SLA_preset(const wxString& caption);
-    bool            run_wizard(ConfigWizard::RunReason reason, ConfigWizard::StartPage start_page = ConfigWizard::SP_WELCOME);
+    bool            run_wizard(RunReason reason, StartPage start_page = StartPage::SP_WELCOME);
     void            show_desktop_integration_dialog();
 
 #if ENABLE_THUMBNAIL_GENERATOR_DEBUG
@@ -962,12 +996,12 @@ private:
     void            gcode_thumbnails_debug();
 #endif // ENABLE_THUMBNAIL_GENERATOR_DEBUG
 
-    OpenGLManager& get_opengl_manager() { return m_opengl_mgr; }
-    GLShaderProgram* get_shader(const std::string& shader_name) { return m_opengl_mgr.get_shader(shader_name); }
-    GLShaderProgram* get_current_shader() { return m_opengl_mgr.get_current_shader(); }
+    OpenGLManager& get_opengl_manager() { return *m_opengl_mgr; }
+    GLShaderProgram* get_shader(const std::string& shader_name);
+    GLShaderProgram* get_current_shader();
 
-    bool is_gl_version_greater_or_equal_to(unsigned int major, unsigned int minor) const { return m_opengl_mgr.get_gl_info().is_version_greater_or_equal_to(major, minor); }
-    bool is_glsl_version_greater_or_equal_to(unsigned int major, unsigned int minor) const { return m_opengl_mgr.get_gl_info().is_glsl_version_greater_or_equal_to(major, minor); }
+    bool is_gl_version_greater_or_equal_to(unsigned int major, unsigned int minor) const;
+    bool is_glsl_version_greater_or_equal_to(unsigned int major, unsigned int minor) const;
     int  GetSingleChoiceIndex(const wxString& message, const wxString& caption, const wxArrayString& choices, int initialSelection);
 
     // extend is stl/3mf/gcode/step etc 
@@ -1021,8 +1055,6 @@ private:
     bool            wait_for_network_idle(int timeout_ms);
     bool            check_older_app_config(Semver current_version, bool backup);
     void            copy_older_config();
-    void                               copy_web_resources();
-    void            do_notify_flutter_web_copy_failure();
     void            window_pos_save(wxTopLevelWindow* window, const std::string &name);
     bool            window_pos_restore(wxTopLevelWindow* window, const std::string &name, bool default_maximized = false);
     void            window_pos_sanitize(wxTopLevelWindow* window);
@@ -1045,57 +1077,21 @@ private:
     bool                    m_unsigned_plugin_warning_shown { false };
     boost::optional<Semver> m_last_config_version;
     bool                    m_config_corrupted { false };
-    FlutterWebCopyStatus    m_flutter_web_copy_status{ FlutterWebCopyStatus::Ok };
-    bool                    m_flutter_web_copy_notified{ false };
     std::string             m_open_method;
-    SMUserInfo m_login_userinfo;
-
-    // --- Silent login-token refresh bookkeeping (see sm_maybe_refresh_login_token) ---
-    static constexpr int SM_TOKEN_REFRESH_INTERVAL_H = 12;           // refresh cadence, well inside the 24 h token lifetime
-    static constexpr int SM_TOKEN_REFRESH_RETRY_MIN  = 30;           // min wait after a failed attempt
-    static constexpr int SM_TOKEN_REFRESH_TIMEOUT_S  = 120;          // give up on a single silent attempt
-    static constexpr int SM_TOKEN_CHECK_INTERVAL_MS  = 5 * 60 * 1000; // periodic due-check tick
-
-    std::chrono::system_clock::time_point m_token_last_refresh_success{};
-    std::chrono::system_clock::time_point m_token_last_refresh_attempt{};
-    std::size_t                           m_silent_refresh_generation     = 0;
-    bool     m_sm_silent_refresh_in_progress = false;
-    bool     m_sm_login_dialog_showing       = false;
-    std::unique_ptr<wxTimer>              m_token_check_timer;
-    std::unique_ptr<wxTimer>              m_silent_refresh_timeout_timer;
-    void     on_token_check_timer(wxTimerEvent &event);
-    void     on_silent_refresh_timeout(wxTimerEvent &event);
-
-    // Flutter run-result watch (Snapmaker upstream 5970fea62d)
-    bool                     m_flutter_wcp_reported{false};
-    std::unique_ptr<wxTimer> m_flutter_wcp_timeout_timer;
-    static constexpr int     FLUTTER_WCP_TIMEOUT_MS = 120 * 1000;
-    void                     on_flutter_wcp_timeout(wxTimerEvent &event);
+    Gateway::AccountSnapshot   m_gateway_account;
+    std::atomic<std::uint64_t> m_gateway_account_refresh_generation{0};
+    std::vector<std::thread>   m_gateway_account_refresh_workers;
 
 public:
     std::unordered_map<void*, std::weak_ptr<SSWCP_Instance>> m_recent_file_subscribers;
-    std::unordered_map<void*, std::weak_ptr<SSWCP_Instance>> m_user_login_subscribers;
-    std::unordered_map<void*, std::weak_ptr<SSWCP_Instance>> m_device_card_subscribers;
     std::unordered_map<void*, std::weak_ptr<SSWCP_Instance>> m_page_state_subscribers;
     std::unordered_map<void*, std::weak_ptr<SSWCP_Instance>> m_foreground_change_subscribers;
     std::unordered_map<void*, std::weak_ptr<SSWCP_Instance>> m_user_update_privacy_subscribers;
-    struct CachePairCompare
-    {
-        bool operator()(const std::pair<void*, std::weak_ptr<SSWCP_Instance>>& lhs,
-                        const std::pair<void*, std::weak_ptr<SSWCP_Instance>>& rhs) const
-        {
-            return lhs.first <= rhs.first;
-        }
-    };
-    std::map<std::pair<void*, std::weak_ptr<SSWCP_Instance>>, std::string, CachePairCompare>                     m_cache_subscribers;
-
     void recent_file_notify(const json& res);
-    void user_login_notify(const json& res);
-    void device_card_notify(const json& res);
     void page_state_notify_webview(wxWebView* webview, const std::string& state);
+
     // Push foreground/background state change to all subscribed webview instances
     void notify_foreground_change(const bool active);
-    void cache_notify(const std::string& key, const json& res);
     void user_update_privacy_notify(const bool& res);
 
 public:
@@ -1152,20 +1148,19 @@ public:
         void reload_all() {
             for (const auto& view : webviews) {
                 auto ptr = view.first;
-                wxString new_url = app->get_international_url(view.second);
-                ptr->LoadURL(new_url);
+                ptr->LoadURL(view.second);
             }
 
             for (const auto& panel : webview_panels) {
                 auto ptr = panel.first;
-                wxString new_url = app->get_international_url(panel.second);
-                ptr->load_url(new_url);
+                wxString url = panel.second;
+                ptr->load_url(url);
             }
 
             for (const auto& prview : printerviews) {
                 auto ptr = prview.first;
-                wxString new_url = app->get_international_url(prview.second.first);
-                ptr->load_url(new_url, prview.second.second);
+                auto     url  = prview.second.first;
+                ptr->load_url(url, prview.second.second);
             }
         }
     };
@@ -1189,6 +1184,8 @@ bool is_soluble_filament(int extruder_id);
 bool has_filaments(const std::vector<std::string>& filament_types);
 // Whether the 0-based support interface filament forms a PLA/PETG pair with a model material.
 bool check_pla_petg_support_pair(int extruder_id);
+// Up direction of the edited printer's tilted build plate (+Z when untilted).
+Vec3d build_plate_tilt_up_direction();
 } // namespace GUI
 } // Slic3r
 

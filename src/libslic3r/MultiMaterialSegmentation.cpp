@@ -1,22 +1,52 @@
+#include "MultiMaterialSegmentation.hpp"
 #include "BoundingBox.hpp"
 #include "ClipperUtils.hpp"
+#include "Config.hpp"
 #include "EdgeGrid.hpp"
+#include "Geometry/VoronoiOffset.hpp"
+#include "Geometry/Voronoi.hpp"
+#include "Flow.hpp"
+#include "ExPolygon.hpp"
 #include "Layer.hpp"
+#include "Point.hpp"
+#include "Polygon.hpp"
+#include "Line.hpp"
+#include "Model.hpp"
 #include "Print.hpp"
 #include "Geometry/VoronoiVisualUtils.hpp"
 #include "Geometry/VoronoiUtils.hpp"
 #include "MutablePolygon.hpp"
-#include "format.hpp"
+#include "Utils.hpp"
+#include "PrintConfig.hpp"
+#include "TriangleMeshSlicer.hpp"
+#include "Surface.hpp"
+#include "libslic3r.h"
 
+#include <numeric>
+#include <cmath>
+#include <cstddef>
+#include <list>
+#include <cstdint>
+#include <cassert>
 #include <algorithm>
+#include <cstdlib>
+#include <boost/container_hash/hash.hpp>
+#include <math.h>
+#include <functional>
+#include <array>
+#include <limits>
 #include <utility>
 #include <unordered_set>
 
 #include <boost/log/trivial.hpp>
 #include <tbb/parallel_for.h>
-#include <array>
 #include <mutex>
 #include <boost/thread/lock_guard.hpp>
+#include <vector>
+#include <queue>
+#include "SurfaceCollection.hpp"
+
+namespace Slic3r { enum class EnforcerBlockerType : int16_t; }
 
 //#define MM_SEGMENTATION_DEBUG_GRAPH
 //#define MM_SEGMENTATION_DEBUG_REGIONS
@@ -34,6 +64,7 @@
 
 namespace Slic3r {
 using boost::polygon::voronoi_diagram;
+using VD = Geometry::VoronoiDiagram;
 
 static inline Point mk_point(const Voronoi::VD::vertex_type *point) { return {coord_t(point->x()), coord_t(point->y())}; }
 
@@ -638,6 +669,8 @@ static std::vector<std::pair<size_t, size_t>> get_segments(const ColoredLines &p
     return segments;
 }
 
+
+
 static std::vector<PaintedLine> filter_painted_lines(const Line &line_to_process, const size_t start_idx, const size_t end_idx, const std::vector<PaintedLine> &painted_lines)
 {
     const int                filter_eps_value = scale_(0.1f);
@@ -690,15 +723,29 @@ static std::vector<std::vector<PaintedLine>> post_process_painted_lines(const st
     if (painted_lines.empty())
         return {};
 
+    // The painted lines were appended by parallel workers, so their order is arbitrary. The sort must
+    // therefore be a total order: two projections of the same span from facets of different colours
+    // tie on every geometric key, and whichever sorts first wins the span in filter_painted_lines().
+    // The colour and the end points break such ties so the result does not depend on scheduling.
     auto comp = [&contours](const PaintedLine &first, const PaintedLine &second) {
-        Point first_start_p = contours[first.contour_idx].segment_start(first.line_idx);
-        return first.contour_idx < second.contour_idx ||
-               (first.contour_idx == second.contour_idx &&
-                (first.line_idx < second.line_idx ||
-                 (first.line_idx == second.line_idx &&
-                  ((first.projected_line.a - first_start_p).cast<double>().squaredNorm() < (second.projected_line.a - first_start_p).cast<double>().squaredNorm() ||
-                   ((first.projected_line.a - first_start_p).cast<double>().squaredNorm() == (second.projected_line.a - first_start_p).cast<double>().squaredNorm() &&
-                    (first.projected_line.b - first.projected_line.a).cast<double>().squaredNorm() < (second.projected_line.b - second.projected_line.a).cast<double>().squaredNorm())))));
+        if (first.contour_idx != second.contour_idx)
+            return first.contour_idx < second.contour_idx;
+        if (first.line_idx != second.line_idx)
+            return first.line_idx < second.line_idx;
+        const Point  start_p     = contours[first.contour_idx].segment_start(first.line_idx);
+        const double first_dist  = (first.projected_line.a - start_p).cast<double>().squaredNorm();
+        const double second_dist = (second.projected_line.a - start_p).cast<double>().squaredNorm();
+        if (first_dist != second_dist)
+            return first_dist < second_dist;
+        const double first_len  = (first.projected_line.b - first.projected_line.a).cast<double>().squaredNorm();
+        const double second_len = (second.projected_line.b - second.projected_line.a).cast<double>().squaredNorm();
+        if (first_len != second_len)
+            return first_len < second_len;
+        if (first.color != second.color)
+            return first.color < second.color;
+        if (first.projected_line.a != second.projected_line.a)
+            return first.projected_line.a < second.projected_line.a;
+        return first.projected_line.b < second.projected_line.b;
     };
     std::sort(painted_lines.begin(), painted_lines.end(), comp);
 
@@ -1320,10 +1367,8 @@ static inline std::vector<std::vector<ExPolygons>> segmentation_top_and_bottom_l
         return row;
     };
 
-    // Maximum number of top / bottom layers accounts for maximum overlap of one thread group into a neighbor thread group.
     int max_top_layers = 0;
     int max_bottom_layers = 0;
-    int granularity = 1;
     for (size_t i = 0; i < print_object.num_printing_regions(); ++ i) {
         const PrintRegionConfig &config = print_object.printing_region(i).config();
         // Clamp to >= 1: 0 means "surface layer only"; negatives would wrap to SIZE_MAX.
@@ -1335,14 +1380,13 @@ static inline std::vector<std::vector<ExPolygons>> segmentation_top_and_bottom_l
         }
         max_top_layers    = std::max(max_top_layers, top_layers);
         max_bottom_layers = std::max(max_bottom_layers, bottom_layers);
-        granularity       = std::max(granularity, std::max(top_layers, bottom_layers) - 1);
     }
 
     // Project upwards pointing painted triangles over top surfaces,
     // project downards pointing painted triangles over bottom surfaces.
     std::vector<std::vector<Polygons>> top_raw(num_facets_states), bottom_raw(num_facets_states);
     std::vector<float> zs = zs_from_layers(layers);
-    Transform3d        object_trafo = print_object.trafo_centered();
+    Transform3d        object_trafo = print_object.trafo_sliced();
     // ORCA: per row, the footprints of a run colour's painted up- and down-facing triangles
     // (see the exposed-face strips below). A triangle is filed on every row its z range meets.
     std::vector<std::vector<Polygons>> face_up(num_facets_states), face_down(num_facets_states);
@@ -1406,10 +1450,16 @@ static inline std::vector<std::vector<ExPolygons>> segmentation_top_and_bottom_l
                             slicing_params.trafo = volume_trafo;
                             Polygons bottom_slice = slice_mesh(painted, zs[0], slicing_params);
 
-                            top.erase(top.begin());
-                            bottom.erase(bottom.begin());
-
-                            bottom[0] = union_(bottom[0], bottom_slice);
+                            // Only the requested projections exist: with no top
+                            // penetration layers `top` is empty and erasing its begin() was
+                            // undefined (found by fuzzing: a sunk, painted object crashed here).
+                            if (! top.empty())
+                                top.erase(top.begin());
+                            if (! bottom.empty()) {
+                                bottom.erase(bottom.begin());
+                                if (! bottom.empty())
+                                    bottom[0] = union_(bottom[0], bottom_slice);
+                            }
                         } else
                             slice_mesh_slabs(painted, zs, volume_trafo, max_top_layers > 0 ? &top : nullptr, max_bottom_layers > 0 ? &bottom : nullptr, nullptr, throw_on_cancel_callback);
                         auto merge = [](std::vector<Polygons> &&src, std::vector<Polygons> &dst) {
@@ -1506,10 +1556,15 @@ static inline std::vector<std::vector<ExPolygons>> segmentation_top_and_bottom_l
     }
 #endif // MM_SEGMENTATION_DEBUG_TOP_BOTTOM
 
-    // When the upper surface of an object is occluded, it should no longer be considered the upper surface
+    // When the upper surface of an object is occluded, it should no longer be considered the upper surface.
+    // Every (colour, layer) pair is trimmed on its own, so they all run at once: the painted faces of a finely
+    // textured part project hundreds of thousands of triangles onto one layer, which used to be trimmed serially.
     {
-        for (size_t extruder_idx = 0; extruder_idx < num_facets_states; ++extruder_idx) {
-            for (size_t layer_idx = 0; layer_idx < layers.size(); ++layer_idx) {
+        const size_t occluded_pairs = num_facets_states * layers.size();
+        tbb::parallel_for(tbb::blocked_range<size_t>(0, occluded_pairs), [&](const tbb::blocked_range<size_t> &range) {
+            for (size_t pair_idx = range.begin(); pair_idx < range.end(); ++pair_idx) {
+                const size_t extruder_idx = pair_idx / layers.size();
+                const size_t layer_idx    = pair_idx % layers.size();
                 if (!top_raw[extruder_idx].empty() && !top_raw[extruder_idx][layer_idx].empty() && layer_idx + 1 < layers.size()) {
                     top_raw[extruder_idx][layer_idx] = diff(top_raw[extruder_idx][layer_idx], input_expolygons[layer_idx + 1]);
                 }
@@ -1517,19 +1572,21 @@ static inline std::vector<std::vector<ExPolygons>> segmentation_top_and_bottom_l
                     bottom_raw[extruder_idx][layer_idx] = diff(bottom_raw[extruder_idx][layer_idx], input_expolygons[layer_idx - 1]);
                 }
             }
-        }
+        });
     }
 
     std::vector<std::vector<ExPolygons>> triangles_by_color_bottom(num_facets_states);
     std::vector<std::vector<ExPolygons>> triangles_by_color_top(num_facets_states);
-    triangles_by_color_bottom.assign(num_facets_states, std::vector<ExPolygons>(num_layers * 2));
-    triangles_by_color_top.assign(num_facets_states, std::vector<ExPolygons>(num_layers * 2));
+    triangles_by_color_bottom.assign(num_facets_states, std::vector<ExPolygons>(num_layers));
+    triangles_by_color_top.assign(num_facets_states, std::vector<ExPolygons>(num_layers));
 
-    // BBS: use shell_triangles_by_color_bottom & shell_triangles_by_color_top to save the top and bottom embedded layers's color information
-    std::vector<std::vector<ExPolygons>> shell_triangles_by_color_bottom(num_facets_states);
-    std::vector<std::vector<ExPolygons>> shell_triangles_by_color_top(num_facets_states);
-    shell_triangles_by_color_bottom.assign(num_facets_states, std::vector<ExPolygons>(num_layers * 2));
-    shell_triangles_by_color_top.assign(num_facets_states, std::vector<ExPolygons>(num_layers * 2));
+    // BBS: the painted top / bottom surfaces are also projected onto the shell layers below / above them.
+    // Each layer only writes the projections it produced, keyed by the layer they land on, so the
+    // parallel loop shares nothing; they are gathered per target layer afterwards, in source-layer
+    // order, which keeps the result independent of how the layers were scheduled.
+    using ShellProjections = std::vector<std::pair<size_t, ExPolygons>>;  // (target layer, projection)
+    std::vector<std::vector<ShellProjections>> shell_triangles_by_color_bottom(num_facets_states, std::vector<ShellProjections>(num_layers));
+    std::vector<std::vector<ShellProjections>> shell_triangles_by_color_top(num_facets_states, std::vector<ShellProjections>(num_layers));
 
     struct LayerColorStat {
         // Number of regions for a queried color.
@@ -1586,20 +1643,58 @@ static inline std::vector<std::vector<ExPolygons>> segmentation_top_and_bottom_l
         return out;
     };
 
-    // ORCA: the shell rows of a layer are appended to the rows below / above it, up to granularity - 1
-    // rows away. The two-halves scheme (layer_idx_offset) meant to keep neighbouring groups apart
-    // relies on the parallel ranges being aligned to whole groups, which the range splitting does
-    // not guarantee: adjacent ranges of the same parity then append to the same rows concurrently
-    // and lose polygons (with the deep shells of a colour printing in runs, whole rows of the
-    // projected face went missing). Serialize the appends per row.
-    std::array<std::mutex, 64> shell_mutexes;
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, num_layers, granularity), [&granularity, &num_layers, &num_facets_states, &layer_color_stat, &top_raw, &triangles_by_color_top,
-                                                                               &throw_on_cancel_callback, &input_expolygons, &bottom_raw, &triangles_by_color_bottom,
-                                                                               &shell_triangles_by_color_top, &shell_triangles_by_color_bottom, &pitch_shell_row, &shell_mutexes](const tbb::blocked_range<size_t> &range) {
-        size_t group_idx   = range.begin() / granularity;
-        size_t layer_idx_offset = (group_idx & 1) * num_layers;
+    // Projects a painted top or bottom face `ex` of layer `layer_idx` onto the shell layers below or above it (in
+    // `shell_layers`, nearest first), one more perimeter in on each, stopping at the first layer where nothing is left.
+    // Only the slices within the deepest offset of `ex` (three times that with the miter joins) decide the result, so the
+    // work is done per tile of `ex`'s ExPolygons on the slices cut to the tile's box grown by that much: the same result, but
+    // each Clipper call stays the size of a tile rather than of a layer cut through a fine relief, and the tiles run in
+    // parallel.
+    const auto project_to_shells = [&input_expolygons](const ExPolygons &ex, size_t layer_idx, const std::vector<size_t> &shell_layers,
+                                                       const LayerColorStat &stat, ShellProjections &dst) {
+        std::vector<float> offsets(shell_layers.size());
+        float              offset = 0.f;
+        for (size_t i = 0; i < shell_layers.size(); ++i) {
+            //BBS: offset width should be 2*spacing to avoid too narrow area which has overlap of wall line
+            offset -= (stat.extrusion_spacing + stat.extrusion_width);
+            offsets[i] = offset;
+        }
+        if (offsets.empty())
+            return;
+        const coord_t reach = coord_t(std::ceil(DefaultMiterLimit * std::abs(offsets.back()))) + 10 * SCALED_EPSILON;
+        const std::vector<ClipperUtils::ExPolygonsTile> tiles = ClipperUtils::tile_expolygons(ex, 16);
+        // [shell layer][tile]
+        std::vector<std::vector<ExPolygons>> shells(shell_layers.size(), std::vector<ExPolygons>(tiles.size()));
+        tbb::parallel_for(size_t(0), tiles.size(), [&](size_t tile_idx) {
+            const ClipperUtils::ExPolygonsTile &tile = tiles[tile_idx];
+            const BoundingBox                   bbox = tile.bbox.inflated(reach);
+            ExPolygons                          tile_ex;
+            tile_ex.reserve(tile.members.size());
+            for (size_t i : tile.members)
+                tile_ex.emplace_back(ex[i]);
+            Polygons layer_slices_trimmed = ClipperUtils::clip_clipper_polygons_with_subject_bbox(input_expolygons[layer_idx], bbox);
+            for (size_t i = 0; i < shell_layers.size() && ! layer_slices_trimmed.empty(); ++i) {
+                const ExPolygons trimmed = intersection_ex(layer_slices_trimmed, ClipperUtils::clip_clipper_polygons_with_subject_bbox(input_expolygons[shell_layers[i]], bbox));
+                shells[i][tile_idx]  = opening_ex(intersection_ex(tile_ex, offset_ex(trimmed, offsets[i])), stat.small_region_threshold);
+                layer_slices_trimmed = to_polygons(trimmed);
+            }
+        });
+        for (size_t i = 0; i < shell_layers.size(); ++i) {
+            ExPolygons shell;
+            for (ExPolygons &tile_shell : shells[i])
+                append(shell, std::move(tile_shell));
+            if (shell.empty())
+                break;
+            dst.emplace_back(shell_layers[i], std::move(shell));
+        }
+    };
+
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, num_layers), [&num_layers, &num_facets_states, &layer_color_stat, &top_raw, &triangles_by_color_top,
+                                                                  &throw_on_cancel_callback, &input_expolygons, &bottom_raw, &triangles_by_color_bottom, &project_to_shells,
+                                                                  &pitch_shell_row, &shell_triangles_by_color_top, &shell_triangles_by_color_bottom](const tbb::blocked_range<size_t> &range) {
         for (size_t layer_idx = range.begin(); layer_idx < range.end(); ++ layer_idx) {
-            for (size_t color_idx = 0; color_idx < num_facets_states; ++color_idx) {
+            // Each colour writes only its own vectors, so the colours run in parallel: a painted top or bottom face
+            // projects onto a single layer, which otherwise did all of its colours on one thread.
+            tbb::parallel_for(size_t(0), size_t(num_facets_states), [&](size_t color_idx) {
                 throw_on_cancel_callback();
                 LayerColorStat stat = layer_color_stat(layer_idx, color_idx);
                 if (std::vector<Polygons> &top = top_raw[color_idx]; ! top.empty() && ! top[layer_idx].empty())
@@ -1612,37 +1707,37 @@ static inline std::vector<std::vector<ExPolygons>> segmentation_top_and_bottom_l
                         if (! stat.pitch_colour)
                             top_ex = opening_ex(top_ex, stat.small_region_threshold);
                         if (! top_ex.empty()) {
-                            append(triangles_by_color_top[color_idx][layer_idx + layer_idx_offset], top_ex);
-                            float offset = 0.f;
-                            // ORCA: for a colour printing in runs of layers the shell rows are
-                            // trimmed from the row below the face on: the face layer's own slice
-                            // may already hold the cavity above an inner-corner face (a pocket or
-                            // hold floor), which would inset every row from that cavity's wall and
-                            // leave a strip along it that no run can print.
-                            ExPolygons layer_slices_trimmed = input_expolygons[stat.pitch_colour && layer_idx > 0 ? layer_idx - 1 : layer_idx];
-                            // ORCA: this colour's own face strips between the shell row and the face row (see pitch_shell_row).
-                            Polygons own_face;
-                            for (int last_idx = int(layer_idx) - 1; last_idx > std::max(int(layer_idx - stat.top_color_penetration_layers), int(0)); --last_idx) {
-                                if (stat.pitch_colour && size_t(last_idx) < top.size())
-                                    append(own_face, top[last_idx]);
-                                //BBS: offset width should be 2*spacing to avoid too narrow area which has overlap of wall line
-                                //offset -= stat.extrusion_width ;
-                                // ORCA: a colour printing in runs of layers keeps the same inset on every
-                                // shell row (vertical shell walls): the run below a painted face then
-                                // prints the shell as one piece instead of stepping its growing outline
-                                // layer by layer. Other colours keep the stock receding shell.
-                                if (! stat.pitch_colour || offset == 0.f)
-                                    offset -= (stat.extrusion_spacing + stat.extrusion_width);
-                                layer_slices_trimmed = intersection_ex(layer_slices_trimmed, input_expolygons[last_idx]);
-                                ExPolygons last = stat.pitch_colour ?
-                                    pitch_shell_row(top_ex, layer_slices_trimmed, offset, float(stat.extrusion_width), own_face) :
-                                    opening_ex(intersection_ex(top_ex, offset_ex(layer_slices_trimmed, offset)), stat.small_region_threshold);
-                                if (last.empty())
-                                    break;
-                                {
-                                    std::lock_guard<std::mutex> lock(shell_mutexes[last_idx % shell_mutexes.size()]);
-                                    append(shell_triangles_by_color_top[color_idx][last_idx + layer_idx_offset], std::move(last));
+                            append(triangles_by_color_top[color_idx][layer_idx], top_ex);
+                            if (stat.pitch_colour) {
+                                float offset = 0.f;
+                                // ORCA: for a colour printing in runs of layers the shell rows are
+                                // trimmed from the row below the face on: the face layer's own slice
+                                // may already hold the cavity above an inner-corner face (a pocket or
+                                // hold floor), which would inset every row from that cavity's wall and
+                                // leave a strip along it that no run can print.
+                                ExPolygons layer_slices_trimmed = input_expolygons[layer_idx > 0 ? layer_idx - 1 : layer_idx];
+                                // ORCA: this colour's own face strips between the shell row and the face row (see pitch_shell_row).
+                                Polygons own_face;
+                                for (int last_idx = int(layer_idx) - 1; last_idx > std::max(int(layer_idx - stat.top_color_penetration_layers), int(0)); --last_idx) {
+                                    if (size_t(last_idx) < top.size())
+                                        append(own_face, top[last_idx]);
+                                    // ORCA: a colour printing in runs of layers keeps the same inset on every
+                                    // shell row (vertical shell walls): the run below a painted face then
+                                    // prints the shell as one piece instead of stepping its growing outline
+                                    // layer by layer. Other colours keep the stock receding shell.
+                                    if (offset == 0.f)
+                                        offset -= (stat.extrusion_spacing + stat.extrusion_width);
+                                    layer_slices_trimmed = intersection_ex(layer_slices_trimmed, input_expolygons[last_idx]);
+                                    ExPolygons last = pitch_shell_row(top_ex, layer_slices_trimmed, offset, float(stat.extrusion_width), own_face);
+                                    if (last.empty())
+                                        break;
+                                    shell_triangles_by_color_top[color_idx][layer_idx].emplace_back(size_t(last_idx), std::move(last));
                                 }
+                            } else {
+                                std::vector<size_t> shell_layers;
+                                for (int last_idx = int(layer_idx) - 1; last_idx > std::max(int(layer_idx - stat.top_color_penetration_layers), int(0)); --last_idx)
+                                    shell_layers.emplace_back(size_t(last_idx));
+                                project_to_shells(top_ex, layer_idx, shell_layers, stat, shell_triangles_by_color_top[color_idx][layer_idx]);
                             }
                         }
                     }
@@ -1652,33 +1747,44 @@ static inline std::vector<std::vector<ExPolygons>> segmentation_top_and_bottom_l
                         if (! stat.pitch_colour) // ORCA: see the top projection
                             bottom_ex = opening_ex(bottom_ex, stat.small_region_threshold);
                         if (! bottom_ex.empty()) {
-                            append(triangles_by_color_bottom[color_idx][layer_idx + layer_idx_offset], bottom_ex);
-                            float offset = 0.f;
-                            ExPolygons layer_slices_trimmed = input_expolygons[stat.pitch_colour && layer_idx + 1 < num_layers ? layer_idx + 1 : layer_idx]; // ORCA: see the top shell loop
-                            Polygons own_face; // ORCA: see the top shell loop
-                            for (size_t last_idx = layer_idx + 1; last_idx < std::min(layer_idx + stat.bottom_color_penetration_layers, num_layers); ++last_idx) {
-                                if (stat.pitch_colour && last_idx < bottom.size())
-                                    append(own_face, bottom[last_idx]);
-                                //BBS: offset width should be 2*spacing to avoid too narrow area which has overlap of wall line
-                                //offset -= stat.extrusion_width;
-                                if (! stat.pitch_colour || offset == 0.f) // ORCA: see the top shell loop
-                                    offset -= (stat.extrusion_spacing + stat.extrusion_width);
-                                layer_slices_trimmed = intersection_ex(layer_slices_trimmed, input_expolygons[last_idx]);
-                                ExPolygons last = stat.pitch_colour ?
-                                    pitch_shell_row(bottom_ex, layer_slices_trimmed, offset, float(stat.extrusion_width), own_face) :
-                                    opening_ex(intersection_ex(bottom_ex, offset_ex(layer_slices_trimmed, offset)), stat.small_region_threshold);
-                                if (last.empty())
-                                    break;
-                                {
-                                    std::lock_guard<std::mutex> lock(shell_mutexes[last_idx % shell_mutexes.size()]);
-                                    append(shell_triangles_by_color_bottom[color_idx][last_idx + layer_idx_offset], std::move(last));
+                            append(triangles_by_color_bottom[color_idx][layer_idx], bottom_ex);
+                            if (stat.pitch_colour) {
+                                float offset = 0.f;
+                                ExPolygons layer_slices_trimmed = input_expolygons[layer_idx + 1 < num_layers ? layer_idx + 1 : layer_idx]; // ORCA: see the top shell loop
+                                Polygons own_face; // ORCA: see the top shell loop
+                                for (size_t last_idx = layer_idx + 1; last_idx < std::min(layer_idx + stat.bottom_color_penetration_layers, num_layers); ++last_idx) {
+                                    if (last_idx < bottom.size())
+                                        append(own_face, bottom[last_idx]);
+                                    if (offset == 0.f) // ORCA: see the top shell loop
+                                        offset -= (stat.extrusion_spacing + stat.extrusion_width);
+                                    layer_slices_trimmed = intersection_ex(layer_slices_trimmed, input_expolygons[last_idx]);
+                                    ExPolygons last = pitch_shell_row(bottom_ex, layer_slices_trimmed, offset, float(stat.extrusion_width), own_face);
+                                    if (last.empty())
+                                        break;
+                                    shell_triangles_by_color_bottom[color_idx][layer_idx].emplace_back(last_idx, std::move(last));
                                 }
+                            } else {
+                                std::vector<size_t> shell_layers;
+                                for (size_t last_idx = layer_idx + 1; last_idx < std::min(layer_idx + stat.bottom_color_penetration_layers, num_layers); ++last_idx)
+                                    shell_layers.emplace_back(last_idx);
+                                project_to_shells(bottom_ex, layer_idx, shell_layers, stat, shell_triangles_by_color_bottom[color_idx][layer_idx]);
                             }
                         }
                     }
-            }
+            });
         }
     });
+
+    // Gather the shell projections per target layer, walking the source layers in order.
+    std::vector<std::vector<ExPolygons>> shell_top_by_layer(num_facets_states, std::vector<ExPolygons>(num_layers));
+    std::vector<std::vector<ExPolygons>> shell_bottom_by_layer(num_facets_states, std::vector<ExPolygons>(num_layers));
+    for (size_t color_idx = 0; color_idx < num_facets_states; ++color_idx)
+        for (size_t layer_idx = 0; layer_idx < num_layers; ++layer_idx) {
+            for (auto &[target, projection] : shell_triangles_by_color_top[color_idx][layer_idx])
+                append(shell_top_by_layer[color_idx][target], std::move(projection));
+            for (auto &[target, projection] : shell_triangles_by_color_bottom[color_idx][layer_idx])
+                append(shell_bottom_by_layer[color_idx][target], std::move(projection));
+        }
 
     // ORCA: a colour printing in runs of N layers commits the shape common to its N rows. With
     // the side regions cut to a ribbon of max_width along the outline, that common shape under
@@ -1726,10 +1832,10 @@ static inline std::vector<std::vector<ExPolygons>> segmentation_top_and_bottom_l
                     };
                     for (size_t t = layer_idx + 1; t < std::min(layer_idx + size_t(n), num_layers); ++ t)
                         if (ExPolygons under = ribbon_under(top, t); ! under.empty())
-                            append(shell_triangles_by_color_top[color_idx][layer_idx], std::move(under));
+                            append(shell_top_by_layer[color_idx][layer_idx], std::move(under));
                     for (size_t t = layer_idx + 1 > size_t(n) ? layer_idx + 1 - size_t(n) : 0; t < layer_idx; ++ t)
                         if (ExPolygons under = ribbon_under(bottom, t); ! under.empty())
-                            append(shell_triangles_by_color_bottom[color_idx][layer_idx], std::move(under));
+                            append(shell_bottom_by_layer[color_idx][layer_idx], std::move(under));
                 }
             });
         }
@@ -1737,35 +1843,31 @@ static inline std::vector<std::vector<ExPolygons>> segmentation_top_and_bottom_l
 
     std::vector<std::vector<ExPolygons>> triangles_by_color_merged(num_facets_states);
     triangles_by_color_merged.assign(num_facets_states, std::vector<ExPolygons>(num_layers));
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, num_layers), [&triangles_by_color_merged, &triangles_by_color_bottom, &triangles_by_color_top, &num_layers, &throw_on_cancel_callback,
-                                                                  &shell_triangles_by_color_top, &shell_triangles_by_color_bottom, &layer_color_stat, max_width](const tbb::blocked_range<size_t> &range) {
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, num_layers), [&triangles_by_color_merged, &triangles_by_color_bottom, &triangles_by_color_top, &throw_on_cancel_callback,
+                                                                  &shell_top_by_layer, &shell_bottom_by_layer, &layer_color_stat, max_width](const tbb::blocked_range<size_t> &range) {
         for (size_t layer_idx = range.begin(); layer_idx < range.end(); ++ layer_idx) {
             throw_on_cancel_callback();
-            ExPolygons painted_exploys;
-            for (size_t color_idx = 0; color_idx < triangles_by_color_merged.size(); ++color_idx) {
+            // The per-colour unions below are independent of each other, so they run in parallel (a painted top or
+            // bottom face puts all of its colours on one layer); whatever combines the colours stays in colour order.
+            const auto merge_colour_union = [&](size_t color_idx) {
                 auto &self = triangles_by_color_merged[color_idx][layer_idx];
                 append(self, std::move(triangles_by_color_bottom[color_idx][layer_idx]));
-                append(self, std::move(triangles_by_color_bottom[color_idx][layer_idx + num_layers]));
                 append(self, std::move(triangles_by_color_top[color_idx][layer_idx]));
-                append(self, std::move(triangles_by_color_top[color_idx][layer_idx + num_layers]));
                 self = union_ex(self);
+            };
+            tbb::parallel_for(size_t(0), triangles_by_color_merged.size(), merge_colour_union);
 
-                append(painted_exploys, self);
-            }
-
+            ExPolygons painted_exploys;
+            for (size_t color_idx = 0; color_idx < triangles_by_color_merged.size(); ++color_idx)
+                append(painted_exploys, triangles_by_color_merged[color_idx][layer_idx]);
             painted_exploys = union_ex(painted_exploys);
 
             //BBS: merge the top and bottom shell layers
-            for (size_t color_idx = 0; color_idx < triangles_by_color_merged.size(); ++color_idx) {
+            tbb::parallel_for(size_t(0), triangles_by_color_merged.size(), [&](size_t color_idx) {
                 auto &self = triangles_by_color_merged[color_idx][layer_idx];
 
-                auto top_area = diff_ex(union_ex(shell_triangles_by_color_top[color_idx][layer_idx],
-                                                 shell_triangles_by_color_top[color_idx][layer_idx + num_layers]),
-                                        painted_exploys);
-
-                auto bottom_area = diff_ex(union_ex(shell_triangles_by_color_bottom[color_idx][layer_idx],
-                                                    shell_triangles_by_color_bottom[color_idx][layer_idx + num_layers]),
-                                          painted_exploys);
+                auto top_area    = diff_ex(union_ex(shell_top_by_layer[color_idx][layer_idx]), painted_exploys);
+                auto bottom_area = diff_ex(union_ex(shell_bottom_by_layer[color_idx][layer_idx]), painted_exploys);
 
                 append(self, top_area);
                 append(self, bottom_area);
@@ -1780,7 +1882,7 @@ static inline std::vector<std::vector<ExPolygons>> segmentation_top_and_bottom_l
                     if (LayerColorStat stat = layer_color_stat(layer_idx, color_idx); stat.pitch_colour)
                         self = opening_ex(self, max_width <= 0.f || scaled<float>(max_width) + float(SCALED_EPSILON) >= stat.extrusion_width ?
                                                     0.5f * stat.extrusion_width : stat.small_region_threshold);
-            }
+            });
             // Trim one region by the other if some of the regions overlap.
             ExPolygons painted_regions;
             for (size_t color_idx = 1; color_idx < triangles_by_color_merged.size(); ++color_idx) {
@@ -2147,7 +2249,71 @@ static void remove_multiple_edges_in_vertices(MMU_Graph &graph, const std::vecto
     }
 }
 
-static std::vector<std::vector<ExPolygons>> merge_segmented_layers(const std::vector<std::vector<ExPolygons>> &segmented_regions,
+
+namespace {
+// Finds the islands (layer ExPolygons) a region piece overlaps. A top or bottom region is projected from the neighbouring
+// layers and may reach past the island it belongs to, or over several islands.
+class IslandLocator
+{
+public:
+    explicit IslandLocator(const ExPolygons &islands) : m_islands(islands)
+    {
+        m_bboxes.reserve(islands.size());
+        for (const ExPolygon &island : islands) {
+            m_bboxes.emplace_back(get_extents(island));
+            m_extent.merge(m_bboxes.back());
+        }
+        if (!m_extent.defined)
+            return;
+        const Point size = m_extent.size();
+        m_cell_w = std::max<coord_t>(1, size.x() / GRID + 1);
+        m_cell_h = std::max<coord_t>(1, size.y() / GRID + 1);
+        m_grid.assign(GRID * GRID, {});
+        for (size_t i = 0; i < m_bboxes.size(); ++i)
+            for_cells(m_bboxes[i], [&](int cell) { m_grid[cell].emplace_back(i); });
+    }
+
+    void find(const ExPolygon &piece, std::vector<size_t> &out) const
+    {
+        out.clear();
+        const BoundingBox bbox = get_extents(piece);
+        if (!m_extent.defined || !m_extent.overlap(bbox))
+            return;
+        for_cells(bbox, [&](int cell) {
+            for (size_t i : m_grid[cell])
+                if (m_bboxes[i].overlap(bbox))
+                    out.emplace_back(i);
+        });
+        sort_remove_duplicates(out);
+        if (out.size() > 1)
+            out.erase(std::remove_if(out.begin(), out.end(), [&](size_t i) {
+                const BoundingBox common(m_bboxes[i].min.cwiseMax(bbox.min), m_bboxes[i].max.cwiseMin(bbox.max));
+                return intersection(ClipperUtils::clip_clipper_polygons_with_subject_bbox(piece, common.inflated(SCALED_EPSILON)),
+                                    ClipperUtils::clip_clipper_polygons_with_subject_bbox(m_islands[i], common.inflated(SCALED_EPSILON))).empty();
+            }), out.end());
+    }
+
+private:
+    static constexpr int GRID = 64;
+    template<typename Fn> void for_cells(const BoundingBox &bb, Fn &&fn) const
+    {
+        const int x0 = std::clamp(int((bb.min.x() - m_extent.min.x()) / m_cell_w), 0, GRID - 1), x1 = std::clamp(int((bb.max.x() - m_extent.min.x()) / m_cell_w), 0, GRID - 1);
+        const int y0 = std::clamp(int((bb.min.y() - m_extent.min.y()) / m_cell_h), 0, GRID - 1), y1 = std::clamp(int((bb.max.y() - m_extent.min.y()) / m_cell_h), 0, GRID - 1);
+        for (int y = y0; y <= y1; ++y)
+            for (int x = x0; x <= x1; ++x)
+                fn(y * GRID + x);
+    }
+
+    const ExPolygons                &m_islands;
+    std::vector<BoundingBox>         m_bboxes;
+    BoundingBox                      m_extent;
+    coord_t                          m_cell_w = 1, m_cell_h = 1;
+    std::vector<std::vector<size_t>> m_grid;
+};
+} // namespace
+
+static std::vector<std::vector<ExPolygons>> merge_segmented_layers(const std::vector<ExPolygons>              &input_expolygons,
+                                                                   const std::vector<std::vector<ExPolygons>> &segmented_regions,
                                                                    std::vector<std::vector<ExPolygons>>      &&top_and_bottom_layers,
                                                                    const size_t                                num_facets_states,
                                                                    const std::function<void()>                &throw_on_cancel_callback)
@@ -2158,32 +2324,91 @@ static std::vector<std::vector<ExPolygons>> merge_segmented_layers(const std::ve
     assert(!top_and_bottom_layers.size() || num_facets_states == top_and_bottom_layers.size());
 
     BOOST_LOG_TRIVIAL(debug) << "Print object segmentation - Merging segmented layers in parallel - Begin";
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, num_layers), [&segmented_regions, &top_and_bottom_layers, &segmented_regions_merged, &num_facets_states, &throw_on_cancel_callback](const tbb::blocked_range<size_t> &range) {
+    // Every region of a layer is merged together with the regions of the islands it overlaps, and the islands are further
+    // apart than the dimple removal below reaches, so this gives the same result as merging the layer at once. On a layer
+    // cut through a fine relief every region shares thousands of hole contours with every other, and Clipper, splitting
+    // and re-linking one huge polygon over and over, took anything up to half an hour for a layer; per island each operation
+    // stays the size of the island, and the islands run in parallel.
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, num_layers), [&](const tbb::blocked_range<size_t> &range) {
         for (size_t layer_idx = range.begin(); layer_idx < range.end(); ++layer_idx) {
             assert(segmented_regions[layer_idx].size() == num_facets_states);
+            throw_on_cancel_callback();
+            // Group the islands joined by a region overlapping several of them; the last group takes the regions lying
+            // outside every island.
+            const ExPolygons   &islands = input_expolygons[layer_idx];
+            const IslandLocator locator(islands);
+            std::vector<size_t> parent(islands.size() + 1);
+            std::iota(parent.begin(), parent.end(), 0);
+            const auto root = [&parent](size_t i) {
+                while (parent[i] != i)
+                    i = parent[i] = parent[parent[i]];
+                return i;
+            };
+            // Islands of every piece: side regions of colours 0.., then top/bottom regions of colours 0..
+            std::vector<const ExPolygon *> pieces;
+            for (size_t extruder_id = 0; extruder_id < num_facets_states; ++extruder_id)
+                for (const ExPolygon &piece : segmented_regions[layer_idx][extruder_id])
+                    pieces.emplace_back(&piece);
+            if (!top_and_bottom_layers.empty())
+                for (size_t color_idx = 0; color_idx < num_facets_states; ++color_idx)
+                    for (const ExPolygon &piece : top_and_bottom_layers[color_idx][layer_idx])
+                        pieces.emplace_back(&piece);
+            std::vector<std::vector<size_t>> overlapped(pieces.size());
+            tbb::parallel_for(size_t(0), pieces.size(), [&](size_t i) { locator.find(*pieces[i], overlapped[i]); });
+            std::vector<size_t> piece_island(pieces.size());
+            for (size_t i = 0; i < pieces.size(); ++i) {
+                piece_island[i] = overlapped[i].empty() ? islands.size() : overlapped[i].front();
+                for (size_t island : overlapped[i])
+                    parent[root(island)] = root(piece_island[i]);
+            }
+            std::vector<size_t> bucket_of(parent.size(), size_t(-1));
+            size_t              num_buckets = 0;
+            for (size_t i = 0; i < parent.size(); ++i)
+                if (size_t &b = bucket_of[root(i)]; b == size_t(-1))
+                    b = num_buckets++;
+
+            // [bucket][colour]
+            std::vector<std::vector<ExPolygons>> sides(num_buckets, std::vector<ExPolygons>(num_facets_states));
+            std::vector<std::vector<ExPolygons>> tops(num_buckets, std::vector<ExPolygons>(num_facets_states));
+            size_t                               piece_idx = 0;
+            for (size_t extruder_id = 0; extruder_id < num_facets_states; ++extruder_id)
+                for (const ExPolygon &piece : segmented_regions[layer_idx][extruder_id])
+                    sides[bucket_of[root(piece_island[piece_idx++])]][extruder_id].emplace_back(piece);
+            if (!top_and_bottom_layers.empty())
+                for (size_t color_idx = 0; color_idx < num_facets_states; ++color_idx)
+                    for (const ExPolygon &piece : top_and_bottom_layers[color_idx][layer_idx])
+                        tops[bucket_of[root(piece_island[piece_idx++])]][color_idx].emplace_back(piece);
+
+            // Side regions minus the top/bottom regions of every colour.
+            std::vector<std::vector<ExPolygons>> merged(num_buckets, std::vector<ExPolygons>(num_facets_states));
+            tbb::parallel_for(size_t(0), num_buckets, [&](size_t bucket) {
+                Polygons tops_all;
+                for (const ExPolygons &t : tops[bucket])
+                    polygons_append(tops_all, t);
+                for (size_t extruder_id = 0; extruder_id < num_facets_states; ++extruder_id)
+                    if (!sides[bucket][extruder_id].empty())
+                        merged[bucket][extruder_id] = tops_all.empty() ? std::move(sides[bucket][extruder_id]) :
+                                                                         diff_ex_by_piece(sides[bucket][extruder_id], tops_all);
+            });
+
+            // Then this colour's top/bottom regions, with the dimples removed (#7235) when the layer has side regions left.
             for (size_t extruder_id = 0; extruder_id < num_facets_states; ++extruder_id) {
-                throw_on_cancel_callback();
-                if (!segmented_regions[layer_idx][extruder_id].empty()) {
-                    ExPolygons segmented_regions_trimmed = segmented_regions[layer_idx][extruder_id];
-                    if (!top_and_bottom_layers.empty()) {
-                        for (const std::vector<ExPolygons> &top_and_bottom_by_extruder : top_and_bottom_layers) {
-                            if (!top_and_bottom_by_extruder[layer_idx].empty() && !segmented_regions_trimmed.empty()) {
-                                segmented_regions_trimmed = diff_ex(segmented_regions_trimmed, top_and_bottom_by_extruder[layer_idx]);
-                            }
-                        }
-                    }
-
-                    segmented_regions_merged[layer_idx][extruder_id] = std::move(segmented_regions_trimmed);
+                if (top_and_bottom_layers.empty() || top_and_bottom_layers[extruder_id][layer_idx].empty()) {
+                    for (size_t bucket = 0; bucket < num_buckets; ++bucket)
+                        append(segmented_regions_merged[layer_idx][extruder_id], std::move(merged[bucket][extruder_id]));
+                    continue;
                 }
-
-                if (!top_and_bottom_layers.empty() && !top_and_bottom_layers[extruder_id][layer_idx].empty()) {
-                    bool was_top_and_bottom_empty = segmented_regions_merged[layer_idx][extruder_id].empty();
-                    append(segmented_regions_merged[layer_idx][extruder_id], top_and_bottom_layers[extruder_id][layer_idx]);
-
-                    // Remove dimples (#7235) appearing after merging side segmentation of the model with tops and bottoms painted layers.
-                    if (!was_top_and_bottom_empty)
-                        segmented_regions_merged[layer_idx][extruder_id] = offset2_ex(union_ex(segmented_regions_merged[layer_idx][extruder_id]), float(SCALED_EPSILON), -float(SCALED_EPSILON));
-                }
+                bool was_top_and_bottom_empty = true;
+                for (size_t bucket = 0; bucket < num_buckets && was_top_and_bottom_empty; ++bucket)
+                    was_top_and_bottom_empty = merged[bucket][extruder_id].empty();
+                tbb::parallel_for(size_t(0), num_buckets, [&](size_t bucket) {
+                    ExPolygons &region = merged[bucket][extruder_id];
+                    append(region, tops[bucket][extruder_id]);
+                    if (!was_top_and_bottom_empty && !region.empty())
+                        region = offset2_ex(union_ex(region), float(SCALED_EPSILON), -float(SCALED_EPSILON));
+                });
+                for (size_t bucket = 0; bucket < num_buckets; ++bucket)
+                    append(segmented_regions_merged[layer_idx][extruder_id], std::move(merged[bucket][extruder_id]));
             }
         }
     }); // end of parallel_for
@@ -2352,17 +2577,19 @@ std::vector<std::vector<ExPolygons>> segmentation_by_painting(const PrintObject 
     }
 
     BOOST_LOG_TRIVIAL(debug) << "Print object segmentation - Projection of painted triangles - Begin";
+    // The layers were sliced in this frame (belt rotation, remap and Z lift included), and it already centers the object.
+    const Transform3d object_trafo = print_object.trafo_sliced();
     for (const ModelVolume *mv : print_object.model_object()->volumes) {
         const ModelVolumeFacetsInfo facets_info = extract_facets_info(*mv);
-        tbb::parallel_for(tbb::blocked_range<size_t>(1, num_facets_states), [&mv, &print_object, &facets_info, &layers, &edge_grids, &painted_lines, &painted_lines_mutex, &input_expolygons, &throw_on_cancel_callback](const tbb::blocked_range<size_t> &range) {
+        tbb::parallel_for(tbb::blocked_range<size_t>(1, num_facets_states), [&mv, &object_trafo, &facets_info, &layers, &edge_grids, &painted_lines, &painted_lines_mutex, &input_expolygons, &throw_on_cancel_callback](const tbb::blocked_range<size_t> &range) {
             for (size_t extruder_idx = range.begin(); extruder_idx < range.end(); ++extruder_idx) {
                 throw_on_cancel_callback();
                 const indexed_triangle_set custom_facets = facets_info.facets_annotation.get_facets(*mv, EnforcerBlockerType(extruder_idx));
                 if (!mv->is_model_part() || custom_facets.indices.empty())
                     continue;
 
-                const Transform3f tr = print_object.trafo().cast<float>() * mv->get_matrix().cast<float>();
-                tbb::parallel_for(tbb::blocked_range<size_t>(0, custom_facets.indices.size()), [&tr, &custom_facets, &print_object, &layers, &edge_grids, &input_expolygons, &painted_lines, &painted_lines_mutex, &extruder_idx](const tbb::blocked_range<size_t> &range) {
+                const Transform3f tr = (object_trafo * mv->get_matrix()).cast<float>();
+                tbb::parallel_for(tbb::blocked_range<size_t>(0, custom_facets.indices.size()), [&tr, &custom_facets, &layers, &edge_grids, &input_expolygons, &painted_lines, &painted_lines_mutex, &extruder_idx](const tbb::blocked_range<size_t> &range) {
                     for (size_t facet_idx = range.begin(); facet_idx < range.end(); ++facet_idx) {
                         float min_z = std::numeric_limits<float>::max();
                         float max_z = std::numeric_limits<float>::lowest();
@@ -2415,7 +2642,6 @@ std::vector<std::vector<ExPolygons>> segmentation_by_painting(const PrintObject 
 
                             Line line_to_test(Point(scale_(line_start_f.x()), scale_(line_start_f.y())),
                                               Point(scale_(line_end_f.x()), scale_(line_end_f.y())));
-                            line_to_test.translate(-print_object.center_offset());
 
                             // BoundingBoxes for EdgeGrids are computed from printable regions. It is possible that the painted line (line_to_test) could
                             // be outside EdgeGrid's BoundingBox, for example, when the negative volume is used on the painted area (GH #7618).
@@ -2470,16 +2696,56 @@ std::vector<std::vector<ExPolygons>> segmentation_by_painting(const PrintObject 
 
                 assert(!color_poly.empty());
                 assert(!color_poly.front().empty());
-                if (has_layer_only_one_color(color_poly)) {
-                    // If the whole layer is painted using the same color, it is not needed to construct a Voronoi diagram for the segmentation of this layer.
-                    segmented_regions[layer_idx][size_t(color_poly.front().front().color)] = input_expolygons[layer_idx];
-                } else {
-                    MMU_Graph graph = build_graph(layer_idx, color_poly);
-                    remove_multiple_edges_in_vertices(graph, color_poly);
-                    graph.remove_nodes_with_one_arc();
-                    segmented_regions[layer_idx] = extract_colored_segments(graph, num_facets_states);
-                    //segmented_regions[layer_idx] = extract_colored_segments(color_poly, num_extruders, layer_idx);
+                // Each island (an ExPolygon with its holes) is segmented on its own. Any point of an island is closer to
+                // that island's contours than to any other island's - the way out crosses its own boundary first - so its
+                // Voronoi cells, and with them its colour regions, depend on nothing else. A layer cut through a fine relief
+                // has thousands of islands, and one Voronoi diagram over all of them degenerated into overlapping regions
+                // that every boolean afterwards had to untangle. Per island the diagrams stay small and the islands run in
+                // parallel; an island in a single colour needs no diagram at all.
+                const ExPolygons                      &islands = input_expolygons[layer_idx];
+                std::vector<std::pair<size_t, size_t>> island_contours(islands.size()); // [first, last) into color_poly
+                {
+                    // The same order EdgeGrid::Grid::create() lists the contours in, and so colorize_contours().
+                    size_t idx = 0;
+                    for (size_t island_idx = 0; island_idx < islands.size(); ++island_idx) {
+                        const size_t first = idx;
+                        if (!islands[island_idx].contour.empty())
+                            ++idx;
+                        for (const Polygon &hole : islands[island_idx].holes)
+                            if (!hole.empty())
+                                ++idx;
+                        island_contours[island_idx] = {first, idx};
+                    }
+                    assert(idx == color_poly.size());
                 }
+                std::vector<std::vector<ExPolygons>> island_regions(islands.size());
+                tbb::parallel_for(size_t(0), islands.size(), [&](size_t island_idx) {
+                    const auto [first, last] = island_contours[island_idx];
+                    if (first == last)
+                        return;
+                    const std::vector<ColoredLines> island_poly(color_poly.begin() + first, color_poly.begin() + last);
+                    std::vector<ExPolygons>        &regions = island_regions[island_idx];
+                    if (has_layer_only_one_color(island_poly)) {
+                        regions.assign(num_facets_states, ExPolygons());
+                        regions[size_t(island_poly.front().front().color)].emplace_back(islands[island_idx]);
+                    } else {
+                        MMU_Graph graph = build_graph(layer_idx, island_poly);
+                        remove_multiple_edges_in_vertices(graph, island_poly);
+                        graph.remove_nodes_with_one_arc();
+                        regions = extract_colored_segments(graph, num_facets_states);
+                        // The faces of one colour tile it without overlapping; merged here, where an island is small,
+                        // every later boolean gets a few regions instead of thousands of faces sharing their edges. An
+                        // island with many holes keeps its faces: merged, each colour would be one region with thousands
+                        // of holes, and subtracting from that is far slower than from the faces one at a time.
+                        if (island_poly.size() <= 64)
+                            for (ExPolygons &faces : regions)
+                                if (faces.size() > 1)
+                                    faces = union_ex(faces);
+                    }
+                });
+                for (std::vector<ExPolygons> &regions : island_regions)
+                    for (size_t color_idx = 0; color_idx < regions.size(); ++color_idx)
+                        append(segmented_regions[layer_idx][color_idx], std::move(regions[color_idx]));
 
 #ifdef MM_SEGMENTATION_DEBUG_REGIONS
                 export_regions_to_svg(debug_out_path("3-mm-regions-sides-%d-%d.svg", layer_idx, iRun), segmented_regions[layer_idx], input_expolygons[layer_idx]);
@@ -2508,7 +2774,7 @@ std::vector<std::vector<ExPolygons>> segmentation_by_painting(const PrintObject 
         throw_on_cancel_callback();
     }
 
-    std::vector<std::vector<ExPolygons>> segmented_regions_merged = merge_segmented_layers(segmented_regions, std::move(top_and_bottom_layers), num_facets_states, throw_on_cancel_callback);
+    std::vector<std::vector<ExPolygons>> segmented_regions_merged = merge_segmented_layers(input_expolygons, segmented_regions, std::move(top_and_bottom_layers), num_facets_states, throw_on_cancel_callback);
     throw_on_cancel_callback();
 
 #ifdef MM_SEGMENTATION_DEBUG_REGIONS
@@ -2525,7 +2791,8 @@ std::vector<std::vector<ExPolygons>> segmentation_by_painting(const PrintObject 
 
 // Returns multi-material segmentation based on painting in multi-material segmentation gizmo
 std::vector<std::vector<ExPolygons>> multi_material_segmentation_by_painting(const PrintObject &print_object, const std::function<void()> &throw_on_cancel_callback) {
-    const size_t num_physical_filaments = print_object.print()->config().filament_colour.size();
+    // apply_mm_segmentation() reads one entry per filament_diameter, and filament_colour can be shorter.
+    const size_t num_physical_filaments = print_object.print()->config().filament_diameter.size();
     const size_t num_total_filaments    = print_object.print()->mixed_filament_manager().total_filaments(num_physical_filaments);
     const size_t num_facets_states      = num_total_filaments + 1;
     const float  max_width          = float(print_object.config().mmu_segmented_region_max_width.value);

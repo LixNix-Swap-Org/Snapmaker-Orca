@@ -1,20 +1,31 @@
 #ifndef slic3r_Preset_hpp_
 #define slic3r_Preset_hpp_
 
+#include <cstddef>
+#include <cassert>
+#include <cmath>
+#include <algorithm>
 #include <deque>
+#include <map>
+#include <limits>
 #include <set>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <functional>
 #include <mutex>
+#include <optional>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/property_tree/ptree_fwd.hpp>
+#include <vector>
+#include <utility>
 
+#include "Config.hpp"
 #include "PrintConfig.hpp"
 #include "Semver.hpp"
 #include "ProjectTask.hpp"
+#include "libslic3r.h"
 
 //BBS: change system directories
 #define PRESET_WEB_DIR         "web"
@@ -343,7 +354,8 @@ public:
 
     //BBS: add logic for only difference save
     //if parent_config is null, save all keys, otherwise, only save difference
-    void                save(DynamicPrintConfig* parent_config);
+    // Returns false when the preset file could not be written.
+    bool                save(DynamicPrintConfig* parent_config);
     void                reload(Preset const & parent);
 
     // Return a label of this preset, consisting of a name and a "(modified)" suffix, if this preset is dirty.
@@ -493,6 +505,9 @@ bool is_compatible_with_printer(const PresetWithVendorProfile &preset, const Pre
 bool is_compatible_with_printer(const DynamicPrintConfig &preset_config, Preset::Type preset_type,
                                 const DynamicPrintConfig &printer_config, const std::string &printer_name);
 
+// True for a list option the settings tab edits as one value, so a change to it is reported for the whole list.
+bool is_edited_as_whole_list(const ConfigDef *def, const std::string &opt_key);
+
 // Where a preset is being loaded from. `Auto` lets load_presets() infer from the directory path.
 struct PresetOrigin {
     enum class Kind { Auto, User, LocalBundle, SubscribedBundle };
@@ -511,6 +526,12 @@ std::string get_preset_canonical_name(const std::string &preset_bare_name, const
 
 // Tail segment of a canonical name — what's written to the bundle's .json filename and JSON "name" field.
 std::string get_preset_bare_name(const std::string &canonical_name);
+
+// Lock file guarding every user preset file under data_dir() against other
+// running instances and the preset sync thread. Empty without a data dir, and
+// for a read-only load (the CLI), which never rewrites or deletes and may run
+// many jobs on one data dir.
+std::string user_presets_lock_path(bool read_only = false);
 
 // Resolve an origin from a directory path when the caller passes Kind::Auto.
 PresetOrigin detect_origin_from_path(const boost::filesystem::path &path, const PresetOrigin &explicit_origin = PresetOrigin());
@@ -547,6 +568,20 @@ struct PresetConfigSubstitutions {
 // Substitutions having been performed during parsing a set of configuration files, for example when starting up
 // PrusaSlicer and reading the user Print / Filament / Printer profiles.
 using PresetsConfigSubstitutions = std::vector<PresetConfigSubstitutions>;
+
+// A user filament preset made against an older release that no longer shows on printers its system parent
+// listed then, and those printers. Migrating it writes them into the preset's own compatible_printers.
+struct LegacyUserFilamentPreset {
+    std::string              preset;
+    std::string              parent;
+    // The parent's name as the preset file states it: the name the older release knew it by.
+    std::string              inherits;
+    // The printers the preset lost: what the prompt lists.
+    std::vector<std::string> printers;
+    std::string              file;
+    // The list the file gets: the parent's current printers plus the lost ones.
+    std::vector<std::string> compatible_printers;
+};
 
 // Collections of presets of the same type (one of the Print, Filament or Printer type).
 class PresetCollection
@@ -598,9 +633,21 @@ public:
     void            save_user_presets(const std::string& dir_path, const std::string& type, std::map<std::string, std::string>& need_to_delete_list);
     bool            load_user_preset(std::string name, std::map<std::string, std::string> preset_values, PresetsConfigSubstitutions& substitutions, ForwardCompatibilitySubstitutionRule rule, const PresetOrigin &load_origin = PresetOrigin(PresetOrigin::Kind::User));
     void            update_after_user_presets_loaded();
+    // User presets store only their diff, so a user preset inherits its system parent's compatible_printers
+    // and disappears from a printer once a profile update narrows that list. Lists the user presets whose
+    // files do not set compatible_printers, and the printers their parent covered in an older release but
+    // no longer lists. printers_by_parent is keyed by the parent's name in that release, which is the name
+    // the preset file's inherits still holds.
+    std::vector<LegacyUserFilamentPreset> legacy_user_filament_presets(const std::map<std::string, std::vector<std::string>> &printers_by_parent);
+    // Writes legacy.compatible_printers into the preset's file and keeps every other key. The caller holds the
+    // user presets lock. False if the file has gained a compatible_printers key or another parent since the
+    // preset was found, or could not be written.
+    static bool     write_legacy_user_filament_preset(const LegacyUserFilamentPreset &legacy);
+    // Gives the loaded presets the lists their files were just given, and marks cloud copies for upload.
+    void            apply_legacy_user_filament_presets(const std::vector<LegacyUserFilamentPreset> &written);
     //BBS: get user presets
     int  get_user_presets(PresetBundle *preset_bundle, std::vector<Preset> &result_presets);
-    void set_sync_info_and_save(std::string name, std::string setting_id, std::string syncinfo, long long update_time);
+    void set_sync_info_and_save(std::string name, std::string setting_id, std::string syncinfo, long long update_time, const std::string& user_id);
     bool need_sync(std::string name, std::string setting_id, long long update_time);
 
     //BBS: add function to generate differed preset for save
@@ -629,6 +676,12 @@ public:
                                     const DynamicConfig &     dynamic_config,
                                     const std::string &       compatible_printers,
                                     bool                      force_rewritten = false);
+
+    // User presets made for one printer alone, as clone_presets_for_printer() makes them: every entry of
+    // their compatible_printers is that printer. They are deleted together with that printer. Presets
+    // that also list other printers, or are not limited by printer name, are shared and kept, and so is
+    // every preset a kept preset inherits from.
+    std::vector<Preset const *> get_user_presets_for_printer(const std::string &printer_name) const;
 
     std::map<std::string, std::vector<Preset const *>> get_filament_presets() const;
 
@@ -729,7 +782,14 @@ public:
     Preset&         get_edited_preset()         { return m_edited_preset; }
     const Preset&   get_edited_preset() const   { return m_edited_preset; }
 
-    const Preset& get_selected_preset_base() const { return *get_preset_base(m_presets[m_idx_selected]); }
+    // The root of the selected preset's inherits chain, or the selected preset itself when
+    // the chain names a preset that is not loaded (e.g. a vendor that is not installed).
+    const Preset& get_selected_preset_base() const
+    {
+        const Preset &selected = m_presets[m_idx_selected];
+        const Preset *base     = get_preset_base(selected);
+        return base ? *base : selected;
+    }
 
     // Return the last saved preset.
 //  const Preset&   get_saved_preset() const { return m_saved_preset; }
@@ -936,6 +996,16 @@ protected:
     void            set_custom_preset_alias(Preset &preset);
 
 private:
+    // A preset file and its .info as read from disk, std::nullopt for one that is missing.
+    struct PresetFilesOnDisk
+    {
+        std::optional<std::string> json;
+        std::optional<std::string> info;
+
+        static PresetFilesOnDisk read(const boost::filesystem::path &file);
+        bool operator==(const PresetFilesOnDisk &rhs) const { return json == rhs.json && info == rhs.info; }
+    };
+
     // One preset file read and flattened against the presets already in this
     // collection, before anything the collection shares has been touched.
     struct UserPresetLoad
@@ -953,6 +1023,9 @@ private:
         bool        discard_file { false };
         // The .info file read beside the preset, which commit logs.
         std::string info_file;
+        // Both files as they were before the preset was read from them. Resolve runs
+        // without the instance lock, so commit compares this with the disk under it.
+        PresetFilesOnDisk on_disk;
         // Counted and logged by commit, in the order the directory listed the files.
         std::vector<std::string>   errors;
         PresetsConfigSubstitutions substitutions;
@@ -964,7 +1037,8 @@ private:
     UserPresetLoad  resolve_user_preset(const boost::filesystem::path &file, const std::string &canonical_name,
                                         const PresetOrigin &load_origin, ForwardCompatibilitySubstitutionRule substitution_rule,
                                         const std::string &extruder_id_name, const std::string &extruder_variant_name,
-                                        std::set<std::string> *key_set1, std::set<std::string> *key_set2) const;
+                                        std::set<std::string> *key_set1, std::set<std::string> *key_set2,
+                                        bool read_only) const;
 
     // Install one resolved preset. The collection, its alias maps, the error count
     // and the preset files on disk are touched here and only here.
@@ -1141,7 +1215,7 @@ public:
 
     //BBS: change to json format
     //void                save() { this->config.save(this->file); }
-    void                save(DynamicPrintConfig* parent_config) { this->config.save_to_json(this->file, std::string("Physical_Printer"), std::string("User"), std::string(SLIC3R_VERSION)); }
+    void                save(DynamicPrintConfig* parent_config);
     void                save(const std::string& file_name_from, const std::string& file_name_to);
 
     void                update_from_preset(const Preset& preset);

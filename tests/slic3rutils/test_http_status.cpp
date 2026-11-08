@@ -1,8 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 
-// Snapmaker Orca: Slic3r::Http reports every final status outside 200-299 through on_error.
-// Before the change a final 1xx or 3xx (a 304, a redirect without a Location header) called
-// neither callback, so a caller that waits for one of the two never finished.
+// Snapmaker Orca: Slic3r::Http reports every final status outside 200-299 except 304 through on_error.
+// Every final status fires exactly one of the two callbacks, so a waiting caller always finishes.
 #include "slic3r/Utils/Http.hpp"
 
 #include <chrono>
@@ -106,16 +105,15 @@ TEST_CASE("A 200 answer calls on_complete only", "[HttpStatus]")
     CHECK(outcome.body == "ok");
 }
 
-TEST_CASE("A final 304 calls on_error with the status", "[HttpStatus]")
+TEST_CASE("A final 304 calls on_complete with the status", "[HttpStatus]")
 {
     CannedServer server("HTTP/1.1 304 Not Modified\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
     const Outcome outcome = fetch(server.url());
 
-    CHECK(outcome.completed == 0);
-    CHECK(outcome.failed == 1);
-    CHECK(outcome.error_status == 304u);
-    // The transfer itself succeeded, so there is no curl error text.
-    CHECK(outcome.error.empty());
+    CHECK(outcome.completed == 1);
+    CHECK(outcome.failed == 0);
+    CHECK(outcome.complete_status == 304u);
+    CHECK(outcome.body.empty());
 }
 
 TEST_CASE("A 302 without a Location header calls on_error with the status", "[HttpStatus]")

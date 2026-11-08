@@ -9,7 +9,7 @@ namespace Slic3r { namespace SSWCPProtocol {
 
 namespace {
 
-bool is_valid_flow_type(const std::string &value)
+bool is_valid_flow_type(const std::string& value)
 {
     // Only the standard and high-flow nozzle modes are recognized flow types.
     return value == FLOW_MODE_STANDARD || value == FLOW_MODE_HIGH_FLOW;
@@ -28,28 +28,6 @@ bool append_flow_type(const nlohmann::json &entry, std::vector<std::string> &out
     if (!type) return false;
     out.push_back(*type);
     any_stated = true;
-    return true;
-}
-
-bool parse_system_flow_types(const nlohmann::json &value, std::vector<std::string> &out)
-{
-    std::vector<std::string> parsed;
-    bool                     any_stated = false;
-    const auto               append = [&parsed, &any_stated](const nlohmann::json &entry) {
-        return append_flow_type(entry, parsed, any_stated);
-    };
-
-    if (value.is_array()) {
-        for (const nlohmann::json &entry : value)
-            if (!append(entry)) return false;
-    } else if (!append(value)) {
-        return false;
-    }
-
-    // Nothing but unstated entries: the firmware reports no flow types.
-    if (!any_stated)
-        parsed.clear();
-    out = std::move(parsed);
     return true;
 }
 
@@ -128,12 +106,14 @@ void parse_nozzle_diameters(const nlohmann::json &value, std::vector<std::string
     }
 }
 
-std::vector<std::string> build_filament_volume_types(const std::vector<int> *values, size_t count)
+std::vector<std::string> build_filament_volume_types(const std::vector<int>* values, size_t count)
 {
     std::vector<std::string> result(count, FLOW_MODE_STANDARD);
-    if (values == nullptr) return result;
+    if (values == nullptr)
+        return result;
     for (size_t i = 0; i < std::min(count, values->size()); ++i)
-        if ((*values)[i] == nvtHighFlow) result[i] = FLOW_MODE_HIGH_FLOW;
+        if ((*values)[i] == nvtHighFlow)
+            result[i] = FLOW_MODE_HIGH_FLOW;
     return result;
 }
 
@@ -174,13 +154,14 @@ size_t sync_reference_head(const std::vector<std::string> &flows, size_t head_co
     return 0;
 }
 
-OptionalFlowTypesStatus parse_optional_flow_types(const nlohmann::json &object, const char *key, size_t count,
-                                                   std::vector<std::string> &out)
+OptionalFlowTypesStatus parse_optional_flow_types(const nlohmann::json& object, const char* key, size_t count, std::vector<std::string>& out)
 {
     out.clear();
     const auto it = object.find(key);
-    if (it == object.end()) return OptionalFlowTypesStatus::Missing;
-    if (!it->is_array() || it->size() < count) return OptionalFlowTypesStatus::Invalid;
+    if (it == object.end())
+        return OptionalFlowTypesStatus::Missing;
+    if (!it->is_array() || it->size() < count)
+        return OptionalFlowTypesStatus::Invalid;
 
     std::vector<std::string> parsed;
     parsed.reserve(count);
@@ -193,48 +174,21 @@ OptionalFlowTypesStatus parse_optional_flow_types(const nlohmann::json &object, 
     return OptionalFlowTypesStatus::Valid;
 }
 
-bool parse_machine_info_response(const nlohmann::json &response, MachineInfo &out)
+bool select_complete_cached_nozzle_info(const std::vector<std::pair<std::string, std::string>>& slots,
+                                        std::vector<std::string>&                               diameters,
+                                        std::vector<std::string>&                               flows)
 {
-    const nlohmann::json *root = &response;
-    if (const auto data = response.find("data"); data != response.end() && data->is_object())
-        root = &*data;
-
-    const auto system_info = root->find("system_info");
-    if (system_info == root->end() || !system_info->is_object()) return false;
-    const auto product_info = system_info->find("product_info");
-    if (product_info == system_info->end() || !product_info->is_object()) return false;
-
-    MachineInfo parsed;
-    if (const auto model = product_info->find("machine_type"); model != product_info->end() && model->is_string())
-        parsed.model = model->get<std::string>();
-    if (const auto name = product_info->find("device_name"); name != product_info->end() && name->is_string())
-        parsed.device_name = name->get<std::string>();
-
-    if (const auto diameters = product_info->find("nozzle_diameter"); diameters != product_info->end())
-        parse_nozzle_diameters(*diameters, parsed.nozzle_diameters);
-
-    auto flows = product_info->find("nozzle_volume_type");
-    if (flows == product_info->end())
-        flows = product_info->find("nozzle_volume_types");
-    if (flows != product_info->end() && !parse_system_flow_types(*flows, parsed.nozzle_volume_types))
-        parsed.nozzle_volume_types.clear();
-
-    out = std::move(parsed);
-    return true;
-}
-
-bool select_complete_cached_nozzle_info(const std::vector<std::pair<std::string, std::string>> &slots,
-                                         std::vector<std::string> &diameters, std::vector<std::string> &flows)
-{
-    if (slots.empty()) return false;
+    if (slots.empty())
+        return false;
 
     std::vector<std::string> cached_diameters;
     std::vector<std::string> cached_flows;
     cached_diameters.reserve(slots.size());
     cached_flows.reserve(slots.size());
     bool flows_complete = true;
-    for (const auto &[diameter, flow] : slots) {
-        if (diameter.empty()) return false;
+    for (const auto& [diameter, flow] : slots) {
+        if (diameter.empty())
+            return false;
         cached_diameters.push_back(diameter);
         if (!is_valid_flow_type(flow))
             flows_complete = false;
@@ -245,13 +199,12 @@ bool select_complete_cached_nozzle_info(const std::vector<std::pair<std::string,
     diameters = std::move(cached_diameters);
     if (flows_complete)
         flows = std::move(cached_flows);
-    // else: leave the caller's flows untouched. An incomplete cache must not wipe
-    // values we already have (e.g. freshly resolved from objects.query); only a
-    // complete, valid cache overrides them.
+    else
+        flows.clear();
     return true;
 }
 
-std::string normalize_machine_model(const std::string &model)
+std::string normalize_machine_model(const std::string& model)
 {
     // CRITICAL: empty string must stay empty. Never default to a machine type,
     // because callers use the result for whitelist gating and persistent storage.
@@ -265,35 +218,30 @@ std::string normalize_machine_model(const std::string &model)
     return model;
 }
 
-bool parse_extruder_nozzle_info(const nlohmann::json &response,
-                                 std::vector<std::string> &diameters,
-                                 std::vector<std::string> &volume_types)
+bool parse_extruder_objects(const nlohmann::json& objects, std::vector<std::string>& diameters, std::vector<std::string>& volume_types)
 {
     diameters.clear();
     volume_types.clear();
 
-    // Navigate to data.status
-    const nlohmann::json *root = &response;
-    if (const auto data = response.find("data"); data != response.end() && data->is_object())
-        root = &*data;
-    const auto status = root->find("status");
-    if (status == root->end() || !status->is_object())
-        return false;
-
     // Dynamically discover extruder objects: "extruder", "extruder1", "extruder2", ...
     // Moonraker names the first toolhead "extruder" and subsequent ones with a numeric suffix.
     // Collect matching keys with their ordinal index for stable ordering.
-    struct ExtruderEntry { size_t index; std::string key; };
+    struct ExtruderEntry
+    {
+        size_t      index;
+        std::string key;
+    };
     std::vector<ExtruderEntry> extruders;
-    for (auto it = status->begin(); it != status->end(); ++it) {
-        const std::string &key = it.key();
-        size_t index;
+    for (auto it = objects.begin(); it != objects.end(); ++it) {
+        const std::string& key = it.key();
+        size_t             index;
         if (key == "extruder") {
             index = 0;
         } else if (key.size() > 8 && key.compare(0, 8, "extruder") == 0 &&
                    std::all_of(key.begin() + 8, key.end(), [](unsigned char c) { return std::isdigit(c); })) {
             // Cap suffix length to avoid stoul overflow on pathological firmware keys.
-            if (key.size() - 8 > 4) continue;
+            if (key.size() - 8 > 4)
+                continue;
             index = std::stoul(key.substr(8));
         } else {
             continue;
@@ -302,13 +250,12 @@ bool parse_extruder_nozzle_info(const nlohmann::json &response,
             extruders.push_back({index, key});
     }
     // Sort by toolhead index: extruder(0), extruder1(1), extruder2(2), ...
-    std::sort(extruders.begin(), extruders.end(),
-              [](const ExtruderEntry &a, const ExtruderEntry &b) { return a.index < b.index; });
+    std::sort(extruders.begin(), extruders.end(), [](const ExtruderEntry& a, const ExtruderEntry& b) { return a.index < b.index; });
 
     bool any_flow_stated = false;
-    for (const auto &entry : extruders) {
-        const auto extr = status->find(entry.key);
-        const auto nd = extr->find("nozzle_diameter");
+    for (const auto& entry : extruders) {
+        const auto extr = objects.find(entry.key);
+        const auto nd   = extr->find("nozzle_diameter");
         if (nd == extr->end())
             continue;
 
@@ -330,39 +277,6 @@ bool parse_extruder_nozzle_info(const nlohmann::json &response,
         volume_types.clear();
 
     return !diameters.empty();
-}
-
-ResolveResult merge_machine_info(const nlohmann::json &system_info, const nlohmann::json &objects_query)
-{
-    ResolveResult result;
-    MachineInfo  &mi = result.info;
-
-    // model / device_name: system_info is authoritative, normalized for whitelist safety.
-    MachineInfo sys_mi;
-    if (!system_info.is_null() && parse_machine_info_response(system_info, sys_mi)) {
-        mi.model       = normalize_machine_model(sys_mi.model);
-        mi.device_name = sys_mi.device_name;
-        // system_info nozzle data as fallback
-        mi.nozzle_diameters    = sys_mi.nozzle_diameters;
-        mi.nozzle_volume_types = sys_mi.nozzle_volume_types;
-    }
-    // nozzle: objects.query is preferred (real-time), overrides system_info.
-    std::vector<std::string> obj_diameters, obj_flows;
-    if (!objects_query.is_null() && parse_extruder_nozzle_info(objects_query, obj_diameters, obj_flows)) {
-        mi.nozzle_diameters = std::move(obj_diameters);
-        // Flow types are replaced only when objects.query states them; otherwise those of
-        // system_info stay.
-        if (!obj_flows.empty())
-            mi.nozzle_volume_types = std::move(obj_flows);
-    }
-
-    if (mi.model.empty())
-        result.status = ResolveStatus::NoResponse;
-    else if (mi.nozzle_diameters.empty())
-        result.status = ResolveStatus::GotIdentity;
-    else
-        result.status = ResolveStatus::Complete;
-    return result;
 }
 
 FinishFilamentMappingEvent parse_finish_filament_mapping_event(const nlohmann::json &params)

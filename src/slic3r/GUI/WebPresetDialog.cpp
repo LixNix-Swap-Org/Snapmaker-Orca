@@ -22,8 +22,12 @@
 #include <boost/cast.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/nowide/fstream.hpp>
 
 #include "MainFrame.hpp"
+#include "Plater.hpp"
+#include "GUI.hpp"
+#include "UnsavedChangesDialog.hpp"
 #include <boost/dll.hpp>
 #include <slic3r/GUI/Widgets/WebView.hpp>
 #include <slic3r/Utils/Http.hpp>
@@ -39,13 +43,14 @@
 #include "ProfileLoadUtil.hpp"
 
 using namespace nlohmann;
+namespace fs = boost::filesystem;
 
 namespace Slic3r { namespace GUI {
 
 extern json m_ProfileJson;
 extern std::mutex m_ProfileJson_mutex;
 
-extern void StringReplace(string& strBase, string strSrc, string strDes);
+extern void StringReplace(std::string& strBase, std::string strSrc, std::string strDes);
 
 static wxString update_custom_filaments()
 {
@@ -474,38 +479,7 @@ void WebPresetDialog::OnScriptMessage(wxWebViewEvent& evt)
                 }
             }
 
-            DeviceInfo info;
-            if (wxGetApp().app_config->get_device_info(m_device_id, info)) {
-                info.model_name   = MSelected.begin().value()["model"].get<std::string>();
-                info.nozzle_sizes = {MSelected.begin().value()["nozzle_diameter"].get<std::string>()};
-                info.preset_name  = info.model_name + " (" + info.nozzle_sizes[0] + " nozzle)";
-                size_t vendor_pos = info.model_name.find_first_of(" ");
-                if (vendor_pos != std::string::npos) {
-                    std::string vendor        = info.model_name.substr(0, vendor_pos);
-                    std::string machine_cover = LOCALHOST_URL + std::to_string(wxGetApp().m_page_http_server.get_port()) + "/profiles/" + vendor + "/" +
-                                                info.model_name + "_cover.png";
-
-                    info.img = machine_cover;
-                }
-
-                wxGetApp().app_config->save_device_info(info);
-
-                //// 同步卡片
-                //auto devices = wxGetApp().app_config->get_devices();
-                //json param;
-                //param["command"]       = "local_devices_arrived";
-                //param["sequece_id"]    = "10001";
-                //param["data"]          = devices;
-                //std::string logout_cmd = param.dump();
-                //wxString    strJS      = wxString::Format("window.postMessage(%s)", logout_cmd);
-                //GUI::wxGetApp().run_script(strJS);
-
-                // wcp订阅
-                json data = wxGetApp().app_config->get_devices();
-                wxGetApp().device_card_notify(data);
-
-                wxGetApp().mainframe->plater()->sidebar().update_all_preset_comboboxes();
-            }
+            wxGetApp().mainframe->plater()->sidebar().update_all_preset_comboboxes();
 
         } else if (strCmd == "save_userguide_filaments") {
             {
@@ -531,7 +505,6 @@ void WebPresetDialog::OnScriptMessage(wxWebViewEvent& evt)
                 std::lock_guard<std::mutex> lock(m_ProfileJson_mutex);
                 oldregion = m_ProfileJson["region"];
             }
-            bool        bLogin    = false;
             if (m_Region != oldregion) {
                 AppConfig*    config       = GUI::wxGetApp().app_config;
                 std::string   country_code = config->get_country_code();
@@ -539,7 +512,6 @@ void WebPresetDialog::OnScriptMessage(wxWebViewEvent& evt)
                 if (agent) {
                     agent->set_country_code(country_code);
                     if (wxGetApp().is_user_login()) {
-                        bLogin = true;
                         agent->user_logout();
                     }
                 }
@@ -550,8 +522,6 @@ void WebPresetDialog::OnScriptMessage(wxWebViewEvent& evt)
             if (InstallNetplugin)
                 GUI::wxGetApp().CallAfter([this] { GUI::wxGetApp().ShowDownNetPluginDlg(); });
 
-            if (bLogin)
-                GUI::wxGetApp().CallAfter([this] { login(); });
         } else if (strCmd == "user_guide_cancel") {
             this->EndModal(wxID_CANCEL);
             this->Close();
@@ -610,21 +580,7 @@ void WebPresetDialog::SendUserGuideProfile()
         res_json = m_ProfileJson;
     }
 
-    std::string              model_name = "";
-    std::vector<std::string> nozzle_sizes;
-    if (m_device_id != "") {
-        DeviceInfo info;
-        if (wxGetApp().app_config->get_device_info(m_device_id, info)) {
-            if (info.model_name != "") {
-                // test
-                if (info.model_name == "lava" || info.model_name == "Snapmaker test") {
-                    info.model_name = "Snapmaker U1";
-                }
-                model_name   = info.model_name;
-                nozzle_sizes = info.nozzle_sizes;
-            }
-        }
-    }
+    const std::string model_name = "";
 
     if (res_json.count("model")) {
         json& model = res_json["model"];
@@ -632,11 +588,7 @@ void WebPresetDialog::SendUserGuideProfile()
             json& item = model[i];
             if (item.count("nozzle_selected")) {
                 if (item["model"].get<std::string>() == model_name) {
-                    if (!nozzle_sizes.empty()) {
-                        item["nozzle_selected"] = nozzle_sizes[0];
-                    } else {
-                        item["nozzle_selected"] = "";
-                    }
+                    item["nozzle_selected"] = "";
 
                     if (m_bind_nozzle) {
                         json cp_item = item;
@@ -1226,7 +1178,7 @@ int WebPresetDialog::LoadProfile()
         //} while (_findnext(handle, &findData) == 0); // ???????????
 
         // load BBL bundle from user data path
-        string                                targetPath = sm_bundle_path.make_preferred().string();
+        std::string                           targetPath = sm_bundle_path.make_preferred().string();
         boost::filesystem::path               myPath(targetPath);
         boost::filesystem::directory_iterator endIter;
         for (boost::filesystem::directory_iterator iter(myPath); iter != endIter; iter++) {

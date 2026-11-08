@@ -45,12 +45,15 @@ jobs:
       # Branches whose builds are published to the nightly release.
       deploy_nightly: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/2.3.0-final' }}
       macos_sign: ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/release_') || github.ref == 'refs/heads/2.3.0-final') && secrets.BUILD_CERTIFICATE_BASE64 != '' }}
+      NSIS_VERSION: '3.13'
+      NSIS_SHA256: BA63DFFC4410EE89193E1CB5A41989991BD77C61068DA17E3156D136B7B0B3D8
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
           lfs: 'true'
+          submodules: recursive
 
       # The deploy steps publish to the release tagged nightly-builds of the repository
       # named by vars.NIGHTLY_REPO (default LixNix-Swap-Org/Snapmaker-Orca). Its numeric
@@ -77,32 +80,15 @@ jobs:
         if: ${{ !(runner.os == 'macOS' && inputs.macos-combine-only) }}
         uses: actions/cache@v6
         with:
-          path: ${{ inputs.cache-path }}
+          path: ${{ github.workspace }}/${{ inputs.cache-path }}
           key: ${{ inputs.cache-key }}
           fail-on-cache-miss: true
 
       - uses: lukka/get-cmake@latest
-        # The windows-11-arm runner needs CMake <= 3.31 (handled in the next step).
-        if: ${{ !(runner.os == 'Windows' && inputs.arch == 'arm64') }}
         with:
           cmakeVersion: "~4.3.0"  # use most recent 4.3.x version
           useLocalCache: true         # <--= Use the local cache (default is 'false').
           useCloudCache: true
-
-      - name: Install CMake 3.31.x (Windows ARM64)
-        # windows-11-arm ships CMake 4.x, which removed pre-3.5 policy
-        # compatibility AND has incomplete ASM_ARMASM linker modules
-        # (breaks Boost.Context on ARM64). Pin to the last 3.x release.
-        if: runner.os == 'Windows' && inputs.arch == 'arm64'
-        shell: pwsh
-        run: |
-          $ver = "3.31.6"
-          $url = "https://github.com/Kitware/CMake/releases/download/v$ver/cmake-$ver-windows-arm64.zip"
-          Invoke-WebRequest -Uri $url -OutFile "$env:RUNNER_TEMP\cmake.zip"
-          Expand-Archive -Path "$env:RUNNER_TEMP\cmake.zip" -DestinationPath "$env:RUNNER_TEMP\cmake" -Force
-          $cmakeBin = "$env:RUNNER_TEMP\cmake\cmake-$ver-windows-arm64\bin"
-          if (-not (Test-Path "$cmakeBin\cmake.exe")) { throw "cmake.exe not found at $cmakeBin" }
-          Add-Content -Path $env:GITHUB_PATH -Value $cmakeBin
 
       # Compiler cache. Pushes save it, so main keeps it warm; pull requests
       # restore it and discard what they compiled. Objects are keyed on the
@@ -113,15 +99,6 @@ jobs:
         shell: bash
         run: |
           leg="${{ runner.os }}-${{ inputs.arch || 'amd64' }}${{ runner.os == 'Windows' && format('-{0}', inputs.compiler) || '' }}"
-          # clang-cl refuses a precompiled header from another cl.exe build and ccache
-          # does not hash that build, so each one gets its own cache. The build number
-          # is read from cl.exe itself; the toolset directory keeps its name across patches.
-          if [ "${{ runner.os }}" = Windows ]; then
-            vswhere='/c/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe'
-            toolset=$(tr -d '\r\n' < "$("$vswhere" -latest -products '*' -find 'VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt' | tr -d '\r')")
-            cl=$("$vswhere" -latest -products '*' -find 'VC\Tools\MSVC\'"$toolset"'\**\cl.exe' | tr -d '\r' | head -1)
-            leg="$leg-vc$("$cl" 2>&1 | grep -o -E 'Version [0-9.]+' | cut -d' ' -f2)"
-          fi
           echo "CCACHE_LEG=$leg" >> "$GITHUB_ENV"
           echo "CCACHE_ENTRY=ccache-$leg-${{ github.run_id }}-${{ github.run_attempt }}" >> "$GITHUB_ENV"
 
@@ -243,10 +220,19 @@ jobs:
       - name: Free disk space
         if: runner.os == 'macOS' && !inputs.macos-combine-only && !vars.SELF_HOSTED
         run: |
-          df -hI /dev/disk3s1s1
-          sudo find /Applications -maxdepth 1 -type d -name "Xcode_*.app" ! -name "Xcode_15.4.app" -exec rm -rf {} +
+          df -hI /
+          # Deleting the unused Xcodes takes minutes, so only do it when the
+          # build might not fit. A cold build uses under 4 GiB after this step.
+          avail_gib=$(df -g / | awk 'NR == 2 { print $4 }')
+          if [ "$avail_gib" -ge 15 ]; then
+            echo "$avail_gib GiB free, enough for the build"
+            exit 0
+          fi
+          # Keep only the selected Xcode
+          xcode=$(basename "$(cd "$(xcode-select -p)/../.." && pwd -P)")
+          sudo find /Applications -maxdepth 1 -type d -name "Xcode_*.app" ! -name "$xcode" -exec rm -rf {} +
           sudo rm -rf ~/Library/Developer/CoreSimulator/Caches/*
-          df -hI /dev/disk3s1s1
+          df -hI /
 
       - name: Build slicer mac
         if: runner.os == 'macOS' && !inputs.macos-combine-only
@@ -265,7 +251,7 @@ jobs:
         working-directory: ${{ github.workspace }}
         # The test binaries load libsentry.dylib through an rpath into the deps
         # prefix; ship it at that path so the unit-test runner can resolve it.
-        run: tar -cvf build_tests.tar build/arm64/tests deps/build/arm64/OrcaSlicer_dep/usr/local/lib/libsentry.dylib
+        run: tar -cvf build_tests.tar build/arm64/tests deps/build/arm64/OrcaSlicer_dep/usr/local/lib/libsentry.dylib resources/web/flutter_web/main.dart.js
 
       - name: Upload Test Artifact mac
         if: runner.os == 'macOS' && !inputs.macos-combine-only && inputs.arch == 'arm64'
@@ -321,9 +307,19 @@ jobs:
         run: |
           ./build_release_macos.sh -u -x ${{ !vars.SELF_HOSTED && '-j 3' || '' }} -a universal
 
+      # xcrun stapler fetches the notarization ticket over HTTP/3 (UDP/443), which GitHub
+      # macOS runners currently drop (actions/runner-images#14924). Blocking outbound
+      # UDP/443 makes stapler fall back to plain HTTPS over TCP. Remove once fixed upstream.
+      - name: Block UDP 443 to work around stapler Error 68 (actions/runner-images#14924)
+        if: env.macos_sign == 'true' && runner.os == 'macOS' && inputs.macos-combine-only && !vars.SELF_HOSTED
+        run: |
+          echo "block return out quick proto udp from any to any port 443" | sudo pfctl -f -
+          sudo pfctl -E
+
  # Thanks to RaySajuuk, it's working now
       - name: Sign app and notary
         if: env.macos_sign == 'true' && runner.os == 'macOS' && inputs.macos-combine-only
+        timeout-minutes: 30
         working-directory: ${{ github.workspace }}
         env:
           BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
@@ -331,8 +327,9 @@ jobs:
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
           CERTIFICATE_ID: ${{ secrets.MACOS_CERTIFICATE_ID }}
         run: |
-          # Load the `retry` helper (retries flaky commands such as `hdiutil create`).
+          # Load the `retry` and `create_dmg` helpers.
           source ${{ github.workspace }}/scripts/retry.sh
+          source ${{ github.workspace }}/scripts/create_dmg.sh
           CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
           KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
           echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode --output $CERTIFICATE_PATH
@@ -386,7 +383,7 @@ jobs:
           rm -rf ${{ github.workspace }}/build/universal/Snapmaker_Orca_dmg/*
           cp -R "${{ github.workspace }}/build/universal/Snapmaker_Orca/Snapmaker Orca.app" "${{ github.workspace }}/build/universal/Snapmaker_Orca_dmg/"
           ln -sfn /Applications ${{ github.workspace }}/build/universal/Snapmaker_Orca_dmg/Applications
-          retry hdiutil create -volname "Snapmaker_Orca" -srcfolder ${{ github.workspace }}/build/universal/Snapmaker_Orca_dmg -ov -format UDZO "${{ github.workspace }}/Snapmaker_Orca_Mac_universal_${{ env.ver }}.dmg"
+          create_dmg "Snapmaker_Orca" ${{ github.workspace }}/build/universal/Snapmaker_Orca_dmg "${{ github.workspace }}/Snapmaker_Orca_Mac_universal_${{ env.ver }}.dmg"
           codesign --deep --force --verbose --options runtime --timestamp --entitlements "$ENTITLEMENTS" --sign "$CERTIFICATE_ID" "${{ github.workspace }}/Snapmaker_Orca_Mac_universal_${{ env.ver }}.dmg"
 
           # Create separate Snapmaker_Orca_profile_validator DMG if the app exists
@@ -395,31 +392,32 @@ jobs:
             rm -rf ${{ github.workspace }}/build/universal/Snapmaker_Orca_profile_validator_dmg/*
             cp -R ${{ github.workspace }}/build/universal/Snapmaker_Orca/Snapmaker_Orca_profile_validator.app ${{ github.workspace }}/build/universal/Snapmaker_Orca_profile_validator_dmg/
             ln -sfn /Applications ${{ github.workspace }}/build/universal/Snapmaker_Orca_profile_validator_dmg/Applications
-            retry hdiutil create -volname "Snapmaker_Orca Profile Validator" -srcfolder ${{ github.workspace }}/build/universal/Snapmaker_Orca_profile_validator_dmg -ov -format UDZO "${{ github.workspace }}/Snapmaker_Orca_profile_validator_Mac_universal_${{ env.ver }}.dmg"
+            create_dmg "Snapmaker_Orca Profile Validator" ${{ github.workspace }}/build/universal/Snapmaker_Orca_profile_validator_dmg "${{ github.workspace }}/Snapmaker_Orca_profile_validator_Mac_universal_${{ env.ver }}.dmg"
             codesign --deep --force --verbose --options runtime --timestamp --entitlements "$ENTITLEMENTS" --sign "$CERTIFICATE_ID" "${{ github.workspace }}/Snapmaker_Orca_profile_validator_Mac_universal_${{ env.ver }}.dmg"
           fi
 
           # Notarize main DMG
           xcrun notarytool submit "${{ github.workspace }}/Snapmaker_Orca_Mac_universal_${{ env.ver }}.dmg" --apple-id "${{ secrets.APPLE_DEV_ACCOUNT }}" --team-id "${{ secrets.TEAM_ID }}" --password "${{ secrets.APP_PWD }}" --wait
-          xcrun stapler staple "${{ github.workspace }}/Snapmaker_Orca_Mac_universal_${{ env.ver }}.dmg"
+          retry xcrun stapler staple "${{ github.workspace }}/Snapmaker_Orca_Mac_universal_${{ env.ver }}.dmg"
 
           # Notarize profile validator DMG if it exists
           if [ -f "${{ github.workspace }}/Snapmaker_Orca_profile_validator_Mac_universal_${{ env.ver }}.dmg" ]; then
             xcrun notarytool submit "${{ github.workspace }}/Snapmaker_Orca_profile_validator_Mac_universal_${{ env.ver }}.dmg" --apple-id "${{ secrets.APPLE_DEV_ACCOUNT }}" --team-id "${{ secrets.TEAM_ID }}" --password "${{ secrets.APP_PWD }}" --wait
-            xcrun stapler staple "${{ github.workspace }}/Snapmaker_Orca_profile_validator_Mac_universal_${{ env.ver }}.dmg"
+            retry xcrun stapler staple "${{ github.workspace }}/Snapmaker_Orca_profile_validator_Mac_universal_${{ env.ver }}.dmg"
           fi
 
       - name: Create DMG without notary
         if: env.macos_sign != 'true' && runner.os == 'macOS' && inputs.macos-combine-only
         working-directory: ${{ github.workspace }}
         run: |
-          # Load the `retry` helper (retries flaky commands such as `hdiutil create`).
+          # Load the `retry` and `create_dmg` helpers.
           source ${{ github.workspace }}/scripts/retry.sh
+          source ${{ github.workspace }}/scripts/create_dmg.sh
           mkdir -p ${{ github.workspace }}/build/universal/Snapmaker_Orca_dmg
           rm -rf ${{ github.workspace }}/build/universal/Snapmaker_Orca_dmg/*
           cp -R "${{ github.workspace }}/build/universal/Snapmaker_Orca/Snapmaker Orca.app" "${{ github.workspace }}/build/universal/Snapmaker_Orca_dmg/"
           ln -sfn /Applications ${{ github.workspace }}/build/universal/Snapmaker_Orca_dmg/Applications
-          retry hdiutil create -volname "Snapmaker_Orca" -srcfolder ${{ github.workspace }}/build/universal/Snapmaker_Orca_dmg -ov -format UDZO "${{ github.workspace }}/Snapmaker_Orca_Mac_universal_${{ env.ver }}.dmg"
+          create_dmg "Snapmaker_Orca" ${{ github.workspace }}/build/universal/Snapmaker_Orca_dmg "${{ github.workspace }}/Snapmaker_Orca_Mac_universal_${{ env.ver }}.dmg"
 
           # Create separate Snapmaker_Orca_profile_validator DMG if the app exists
           if [ -f "${{ github.workspace }}/build/universal/Snapmaker_Orca/Snapmaker_Orca_profile_validator.app/Contents/MacOS/Snapmaker_Orca_profile_validator" ]; then
@@ -427,7 +425,7 @@ jobs:
             rm -rf ${{ github.workspace }}/build/universal/Snapmaker_Orca_profile_validator_dmg/*
             cp -R ${{ github.workspace }}/build/universal/Snapmaker_Orca/Snapmaker_Orca_profile_validator.app ${{ github.workspace }}/build/universal/Snapmaker_Orca_profile_validator_dmg/
             ln -sfn /Applications ${{ github.workspace }}/build/universal/Snapmaker_Orca_profile_validator_dmg/Applications
-            retry hdiutil create -volname "Snapmaker_Orca Profile Validator" -srcfolder ${{ github.workspace }}/build/universal/Snapmaker_Orca_profile_validator_dmg -ov -format UDZO "${{ github.workspace }}/Snapmaker_Orca_profile_validator_Mac_universal_${{ env.ver }}.dmg"
+            create_dmg "Snapmaker_Orca Profile Validator" ${{ github.workspace }}/build/universal/Snapmaker_Orca_profile_validator_dmg "${{ github.workspace }}/Snapmaker_Orca_profile_validator_Mac_universal_${{ env.ver }}.dmg"
           fi
 
       # Delete the per-arch bundles only after signing/DMG creation succeeded, so a
@@ -519,41 +517,60 @@ jobs:
         if: runner.os == 'Windows'
         uses: microsoft/setup-msbuild@v3
 
-      - name: Install nsis
+      # NSIS builds the installer. A pinned portable copy is kept in the Actions
+      # cache, so most runs never download it, and a cache miss fetches the
+      # release archive from SourceForge instead of going through the Chocolatey
+      # community feed, which hosted runners often cannot reach. Prepending it to
+      # PATH also makes cpack use it over the NSIS preinstalled on some images.
+      - name: Restore NSIS
+        id: nsis-cache
+        if: runner.os == 'Windows' && !vars.SELF_HOSTED
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ runner.temp }}/nsis
+          key: nsis-${{ env.NSIS_VERSION }}
+
+      - name: Install NSIS
         if: runner.os == 'Windows' && !vars.SELF_HOSTED
         shell: pwsh
-        # The Chocolatey community feed intermittently 504s, and `choco install`
-        # exits 0 when package resolution fails that way. Unchecked, the job then
-        # builds for ~25 minutes before `cpack -G NSIS` reports a missing makensis.
-        # Retry the install and verify makensis itself, so a real failure stops here.
         run: |
           dir "C:/Program Files (x86)/Windows Kits/10/Include"
-          $nsisDir = Join-Path ${env:ProgramFiles(x86)} 'NSIS'
+          $nsisDir = Join-Path $env:RUNNER_TEMP 'nsis'
           $makensis = Join-Path $nsisDir 'makensis.exe'
-          for ($attempt = 1; $attempt -le 3 -and -not (Test-Path $makensis); $attempt++) {
-            if ($attempt -gt 1) { Start-Sleep -Seconds (15 * $attempt) }
-            Write-Host "::group::choco install nsis (attempt $attempt)"
-            choco install nsis --yes --no-progress
-            Write-Host "::endgroup::"
-          }
           if (-not (Test-Path $makensis)) {
-            throw "NSIS install failed: $makensis not found after 3 attempts."
+            $zip = Join-Path $env:RUNNER_TEMP "nsis-$env:NSIS_VERSION.zip"
+            curl.exe -fsSL --retry 5 --retry-all-errors --retry-delay 15 -o $zip "https://downloads.sourceforge.net/project/nsis/NSIS%203/$env:NSIS_VERSION/nsis-$env:NSIS_VERSION.zip"
+            if ($LASTEXITCODE -ne 0) { throw "NSIS $env:NSIS_VERSION download failed." }
+            if ((Get-FileHash $zip -Algorithm SHA256).Hash -ne $env:NSIS_SHA256) {
+              throw "NSIS $env:NSIS_VERSION archive does not match its pinned SHA256."
+            }
+            Expand-Archive $zip $env:RUNNER_TEMP
+            Move-Item (Join-Path $env:RUNNER_TEMP "nsis-$env:NSIS_VERSION") $nsisDir
           }
           & $makensis /VERSION
           $nsisDir | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
 
+      - name: Save NSIS
+        if: runner.os == 'Windows' && !vars.SELF_HOSTED && steps.nsis-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ runner.temp }}/nsis
+          key: nsis-${{ env.NSIS_VERSION }}
+
+      # build_win.bat stages the connect bundle with Python.
+      - name: Set up Python Win
+        if: runner.os == 'Windows' && !vars.SELF_HOSTED
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
       - name: Build slicer Win
         if: runner.os == 'Windows'
         working-directory: ${{ github.workspace }}
-        # Orca removed the Netfabb (Win10 SDK) STL repair path in favour of CGAL
-        # (FixModelByCgal), so the Windows SDK pin is no longer required.
-        # env:
-        #   WindowsSdkDir: 'C:\Program Files (x86)\Windows Kits\10\'
-        #   WindowsSDKVersion: '10.0.26100.0\'
         # --tests builds the unit tests too; the unit_tests_windows_* jobs run them.
         run: |
           # cache-path is the install directory inside the deps build directory.
-          $deps = (Split-Path "${{ inputs.cache-path }}").Replace('\', '/')
+          $deps = (Split-Path "${{ github.workspace }}/${{ inputs.cache-path }}").Replace('\', '/')
           # -l compiles with Visual Studio's clang-cl and -x builds with Ninja; --msvc --msbuild is cl under the Visual Studio generator.
           $flags = if ("${{ inputs.compiler }}" -eq "clang") { "-l", "-x" } else { "--msvc", "--msbuild" }
           .\build_win.bat -s --tests -i --arch ${{ inputs.arch }} --build-dir $env:BUILD_DIR --deps-dir $deps @flags
@@ -570,7 +587,7 @@ jobs:
         if: runner.os == 'Windows'
         working-directory: ${{ github.workspace }}
         shell: pwsh
-        run: tar -cvf build_tests.tar ${{ env.BUILD_DIR }}/tests
+        run: tar -cvf build_tests.tar ${{ env.BUILD_DIR }}/tests resources/web/flutter_web/main.dart.js
 
       - name: Upload Test Artifact Win
         if: runner.os == 'Windows'
@@ -631,6 +648,13 @@ jobs:
           name: Snapmaker_Orca_profile_validator_Windows_${{ env.ver }}
           path: ${{ github.workspace }}/${{ env.BUILD_DIR }}/src/Release/Snapmaker_Orca_profile_validator.exe
 
+      - name: Check exception throw info Win
+        if: runner.os == 'Windows' && inputs.compiler == 'clang'
+        working-directory: ${{ github.workspace }}
+        # After the uploads, so a failure still leaves the build and its PDB to inspect, and before any deploy.
+        shell: pwsh
+        run: scripts\check_exception_throw_info.ps1 -BuildDir $env:BUILD_DIR
+
       - name: Deploy Windows release portable
         if: github.repository == (vars.NIGHTLY_REPO || 'LixNix-Swap-Org/Snapmaker-Orca') && env.deploy_nightly == 'true' && runner.os == 'Windows' && !vars.SELF_HOSTED && steps.nightly.outputs.release_id != ''
         uses: WebFreak001/deploy-nightly@v3.2.0
@@ -684,7 +708,7 @@ jobs:
           appimage=./build/Snapmaker_Orca_Linux_AppImage${{ env.ubuntu-ver-str }}${{ env.arch_suffix }}_${{ env.ver }}.AppImage
           mv -n ./build/Snapmaker_Orca_Linux_V${{ env.ver_pure }}.AppImage "$appimage"
           chmod +x "$appimage"
-          tar -cvf build_tests.tar build/tests
+          tar -cvf build_tests.tar build/tests resources/web/flutter_web/main.dart.js
 
         # The unstripped build-tree binary carries the symtab Sentry needs; the
         # AppImage ships the same build (same ELF build-id). Arch subdir keeps the
@@ -730,6 +754,9 @@ jobs:
           chmod +x "$appimage"
           "$appimage" --appimage-extract
           ./scripts/build_preset_cache.sh -b build build/package/resources/profiles squashfs-root/resources/profiles
+          # The runtime extracts every directory as 0700, and appimagetool (continuous
+          # build 333 onwards) refuses to pack a tree other users cannot read.
+          chmod -R a+rX squashfs-root
           appimagetool=$(find build -name "appimagetool.AppImage" | head -1)
           ARCH=$(uname -m) "$appimagetool" --appimage-extract-and-run squashfs-root "$appimage"
           rm -rf squashfs-root

@@ -2,16 +2,19 @@
 #define slic3r_AppConfig_hpp_
 
 #include <set>
+#include <chrono>
 #include <map>
 #include <string>
-#include "nlohmann/json.hpp"
+#include <unordered_map>
+#include <nlohmann/json_fwd.hpp>
+#include "LocalesUtils.hpp"
 #include <boost/algorithm/string/trim_all.hpp>
+#include <utility>
+#include <vector>
 
 #include "libslic3r/Config.hpp"
 #include "libslic3r/Semver.hpp"
 #include "calib.hpp"
-
-using namespace nlohmann;
 
 #define ENV_DEV_HOST		"0"
 #define ENV_QAT_HOST		"1"
@@ -36,10 +39,13 @@ using namespace nlohmann;
 #define SETTING_OPENGL_SCENE_CACHE "opengl_scene_cache"
 #define SETTING_OPENGL_SKIP_IDENTICAL_FRAMES "opengl_skip_identical_frames"
 #define SETTING_OPENGL_SHOW_FPS_OVERLAY "opengl_show_fps_overlay"
+#define SETTING_OPENGL_SHOW_RENDER_TIMINGS "opengl_show_render_timings"
 #define SETTING_OPENGL_REALISTIC_MODE "opengl_realistic_mode"
 #define SETTING_OPENGL_REALISTIC_PHONG "opengl_realistic_phong"
 #define SETTING_OPENGL_SHADING_MODEL "opengl_shading_model"
 #define SETTING_OPENGL_PHONG_BASIC_PLATE_SHADOWS "opengl_phong_basic_plate_shadows"
+// off, static (light fixed in the world) or orbit (light turning with the camera)
+#define SETTING_OPENGL_REALISTIC_SHADOWS "opengl_realistic_shadows"
 #define SETTING_OPENGL_PHONG_SSAO "opengl_phong_ssao"
 #define SETTING_OPENGL_PHONG_SMOOTH_NORMALS "opengl_phong_smooth_normals"
 // Snapmaker Orca: render LOD, small on-screen objects are drawn from a reduced mesh. Empty reads as
@@ -47,6 +53,7 @@ using namespace nlohmann;
 // default change reaches every config without an explicit choice.
 #define SETTING_OPENGL_MESH_LOD "opengl_mesh_lod"
 #define SETTING_OPENGL_REALISTIC_PREVIEW "opengl_realistic_preview"
+#define SETTING_OPENGL_REALISTIC_GLOSS "opengl_realistic_gloss"
 
 #define SETTING_PLUGIN_PAGES_VISIBLE_COUNT "plugin_pages_visible_count"
 #define PLUGIN_PAGES_VISIBLE_COUNT_MIN 1
@@ -69,86 +76,6 @@ using namespace nlohmann;
 
 
 namespace Slic3r {
-
-struct DeviceInfo {
-    std::string ip;
-    std::string dev_id;
-    std::string dev_name;
-    std::string model_name;
-    std::string preset_name;  // 关联的打印机预设名称
-    bool        connected;
-	std::string img;
-	std::vector<std::string> nozzle_sizes;
-	std::vector<std::string> nozzle_volume_type;
-    std::string              sn;
-    int              protocol;
-    std::string              api_key;
-    std::string              user;
-    std::string              password;
-    std::string              ca;
-    std::string              cert;
-    std::string              key;
-    std::string              clientId;
-    int              port;
-    std::string              link_mode;
-    std::string              userid;
-    std::string              id;
-
-
-    
-    // For JSON serialization, nozzle_volume_type needs to be compatible with scenarios where this field is missing in old configurations
-    friend void to_json(json& j, const DeviceInfo& device)
-    {
-        j = json{{"ip", device.ip},
-                 {"dev_id", device.dev_id},
-                 {"dev_name", device.dev_name},
-                 {"model_name", device.model_name},
-                 {"preset_name", device.preset_name},
-                 {"connected", device.connected},
-                 {"img", device.img},
-                 {"nozzle_sizes", device.nozzle_sizes},
-                 {"nozzle_volume_type", device.nozzle_volume_type},
-                 {"sn", device.sn},
-                 {"protocol", device.protocol},
-                 {"api_key", device.api_key},
-                 {"user", device.user},
-                 {"password", device.password},
-                 {"ca", device.ca},
-                 {"cert", device.cert},
-                 {"key", device.key},
-                 {"clientId", device.clientId},
-                 {"port", device.port},
-                 {"link_mode", device.link_mode},
-                 {"userid", device.userid},
-                 {"id", device.id}};
-    }
-
-    friend void from_json(const json& j, DeviceInfo& device)
-    {
-        j.at("ip").get_to(device.ip);
-        j.at("dev_id").get_to(device.dev_id);
-        j.at("dev_name").get_to(device.dev_name);
-        j.at("model_name").get_to(device.model_name);
-        j.at("preset_name").get_to(device.preset_name);
-        j.at("connected").get_to(device.connected);
-        j.at("img").get_to(device.img);
-        j.at("nozzle_sizes").get_to(device.nozzle_sizes);
-        device.nozzle_volume_type = j.value("nozzle_volume_type", std::vector<std::string>{});
-        j.at("sn").get_to(device.sn);
-        j.at("protocol").get_to(device.protocol);
-        j.at("api_key").get_to(device.api_key);
-        j.at("user").get_to(device.user);
-        j.at("password").get_to(device.password);
-        j.at("ca").get_to(device.ca);
-        j.at("cert").get_to(device.cert);
-        j.at("key").get_to(device.key);
-        j.at("clientId").get_to(device.clientId);
-        j.at("port").get_to(device.port);
-        j.at("link_mode").get_to(device.link_mode);
-        j.at("userid").get_to(device.userid);
-        j.at("id").get_to(device.id);
-    }
-};
 
 // Connected LAN mode BambuLab printer
 struct BBLocalMachine
@@ -205,14 +132,18 @@ public:
 
 	// Load the slic3r.ini from a user profile directory (or a datadir, if configured).
 	// Return an error string, or an empty string on success.
-	std::string         load();
+	std::string         load(bool read_only = false);
 	// Treat a missing config as default state; otherwise load it normally.
+	// The CLI's load: it never saves, so it takes no lock and creates no lock file.
 	std::string         load_if_exists();
 	// Store the slic3r.ini into a user profile directory (or a datadir, if configured).
 	void 			   	save();
 
 	// Does this config need to be saved?
 	bool 				dirty() const { return m_dirty; }
+	// False for ten seconds after a failed write, so the idle handler does not
+	// repeat a hopeless attempt on every event; an explicit save() always tries.
+	bool 				save_due() const { return std::chrono::steady_clock::now() >= m_retry_save_at; }
 
 
 	void				set_dirty() { m_dirty = true; }
@@ -234,10 +165,16 @@ public:
 		{ std::string value; this->get(section, key, value); return value; }
 	std::string 		get(const std::string &key) const
 		{ std::string value; this->get("app", key, value); return value; }
+	// The spellings a boolean has in a saved configuration ("1" is the legacy form).
+	static bool			is_true(const std::string &value) { return value == "true" || value == "1"; }
 	bool				get_bool(const std::string &section, const std::string &key) const
-		{ return this->get(section, key) == "true" || this->get(key) == "1"; }
+		{ return is_true(this->get(section, key)); }
 	bool				get_bool(const std::string &key) const
 		{ return this->get_bool("app", key); }
+	// Reads one "app" boolean straight from the editor configuration saved in data_dir, for the
+	// few settings that must act before the configuration is loaded. False when the file is
+	// missing, unreadable or has no such key.
+	static bool			peek_bool(const std::string &data_dir, const std::string &key);
 	void			    set(const std::string &section, const std::string &key, const std::string &value)
 	{
 #ifndef NDEBUG
@@ -271,6 +208,9 @@ public:
 			m_dirty = true;
 		}
 	}
+
+	void                set(const std::string& section, const std::string& key, const char* value)
+		{ this->set(section, key, std::string(value)); }
 
 	void				set(const std::string& section, const std::string &key, bool value)
 	{
@@ -328,7 +268,7 @@ public:
 	const VendorMap&    vendors() const { return m_vendors; }
 
 	// Orca printer settings
-    typedef std::map<std::string, nlohmann::json> MachineSettingMap;
+    typedef std::map<std::string, std::map<std::string, std::string>> MachineSettingMap;
     bool has_printer_settings(std::string printer) const {
         return m_printer_settings.find(printer) != m_printer_settings.end();
     }
@@ -340,18 +280,15 @@ public:
         MachineSettingMap::const_iterator printerIt = m_printer_settings.find(printer);
         if (printerIt == m_printer_settings.end())
             return false;
-        return printerIt->second.contains(name);
+        return printerIt->second.count(name) != 0;
     }
     std::string get_printer_setting(const std::string& printer, const std::string& name) const {
         MachineSettingMap::const_iterator printerIt = m_printer_settings.find(printer);
         if (printerIt == m_printer_settings.end())
             return "";
 
-        nlohmann::json::const_iterator settingIt = printerIt->second.find(name);
-        if (settingIt == printerIt->second.end() || !settingIt.value().is_string())
-            return "";
-
-        return settingIt.value().get<std::string>();
+        const auto settingIt = printerIt->second.find(name);
+        return settingIt == printerIt->second.end() ? std::string() : settingIt->second;
     }
     void set_printer_setting(const std::string& printer, const std::string& name, const std::string& value) {
         m_printer_settings[printer][name] = value;
@@ -381,6 +318,8 @@ public:
             m_dirty = true;
         }
     }
+
+    void clear_local_machine_access_code(const std::string& dev_id, const std::string& agent_id);
 
     const std::vector<std::string> &get_filament_presets() const { return m_filament_presets; }
     void set_filament_presets(const std::vector<std::string> &filament_presets){
@@ -427,6 +366,10 @@ public:
 
 	// Get the default config path from Slic3r::data_dir().
 	std::string			config_path();
+	// The configuration file of the given mode inside data_dir.
+	static std::string	config_path(const std::string &data_dir, EAppMode mode);
+	// Lock file guarding config_path() against other running instances; empty without a data dir.
+	std::string			lock_path();
 
 	// Returns true if the user's data directory comes from before Slic3r 1.40.0 (no updating)
 	bool 				legacy_datadir() const { return m_legacy_datadir; }
@@ -482,18 +425,11 @@ public:
 	bool get_mouse_device_invert_roll(const std::string& name, bool& invert) const
 		{ return get_3dmouse_device_numeric_value(name, "invert_roll", invert); }
 
-	void update_filament_names(json& j);
+	void update_filament_names(nlohmann::json& j);
 
 	static const std::string SECTION_FILAMENTS;
     static const std::string SECTION_MATERIALS;
     static const std::string SECTION_EMBOSS_STYLE;
-
-    // 添加设备相关的方法
-    void save_device_info(const DeviceInfo& device);
-    void remove_device_info(const std::string& dev_id);
-    std::vector<DeviceInfo> get_devices() const;
-    bool get_device_info(const std::string& dev_id, DeviceInfo& info) const;
-    void                    clear_device_info();
 
 	void clear_filament_extruder_map();
     std::unordered_map<int, int>& get_filament_extruder_map_ref();
@@ -552,8 +488,16 @@ private:
 
 	// Preset for each machine
 	MachineSettingMap											m_printer_settings;
+	// Writes the assembled config text, and on Windows its checksum and a backup copy; false when the
+	// config itself could not be written, in which case the caller stays dirty and retries. `checksum_source`
+	// is the text load() will verify, which for the JSON config ends before the trailing newline.
+	bool												write_config_file(const std::string &path, std::string body, const std::string &checksum_source);
+
 	// Has any value been modified since the config.ini has been last saved or loaded?
 	bool														m_dirty;
+	// After a failed write, save_due() is false for the next ten seconds, so the
+	// idle handler does not repeat a hopeless write on every event.
+	std::chrono::steady_clock::time_point						m_retry_save_at{};
 	// Original version found in the ini file before it was overwritten
 	Semver                                                      m_orig_version;
 	// Whether the existing version is before system profiles & configuration updating
@@ -572,9 +516,6 @@ private:
 
     // 添加耗材名称映射表
     static const std::map<std::string, std::string> filament_name_map;
-
-    // 添加设备信息存储
-    std::vector<DeviceInfo> m_device_list;
 
 	// 耗材喷嘴映射表
     std::unordered_map<int, int> filament_extruder_map;

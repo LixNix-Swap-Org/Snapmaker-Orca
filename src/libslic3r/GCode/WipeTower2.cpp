@@ -1,26 +1,47 @@
 // Orca: WipeTower2 for all non bbl printers, support all MMU device and toolchanger.
 #include "WipeTower2.hpp"
 
+#include <algorithm>
+#include <Eigen/Geometry>
 #include <cassert>
+#include <cmath>
+#include <cstdlib>
+#include <cstddef>
+#include <cstdio>
 #include <iostream>
+#include <map>
+#include <string>
+#include <math.h>
+#include <limits>
+#include <utility>
 #include <vector>
 #include <numeric>
 #include <memory>
-#include <limits>
 #include <sstream>
 #include <iomanip>
 
+#include "libslic3r/Circle.hpp"
+#include "libslic3r/ArcFitter.hpp"
 #include "ClipperUtils.hpp"
+#include "libslic3r/ExtrusionEntity.hpp"
+#include "libslic3r/GCode/WipeTower.hpp"
+#include "libslic3r/ExPolygon.hpp"
+#include "libslic3r/Fill/FillBase.hpp"
 #include "GCodeProcessor.hpp"
 #include "BoundingBox.hpp"
+#include "libslic3r/Line.hpp"
 #include "LocalesUtils.hpp"
 #include "Geometry.hpp"
+#include "libslic3r/Polygon.hpp"
+#include "libslic3r/Point.hpp"
+#include "libslic3r/Polyline.hpp"
 #include "PrintConfig.hpp"
 #include "Surface.hpp"
-#include "Fill/FillRectilinear.hpp"
+#include "libslic3r/libslic3r.h"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/log/trivial.hpp>
+#include "libslic3r/Config.hpp"
 
 namespace Slic3r {
 
@@ -1103,7 +1124,7 @@ WipeTower2::WipeTower2(const PrintConfig& config, const PrintRegionConfig& defau
     m_change_pressure(config.enable_change_pressure_when_wiping),
     m_change_pressure_value(config.ramming_pressure_advance_value),
     m_ramming_width_ratio(config.ramming_line_width_ratio),
-    m_enable_arc_fitting(config.enable_arc_fitting),
+    m_enable_arc_fitting(config.enable_arc_fitting.value == ArcFittingMode::Enabled),
     m_used_fillet(config.wipe_tower_fillet_wall),
     m_rib_width(config.wipe_tower_rib_width),
     m_extra_rib_length(config.wipe_tower_extra_rib_length),
@@ -1910,7 +1931,9 @@ void WipeTower2::toolchange_Change(
 
     // This is where we want to place the custom gcodes. We will use placeholders for this.
     // These will be substituted by the actual gcodes when the gcode is generated.
-    // writer.append("[end_filament_gcode]\n");
+    //writer.append("[end_filament_gcode]\n");
+    // Lift to the layer Z so change_filament_gcode can't hit taller printed parts.
+    writer.append("[restore_layer_z_before_toolchange]\n");
     writer.append("[change_filament_gcode]\n");
 
     // Snapmaker Orca: the Tn is issued above, so the park move and the repositioning travel below

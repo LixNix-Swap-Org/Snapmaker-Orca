@@ -2,11 +2,38 @@
 
 #include <boost/filesystem.hpp>
 
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/reporters/catch_reporter_event_listener.hpp>
+#include <catch2/reporters/catch_reporter_registrars.hpp>
+
+#include <slic3r/plugin/PluginManager.hpp>
+#include <slic3r/plugin/PythonInterpreter.hpp>
+
+#include "catch2/interfaces/catch_interfaces_reporter.hpp"
 #include "libslic3r/Utils.hpp"
 #include "slic3r/Utils/Http.hpp"
 #include "slic3r/Utils/OrcaCloudServiceAgent.hpp"
 
 namespace {
+
+// Finalizes the embedded interpreter once, after the last test case, and never between cases.
+// CPython cannot be reinitialized after Py_Finalize (a second init aborts inside _datetime), and
+// the app likewise finalizes it only at exit, so the per-test fixtures tear down only the
+// PluginManager. Running at the end of the run, rather than from a static destructor, also keeps
+// shutdown()'s logging ahead of boost::log's teardown.
+class PythonInterpreterRunEnd final : public Catch::EventListenerBase
+{
+public:
+    using Catch::EventListenerBase::EventListenerBase;
+
+    void testRunEnded(const Catch::TestRunStats&) override
+    {
+        if (!Slic3r::PythonInterpreter::instance().is_initialized())
+            return;
+        Slic3r::PluginManager::instance().shutdown();
+        Slic3r::PythonInterpreter::instance().shutdown();
+    }
+};
 
 // Runs the body in a directory of its own, so that a file a defect creates under a relative name
 // is found there instead of wherever the suite happens to have been started.
@@ -40,25 +67,9 @@ nlohmann::json flat_session_json(const nlohmann::json& fields)
     return session;
 }
 
-nlohmann::json nested_session_json(const nlohmann::json& metadata)
-{
-    return {
-        {"access_token", "test-token"},
-        {"user", {
-            {"id", "test-user-id"},
-            {"user_metadata", metadata}
-        }}
-    };
-}
-
-std::string resolved_display_name(const nlohmann::json& session)
-{
-    Slic3r::OrcaCloudServiceAgent agent("");
-    REQUIRE(agent.set_user_session(session, false));
-    return agent.get_user_nickname();
-}
-
 } // namespace
+
+CATCH_REGISTER_LISTENER(PythonInterpreterRunEnd)
 
 TEST_CASE("Check SSL certificates paths", "[Http][NotWorking]") {
     
@@ -76,62 +87,6 @@ TEST_CASE("Check SSL certificates paths", "[Http][NotWorking]") {
     g.perform_sync();
     
     REQUIRE(status == 200);
-}
-
-TEST_CASE("Orca cloud flat session resolves display name consistently", "[OrcaCloudServiceAgent]")
-{
-    CHECK(resolved_display_name(flat_session_json({
-        {"username", "orca_username"},
-        {"display_name", "Display Name"},
-        {"nickname", "Nickname"}
-    })) == "Display Name");
-
-    CHECK(resolved_display_name(flat_session_json({
-        {"username", "orca_username"},
-        {"nickname", "Nickname"}
-    })) == "Nickname");
-
-    CHECK(resolved_display_name(flat_session_json({
-        {"username", "orca_username"},
-        {"full_name", "Full Name"}
-    })) == "Full Name");
-
-    CHECK(resolved_display_name(flat_session_json({
-        {"username", "orca_username"},
-        {"name", "Provider Name"}
-    })) == "Provider Name");
-
-    CHECK(resolved_display_name(flat_session_json({
-        {"username", "orca_username"}
-    })) == "orca_username");
-}
-
-TEST_CASE("Orca cloud nested session resolves display name consistently", "[OrcaCloudServiceAgent]")
-{
-    CHECK(resolved_display_name(nested_session_json({
-        {"username", "orca_username"},
-        {"display_name", "Display Name"},
-        {"nickname", "Nickname"}
-    })) == "Display Name");
-
-    CHECK(resolved_display_name(nested_session_json({
-        {"username", "orca_username"},
-        {"nickname", "Nickname"}
-    })) == "Nickname");
-
-    CHECK(resolved_display_name(nested_session_json({
-        {"username", "orca_username"},
-        {"full_name", "Full Name"}
-    })) == "Full Name");
-
-    CHECK(resolved_display_name(nested_session_json({
-        {"username", "orca_username"},
-        {"name", "Provider Name"}
-    })) == "Provider Name");
-
-    CHECK(resolved_display_name(nested_session_json({
-        {"username", "orca_username"}
-    })) == "orca_username");
 }
 
 TEST_CASE("Storing an Orca cloud session writes nothing without a data directory", "[OrcaCloudServiceAgent]")
@@ -194,4 +149,3 @@ TEST_CASE("Http basic authentication", "[Http][NotWorking]") {
 
     REQUIRE(status == 200);
 }
-

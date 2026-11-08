@@ -1,4 +1,12 @@
 #include "HttpServer.hpp"
+#include <boost/asio/socket_base.hpp>
+#include <boost/beast/core/error.hpp>
+#include <boost/asio/error.hpp>
+#include <boost/asio/buffer.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/ip/basic_endpoint.hpp>
+#include <boost/asio/post.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
@@ -7,14 +15,26 @@
 #include <cstring>
 #include <ctime>
 #include <condition_variable>
+#include "CloudProvider.hpp"
 #include "GUI_App.hpp"
+#include "I18N.hpp"
 #include "slic3r/Utils/Http.hpp"
 #include "slic3r/Utils/NetworkAgent.hpp"
 #include "slic3r/Utils/BBLNetworkPlugin.hpp"
 #include "libslic3r/Thread.hpp"
 #include  "sentry_wrapper/SentryWrapper.hpp"
 #include <boost/beast/core/detail/base64.hpp>
+#include <cstddef>
+#include <istream>
+#include <memory>
+#include <iostream>
+#include <functional>
 #include <nlohmann/json.hpp>
+#include <string>
+#include <vector>
+#include <sstream>
+#include <ostream>
+#include <utility>
 // windows.h stays last: its min/max/GetObject macros break nlohmann/json.hpp.
 #ifdef _WIN32
 #include <windows.h>
@@ -439,7 +459,7 @@ void HttpServer::IOServer::stop_all()
 HttpServer::IOServer::IOServer(HttpServer& server) : server(server), acceptor(io_service)
 {
     try {
-        boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::tcp::v4(), server.port);
+        boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address_v4::loopback(), server.port);
         acceptor.open(endpoint.protocol());
         acceptor.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
         acceptor.bind(endpoint);
@@ -473,7 +493,7 @@ bool HttpServer::is_port_available(boost::asio::ip::port_type port)
     // restart) refuses the connection and correctly reads as available - the real
     // acceptor keeps reuse_address(true) to rebind through TIME_WAIT.
     try {
-        boost::asio::io_service      io_service;
+        boost::asio::io_context      io_service;
         boost::asio::ip::tcp::socket probe(io_service);
         boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address_v4::loopback(), port);
         boost::system::error_code    ec;
@@ -659,9 +679,9 @@ bool HttpServer::is_healthy()
         }
         
         // A test connection verifies that the server actually responds.
-        boost::asio::io_service test_io_service;
+        boost::asio::io_context test_io_service;
         boost::asio::ip::tcp::socket test_socket(test_io_service);
-        boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address::from_string("127.0.0.1"), port);
+        boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address_v4::loopback(), port);
         
         boost::system::error_code ec;
         test_socket.connect(endpoint, ec);
@@ -958,10 +978,10 @@ std::shared_ptr<HttpServer::Response> HttpServer::auth_handle_request(const std:
             GUI::wxGetApp().CallAfter([] { wxGetApp().ShowUserLogin(false); });
         }
 
-        const std::string title = login_ok ? "Authentication complete" : "Authentication failed";
+        const std::string title = login_ok ? _u8L("Authentication complete") : _u8L("Authentication failed");
         const std::string message = login_ok
-            ? "You can return to Snapmaker Orca. This window will close automatically."
-            : "Something went wrong. Please return to Snapmaker Orca and try again.";
+            ? _u8L("You can return to Snapmaker Orca. This window will close automatically.")
+            : _u8L("Something went wrong. Please return to Snapmaker Orca and try again.");
         const std::string html =
             "<html><head><meta charset=\"utf-8\">"
             "<style>body{font-family:Arial,sans-serif;background:#f7f7f7;color:#222;margin:32px;}"
@@ -1157,8 +1177,8 @@ std::string HttpServer::map_url_to_file_path(const std::string& url)
         trimmed_url = trimmed_url.substr(0, question_mark);
     }
 
-    if (trimmed_url == "/") {
-        trimmed_url = "/flutter_web/index.html"; // defualt home page
+    if (trimmed_url == "/" || trimmed_url.rfind("/web/flutter_web/", 0) == 0) {
+        return "";
     }
     else if (trimmed_url.substr(0, 11) == "/localfile/") {
         auto real_path = trimmed_url.substr(11);
@@ -1191,21 +1211,7 @@ std::string HttpServer::map_url_to_file_path(const std::string& url)
 
         return decoded;
     }
-    auto data_web_path = boost::filesystem::path(data_dir()) / "web";
-    if (!boost::filesystem::exists(data_web_path / "flutter_web")) {
-        if (!GUI::wxGetApp().copy_bundled_flutter_web(false))
-            GUI::wxGetApp().try_notify_flutter_web_copy_failure();
-    }
-
-    wxString res = "";
-    if (trimmed_url.find("flutter_web") == std::string::npos) 
-    {
-       res = wxString::FromUTF8(resources_dir()) + trimmed_url;
-    }
-    else
-    {
-       res = wxString::FromUTF8(data_dir()) + trimmed_url;
-    }
+    wxString res = wxString::FromUTF8(resources_dir()) + trimmed_url;
  
     auto strUTF8 = res.ToStdString(wxConvUTF8);
 
@@ -1227,9 +1233,9 @@ void HttpServer::ResponseRedirect::write_response(std::stringstream& ssOut)
         "<style>body{font-family:Arial,sans-serif;background:#f7f7f7;color:#222;margin:32px;}"
         "a.button{display:inline-block;padding:10px 16px;margin-top:12px;background:#0f8bff;color:#fff;text-decoration:none;border-radius:6px;}"
         "</style></head><body><div class=\"container\">"
-        "<h2>Authentication complete</h2>"
-        "<p>You can return to Snapmaker Orca. If your browser does not redirect automatically, use the button below.</p>"
-        "<a class=\"button\" href=\"" + location_str + "\">Continue</a>"
+        "<h2>" + _u8L("Authentication complete") + "</h2>"
+        "<p>" + _u8L("You can return to Snapmaker Orca. If your browser does not redirect automatically, use the button below.") + "</p>"
+        "<a class=\"button\" href=\"" + location_str + "\">" + _u8L("Continue") + "</a>"
         "<script>setTimeout(function(){try{window.close();}catch(e){}},1500);</script>"
         "</div></body></html>";
     size_t            content_length = sHTML.size(); // 字节长度

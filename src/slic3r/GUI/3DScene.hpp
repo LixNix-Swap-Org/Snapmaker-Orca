@@ -19,9 +19,16 @@
 
 #include <array>
 #include <cfloat>
+#include <cstddef>
+#include <cmath>
 #include <functional>
+#include <map>
+#include "libslic3r/BoundingBox.hpp"
 #include <memory>
 #include <optional>
+#include <vector>
+#include <string>
+#include <utility>
 
 #ifndef NDEBUG
 #define HAS_GLSAFE
@@ -66,7 +73,7 @@ enum ModelInstanceEPrintVolumeState : unsigned char;
 using ModelObjectPtrs = std::vector<ModelObject*>;
 
 struct ObjectFilamentInfo {
-    ModelObject* object;
+    ModelObject* object { nullptr };
     std::map<int, int> manual_filaments; //manual mode: filament id -> extruder id can not be printed
 
     std::vector<int> auto_filaments; //auto mode: filaments in all extruder's outside area
@@ -208,6 +215,8 @@ public:
 	    bool                visible : 1;
 	    // Whether or not this volume is active for rendering
 	    bool                is_active : 1;
+	    // Whether or not is_active was cleared because the other plates are hidden
+	    bool                on_hidden_plate : 1;
 	    // Whether or not to use this volume when applying zoom_to_volumes()
 	    bool                zoom_to_volumes : 1;
 	    // Wheter or not this volume is enabled for outside print volume detection in shader.
@@ -231,6 +240,10 @@ public:
         bool                force_neutral_color : 1;
         // Whether or not to force rendering of sinking contours
         bool                force_sinking_contours : 1;
+        // Orca: draw this volume with a positive depth bias (glPolygonOffset, pushed away from the
+        // camera), so on a surface it shares with another volume the other volume wins the depth
+        // test instead of z-fighting it
+        bool                depth_bias : 1;
         // Is render for picking
         bool                picking : 1;
         // slice error
@@ -259,6 +272,7 @@ public:
     // The same choice without the grant, for the shadow depth pass of GLCanvas3D, which follows
     // update_lod() within the same scene pass.
     GUI::GLModel&           shadow_model();
+    const GUI::GLModel&     shadow_model() const;
 
     // raycaster used for picking
     std::unique_ptr<GUI::MeshRaycaster> mesh_raycaster;
@@ -382,7 +396,7 @@ public:
     virtual void render_with_outline(const GUI::Size& cnv_size);
 
     //BBS: add simple render function for thumbnail
-    void simple_render(GLShaderProgram* shader, ModelObjectPtrs& model_objects, std::vector<ColorRGBA>& extruder_colors, bool ban_light =false);
+    void simple_render(GLShaderProgram* shader, ModelObjectPtrs& model_objects, std::vector<ColorRGBA>& extruder_colors, bool ban_light =false, bool ban_color_volume = false);
     // Snapmaker Orca: whether simple_render() draws this volume from its painted (multi material
     // segmentation) models. The one rule of simple_render() and of the render LOD, which keeps a
     // painted volume at full detail. painted_volume receives the ModelVolume when true.

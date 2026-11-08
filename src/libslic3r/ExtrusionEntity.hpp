@@ -1,13 +1,19 @@
 #ifndef slic3r_ExtrusionEntity_hpp_
 #define slic3r_ExtrusionEntity_hpp_
 
+#include "Point.hpp"
 #include "libslic3r.h"
 #include "Polygon.hpp"
 #include "Polyline.hpp"
 
 #include <assert.h>
+#include <cstdint>
+#include <string>
+#include <cstddef>
 #include <string_view>
 #include <numeric>
+#include <vector>
+#include <utility>
 
 namespace Slic3r {
 
@@ -150,12 +156,18 @@ public:
     virtual double length() const = 0;
     virtual double total_volume() const = 0;
     
-    // Orca: Used for inner/outer/inner mode - classic perimeter generator
+    // Orca: Wall index set by the perimeter generators, 0 for the outer wall, -1 if unset
     int inset_idx = -1;
 
     static std::string role_to_string(ExtrusionRole role);
     static ExtrusionRole string_to_role(const std::string_view role);
 };
+
+// Orca: Overhang paths share one role on every wall, so the inset index tells inner walls apart where set.
+inline bool is_inner_wall(const ExtrusionEntity &entity)
+{
+    return entity.inset_idx >= 0 ? entity.inset_idx > 0 : entity.role() == erPerimeter;
+}
 
 typedef std::vector<ExtrusionEntity*> ExtrusionEntitiesPtr;
 
@@ -717,6 +729,31 @@ inline void extrusion_entities_append_loops_and_paths(ExtrusionEntitiesPtr &dst,
         }
     }
     polylines.clear();
+}
+
+// Detach ExtrusionLoop entities out of the list, keeping their relative order.
+// Ownership of the detached entities moves to loops_out.
+inline void detach_extrusion_loops(ExtrusionEntitiesPtr &entities, ExtrusionEntitiesPtr &loops_out)
+{
+    for (auto it = entities.begin(); it != entities.end();) {
+        if ((*it)->is_loop()) {
+            loops_out.emplace_back(*it);
+            it = entities.erase(it);
+        } else {
+            ++ it;
+        }
+    }
+}
+
+// Put entities back in front of the list, keeping their relative order.
+// Ownership of the inserted entities moves to entities. Self-assignment
+// (entities == front) is a no-op, inserting a range into itself is UB.
+inline void prepend_extrusion_entities(ExtrusionEntitiesPtr &entities, ExtrusionEntitiesPtr &&front)
+{
+    if (! front.empty() && &entities != &front) {
+        entities.insert(entities.begin(), front.begin(), front.end());
+        front.clear();
+    }
 }
 
 }

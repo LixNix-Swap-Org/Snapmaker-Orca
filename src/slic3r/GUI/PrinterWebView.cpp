@@ -1,22 +1,42 @@
 #include "PrinterWebView.hpp"
 
-#include "I18N.hpp"
 #include "PrinterWebViewHandler.hpp"
+#include "I18N.hpp"
+
 #include "slic3r/GUI/PrinterWebView.hpp"
-#include "slic3r/GUI/wxExtensions.hpp"
 #include "slic3r/GUI/GUI_App.hpp"
 #include "slic3r/GUI/MainFrame.hpp"
 #include "common_func/common_func.hpp"
+#include <slic3r/GUI/Widgets/WebView.hpp>
+#include <slic3r/GUI/Widgets/WebViewHostDialog.hpp>
 
+#include "libslic3r_version.h"
+#include <libslic3r/PrintConfig.hpp>
+#include "libslic3r/Utils.hpp"
+#include "libslic3r/Config.hpp"
+#include "libslic3r/PresetBundle.hpp"
+
+#include <boost/log/trivial.hpp>
 #include <boost/filesystem/path.hpp>
+
+#include <nlohmann/json.hpp>
+
+#include <wx/event.h>
+#include <wx/panel.h>
+#include <wx/gdicmn.h>
+#include <wx/log.h>
 #include <wx/sizer.h>
 #include <wx/string.h>
 #include <wx/toolbar.h>
-
-#include <slic3r/GUI/Widgets/WebView.hpp>
+#include <wx/utils.h>
 #include <wx/webview.h>
 #include "slic3r/GUI/SSWCP.hpp"
 #include "sentry_wrapper/SentryWrapper.hpp"
+
+#include <memory>
+#include <utility>
+
+class wxWindow;
 
 #ifdef __linux__
 #include <webkit2/webkit2.h>
@@ -100,6 +120,17 @@ static void inject_vue_resize_workaround(wxWebView *webView)
 }
 #endif
 
+// The strings of the page shown when the printer has no connection set up
+// (resources/web/orca/missing_connection.html), keyed by its data-i18n ids.
+static void add_page_strings(wxWebView *webView)
+{
+    const nlohmann::json strings = {
+        {"printer_connection", _u8L("Printer Connection")},
+        {"printer_connection_setup", _u8L("Please set up your printer connection to view the device.")},
+    };
+    webView->AddUserScript(wxString::FromUTF8(WebViewHostDialog::localized_strings_script(strings)));
+}
+
 PrinterWebView::PrinterWebView(wxWindow *parent)
         : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize)
     , m_browser(nullptr)
@@ -110,17 +141,13 @@ PrinterWebView::PrinterWebView(wxWindow *parent)
 
     wxBoxSizer* topsizer = new wxBoxSizer(wxVERTICAL);
 
-    wxString url      = wxString::FromUTF8(LOCALHOST_URL + std::to_string(wxGetApp().get_page_http_port()) + "/web/flutter_web/index.html?path=2");
-    auto     real_url = wxGetApp().get_international_url(url);
-    // Snapmaker upstream 5970fea62d: arms the app-wide Flutter run-result watch (a no-op when the
-    // home view has armed it already).
-    wxGetApp().start_flutter_wcp_timeout_watch();
-      // Create the webview
-    m_browser = WebView::CreateWebView(this, real_url);
+    // Starts on the device page so the view is never blank before the first load_url().
+    m_browser = WebView::CreateWebView(this, wxGetApp().gateway_web_url("device_control"));
     if (m_browser == nullptr) {
         wxLogError("Could not init m_browser");
         return;
     }
+    add_page_strings(m_browser);
 
 #ifdef __linux__
     inject_vue_resize_workaround(m_browser);
@@ -177,19 +204,20 @@ void PrinterWebView::load_url(wxString& url, wxString apikey)
     if (m_browser == nullptr)
         return;
     m_apikey = apikey;
+    BOOST_LOG_TRIVIAL(warning) << "[FLUTTER_FLOW] [webview] [navigation_requested] view=device url=" << url.ToUTF8().data();
 
     // ORCA: pick a host specific handler (currently Elegoo only). Returns nullptr for every
     // other host type, in which case the page is driven through SSWCP (Snapmaker flutter UI).
     m_handler = create_printer_webview_handler(*this);
 
-    if (url.find("path=2") != std::string::npos) {
+    if (wxGetApp().is_gateway_url(url)) {
         wxGetApp().fltviews().add_printer_view(this, url, apikey);
     } else {
         wxGetApp().fltviews().remove_printer_view(this);
     }
 
     m_browser->Show();
-    m_browser->LoadURL(url);
+    WebView::LoadUrl(m_browser, url);
 
     UpdateState();
 }
@@ -204,7 +232,7 @@ bool PrinterWebView::isSnapmakerPage()
     if (m_browser == nullptr)
         return false;
     auto url = m_browser->GetCurrentURL();
-    return (url.find("flutter_web") != std::string::npos);
+    return wxGetApp().is_gateway_url(url);
 }
 
 bool PrinterWebView::is_u1_device_page()
@@ -212,7 +240,8 @@ bool PrinterWebView::is_u1_device_page()
     if (m_browser == nullptr)
         return false;
     auto url = m_browser->GetCurrentURL();
-    return url.find("flutter_web") != std::string::npos && url.find("path=2") != std::string::npos;
+    return url.find("flutter_web") != std::string::npos &&
+           (url.find("path=2") != std::string::npos || url.find("/device_control") != std::string::npos);
 }
 
 void PrinterWebView::sendMessage(const std::string& msg) {
@@ -313,6 +342,7 @@ void PrinterWebView::SendAPIKey()
     // ORCA: re-inject the vue-resize/WebKitGTK workaround that RemoveAllUserScripts just cleared.
     inject_vue_resize_workaround(m_browser);
 #endif
+    add_page_strings(m_browser);
 
     m_browser->AddUserScript(script);
 #endif
@@ -354,10 +384,12 @@ void PrinterWebView::OnError(wxWebViewEvent &evt)
 void PrinterWebView::OnLoaded(wxWebViewEvent& evt)
 {
     evt.Skip();
-    if (evt.GetURL().IsEmpty())
+    // The web view's initial empty document (about:blank on WebKit) is not the requested page.
+    if (evt.GetURL().IsEmpty() || evt.GetURL() == "about:blank")
         return;
     if (evt.GetURL() != m_browser->GetCurrentURL())
         return;
+    BOOST_LOG_TRIVIAL(warning) << "[FLUTTER_FLOW] [webview] [navigation_loaded] view=device url=" << evt.GetURL().ToUTF8().data();
     SendAPIKey();
   
     if (m_handler != nullptr) {
@@ -386,9 +418,6 @@ void PrinterWebView::OnScriptMessage(wxWebViewEvent& evt) {
         return;
     }
 
-    // Snapmaker upstream 5970fea62d. It sits after the early return above, so a message of a host
-    // page (Elegoo) is never taken for a sign of life of the Flutter app.
-    wxGetApp().on_flutter_wcp_received();
     SSWCP::handle_web_message(evt.GetString().ToUTF8().data(), m_browser);
 }
 

@@ -35,6 +35,7 @@ extern "C"
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/asio/ip/host_name.hpp>
 #include <stdio.h>
+#include <boost/algorithm/string/constants.hpp>
 
 using namespace Slic3r;
 

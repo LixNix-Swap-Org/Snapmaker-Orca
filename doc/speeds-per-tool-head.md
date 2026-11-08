@@ -346,9 +346,6 @@ Limits:
 - **"Vice versa" starts with the High Flow values.** A preset without a High Flow column prints its
   Standard values on a High Flow extruder too, so a Standard change reaches both extruders until the
   preset has High Flow values.
-- **An override switched off.** A retraction override switched off under High Flow only is written
-  as "nil", the only "off" such a key has, and "nil" means "follow the parent": after loading, the
-  override is on again when the parent has it on.
 
 Other readers:
 

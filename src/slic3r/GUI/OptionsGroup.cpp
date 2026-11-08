@@ -1,5 +1,4 @@
 #include "OptionsGroup.hpp"
-#include "ConfigExceptions.hpp"
 #include "Plater.hpp"
 #include "SettingsIndex.hpp"
 #include "GUI_App.hpp"
@@ -7,26 +6,42 @@
 #include "OG_CustomCtrl.hpp"
 #include "MsgDialog.hpp"
 #include "PluginPickerDialog.hpp"
-#include "format.hpp"
 #include "Widgets/StaticLine.hpp"
 #include "Widgets/LabeledStaticBox.hpp"
 
+#include <boost/any.hpp>
 #include <boost/log/trivial.hpp>
+#include <functional>
+#include <cstddef>
+#include <iostream>
 #include <libslic3r/Config.hpp>
+#include "slic3r/GUI/Field.hpp"
+#include "libslic3r/Preset.hpp"
+#include "slic3r/GUI/Widgets/Label.hpp"
+#include "slic3r/plugin/PluginDescriptor.hpp"
+#include "slic3r/GUI/GUI.hpp"
+#include "libslic3r/PrintConfig.hpp"
 #include <slic3r/plugin/PythonPluginInterface.hpp>
+#include <string>
 #include <utility>
+#include <vector>
 #include <wx/bookctrl.h>
+#include <wx/gdicmn.h>
+#include <wx/event.h>
 #include <wx/numformatter.h>
 #include <wx/textwrapper.h>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include "libslic3r/Exception.hpp"
-#include "libslic3r/Utils.hpp"
-#include "libslic3r/AppConfig.hpp"
 #include "slic3r/plugin/PluginManager.hpp"
 #include "I18N.hpp"
 #include <algorithm>
 #include <locale>
+#include <wx/sizer.h>
+#include <wx/stattext.h>
+#include <wx/utils.h>
+#include "libslic3r/PresetBundle.hpp"
+#include "slic3r/GUI/wxExtensions.hpp"
 
 namespace Slic3r { namespace GUI {
 
@@ -274,7 +289,8 @@ void OptionsGroup::append_line(const Line& line)
             const wxString leaf = (leaf_src == L_CONTEXT("Top", "Layers") || leaf_src == L_CONTEXT("Bottom", "Layers")) ?
                                       _L_CONTEXT(leaf_src, "Layers") :
                                       _(leaf_src);
-            index.set_line_label(opt.opt_id, type, Search::compose_display_label(line.label, leaf, multi));
+            index.set_line_label(opt.opt_id, type, Search::compose_display_label(line.label, leaf, multi),
+                                 Search::compose_display_label(line.label_en, from_u8(leaf_src), multi));
         }
     }
 
@@ -449,11 +465,6 @@ void OptionsGroup::activate_line(Line& line)
         line.get_extra_widgets().size() == 0) {
         const auto& option = option_set.front();
         const auto& field  = build_field(option);
-        // Label widget kept on the field so cross-field validation can recolor it
-        if (label != nullptr)
-            field->set_label_window(label);
-        // Validation highlight derived from the group's config, since pages build lazily and get rebuilt
-        field->init_invalid_highlight_from_config(get_config(), option.opt_id);
 
         if (!custom_ctrl) {
             int flags = option.opt.full_width ? wxEXPAND : wxALIGN_CENTER_VERTICAL;
@@ -474,7 +485,6 @@ void OptionsGroup::activate_line(Line& line)
         ConfigOptionDef option = opt.opt;
         wxSizer* sizer_tmp     = sizer;
         // add label if any
-        wxStaticText* opt_label = nullptr;
         if ((is_multioption_line || line.label.IsEmpty()) && !option.label.empty() && !custom_ctrl) {
             //!			To correct translation by context have to use wxGETTEXT_IN_CONTEXT macro from wxWidget 3.1.1
             wxString str_label = (option.label == L_CONTEXT("Top", "Layers") || option.label == L_CONTEXT("Bottom", "Layers")) ?
@@ -485,17 +495,11 @@ void OptionsGroup::activate_line(Line& line)
             label->SetBackgroundStyle(wxBG_STYLE_PAINT);
             label->SetFont(wxGetApp().normal_font());
             sizer_tmp->Add(label, 0, wxALIGN_CENTER_VERTICAL, 0);
-            opt_label = label;
         }
 
         // add field
         const Option& opt_ref = opt;
         auto& field           = build_field(opt_ref);
-        // Label widget kept on the field so cross-field validation can recolor it
-        if (opt_label != nullptr)
-            field->set_label_window(opt_label);
-        // Validation highlight derived from the group's config, since pages build lazily and get rebuilt
-        field->init_invalid_highlight_from_config(get_config(), opt_ref.opt_id);
         if (!custom_ctrl) {
             if (option_set.size() == 1 && option_set.front().opt.full_width) {
                 const auto v_sizer = new wxBoxSizer(wxVERTICAL);
@@ -663,7 +667,7 @@ Line OptionsGroup::create_single_option_line(const Option& option, const std::st
 {
     wxString tooltip = _(get_formatted_tooltip_text(option.opt, option.opt_id));
 
-    Line retval{_(option.opt.label), tooltip};
+    Line retval{from_u8(option.opt.label), tooltip};
     retval.label_path = path;
     retval.append_option(option);
 
@@ -806,7 +810,7 @@ std::string OptionsGroup::pick_plugin(const ConfigOptionDef& opt)
         return {};
 
     // Only the bare capability name is stored; the full "name;uuid;capability" reference is derived when
-    // the preset is serialized (see ConfigBase::save_plugin_collection). Resolve here to reject bad picks.
+    // the preset is serialized (see ConfigBase::collect_plugin_manifest). Resolve here to reject bad picks.
     Slic3r::PluginDescriptor descriptor;
     if (!manager.try_get_plugin_descriptor(selection.plugin_key, descriptor) || descriptor.name.empty())
         return {};
@@ -1420,7 +1424,7 @@ boost::any ConfigOptionsGroup::get_config_value(const DynamicPrintConfig& config
         if (opt_key == "printable_area")
             ret = get_thumbnails_string(config.option<ConfigOptionPoints>(opt_key)->values);
         else if (opt_key == "bed_exclude_area")
-            ret = get_thumbnails_string(config.option<ConfigOptionPoints>(opt_key)->values);
+            ret = from_u8(config.option<ConfigOptionPoints>(opt_key)->serialize());
         else if (opt_key == "wrapping_exclude_area")
             ret = get_thumbnails_string(config.option<ConfigOptionPoints>(opt_key)->values);
         else
@@ -1692,7 +1696,7 @@ boost::any ConfigOptionsGroup::get_config_value2(const DynamicPrintConfig& confi
         if (opt_key == "printable_area")
             ret = get_thumbnails_string(config.option<ConfigOptionPoints>(opt_key)->values);
         else if (opt_key == "bed_exclude_area")
-            ret = get_thumbnails_string(config.option<ConfigOptionPoints>(opt_key)->values);
+            ret = from_u8(config.option<ConfigOptionPoints>(opt_key)->serialize());
         else if (opt_key == "wrapping_exclude_area")
             ret = get_thumbnails_string(config.option<ConfigOptionPoints>(opt_key)->values);
         else
@@ -1702,6 +1706,21 @@ boost::any ConfigOptionsGroup::get_config_value2(const DynamicPrintConfig& confi
     default: break;
     }
     return ret;
+}
+
+bool ConfigOptionsGroup::commit_config_value(const t_config_option_key& opt_key, int opt_index)
+{
+    if (m_config == nullptr)
+        return false;
+
+    // m_opt_map is filled while the option lines are created, so it still resolves the option when
+    // the group's controls (and thus its fields) have not been built yet.
+    const std::string opt_id = option_id_in_map(m_opt_map, opt_key, opt_index);
+    if (opt_id.empty())
+        return false;
+
+    on_change_OG(opt_id, get_config_value2(*m_config, opt_key, opt_index));
+    return true;
 }
 
 Field* ConfigOptionsGroup::get_fieldc(const t_config_option_key& opt_key, int opt_index)

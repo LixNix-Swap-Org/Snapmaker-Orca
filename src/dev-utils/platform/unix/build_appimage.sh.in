@@ -26,8 +26,6 @@ Name=Snapmaker Orca
 Exec=AppRun %F
 Icon=@SLIC3R_APP_KEY@
 Type=Application
-PrefersNonDefaultGPU=true
-X-KDE-RunOnDiscreteGpu=true
 Categories=Graphics;3DGraphics;Engineering;
 MimeType=model/stl;model/3mf;application/vnd.ms-3mfdocument;application/prs.wavefront-obj;application/x-amf;
 EOF

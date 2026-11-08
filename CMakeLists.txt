@@ -94,6 +94,27 @@ endif()
 set(SLIC3R_RC_VERSION "${ORCA_VERSION_MAJOR},${ORCA_VERSION_MINOR},${ORCA_VERSION_PATCH},0")
 
 set(SLIC3R_RESOURCES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/resources")
+
+# Keep development and packaged resources in sync with the profiles submodule.
+set(SNAPMAKER_PROFILES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/submodules/Profiles")
+set(_profiles_sync_command "${CMAKE_COMMAND}"
+    "-DSUB=${SNAPMAKER_PROFILES_DIR}"
+    "-DDST=${SLIC3R_RESOURCES_DIR}/profiles"
+    "-DVERSION_STAMP=${CMAKE_CURRENT_BINARY_DIR}/snapmaker_profiles_version.txt"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/SyncSnapmakerProfiles.cmake")
+
+execute_process(COMMAND ${_profiles_sync_command} RESULT_VARIABLE _profiles_sync_result)
+if(NOT _profiles_sync_result STREQUAL "0")
+    message(FATAL_ERROR "Snapmaker profiles preparation failed (${_profiles_sync_result})")
+endif()
+
+add_custom_target(sync_snapmaker_profiles ALL
+    COMMAND ${_profiles_sync_command}
+    COMMENT "Syncing Snapmaker profiles from submodules/Profiles into resources/profiles"
+    VERBATIM)
+unset(_profiles_sync_command)
+unset(_profiles_sync_result)
+
 file(TO_NATIVE_PATH "${SLIC3R_RESOURCES_DIR}" SLIC3R_RESOURCES_DIR_WIN)
 
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -160,11 +181,14 @@ set(ORCA_BUNDLED_UV_EXECUTABLE "" CACHE FILEPATH "Path to a uv executable to bun
 # be reproducible and the download verified. To upgrade, bump ORCA_UV_VERSION
 # and refresh every hash below from the release's .sha256 assets, e.g.:
 #   curl -sL https://github.com/astral-sh/uv/releases/download/<ver>/uv-<triple>.tar.gz.sha256
+# The Flatpak copy in scripts/flatpak/io.github.Snapmaker.Snapmaker_Orca.yml pins the
+# same version and hashes and must be bumped with them.
 set(ORCA_UV_VERSION "0.11.21")
 set(ORCA_UV_SHA256_aarch64-apple-darwin      "1f921d491ba5ffeea774eb04d6681ecee379101341cbb1500394993b541bf3f4")
 set(ORCA_UV_SHA256_x86_64-apple-darwin       "f3c8e5708a84b920c18b691214d54d2b0da6b984789caae95d47c95120cb7765")
 set(ORCA_UV_SHA256_aarch64-unknown-linux-gnu "88e800834007cc5efd4675f166eb2a51e7e3ad19876d85fa8805a6fb5c922397")
 set(ORCA_UV_SHA256_x86_64-unknown-linux-gnu  "8c88519b0ef0af9801fcdee419bbb12116bd9e6b18e162ae093c932d8b264050")
+set(ORCA_UV_SHA256_aarch64-pc-windows-msvc   "74e443f8004022dde57a1bd0d10c097830f9ea8feb4ec927db52cd5d805c2f48")
 set(ORCA_UV_SHA256_x86_64-pc-windows-msvc    "ace861f360c6de2babedc1607d0f454b6b09a820dbc8182dc15af927e4df9589")
 
 # Version-scoped cache dir so a version bump invalidates the cached binary.
@@ -179,6 +203,15 @@ endif()
 # (user-provided paths never live under .uv/).
 if(ORCA_BUNDLED_UV_EXECUTABLE MATCHES "/\\.uv/")
     set(ORCA_BUNDLED_UV_EXECUTABLE "" CACHE FILEPATH "Path to the auto-downloaded uv executable" FORCE)
+endif()
+
+# A Flatpak build has no network and cannot download below: the orca_deps module
+# in scripts/flatpak/io.github.Snapmaker.Snapmaker_Orca.yml fetches the same pinned uv and
+# installs it into the app resources, where the runtime looks for it.
+set(ORCA_UV_FLATPAK_BINARY "${CMAKE_INSTALL_FULL_DATAROOTDIR}/Snapmaker_Orca/tools/uv/uv")
+if(FLATPAK AND NOT ORCA_BUNDLED_UV_EXECUTABLE AND EXISTS "${ORCA_UV_FLATPAK_BINARY}")
+    message(STATUS "Using Flatpak-provided uv: ${ORCA_UV_FLATPAK_BINARY}")
+    set(ORCA_BUNDLED_UV_EXECUTABLE "${ORCA_UV_FLATPAK_BINARY}")
 endif()
 
 if(NOT ORCA_BUNDLED_UV_EXECUTABLE)
@@ -203,7 +236,10 @@ if(NOT ORCA_BUNDLED_UV_EXECUTABLE)
                 set(ORCA_UV_ARCH "x86_64-unknown-linux-gnu")
             endif()
         elseif(_orca_uv_proc MATCHES "aarch64|arm64|ARM64")
-            if(APPLE)
+            if(WIN32)
+                set(ORCA_UV_ARCH "aarch64-pc-windows-msvc")
+                set(ORCA_UV_EXT "zip")
+            elseif(APPLE)
                 set(ORCA_UV_ARCH "aarch64-apple-darwin")
             else()
                 set(ORCA_UV_ARCH "aarch64-unknown-linux-gnu")
@@ -221,10 +257,8 @@ if(NOT ORCA_BUNDLED_UV_EXECUTABLE)
             list(GET ORCA_UV_DL_STATUS 0 ORCA_UV_DL_CODE)
             list(GET ORCA_UV_DL_STATUS 1 ORCA_UV_DL_MSG)
             if(NOT ORCA_UV_DL_CODE EQUAL 0)
-                # Network failure keeps the historical graceful degradation (uv is
-                # optional at build time) -- but a hash mismatch below is fatal.
-                message(WARNING "Failed to download uv: ${ORCA_UV_DL_MSG}")
                 file(REMOVE "${ORCA_UV_ARCHIVE}")
+                message(FATAL_ERROR "Failed to download uv: ${ORCA_UV_DL_MSG}")
             else()
                 file(SHA256 "${ORCA_UV_ARCHIVE}" _orca_uv_actual_sha256)
                 if(NOT _orca_uv_actual_sha256 STREQUAL "${ORCA_UV_SHA256_${ORCA_UV_ARCH}}")
@@ -314,6 +348,19 @@ if (APPLE)
     # Type"); Ninja/-Wall does not, and under -Werror it fails Xcode builds on code CI accepts.
     set(CMAKE_XCODE_ATTRIBUTE_GCC_WARN_64_TO_32_BIT_CONVERSION "NO")
 
+    # The Xcode generator ignores CMAKE_<LANG>_COMPILER_LAUNCHER, so hand the launcher to
+    # Xcode's own Compiler Launcher setting, which wraps every clang compile (C, C++,
+    # Objective-C++ and the precompiled header) with one program: the C++ launcher wins when
+    # both are set. The setting takes a single program path, not a CMake launcher list.
+    # Xcode versions without it ignore it and build uncached.
+    if (CMAKE_GENERATOR STREQUAL "Xcode")
+        if (CMAKE_CXX_COMPILER_LAUNCHER)
+            set(CMAKE_XCODE_ATTRIBUTE_C_COMPILER_LAUNCHER "${CMAKE_CXX_COMPILER_LAUNCHER}")
+        elseif (CMAKE_C_COMPILER_LAUNCHER)
+            set(CMAKE_XCODE_ATTRIBUTE_C_COMPILER_LAUNCHER "${CMAKE_C_COMPILER_LAUNCHER}")
+        endif ()
+    endif ()
+
     message(STATUS "Orca: IS_CROSS_COMPILE: ${IS_CROSS_COMPILE}")
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set(CMAKE_INSTALL_RPATH "$ORIGIN")
@@ -332,6 +379,14 @@ endif ()
 if (IS_CROSS_COMPILE)
     message("Detected cross compilation setup. Tests and encoding checks will be forcedly disabled!")
     set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
+endif ()
+
+# With a precompiled header, clang-cl can omit an exception type's copy constructor from its throw info,
+# so copies of the exception share and double-free their data: https://github.com/llvm/llvm-project/issues/53486
+if (MSVC AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    message(STATUS "clang-cl: building without the precompiled header (llvm/llvm-project#53486)")
+    set_property(CACHE SLIC3R_PCH PROPERTY HELPSTRING "Use precompiled headers (ignored with clang-cl, llvm/llvm-project#53486)")
+    set(SLIC3R_PCH OFF)
 endif ()
 
 # Print out the SLIC3R_* cache options
@@ -522,47 +577,6 @@ endif()
 # To be able to link libslic3r with the Perl XS module.
 # Once we get rid of Perl and libslic3r is linked statically, we can get rid of -fPIC
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-# WIN10SDK_PATH is used to point CMake to the WIN10 SDK installation directory.
-# We pick it from environment if it is not defined in another way
-# ORCA: Removed Netfabb STL fixing service support in favor of CGAL.
-# if(WIN32)
-#     if(NOT DEFINED WIN10SDK_PATH)
-#         if(DEFINED ENV{WIN10SDK_PATH})
-#                 set(WIN10SDK_PATH "$ENV{WIN10SDK_PATH}")
-#         endif()
-#     endif()
-#     if(DEFINED WIN10SDK_PATH)
-#         #BBS: modify win10sdk_path
-#         if (EXISTS "${WIN10SDK_PATH}/winrt/windows.graphics.printing3d.h")
-#             set(WIN10SDK_INCLUDE_PATH "${WIN10SDK_PATH}")
-#         else()
-#             message("WIN10SDK_PATH is invalid: ${WIN10SDK_PATH}")
-#             message("${WIN10SDK_PATH}/winrt/windows.graphics.printing3d.h was not found")
-#             message("STL fixing by the Netfabb service will not be compiled")
-#             unset(WIN10SDK_PATH)
-#         endif()
-#     else()
-#         # Try to use the default Windows 10 SDK path.
-#         if (DEFINED ENV{WindowsSdkDir} AND DEFINED ENV{WindowsSDKVersion})
-#             set(WIN10SDK_INCLUDE_PATH "$ENV{WindowsSdkDir}/Include/$ENV{WindowsSDKVersion}")
-#         else ()
-#             set(WIN10SDK_INCLUDE_PATH "C:/Program Files (x86)/Windows Kits/10/Include/10.0.26100.0")
-#         endif ()
-#         if (NOT EXISTS "${WIN10SDK_INCLUDE_PATH}/winrt/windows.graphics.printing3d.h")
-#             message("${WIN10SDK_INCLUDE_PATH}/winrt/windows.graphics.printing3d.h was not found")
-#             message("STL fixing by the Netfabb service will not be compiled")
-#             unset(WIN10SDK_INCLUDE_PATH)
-#         endif()
-#     endif()
-#     if(WIN10SDK_INCLUDE_PATH)
-#         message("Building with Win10 Netfabb STL fixing service support")
-#         add_definitions(-DHAS_WIN10SDK)
-#         include_directories(SYSTEM "${WIN10SDK_INCLUDE_PATH}")
-#     else()
-#         message("Building without Win10 Netfabb STL fixing service support")
-#     endif()
-# endif()
 
 if (APPLE)
     message("OS X SDK Path: ${CMAKE_OSX_SYSROOT}")
@@ -861,7 +875,9 @@ if(SLIC3R_STATIC)
     set(TBB_STATIC 1)
 endif()
 set(TBB_DEBUG 1)
-set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO RelWithDebInfo Release "")
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo" OR MSVC)
+    set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO RelWithDebInfo Release "")
+endif()
 find_package(TBB REQUIRED)
 # include_directories(SYSTEM ${TBB_INCLUDE_DIRS})
 # add_definitions(${TBB_DEFINITIONS})
@@ -882,7 +898,6 @@ if (SLIC3R_SENTRY)
         set(SLIC3R_SENTRY OFF CACHE BOOL "Enable Sentry crash reporting SDK" FORCE)
     endif()
 endif()
-find_package(Freetype REQUIRED)
 
 if (SLIC3R_GUI)
     # LibDataChannel's installed export references its bundled dependencies,
@@ -1157,10 +1172,10 @@ endif ()
 
 find_path(SPNAV_INCLUDE_DIR spnav.h)
 if (SPNAV_INCLUDE_DIR)
-    find_library(SPNAV_LIB NAMES libspnav.a) # Force linking libspnav statically
+    find_library(SPNAV_LIB NAMES libspnav.a spnav)
     if (SPNAV_LIB)
         add_definitions(-DHAVE_SPNAV)
-        message(STATUS "SPNAV library found")
+        message(STATUS "SPNAV library found: ${SPNAV_LIB}")
     else()
         message(STATUS "SPNAV library NOT found, Spacenavd not supported")
     endif()
@@ -1212,7 +1227,8 @@ function(Snapmaker_Orca_copy_dlls target config postfix output_dlls)
     if (NOT OCCT_LIBS)
         message(FATAL_ERROR "OCCT_LIBS is not set; libslic3r must be configured first.")
     endif ()
-    set(_occt_bin "${CMAKE_PREFIX_PATH}/bin/occt")
+    string(TOUPPER "${config}" _config_upper)
+    set(_occt_bin "${OCCT_BIN_DIR_${_config_upper}}")
     set(_occt_dlls "")
     set(_occt_staged "")
     set(_missing_occt "")
@@ -1231,7 +1247,6 @@ function(Snapmaker_Orca_copy_dlls target config postfix output_dlls)
             "SLIC3R_CAD setting as this project.")
     endif ()
     file(COPY ${_occt_dlls}
-            ${CMAKE_PREFIX_PATH}/bin/freetype.dll
             ${CMAKE_PREFIX_PATH}/bin/avformat-61.dll
             ${CMAKE_PREFIX_PATH}/bin/avcodec-61.dll
             ${CMAKE_PREFIX_PATH}/bin/swresample-5.dll
@@ -1245,7 +1260,6 @@ function(Snapmaker_Orca_copy_dlls target config postfix output_dlls)
         ${_out_dir}/libmpfr-4.dll
         ${_out_dir}/WebView2Loader.dll
 
-        ${_out_dir}/freetype.dll
         ${_out_dir}/avformat-61.dll
         ${_out_dir}/avcodec-61.dll
         ${_out_dir}/swresample-5.dll
@@ -1391,7 +1405,7 @@ if(BUILD_TESTS)
     if(NOT TARGET tests)
         add_custom_target(tests)
     endif()
-    foreach(_t IN ITEMS libnest2d_tests libslic3r_tests slic3rutils_tests fff_print_tests sla_print_tests filament_group_tests)
+    foreach(_t IN ITEMS libnest2d_tests libslic3r_tests slic3rutils_tests gateway_tests fff_print_tests sla_print_tests filament_group_tests)
         if(TARGET ${_t})
             add_dependencies(tests ${_t})
         endif()
@@ -1406,21 +1420,38 @@ endif()
 
 # Resources install target, configure fhs.hpp on UNIX
 if (WIN32)
-    install(DIRECTORY "${SLIC3R_RESOURCES_DIR}/" DESTINATION "./resources")
+    install(DIRECTORY "${SLIC3R_RESOURCES_DIR}/" DESTINATION "./resources"
+        PATTERN "*/gw_cache" EXCLUDE
+    )
     if(ORCA_BUNDLED_UV_EXECUTABLE)
         install(PROGRAMS "${ORCA_BUNDLED_UV_EXECUTABLE}" DESTINATION "./resources/tools/uv" RENAME "${ORCA_BUNDLED_UV_FILENAME}")
     endif()
     set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
     include(InstallRequiredSystemLibraries)
+    # A missing MSVC runtime is an error because an installer without it cannot start on a clean machine.
+    set(_orca_runtime_names ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS})
+    list(TRANSFORM _orca_runtime_names REPLACE "^.*/" "")
+    if (MSVC AND (NOT "msvcp140.dll" IN_LIST _orca_runtime_names OR NOT "vcruntime140.dll" IN_LIST _orca_runtime_names))
+        set(_orca_runtime_error "CMake ${CMAKE_VERSION} did not find msvcp140.dll and vcruntime140.dll for MSVC ${MSVC_VERSION}. Update CMake to a release that supports this Visual Studio.")
+        message(WARNING "${_orca_runtime_error}")
+        install(CODE "message(FATAL_ERROR \"${_orca_runtime_error}\")")
+    endif ()
     install (PROGRAMS ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS} DESTINATION ".")
 elseif (SLIC3R_FHS)
     # CMAKE_INSTALL_FULL_DATAROOTDIR: read-only architecture-independent data root (share)
     set(SLIC3R_FHS_RESOURCES "${CMAKE_INSTALL_FULL_DATAROOTDIR}/Snapmaker_Orca")
     install(DIRECTORY ${SLIC3R_RESOURCES_DIR}/ DESTINATION ${SLIC3R_FHS_RESOURCES}
         PATTERN "*/udev" EXCLUDE
+        PATTERN "snapmaker_control_linux_*" PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
     )
     if(ORCA_BUNDLED_UV_EXECUTABLE)
-        install(PROGRAMS "${ORCA_BUNDLED_UV_EXECUTABLE}" DESTINATION "${SLIC3R_FHS_RESOURCES}/tools/uv" RENAME "${ORCA_BUNDLED_UV_FILENAME}")
+        # A Flatpak build finds uv at this exact path, installed by the orca_deps
+        # module before this one configures (see ORCA_UV_FLATPAK_BINARY above).
+        # Installing it there again would copy the file onto itself.
+        set(_orca_uv_fhs_binary "${SLIC3R_FHS_RESOURCES}/tools/uv/${ORCA_BUNDLED_UV_FILENAME}")
+        if(NOT ORCA_BUNDLED_UV_EXECUTABLE_CONFIG STREQUAL _orca_uv_fhs_binary)
+            install(PROGRAMS "${ORCA_BUNDLED_UV_EXECUTABLE}" DESTINATION "${SLIC3R_FHS_RESOURCES}/tools/uv" RENAME "${ORCA_BUNDLED_UV_FILENAME}")
+        endif()
     endif()
     install(FILES src/dev-utils/platform/unix/Snapmaker_Orca.desktop DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
     foreach(SIZE 32 128 192)
@@ -1495,15 +1526,31 @@ set (CPACK_NSIS_DEFINES "!define MUI_STARTMENUPAGE_DEFAULTFOLDER \"${CPACK_PACKA
 # .nsi template must stay ASCII -- the Chinese/English prompt texts therefore
 # live in the separate UTF-8 BOM .nsh instead of this inline block.
 file(READ "${CMAKE_SOURCE_DIR}/cmake/nsis/SnapmakerURLProtocols_install.nsh" CPACK_NSIS_EXTRA_INSTALL_COMMANDS)
+file(READ "${CMAKE_SOURCE_DIR}/cmake/nsis/SnapmakerConnectFirewall_install.nsh" _snapmaker_connect_firewall_install)
+string(APPEND CPACK_NSIS_EXTRA_INSTALL_COMMANDS "\n${_snapmaker_connect_firewall_install}")
 file(READ "${CMAKE_SOURCE_DIR}/cmake/nsis/SnapmakerURLProtocols_uninstall.nsh" _snapmaker_nsis_uninst_url)
 set(_snapmaker_nsis_uninst_kill [=[
-  nsExec::Exec 'taskkill /F /IM snapmaker-orca.exe /T'
+  nsExec::Exec 'taskkill /F /T /IM snapmaker-orca.exe'
   Pop $0
-  nsExec::Exec 'taskkill /F /IM Snapmaker_Orca.exe /T'
+  nsExec::Exec 'taskkill /F /T /IM Snapmaker_Orca.exe'
+  Pop $0
+  nsExec::Exec 'taskkill /F /T /IM snapmaker_control_windows_x64.exe'
+  Pop $0
+  nsExec::Exec 'taskkill /F /T /IM snapmaker_control_windows_arm64.exe'
+  Pop $0
+  nsExec::Exec 'taskkill /F /T /IM snapmaker_connection_windows_x64.exe'
+  Pop $0
+  nsExec::Exec 'taskkill /F /T /IM snapmaker_connection_windows_arm64.exe'
   Pop $0
 ]=])
 string(CONCAT CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS
        "${_snapmaker_nsis_uninst_kill}" "${_snapmaker_nsis_uninst_url}")
+# Wait briefly for the connect CLI to release its executable after the forced
+# termination above before generated files are removed.
+file(READ "${CMAKE_SOURCE_DIR}/cmake/nsis/SnapmakerConnect_uninstall.nsh" _snapmaker_connect_uninstall)
+string(APPEND CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "\n${_snapmaker_connect_uninstall}")
+file(READ "${CMAKE_SOURCE_DIR}/cmake/nsis/SnapmakerConnectFirewall_uninstall.nsh" _snapmaker_connect_firewall_uninstall)
+string(APPEND CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "\n${_snapmaker_connect_firewall_uninstall}")
 # Auto-close the uninstall details page so the wizard advances to the custom
 # finish page as soon as the uninstall section finishes (no extra click).
 string(APPEND CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "  SetAutoClose true\n")

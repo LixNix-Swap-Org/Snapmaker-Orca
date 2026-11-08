@@ -1,12 +1,14 @@
 #ifndef slic3r_PrintHost_hpp_
 #define slic3r_PrintHost_hpp_
 
+#include <cstddef>
 #include <memory>
 #include <set>
 #include <string>
 #include <functional>
 #include <boost/filesystem/path.hpp>
 
+#include <utility>
 #include <wx/string.h>
 
 #include <libslic3r/enum_bitmask.hpp>
@@ -94,22 +96,7 @@ public:
 
     virtual bool send_gcodes(const std::vector<std::string>& codes, std::string& extraInfo) { return false; }
 
-    virtual bool get_machine_info(const std::vector<std::pair<std::string, std::vector<std::string>>>& targets, nlohmann::json& response) { return false; }
-
-    virtual void async_get_system_info(std::function<void(const nlohmann::json& response)> callback){}
-
     virtual void async_server_files_get_status(std::function<void(const nlohmann::json& response)> callback) {}
-
-    virtual void async_get_machine_info(const std::vector<std::pair<std::string, std::vector<std::string>>>& targets, std::function<void(const nlohmann::json& response)>) {}
-
-    virtual void async_get_device_info(std::function<void(const nlohmann::json& response)>) {}
-
-    virtual void async_get_machine_objects(std::function<void(const nlohmann::json& response)>) {}
-
-    virtual void async_get_printer_info(std::function<void(const nlohmann::json& response)>) {}
-
-    virtual void async_set_machine_subscribe_filter(const std::vector<std::pair<std::string, std::vector<std::string>>>& targets,
-                                                    std::function<void(const nlohmann::json& response)>                  callback) {}
 
     virtual void async_unsubscribe_machine_info(const std::string& hash, std::function<void(const nlohmann::json&)>) {}
 
@@ -214,6 +201,7 @@ public:
 
 protected:
     virtual wxString format_error(const std::string &body, const std::string &error, unsigned status) const;
+    static wxString timed_out_message();
 
 private:
     std::function<void()> m_connection_lost_cb = nullptr;

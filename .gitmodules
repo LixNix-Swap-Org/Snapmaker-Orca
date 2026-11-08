@@ -1,0 +1,4 @@
+[submodule "submodules/Profiles"]
+	path = submodules/Profiles
+	url = https://github.com/LixNix-Swap-Org/snapmaker-profiles.git
+	branch = snapmaker-orca-fork

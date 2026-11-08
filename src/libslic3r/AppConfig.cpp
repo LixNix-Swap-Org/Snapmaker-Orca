@@ -1,3 +1,8 @@
+#include "Technologies.hpp"
+#include "Config.hpp"
+#include "PrintConfig.hpp"
+#include "calib.hpp"
+#include "Semver.hpp"
 #include "libslic3r/libslic3r.h"
 #include "libslic3r/Utils.hpp"
 #include "libslic3r/Format/DRC.hpp"
@@ -5,13 +10,23 @@
 //BBS
 #include "Preset.hpp"
 #include "Exception.hpp"
+#include "InstanceLock.hpp"
 #include "LocalesUtils.hpp"
 #include "Thread.hpp"
 #include "format.hpp"
+#include "libslic3r_version.h"
 #include "nlohmann/json.hpp"
 #include "common_func/common_func.hpp"
 
 #include <algorithm>
+#include <string>
+#include <exception>
+#include <boost/none.hpp>
+#include <cstddef>
+#include <system_error>
+#include <chrono>
+#include <map>
+#include <cstring>
 #include <utility>
 #include <vector>
 #include <stdexcept>
@@ -28,6 +43,9 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <cassert>
+#include <iterator>
+#include <string_view>
 
 #ifdef WIN32
 //FIXME replace the two following includes with <boost/md5.hpp> after it becomes mainstream.
@@ -41,8 +59,7 @@ using namespace nlohmann;
 
 namespace Slic3r {
 
-// SM Orca: Snapmaker update/meta endpoints (branding rule 1) - PROFILE/FLUTTER are
-// relative paths appended to APP_UPDATE_URL_BASE_{CN,EN} below.
+// SM Orca: Snapmaker update/meta endpoints; PROFILE is relative to APP_UPDATE_URL_BASE_{CN,EN}.
 static const std::string VERSION_CHECK_URL_STABLE = "https://api.github.com/repos/Snapmaker/OrcaSlicer/releases/latest";
 static const std::string VERSION_CHECK_URL = "https://api.github.com/repos/Snapmaker/OrcaSlicer/releases";
 static const std::string PROFILE_UPDATE_URL = "/upgrade/profile/";
@@ -50,7 +67,6 @@ static const std::string PROFILE_UPDATE_URL = "/upgrade/profile/";
 static const std::string ORCA_PROFILE_UPDATE_URL = "https://check-version.orcaslicer.com/profile";
 // Hidden app config key overriding the Orca profile CDN above.
 constexpr const char* CONFIG_ORCA_UPDATER_URL = "orca_updater_url";
-static const std::string FLUTTER_UPDATE_URL = "/upgrade/flutter/";
 static const std::string MODELS_STR = "models";
 
 #define APP_UPDATE_URL_BASE_CN "https://meta-cfg.snapmaker.cn"
@@ -250,6 +266,14 @@ void AppConfig::set_defaults()
         set("preview_dim_previous_layers_brightness", std::to_string(std::max(0, std::min(brightness, 99))));
     }
 
+    // ORCA: whether the G-code preview keeps the opacity of the filament colors
+    if (get("preview_translucent_filaments").empty())
+        set_bool("preview_translucent_filaments", true);
+
+    // ORCA: whether realistic view gives the opaque toolpaths a glossy highlight
+    if (get(SETTING_OPENGL_REALISTIC_GLOSS).empty())
+        set_bool(SETTING_OPENGL_REALISTIC_GLOSS, true);
+
     // ORCA: view type the G-code preview opens with. "auto" keeps the automatic choice (Filament for
     // multi material prints, Line Type for single material ones), "last" restores the view type the user
     // picked last, any other value is a fixed view type name, see GCodeViewer::view_type_to_config_name().
@@ -336,6 +360,9 @@ void AppConfig::set_defaults()
     if (get(SETTING_OPENGL_SHOW_FPS_OVERLAY).empty())
         set_bool(SETTING_OPENGL_SHOW_FPS_OVERLAY, false);
 
+    if (get(SETTING_OPENGL_SHOW_RENDER_TIMINGS).empty())
+        set_bool(SETTING_OPENGL_SHOW_RENDER_TIMINGS, false);
+
     if (get(SETTING_OPENGL_REALISTIC_MODE).empty())
         set_bool(SETTING_OPENGL_REALISTIC_MODE, false);
 
@@ -348,8 +375,9 @@ void AppConfig::set_defaults()
     if (get(SETTING_OPENGL_SHADING_MODEL).empty())
         set(SETTING_OPENGL_SHADING_MODEL, "gouraud");
 
-    if (get(SETTING_OPENGL_PHONG_BASIC_PLATE_SHADOWS).empty())
-        set_bool(SETTING_OPENGL_PHONG_BASIC_PLATE_SHADOWS, false);
+    // Replaces the on/off setting, whose shadows turned with the camera.
+    if (get(SETTING_OPENGL_REALISTIC_SHADOWS).empty())
+        set(SETTING_OPENGL_REALISTIC_SHADOWS, get_bool(SETTING_OPENGL_PHONG_BASIC_PLATE_SHADOWS) ? "orbit" : "off");
 
     if (get(SETTING_OPENGL_PHONG_SMOOTH_NORMALS).empty())
         set_bool(SETTING_OPENGL_PHONG_SMOOTH_NORMALS, false);
@@ -385,6 +413,10 @@ void AppConfig::set_defaults()
     // restores the conventional CAD representation for users who expect it (x0kd).
     if (get("design_connector_face_glyph").empty())
         set_bool("design_connector_face_glyph", true);
+
+    // Design tab: draw the printer bed and its plate grid (the Feature tree's Bed row).
+    if (get("design_show_bed").empty())
+        set_bool("design_show_bed", true);
 #endif
 
 //#ifdef SUPPORT_SHOW_HINTS
@@ -410,6 +442,9 @@ void AppConfig::set_defaults()
     if (get("show_plate_gridlines").empty())
         set_bool("show_plate_gridlines", true);
 
+    if (get("focus_mode").empty())
+        set_bool("focus_mode", false);
+
     // Snapmaker Orca: on by default (mainline seeds false), closest to the always-on selection
     // outline of Snapmaker Orca 2.4 until the highlight of #764 is ported. A stored choice stays.
     if (get("show_outline").empty())
@@ -420,9 +455,14 @@ void AppConfig::set_defaults()
 
     if (get("show_labels").empty())
         set_bool("show_labels", false);
+    if (get("show_collision_volumes").empty())
+        set_bool("show_collision_volumes", false);
 
     if (get("show_overhang").empty())
         set_bool("show_overhang", false);
+
+    if (get("show_center_of_mass").empty())
+        set_bool("show_center_of_mass", false);
 
 #ifdef _WIN32
 
@@ -557,10 +597,6 @@ void AppConfig::set_defaults()
     // for its size (PerHeadProcess.hpp). GUI_App copies it into PresetBundle::process_follows_nozzle.
     if (get("process_follows_nozzle").empty()) {
         set_bool("process_follows_nozzle", true);
-    }
-
-    if (get("group_filament_presets").empty()) {
-        set("group_filament_presets", "1"); // All "0" / None "1" / By Type "2" / By Vendor "3"
     }
 
     if (get("enable_high_low_temp_mixed_printing").empty()){
@@ -723,6 +759,10 @@ void AppConfig::set_defaults()
     if (get("is_split_compound").empty()) {
         set_bool("is_split_compound", false);
     }
+    // Snapmaker Orca: off by default.
+    if (get("enable_primitive_size_dialog").empty()) {
+        set_bool("enable_primitive_size_dialog", false);
+    }
 
     // Snapmaker Orca: forced off at every start, the Bambu network plug-in is not shipped.
     set_bool("installed_networking", false);
@@ -730,6 +770,9 @@ void AppConfig::set_defaults()
 #ifdef __linux__
     if (get("window_buttons_on_left").empty())
         set_bool("window_buttons_on_left", false);
+
+    if (get("prefer_discrete_gpu").empty())
+        set_bool("prefer_discrete_gpu", false);
 #endif
 
     if (get("use_printer_agents").empty())
@@ -774,6 +817,22 @@ static std::string appconfig_md5_hash_line(const std::string_view data)
     return "# MD5 checksum " + md5_digest_str + "\n";
 }
 
+// write_config_file() saves the JSON configuration followed by a newline and the MD5 checksum line of the JSON.
+// Returns the JSON part of the file text and whether that checksum line follows it and matches. A person or a tool
+// editing the file may drop the checksum line, and the newline after the closing brace with it.
+static std::pair<std::string, bool> split_json_config_checksum(const std::string &file_text)
+{
+    const size_t json_end = file_text.find_last_of('}');
+    // Without a closing brace there is no JSON object, and parsing the empty text fails.
+    if (json_end == std::string::npos)
+        return {};
+    std::string json_text = file_text.substr(0, json_end + 1);
+    // Skip the newline after the closing brace.
+    const size_t checksum_pos = std::min(json_end + 2, file_text.size());
+    const bool   checksum_ok  = file_text.compare(checksum_pos, std::string::npos, appconfig_md5_hash_line(json_text)) == 0;
+    return { std::move(json_text), checksum_ok };
+}
+
 // Assume that the last line with the comment inside the config file contains a checksum and that the user didn't modify the config file.
 static bool verify_config_file_checksum(boost::nowide::ifstream &ifs)
 {
@@ -802,9 +861,12 @@ static bool verify_config_file_checksum(boost::nowide::ifstream &ifs)
 
 
 #ifdef USE_JSON_CONFIG
-std::string AppConfig::load()
+std::string AppConfig::load(bool read_only)
 {
     json j;
+
+    // Keep another instance from replacing or restoring the file mid-read.
+    InstanceLock instance_lock(read_only ? std::string() : lock_path());
 
     // 1) Read the complete config file into a boost::property_tree.
     namespace pt = boost::property_tree;
@@ -819,18 +881,12 @@ std::string AppConfig::load()
 #ifdef WIN32
         std::stringstream input_stream;
         input_stream << ifs.rdbuf();
-        std::string total_string = input_stream.str();
-        size_t last_pos = total_string.find_last_of('}');
-        std::string left_string = total_string.substr(0, last_pos+1);
-        //skip the "\n"
-        std::string right_string = total_string.substr(last_pos+2);
-
-        std::string md5_str = appconfig_md5_hash_line({left_string.data()});
+        const auto [json_text, checksum_ok] = split_json_config_checksum(input_stream.str());
         // Verify the checksum of the config file without taking just for debugging purpose.
-        if (md5_str != right_string)
+        if (!checksum_ok)
             BOOST_LOG_TRIVIAL(info) << "The configuration file " << AppConfig::loading_path() <<
             " has a wrong MD5 checksum or the checksum is missing. This may indicate a file corruption or a harmless user edit.";
-        j = json::parse(left_string);
+        j = json::parse(json_text);
 #else
         ifs >> j;
 #endif
@@ -847,14 +903,8 @@ std::string AppConfig::load()
             boost::nowide::ifstream backup_ifs(backup_path);
             std::stringstream back_input_stream;
             back_input_stream << backup_ifs.rdbuf();
-            std::string back_total_string = back_input_stream.str();
-            size_t back_last_pos = back_total_string.find_last_of('}');
-            std::string back_left_string = back_total_string.substr(0, back_last_pos+1);
-            std::string back_right_string = back_total_string.substr(back_last_pos+2);
-
-            std::string back_md5_str = appconfig_md5_hash_line({back_left_string.data()});
-            // Verify the checksum of the config file without taking just for debugging purpose.
-            if (back_md5_str != back_right_string) {
+            const auto [back_json_text, back_checksum_ok] = split_json_config_checksum(back_input_stream.str());
+            if (!back_checksum_ok) {
                 BOOST_LOG_TRIVIAL(error) << format("Both \"%1%\" and \"%2%\" are corrupted. It isn't possible to restore configuration from the backup.", AppConfig::loading_path(), backup_path);
                 backup_ifs.close();
                 boost::filesystem::remove(backup_path);
@@ -867,7 +917,7 @@ std::string AppConfig::load()
             else {
                 BOOST_LOG_TRIVIAL(info) << format("Configuration file \"%1%\" was corrupted. It has been succesfully restored from the backup \"%2%\".", AppConfig::loading_path(), backup_path);
                 // Try parse configuration file after restore from backup.
-                j = json::parse(back_left_string);
+                j = json::parse(back_json_text);
                 recovered = true;
             }
         }
@@ -953,7 +1003,10 @@ std::string AppConfig::load()
                 }
             } else if (it.key() == "orca_presets") {
                 for (auto& j_model : it.value()) {
-                    m_printer_settings[j_model["machine"].get<std::string>()] = j_model;
+                    auto& settings = m_printer_settings[j_model["machine"].get<std::string>()];
+                    settings.clear();
+                    for (auto item = j_model.begin(); item != j_model.end(); ++item)
+                        settings[item.key()] = item.value().is_string() ? item.value().get<std::string>() : item.value().dump();
                 }
             } else if (it.key() == "local_machines") {
                 for (auto m = it.value().begin(); m != it.value().end(); ++m) {
@@ -1001,10 +1054,8 @@ std::string AppConfig::load()
             }
         }
 
-        // SM Orca
-        if (j.contains("devices")) {
-            m_device_list = j["devices"].get<std::vector<DeviceInfo>>();
-        }
+        // Device ownership belongs to the connection gateway. Legacy devices in
+        // an existing config are intentionally ignored.
     } catch(const std::exception &err) {
         BOOST_LOG_TRIVIAL(info) << format("parse app config \"%1%\", error: %2%", AppConfig::loading_path(), err.what());
 
@@ -1072,7 +1123,6 @@ void AppConfig::save()
     // The config is first written to a file with a PID suffix and then moved
     // to avoid race conditions with multiple instances of Slic3r
     const auto path = config_path();
-    std::string path_pid = (boost::format("%1%.%2%") % path % get_current_pid()).str();
 
     json j;
 
@@ -1157,11 +1207,6 @@ void AppConfig::save()
             continue;
         }
         for (const auto& kvp : category.second) {
-            // SM Orca
-            if (kvp.first == "use_new_connect") {
-                j[category.first][kvp.first] = false;
-                continue;
-            }
             if (kvp.second == "true") {
                 j[category.first][kvp.first] = true;
                 continue;
@@ -1199,18 +1244,6 @@ void AppConfig::save()
     }
 
     j["devices"] = json::array();
-    for (size_t i = 0; i < m_device_list.size(); ++i) {
-        if (m_device_list[i].link_mode != "wan") {
-            j["devices"].push_back(m_device_list[i]);
-        }
-    }
-
-    // j["devices"] = m_device_list;
-
-
-    for (size_t i = 0; i < j["devices"].size(); ++i) {
-        j["devices"][i]["connected"] = false;
-    }
     for (const auto& local_machine : m_local_machines) {
         json m_json;
         m_json["dev_name"]         = local_machine.second.dev_name;
@@ -1221,43 +1254,18 @@ void AppConfig::save()
 
         j["local_machines"][local_machine.first] = m_json;
     }
-    boost::nowide::ofstream c;
-    c.open(path_pid, std::ios::out | std::ios::trunc);
-    c << j.dump(1, '\t') << std::endl;
-
-#ifdef WIN32
-    // WIN32 specific: The final "rename_file()" call is not safe in case of an application crash, there is no atomic "rename file" API
-    // provided by Windows (sic!). Therefore we save a MD5 checksum to be able to verify file corruption. In addition,
-    // we save the config file into a backup first before moving it to the final destination.
-    c << appconfig_md5_hash_line(j.dump(1, '\t'));
-#endif
-
-    c.close();
-    if (c.fail()) {
-      BOOST_LOG_TRIVIAL(error) << "Failed to write new configuration to " << path_pid << "; aborting attempt to overwrite original configuration";
-      return;
-    }
-
-#ifdef WIN32
-    // Make a backup of the configuration file before copying it to the final destination.
-    std::string error_message;
-    std::string backup_path = (boost::format("%1%.bak") % path).str();
-    // Copy configuration file with PID suffix into the configuration file with "bak" suffix.
-    if (copy_file(path_pid, backup_path, error_message, false) != SUCCESS)
-        BOOST_LOG_TRIVIAL(error) << "Copying from " << path_pid << " to " << backup_path << " failed. Failed to create a backup configuration.";
-#endif
-
-    // Rename the config atomically.
-    // On Windows, the rename is likely NOT atomic, thus it may fail if PrusaSlicer crashes on another thread in the meanwhile.
-    // To cope with that, we already made a backup of the config on Windows.
-    rename_file(path_pid, path);
-    m_dirty = false;
+    const std::string config_str = j.dump(1, '\t');
+    if (write_config_file(path, config_str + "\n", config_str))
+        m_dirty = false;
 }
 
 #else
 
-std::string AppConfig::load()
+std::string AppConfig::load(bool read_only)
 {
+    // Keep another instance from replacing or restoring the file mid-read.
+    InstanceLock instance_lock(read_only ? std::string() : lock_path());
+
     // 1) Read the complete config file into a boost::property_tree.
     namespace pt = boost::property_tree;
     pt::ptree tree;
@@ -1395,7 +1403,6 @@ void AppConfig::save()
     // The config is first written to a file with a PID suffix and then moved
     // to avoid race conditions with multiple instances of Slic3r
     const auto path = config_path();
-    std::string path_pid = (boost::format("%1%.%2%") % path % get_current_pid()).str();
 
     std::stringstream config_ss;
     if (m_mode == EAppMode::Editor)
@@ -1431,38 +1438,58 @@ void AppConfig::save()
     // One empty line before the MD5 sum.
     config_ss << std::endl;
 
-    std::string config_str = config_ss.str();
-    boost::nowide::ofstream c;
-    c.open(path_pid, std::ios::out | std::ios::trunc);
-    c << config_str;
-#ifdef WIN32
-    // WIN32 specific: The final "rename_file()" call is not safe in case of an application crash, there is no atomic "rename file" API
-    // provided by Windows (sic!). Therefore we save a MD5 checksum to be able to verify file corruption. In addition,
-    // we save the config file into a backup first before moving it to the final destination.
-    c << appconfig_md5_hash_line(config_str);
-#endif
-    c.close();
-    if (c.fail()) {
-      BOOST_LOG_TRIVIAL(error) << "Failed to write new configuration to " << path_pid << "; aborting attempt to overwrite original configuration";
-      return;
-    }
-
-#ifdef WIN32
-    // Make a backup of the configuration file before copying it to the final destination.
-    std::string error_message;
-    std::string backup_path = (boost::format("%1%.bak") % path).str();
-    // Copy configuration file with PID suffix into the configuration file with "bak" suffix.
-    if (copy_file(path_pid, backup_path, error_message, false) != SUCCESS)
-        BOOST_LOG_TRIVIAL(error) << "Copying from " << path_pid << " to " << backup_path << " failed. Failed to create a backup configuration.";
-#endif
-
-    // Rename the config atomically.
-    // On Windows, the rename is likely NOT atomic, thus it may fail if PrusaSlicer crashes on another thread in the meanwhile.
-    // To cope with that, we already made a backup of the config on Windows.
-    rename_file(path_pid, path);
-    m_dirty = false;
+    const std::string config_str = config_ss.str();
+    if (write_config_file(path, config_str, config_str))
+        m_dirty = false;
 }
 #endif
+
+bool AppConfig::write_config_file(const std::string &path, std::string body, const std::string &checksum_source)
+{
+    // Everything before this is assembly; only the writes need the other instances kept out.
+    InstanceLock instance_lock(lock_path());
+#ifdef WIN32
+    // WIN32 specific: the final replace is not safe in case of an application crash, there is no atomic "rename file" API
+    // provided by Windows (sic!). Therefore we save a MD5 checksum to be able to verify file corruption. In addition,
+    // we save the config file into a backup first before moving it to the final destination.
+    body += appconfig_md5_hash_line(checksum_source);
+#endif
+    // Not flushed to the device: the idle handler saves on the GUI thread after
+    // any change, and the rename already gives a complete old or new file.
+    if (const std::error_code ec = write_file_atomically(path, body)) {
+        BOOST_LOG_TRIVIAL(error) << "Failed to write the configuration " << path << ": " << ec.message() << "; trying again in 10 s";
+        m_retry_save_at = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+        return false;
+    }
+    m_retry_save_at = {};
+#ifdef WIN32
+    // Written after the config, so the backup never holds a state that was not confirmed written.
+    const std::string backup_path = (boost::format("%1%.bak") % path).str();
+    if (const std::error_code ec = write_file_atomically(backup_path, body))
+        BOOST_LOG_TRIVIAL(error) << "Failed to write the backup configuration " << backup_path << ": " << ec.message();
+#endif
+    return true;
+}
+
+void AppConfig::clear_local_machine_access_code(const std::string& dev_id, const std::string& agent_id)
+{
+    // Unscoped credentials predate printer agents and belong to the legacy BBL agent.
+    const bool is_bbl_agent = agent_id.empty() || agent_id == "bbl";
+    auto it = m_local_machines.find(dev_id);
+    if (it != m_local_machines.end()) {
+        const std::string& stored_agent = it->second.printer_agent_id;
+        if (stored_agent == agent_id || (is_bbl_agent && (stored_agent.empty() || stored_agent == "bbl"))) {
+            if (!it->second.access_code.empty()) {
+                it->second.access_code.clear();
+                m_dirty = true;
+            }
+        }
+    }
+    if (is_bbl_agent) {
+        erase("access_code", dev_id);
+        erase("user_access_code", dev_id);
+    }
+}
 
 bool AppConfig::get_variant(const std::string &vendor, const std::string &model, const std::string &variant) const
 {
@@ -1952,19 +1979,48 @@ void AppConfig::reset_selections()
     }
 }
 
-std::string AppConfig::config_path()
+std::string AppConfig::lock_path()
+{
+    return Slic3r::data_dir().empty() ? std::string() : config_path() + ".lock";
+}
+
+std::string AppConfig::config_path(const std::string &data_dir, EAppMode mode)
 {
 #ifdef USE_JSON_CONFIG
-    std::string path = (m_mode == EAppMode::Editor) ?
-        (boost::filesystem::path(Slic3r::data_dir()) / (SLIC3R_APP_KEY ".conf")).make_preferred().string() :
-        (boost::filesystem::path(Slic3r::data_dir()) / (GCODEVIEWER_APP_KEY ".conf")).make_preferred().string();
+    const char *extension = ".conf";
 #else
-    std::string path = (m_mode == EAppMode::Editor) ?
-        (boost::filesystem::path(Slic3r::data_dir()) / (SLIC3R_APP_KEY ".ini")).make_preferred().string() :
-        (boost::filesystem::path(Slic3r::data_dir()) / (GCODEVIEWER_APP_KEY ".ini")).make_preferred().string();
+    const char *extension = ".ini";
 #endif
+    const char *name = (mode == EAppMode::Editor) ? SLIC3R_APP_KEY : GCODEVIEWER_APP_KEY;
+    return (boost::filesystem::path(data_dir) / (std::string(name) + extension)).make_preferred().string();
+}
 
-    return path;
+std::string AppConfig::config_path()
+{
+    return config_path(Slic3r::data_dir(), m_mode);
+}
+
+bool AppConfig::peek_bool(const std::string &data_dir, const std::string &key)
+{
+    try {
+        boost::nowide::ifstream ifs(config_path(data_dir, EAppMode::Editor));
+        if (!ifs.is_open())
+            return false;
+        // Parses the leading JSON value only, so the checksum line Windows appends is ignored.
+        json j;
+        ifs >> j;
+        const auto app = j.find("app");
+        if (app == j.end() || !app->is_object())
+            return false;
+        const auto it = app->find(key);
+        if (it == app->end())
+            return false;
+        if (it->is_boolean())
+            return it->get<bool>();
+        return it->is_string() && is_true(it->get<std::string>());
+    } catch (const std::exception &) {
+        return false;
+    }
 }
 
 std::string AppConfig::get_preset_upgrade_url() 
@@ -1981,25 +2037,6 @@ std::string AppConfig::get_preset_upgrade_url()
     auto countryArea = get_country_code();
     if (countryArea == std::string("CN"))
         url = APP_UPDATE_URL_BASE_CN + PROFILE_UPDATE_URL + localLanguage + std::string("/version.json");
-
-    return url;
-}
-
-std::string AppConfig::get_web_resource_upgrade_url()
-{
-    
-    std::string resourceUrl = get("flutter_upgrade_url");
-    
-    if(!resourceUrl.empty())
-        return resourceUrl;
-    
-    std::string localLanguage = get("language");
-    if (localLanguage != "zh_CN")
-        localLanguage = "en";
-    std::string url  = APP_UPDATE_URL_BASE_EN + FLUTTER_UPDATE_URL + localLanguage + std::string("/version.json");
-    auto countryArea = get_country_code();
-    if (countryArea == std::string("CN"))
-        url = APP_UPDATE_URL_BASE_CN + FLUTTER_UPDATE_URL + localLanguage + std::string("/version.json");
 
     return url;
 }
@@ -2055,56 +2092,6 @@ std::string AppConfig::version_check_url(bool stable_only/* = false*/) const
 bool AppConfig::exists()
 {
     return boost::filesystem::exists(config_path());
-}
-
-void AppConfig::save_device_info(const DeviceInfo& device)
-{
-    // 检查是否已存在该设备
-    auto it = std::find_if(m_device_list.begin(), m_device_list.end(),
-        [&device](const DeviceInfo& d) { return d.dev_id == device.dev_id; });
-    
-    if (it != m_device_list.end()) {
-        // 更新已存在的设备信息
-        *it = device;
-    } else {
-        // 添加新设备
-        m_device_list.push_back(device);
-    }
-    m_dirty = true;
-}
-
-void AppConfig::clear_device_info()
-{
-    m_device_list.clear();
-    m_dirty = true;
-}
-
-void AppConfig::remove_device_info(const std::string& dev_id)
-{
-    auto it = std::find_if(m_device_list.begin(), m_device_list.end(),
-        [&dev_id](const DeviceInfo& d) { return d.dev_id == dev_id; });
-    
-    if (it != m_device_list.end()) {
-        m_device_list.erase(it);
-        m_dirty = true;
-    }
-}
-
-std::vector<DeviceInfo> AppConfig::get_devices() const
-{
-    return m_device_list;
-}
-
-bool AppConfig::get_device_info(const std::string& dev_id, DeviceInfo& info) const
-{
-    auto it = std::find_if(m_device_list.begin(), m_device_list.end(),
-        [&dev_id](const DeviceInfo& d) { return d.dev_id == dev_id; });
-    
-    if (it != m_device_list.end()) {
-        info = *it;
-        return true;
-    }
-    return false;
 }
 
 void AppConfig::clear_filament_extruder_map()
@@ -2251,7 +2238,7 @@ void AppConfig::update_filament_names(json& j)
 
 std::string AppConfig::load_if_exists()
 {
-    return boost::filesystem::exists(loading_path()) ? load() : std::string();
+    return boost::filesystem::exists(loading_path()) ? load(/*read_only=*/true) : std::string();
 }
 
 }; // namespace Slic3r

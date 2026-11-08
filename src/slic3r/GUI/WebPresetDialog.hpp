@@ -28,6 +28,7 @@
 #include "wx/textctrl.h"
 
 #include "GUI_App.hpp"
+#include "GUI_Utils.hpp"
 #include "libslic3r/PresetBundle.hpp"
 #include "slic3r/Utils/PresetUpdater.hpp"
 
@@ -111,7 +112,6 @@ private:
     bool network_plugin_ready{false};
 
 public:
-    std::string m_device_id = "";
     bool        m_bind_nozzle = false;
 
 #if wxUSE_WEBVIEW_IE

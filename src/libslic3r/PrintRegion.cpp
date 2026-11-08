@@ -1,7 +1,13 @@
+#include "Config.hpp"
 #include "Exception.hpp"
+#include "Flow.hpp"
 #include "Print.hpp"
-
+#include <cstddef>
+#include "PrintConfig.hpp"
+#include "libslic3r.h"
 #include <cmath>
+#include <vector>
+#include <algorithm>
 
 namespace Slic3r {
 
@@ -34,8 +40,7 @@ Flow PrintRegion::flow(const PrintObject &object, FlowRole role, double layer_he
     // default mapping (top / bottom surface fills), else the role's.
     // Here this->extruder(role) - 1 may underflow to MAX_INT, but then the get_at() will follback to zero'th element, so everything is all right.
     const unsigned int filament = filament_id > 0 ? filament_id : this->extruder(role);
-    // Snapmaker Orca: the line widths are columns per tool head, read at the column of the head
-    // whose nozzle resolves the width (Print::width_slot; column and nozzle name one head).
+    // Snapmaker Orca: line widths are per-extruder columns, read at Print::width_slot(filament).
     const size_t column = object.print()->width_slot(filament);
     ConfigOptionFloatOrPercent config_width;
     // Get extrusion width from configuration.
@@ -62,7 +67,7 @@ Flow PrintRegion::flow(const PrintObject &object, FlowRole role, double layer_he
     
     // Get the configured nozzle_diameter for the extruder associated to the flow role requested,
     // or for the explicitly given filament when it differs from the role's default mapping (top / bottom surface fills).
-    auto nozzle_diameter = float(print_config.nozzle_diameter.get_at(filament - 1));
+    auto nozzle_diameter = float(nozzle_diameter_for_filament(print_config, filament, object.print()->is_BBL_printer()));
     return Flow::new_from_config_width(role, config_width, nozzle_diameter, float(layer_height));
 }
 

@@ -15,7 +15,6 @@ namespace common
 {
 	std::string get_pc_name();
 
-	std::string get_flutter_version();
 
 	std::string get_profile_version();
 

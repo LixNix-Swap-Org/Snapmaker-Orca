@@ -2,6 +2,16 @@
 #define slic3r_PresetComboBoxes_hpp_
 
 //#include <wx/bmpcbox.h>
+#include <cstddef>
+#include "libslic3r/Config.hpp"
+#include <functional>
+#include <string>
+#include <wx/colour.h>
+#include <vector>
+#include "libslic3r/PrintConfig.hpp"
+#include <map>
+#include <utility>
+#include <wx/event.h>
 #include <wx/colourdata.h>
 #include <wx/gdicmn.h>
 #include <wx/clrpicker.h>

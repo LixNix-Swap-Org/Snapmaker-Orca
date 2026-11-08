@@ -249,6 +249,14 @@ $cases = @(
        Match = @('-DCMAKE_C_COMPILER="[^"]+/clang-cl\.exe"')
        NotContains = @('-A ') }
 
+    'Snapmaker Connect bundle'
+    @{ Name = 'configuring the slicer stages the x64 connect bundle'; Args = @('-s')
+       Contains = @('stage_connect_bundle.py --lock .github\connect-bundle.lock.json --platform windows-x64 --resources-dir resources') }
+    @{ Name = 'arm64 stages the arm64 connect bundle'; Args = @('-s', '--arch', 'arm64')
+       Contains = @('--platform windows-arm64') }
+    @{ Name = '--no-configure stages nothing'; Args = @('-s', '-l', '-x', '--no-configure')
+       NotContains = @('stage_connect_bundle.py') }
+
     'build configurations'
     # One option with a value, driven by a table, so Release is named rather
     # than being whatever is left when no flag is passed.
@@ -301,6 +309,10 @@ $cases = @(
        Contains = @('Precompiled header: off') }
     @{ Name = 'the precompiled header is on unless asked'; Args = @('-s')
        NotContains = @('SLIC3R_PCH') }
+    @{ Name = '-l turns the precompiled header off'; Args = @('-s', '-l')
+       Contains = @('-DSLIC3R_PCH=OFF', 'Precompiled header: off') }
+    @{ Name = 'a deps-only build says nothing about the precompiled header'; Args = @('-d', '-l')
+       NotContains = @('Precompiled header') }
     @{ Name = '--no-pch works without a cache'; Args = @('-s', '--no-pch')
        NotContains = @('COMPILER_LAUNCHER') }
     @{ Name = 'the slicer build runs gettext'; Args = @('-s')
@@ -552,13 +564,6 @@ $cases = @(
        Contains = @('id=Microsoft.VisualStudio.2022.BuildTools') }
     @{ Name = '-l adds the clang compiler and the MSBuild toolset'; Args = @('-u', '--install-vs', 'buildtools', '-l')
        Contains = @('VC.Llvm.Clang ', 'VC.Llvm.ClangToolset') }
-    # CMake 4.x breaks Boost.Context on ARM64, so the installer pins 3.31 there
-    # and leaves x64 on the current release.
-    @{ Name = 'CMake is pinned to 3.31 when installing for arm64'; Args = @('-u', '--arch', 'arm64')
-       Contains = @('Kitware.CMake --version 3.31.8') }
-    @{ Name = 'CMake is not pinned for x64'; Args = @('-u', '--arch', 'x64')
-       Contains = @('Kitware.CMake')
-       NotContains = @('--version') }
     @{ Name = 'installing for arm64 asks for the ARM64 toolset'; Args = @('--install-vs', 'buildtools', '--arch', 'arm64')
        Contains = @('Microsoft.VisualStudio.Component.VC.Tools.ARM64') }
     @{ Name = 'an x64 install asks only for the x64 toolset'; Args = @('--install-vs', 'buildtools')

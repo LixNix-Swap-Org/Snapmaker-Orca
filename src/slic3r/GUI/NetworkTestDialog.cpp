@@ -5,7 +5,7 @@
 #include "libslic3r/Utils.hpp"
 #include "GUI.hpp"
 #include "GUI_App.hpp"
-#include "I18N.hpp"
+#include "libslic3r_version.h"
 #include "slic3r/Utils/Http.hpp"
 #include "libslic3r/AppConfig.hpp"
 #include <wx/regex.h>
@@ -19,6 +19,21 @@
 #ifndef _WIN32
 #include <sys/wait.h>
 #endif
+#include <wx/event.h>
+#include <wx/string.h>
+#include <wx/wx.h>
+#include <wx/gdicmn.h>
+#include "slic3r/GUI/GUI_Utils.hpp"
+#include <wx/dialog.h>
+#include <wx/toplevel.h>
+#include <wx/sizer.h>
+#include "slic3r/GUI/Widgets/Button.hpp"
+#include <ctime>
+#include <sstream>
+#include <iomanip>
+#include <exception>
+#include <wx/utils.h>
+#include <string>
 
 namespace Slic3r {
 namespace GUI {

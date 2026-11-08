@@ -5,6 +5,9 @@
 #include <string>
 #include <array>
 #include <algorithm>
+#include <cassert>
+
+#include <cassert>
 
 namespace Slic3r {
 using RGB = std::array<float, 3>;

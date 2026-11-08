@@ -1,5 +1,5 @@
 if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "4.0")
-    set(CMAKE_POLICY_VERSION_MINIMUM 3.5 CACHE STRING "" FORCE)
+    set(CMAKE_POLICY_VERSION_MINIMUM 3.10 CACHE STRING "" FORCE)
 endif()
 
 #
@@ -24,7 +24,7 @@ endif()
 # therefore, unfortunately, the installation cannot be copied/moved elsewhere without re-installing wxWidgets.
 #
 
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.10)
 if (APPLE)
     # Default to macOS 12.0 (Monterey), the lowest target Xcode 27 accepts.
     # All deps must use the same deployment target as the main project.
@@ -235,7 +235,7 @@ if (NOT IS_CROSS_COMPILE OR NOT APPLE)
         ${_source_dir_arg}
         ${_gen}
         CMAKE_ARGS
-            -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.10
             -DCMAKE_INSTALL_PREFIX:STRING=${DESTDIR}
             -DCMAKE_MODULE_PATH:STRING=${PROJECT_SOURCE_DIR}/../cmake/modules
             -DCMAKE_PREFIX_PATH:STRING=${DESTDIR}
@@ -290,7 +290,7 @@ else()
         ${_source_dir_arg}
         ${_gen}
         CMAKE_ARGS
-            -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.10
             -DCMAKE_INSTALL_PREFIX:STRING=${DESTDIR}
             -DCMAKE_PREFIX_PATH:STRING=${DESTDIR}
             -DCMAKE_IGNORE_PREFIX_PATH:STRING=${CMAKE_IGNORE_PREFIX_PATH}
@@ -370,7 +370,6 @@ if(FLATPAK)
     find_package(EXPAT)
     find_package(CURL)
     find_package(JPEG)
-    find_package(Freetype)
     find_package(OpenSSL 1.1...<3.2)
     find_package(CURL)
 endif()
@@ -398,10 +397,8 @@ include(Boost/Boost.cmake)
 
 include(Cereal/Cereal.cmake)
 include(Qhull/Qhull.cmake)
-include(GLEW/GLEW.cmake)
 
 include(GLFW/GLFW.cmake)
-include(OpenCSG/OpenCSG.cmake)
 set(SLVS_PKG "")
 if (SLIC3R_CAD)
     include(SLVS/SLVS.cmake)
@@ -468,12 +465,6 @@ if (NOT FLATPAK)
     set(WXWIDGETS_PKG "dep_wxWidgets")
 endif()
 
-set(FREETYPE_PKG "")
-if(NOT FREETYPE_FOUND)
-    include(FREETYPE/FREETYPE.cmake)
-    set(FREETYPE_PKG "dep_FREETYPE")
-endif()
-
 execute_process(
     COMMAND ${GIT_EXECUTABLE} rev-parse --is-inside-work-tree
     RESULT_VARIABLE REV_PARSE_RESULT
@@ -504,14 +495,12 @@ set(_dep_list
     dep_Draco
     dep_NLopt
     dep_OpenVDB
-    dep_OpenCSG
     ${SLVS_PKG}
     dep_OpenCV
     dep_Eigen
     dep_CGAL
     dep_GLFW
     dep_OCCT
-    ${FREETYPE_PKG}
     ${PNG_PKG}
     ${ZLIB_PKG}
     ${EXPAT_PKG}

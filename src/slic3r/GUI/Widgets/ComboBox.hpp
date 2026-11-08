@@ -3,6 +3,16 @@
 
 #include "TextInput.hpp"
 #include "DropDown.hpp"
+#include <wx/containr.h>
+#include <wx/ctrlsub.h>
+#include <vector>
+#include <wx/string.h>
+#include <wx/textctrl.h>
+#include <wx/gdicmn.h>
+#include <cstddef>
+#include <wx/arrstr.h>
+#include <wx/clntdata.h>
+#include <wx/event.h>
 
 #define CB_NO_DROP_ICON DD_NO_CHECK_ICON
 #define CB_NO_TEXT DD_NO_TEXT
@@ -86,12 +96,14 @@ public:
 
     wxBitmap GetItemBitmap(unsigned int n);
     void     SetItemBitmap(unsigned int n, wxBitmap const &bitmap);
+    void     SetItemActionBitmap(unsigned int n, wxBitmap const &bitmap);
     bool     is_drop_down(){return drop_down;}
     void     DeleteOneItem(unsigned int pos) { DoDeleteOneItem(pos); }
 
     // Opens the list; `focus` keeps the keyboard focus while it is open (default: the list itself),
     // e.g. the text control of an editable combo, so typing goes on.
     void ForceDropdownOpen(wxWindow *focus = nullptr);
+    void CloseDropdown();
 
 protected:
     virtual int  DoInsertItems(const wxArrayStringsAdapter &items,

@@ -1,5 +1,10 @@
 #include "StateColor.hpp"
+#include <algorithm>
 #include <cmath>
+#include <wx/colour.h>
+#include <map>
+#include <tuple>
+#include <wx/string.h>
 
 static bool gDarkMode = false;
 
@@ -43,7 +48,7 @@ static std::map<wxColour, wxColour> gDarkColors{
     {"#2B3436", "#808080"}, // rgb(43, 52, 54)     Not Used anymore // Leftover from BBS. Was used as main fill color of icons
     {"#ABABAB", "#ABABAB"},
     {"#D9D9D9", "#27272A"}, // rgb(217, 217, 217)  Sidebar > Toggle button track color
-    {"#FFFEFE", "#D9D9D9"}, // rgb(255, 254, 254)  Sidebar > Toggle button thumb color
+    {"#FFFEFE", "#D8D9D9"}, // rgb(255, 254, 254)  Sidebar > Toggle button thumb color
     {"#EBF9F0", "#293F34"},
     //{"#F0F0F0", "#4C4C54"},
     // ORCA
@@ -54,7 +59,6 @@ static std::map<wxColour, wxColour> gDarkColors{
     {"#F0F0F0", "#3F3F46"}, // rgb(240, 240, 240)  Card borders, dividers
     {"#F3F4F6", "#3A3A3F"}, // rgb(243, 244, 246)  Internal card dividers
     {"#242424", "#E4E4E7"}, // rgb(36, 36, 36)    Primary text (hex input, cancel btn)
-    {"#18181B", "#E4E4E7"}, // rgb(24, 24, 27)    Login confirmation text
     {"#4A4A4A", "#A1A1AA"}, // rgb(74, 74, 74)    Secondary text (segmented btns)
     {"#8F8F8F", "#8A8A95"}, // rgb(143, 143, 143) Label text (Hex:, Preview, percentages)
     {"#EBEBEB", "#45454B"}, // rgb(235, 235, 235)  Slider track background

@@ -1,11 +1,24 @@
 #include "ToolOrderUtils.hpp"
+#include "libslic3r/MultiNozzleUtils.hpp"
 #include <queue>
+#include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <optional>
+#include <memory>
+#include <limits>
+#include <functional>
+#include <boost/multiprecision/fwd.hpp>
+#include <iterator>
 #include <set>
 #include <map>
 #include <cmath>
-#include <algorithm>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/log/trivial.hpp>
+#include <vector>
+#include <unordered_map>
+#include <utility>
+#include <unordered_set>
 
 namespace Slic3r
 {
