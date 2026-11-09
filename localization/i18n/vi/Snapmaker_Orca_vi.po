@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Orca Slicer\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 12:56+0100\n"
+"POT-Creation-Date: 2026-11-09 13:41+0100\n"
 "PO-Revision-Date: 2025-10-02 17:43+0700\n"
 "Last-Translator: \n"
 "Language-Team: hainguyen.ts13@gmail.com\n"
@@ -2754,14 +2754,6 @@ msgid "Switching Snapmaker Orca to language %s failed."
 msgstr ""
 
 # AI Translated
-msgid ""
-"\n"
-"You may need to reconfigure the missing locales, likely by running the \"locale-gen\" and \"dpkg-reconfigure locales\" commands.\n"
-msgstr ""
-"\n"
-"Bạn có thể cần cấu hình lại các locale bị thiếu, thường là bằng cách chạy lệnh \"locale-gen\" và \"dpkg-reconfigure locales\".\n"
-
-# AI Translated
 msgid "Application will close."
 msgstr "Ứng dụng sẽ đóng."
 
@@ -3433,6 +3425,10 @@ msgstr "Đơn giản hóa model"
 # AI Translated
 msgid "Subdivision mesh"
 msgstr "Chia nhỏ lưới"
+
+# AI Translated
+msgid "(Lost color)"
+msgstr "(Mất màu)"
 
 msgid "Center"
 msgstr "Căn giữa"
@@ -10170,15 +10166,18 @@ msgstr "Mở khóa bản hiện tại"
 msgid "Lock current plate"
 msgstr "Khóa bản hiện tại"
 
-# AI Translated
-msgid "Filament grouping"
-msgstr "Nhóm filament"
+msgid "Customize current plate"
+msgstr "Tùy chỉnh bản hiện tại"
 
 msgid "Edit current plate name"
 msgstr "Chỉnh sửa tên bản hiện tại"
 
 msgid "Move plate to the front"
 msgstr "Di chuyển bản ra phía trước"
+
+# AI Translated
+msgid "Filament grouping"
+msgstr "Nhóm filament"
 
 # AI Translated
 #. TRN Plate icon tooltip. %1% is the plate's IDEX/IQEX mode, %2% the mode its process preset sets.
@@ -10194,9 +10193,6 @@ msgstr "Chế độ IDEX/IQEX: %1% (nhấn chuột trái để chuyển vòng, n
 # AI Translated
 msgid "Warning: this plate uses a parallel IDEX/IQEX mode with multi-material objects. Proceed with caution — verify your G-code handles this combination correctly."
 msgstr "Cảnh báo: plate này dùng chế độ IDEX/IQEX song song với các vật thể đa vật liệu. Hãy thận trọng — kiểm tra rằng G-code của bạn xử lý đúng tổ hợp này."
-
-msgid "Customize current plate"
-msgstr "Tùy chỉnh bản hiện tại"
 
 # AI Translated
 #, c-format, boost-format
@@ -10830,7 +10826,7 @@ msgstr "Khôi phục"
 msgid "The current hot bed temperature is relatively high. The nozzle may be clogged when printing this filament in a closed enclosure. Please open the front door and/or remove the upper glass."
 msgstr ""
 
-msgid "The nozzle hardness required by the filament is higher than the default nozzle hardness of the printer. Please replace the hardened nozzle or filament, otherwise, the nozzle will be attrited or damaged."
+msgid "The filament is too hard for the current nozzle. Please use a harder nozzle or a softer filament to avoid nozzle wear."
 msgstr ""
 
 msgid "Enabling traditional timelapse photography may cause surface imperfections. It is recommended to change to smooth mode."
@@ -11606,6 +11602,9 @@ msgid "Yes, Continue"
 msgstr ""
 
 msgid "No, Stop"
+msgstr ""
+
+msgid "Don't ask again next time"
 msgstr ""
 
 msgid "Failed to upload pre-print context. Open anyway?"
@@ -12443,6 +12442,9 @@ msgstr "Ghi nhớ thao tác in gần nhất"
 msgid "If enabled, Snapmaker Orca will remember the last selected option in the print button's dropdown (e.g. Print, Export plate sliced file, Export G-code file) and use it as the default on next startup."
 msgstr ""
 
+msgid "Show a dialog asking whether to continue slicing when memory is low"
+msgstr ""
+
 # AI Translated
 msgid "Camera"
 msgstr "Camera"
@@ -12590,6 +12592,12 @@ msgid "Simplify distant objects"
 msgstr ""
 
 msgid "Draws objects that are small on screen from a reduced copy of their mesh, which speeds up large plates. Selected objects, slicing, picking, measuring, thumbnails and exports always use the full mesh. Not used while wireframe, a section view, layer height editing or one of the tools Simplify, Cut, Mesh Boolean, Measure and Assemble is active. Takes effect immediately."
+msgstr ""
+
+msgid "Enable model shadows"
+msgstr ""
+
+msgid "Render soft shadows of objects on the build plate in the Prepare view. Requires OpenGL 3.3 or later."
 msgstr ""
 
 # AI Translated
@@ -12866,6 +12874,12 @@ msgstr "Ẩn bảng đăng nhập bên cạnh"
 # AI Translated
 msgid "Hide the login side panel on the home page."
 msgstr "Ẩn bảng đăng nhập bên cạnh trên trang chủ."
+
+msgid "Enable Snapmaker Space"
+msgstr ""
+
+msgid "When enabled, online models will be displayed on the Home page."
+msgstr ""
 
 # AI Translated
 msgid "Network test"
@@ -13871,9 +13885,6 @@ msgstr "Có một số filament không xác định trong ánh xạ AMS. Vui lò
 
 msgid "Please check the following:"
 msgstr "Vui lòng kiểm tra những điều sau:"
-
-msgid "Please fix the error above, otherwise printing cannot continue."
-msgstr "Vui lòng sửa lỗi ở trên, nếu không việc in không thể tiếp tục."
 
 msgid "Please click the confirm button if you still want to proceed with printing."
 msgstr "Vui lòng nhấp nút xác nhận nếu bạn vẫn muốn tiếp tục in."
@@ -18144,6 +18155,13 @@ msgstr "Ngưỡng kích hoạt làm mát phần nhô"
 msgid "When the overhang exceeds this specified threshold, force the cooling fan to run at the 'Overhang Fan Speed' set below. This threshold is expressed as a percentage, indicating the portion of each line's width that is unsupported by the layer beneath it. Setting this value to 0% forces the cooling fan to run for all outer walls, regardless of the overhang degree."
 msgstr "Khi phần nhô vượt quá ngưỡng được chỉ định này, bắt buộc quạt làm mát chạy ở 'Tốc độ quạt phần nhô' được đặt bên dưới. Ngưỡng này được biểu thị dưới dạng phần trăm, cho biết phần độ rộng của mỗi đường không được hỗ trợ bởi lớp bên dưới nó. Đặt giá trị này thành 0% bắt buộc quạt làm mát chạy cho tất cả thành ngoài, bất kể mức độ nhô."
 
+msgid "Overhang threshold for participating cooling"
+msgstr ""
+
+#, no-c-format, no-boost-format
+msgid "Decide which overhang part join the cooling function to slow down the speed. Expressed as percentage which indicates how much width of the line is without support from the lower layer. 100% means forcing cooling for all outer wall no matter how much overhang degree."
+msgstr ""
+
 msgid "External bridge infill direction"
 msgstr "Hướng infill cầu bên ngoài"
 
@@ -18619,6 +18637,10 @@ msgstr ""
 msgid "mm/s or %"
 msgstr "mm/s hoặc %"
 
+#, no-c-format, no-boost-format
+msgid "Speed of 100% overhang wall which has 0 overlap with the lower layer."
+msgstr ""
+
 # AI Translated
 msgid ""
 "Speed of the externally visible bridge extrusions.\n"
@@ -18829,6 +18851,32 @@ msgstr "Giảm tốc độ in để làm mát lớp tốt hơn"
 msgid "Enable this option to slow printing speed down to ensure that the final layer time is not shorter than the layer time threshold in \"Max fan speed threshold\", so that the layer can be cooled for a longer time. This can improve the quality for small details."
 msgstr "Bật tùy chọn này để giảm tốc độ in nhằm đảm bảo thời gian lớp cuối cùng không ngắn hơn ngưỡng thời gian lớp trong \"Ngưỡng tốc độ quạt tối đa\", để lớp có thể được làm mát lâu hơn. Điều này có thể cải thiện chất lượng cho các chi tiết nhỏ."
 
+msgid "Cooling slowdown logic"
+msgstr ""
+
+msgid ""
+"Determines how the printer slows down when minimum layer time isn't reached.\n"
+"\n"
+"'Uniform cooling' slows down all print features equally (current default behavior).\n"
+"\n"
+"'Consistent surface' prioritizes slowing infill and internal perimeters first, preserving external perimeter speed for better surface finish on glossy filaments. This helps reduce VFA (Vertical Fine Artifacts) and maintains consistent surface shine."
+msgstr ""
+
+msgid "Uniform cooling"
+msgstr ""
+
+msgid "Consistent surface"
+msgstr ""
+
+msgid "Perimeter transition distance"
+msgstr ""
+
+msgid ""
+"Distance in millimeters before the end of slowed perimeters where the original print speed is gradually restored. This prevents visible speed transitions at the end of perimeters.\n"
+"\n"
+"Only applies when 'Consistent surface' cooling logic is selected."
+msgstr ""
+
 msgid "Normal printing"
 msgstr "In bình thường"
 
@@ -18837,6 +18885,17 @@ msgstr "Gia tốc mặc định của cả in bình thường và di chuyển ng
 
 msgid "Acceleration of travel moves."
 msgstr "Gia tốc của di chuyển."
+
+msgid "Short travel"
+msgstr ""
+
+msgid ""
+"Acceleration used for short travel moves near external perimeters. Short travels are moves shorter than the 'Retraction minimum travel' distance.\n"
+"\n"
+"Lower values (e.g., 250-500 mm/s²) reduce ringing artifacts on sharp corners without significantly impacting print time.\n"
+"\n"
+"Set to 0 to disable (uses normal travel acceleration)."
+msgstr ""
 
 # AI Translated
 msgid "First layer travel"
@@ -21097,6 +21156,13 @@ msgstr "Chồng lấp infill đặc/thành trên/dưới"
 #, no-c-format, no-boost-format
 msgid "Top solid infill area is enlarged slightly to overlap with wall for better bonding and to minimize the appearance of pinholes where the top infill meets the walls. A value of 25-30% is a good starting point, minimizing the appearance of pinholes. The percentage value is relative to the inner wall line width."
 msgstr "Vùng infill đặc trên được mở rộng một chút để chồng lấp với thành để liên kết tốt hơn và giảm thiểu sự xuất hiện của lỗ kim nơi infill trên gặp thành. Giá trị 25-30% là điểm khởi đầu tốt, giảm thiểu sự xuất hiện của lỗ kim. Giá trị phần trăm tương đối với độ rộng đường của thành trong."
+
+msgid "Anchor solid infill by X mm"
+msgstr ""
+
+#, c-format, boost-format
+msgid "This parameter grows the top/bottom/solid layers by the specified mm to anchor them into the sparse infill and support the perimeters above. Can be a %% of the width of the perimeters."
+msgstr ""
 
 msgid "This is the speed for internal sparse infill."
 msgstr "Tốc độ của infill thưa bên trong."
@@ -29698,11 +29764,11 @@ msgstr ""
 msgid "Manually select filaments from the current list for color mixing."
 msgstr ""
 
-msgid "Automatically select an official filament set for color mixing match. Mix ratio for each color: 0%–70%."
+msgid "Automatically select an official filament set for color mixing match. Two-color ratios: 15%–85%; three-color ratios: 15%–70%."
 msgstr ""
 
 #, c-format, boost-format
-msgid "The mix ratios for %s in the Color Mapping list are outside the recommended %d%%–%d%% range. Adjust the mix ratios manually for better results."
+msgid "The mix ratios for %s in the Color Mapping list are outside the recommended ranges. Adjust the mix ratios manually for better results."
 msgstr ""
 
 msgid "Color mapping list limit reached (max 64 colors). Excess colors will be removed."
@@ -41006,6 +41072,17 @@ msgid ""
 msgstr ""
 
 # AI Translated
+#~ msgid ""
+#~ "\n"
+#~ "You may need to reconfigure the missing locales, likely by running the \"locale-gen\" and \"dpkg-reconfigure locales\" commands.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Bạn có thể cần cấu hình lại các locale bị thiếu, thường là bằng cách chạy lệnh \"locale-gen\" và \"dpkg-reconfigure locales\".\n"
+
+#~ msgid "Please fix the error above, otherwise printing cannot continue."
+#~ msgstr "Vui lòng sửa lỗi ở trên, nếu không việc in không thể tiếp tục."
+
+# AI Translated
 #~ msgid "Reading"
 #~ msgstr "Đang đọc"
 
@@ -41098,10 +41175,6 @@ msgstr ""
 
 #~ msgid "Split the selected object"
 #~ msgstr "Tách vật thể đã chọn"
-
-# AI Translated
-#~ msgid "(Lost color)"
-#~ msgstr "(Mất màu)"
 
 # AI Translated
 #~ msgid "Filament "

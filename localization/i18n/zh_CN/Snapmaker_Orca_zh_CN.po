@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Slic3rPE\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 12:56+0100\n"
+"POT-Creation-Date: 2026-11-09 13:41+0100\n"
 "PO-Revision-Date: 2026-04-03 17:31+0800\n"
 "Last-Translator: Handle <mail@bysb.net>\n"
 "Language-Team: \n"
@@ -2557,14 +2557,6 @@ msgid "Switching Snapmaker Orca to language %s failed."
 msgstr ""
 
 # AI Translated
-msgid ""
-"\n"
-"You may need to reconfigure the missing locales, likely by running the \"locale-gen\" and \"dpkg-reconfigure locales\" commands.\n"
-msgstr ""
-"\n"
-"您可能需要重新配置缺失的区域设置，通常可以通过运行 “locale-gen” 和 “dpkg-reconfigure locales” 命令来完成。\n"
-
-# AI Translated
 msgid "Application will close."
 msgstr "应用程序将关闭。"
 
@@ -3199,6 +3191,9 @@ msgstr "简化模型"
 
 msgid "Subdivision mesh"
 msgstr "细分网格"
+
+msgid "(Lost color)"
+msgstr "（丢失的颜色）"
 
 msgid "Center"
 msgstr "居中"
@@ -9558,14 +9553,17 @@ msgstr "解锁当前板"
 msgid "Lock current plate"
 msgstr "锁定当前板"
 
-msgid "Filament grouping"
-msgstr "耗材丝分组"
+msgid "Customize current plate"
+msgstr "自定义当前板"
 
 msgid "Edit current plate name"
 msgstr "编辑当前盘名"
 
 msgid "Move plate to the front"
 msgstr "将当前板移到最前面"
+
+msgid "Filament grouping"
+msgstr "耗材丝分组"
 
 # AI Translated
 #. TRN Plate icon tooltip. %1% is the plate's IDEX/IQEX mode, %2% the mode its process preset sets.
@@ -9581,9 +9579,6 @@ msgstr "IDEX/IQEX 模式：%1%（左键单击循环切换，右键单击打开�
 # AI Translated
 msgid "Warning: this plate uses a parallel IDEX/IQEX mode with multi-material objects. Proceed with caution — verify your G-code handles this combination correctly."
 msgstr "警告：此盘包含多材料对象，同时使用了 IDEX/IQEX 并行模式。请谨慎操作，并确认您的 G-code 能正确处理这种组合。"
-
-msgid "Customize current plate"
-msgstr "自定义当前板"
 
 # AI Translated
 #, c-format, boost-format
@@ -10211,8 +10206,8 @@ msgstr "恢复"
 msgid "The current hot bed temperature is relatively high. The nozzle may be clogged when printing this filament in a closed enclosure. Please open the front door and/or remove the upper glass."
 msgstr "当前热床温度相对较高。在封闭式外壳中打印这种丝可能会导致喷嘴堵塞。请打开前门和/或取下上部玻璃。"
 
-msgid "The nozzle hardness required by the filament is higher than the default nozzle hardness of the printer. Please replace the hardened nozzle or filament, otherwise, the nozzle will be attrited or damaged."
-msgstr "打印丝所要求的喷嘴硬度高于打印机默认的喷嘴硬度。请更换硬化的喷嘴或打印丝，否则喷嘴可能被磨损或损坏。"
+msgid "The filament is too hard for the current nozzle. Please use a harder nozzle or a softer filament to avoid nozzle wear."
+msgstr "耗材丝所要求的喷嘴硬度高于打印机的喷嘴硬度。请更换更高硬度的喷嘴或者更低硬度的耗材丝，否则可能导致喷嘴磨损。"
 
 msgid "Enabling traditional timelapse photography may cause surface imperfections. It is recommended to change to smooth mode."
 msgstr "启用传统的延时摄影可能会导致表面瑕疵。建议更改为平滑模式。"
@@ -10965,6 +10960,9 @@ msgstr "是，继续"
 
 msgid "No, Stop"
 msgstr "否，停止"
+
+msgid "Don't ask again next time"
+msgstr "下次不再提示"
 
 msgid "Failed to upload pre-print context. Open anyway?"
 msgstr ""
@@ -11745,6 +11743,9 @@ msgstr "记住上次的打印操作"
 msgid "If enabled, Snapmaker Orca will remember the last selected option in the print button's dropdown (e.g. Print, Export plate sliced file, Export G-code file) and use it as the default on next startup."
 msgstr ""
 
+msgid "Show a dialog asking whether to continue slicing when memory is low"
+msgstr "内存不足时，弹窗提示用户是否执行切片"
+
 msgid "Camera"
 msgstr "摄像机"
 
@@ -11877,6 +11878,12 @@ msgid "Simplify distant objects"
 msgstr ""
 
 msgid "Draws objects that are small on screen from a reduced copy of their mesh, which speeds up large plates. Selected objects, slicing, picking, measuring, thumbnails and exports always use the full mesh. Not used while wireframe, a section view, layer height editing or one of the tools Simplify, Cut, Mesh Boolean, Measure and Assemble is active. Takes effect immediately."
+msgstr ""
+
+msgid "Enable model shadows"
+msgstr "显示模型阴影"
+
+msgid "Render soft shadows of objects on the build plate in the Prepare view. Requires OpenGL 3.3 or later."
 msgstr ""
 
 msgid "Phong shading"
@@ -12137,6 +12144,12 @@ msgstr "隐藏登录侧边栏"
 
 msgid "Hide the login side panel on the home page."
 msgstr "在主页上隐藏登录侧边栏。"
+
+msgid "Enable Snapmaker Space"
+msgstr "开启模型站"
+
+msgid "When enabled, online models will be displayed on the Home page."
+msgstr "开启后，将在主页显示在线模型"
 
 msgid "Network test"
 msgstr "网络测试"
@@ -13088,9 +13101,6 @@ msgstr "AMS映射中存在一些未知的耗材。请检查它们是否符合预
 
 msgid "Please check the following:"
 msgstr "请检查以下内容："
-
-msgid "Please fix the error above, otherwise printing cannot continue."
-msgstr "请修复上述错误，否则打印无法继续。"
 
 msgid "Please click the confirm button if you still want to proceed with printing."
 msgstr "如果您仍然想继续打印，请单击“确定”按钮。"
@@ -17170,6 +17180,13 @@ msgstr "悬垂冷却激活阈值"
 msgid "When the overhang exceeds this specified threshold, force the cooling fan to run at the 'Overhang Fan Speed' set below. This threshold is expressed as a percentage, indicating the portion of each line's width that is unsupported by the layer beneath it. Setting this value to 0% forces the cooling fan to run for all outer walls, regardless of the overhang degree."
 msgstr "当悬垂超过此指定阈值时，强制部件冷却风扇按照下方设置的“悬垂风扇速度”运转。该阈值以百分比表示，指示每条走线宽度中未被下层支撑的部分。将此值设置为0%即使在任何悬垂条件下也会使风扇运转于所有外壁。"
 
+msgid "Overhang threshold for participating cooling"
+msgstr "参与冷却降速的悬垂阈值"
+
+#, no-c-format, no-boost-format
+msgid "Decide which overhang part join the cooling function to slow down the speed. Expressed as percentage which indicates how much width of the line is without support from the lower layer. 100% means forcing cooling for all outer wall no matter how much overhang degree."
+msgstr "决定哪部分悬垂结构参与冷却降速。以线宽无下层支撑的比例表示。100% 表示无论悬垂程度如何，所有外墙都强制参与冷却降速。"
+
 msgid "External bridge infill direction"
 msgstr "外部桥接填充方向"
 
@@ -17588,6 +17605,10 @@ msgstr ""
 msgid "mm/s or %"
 msgstr "mm/s 或 %"
 
+#, no-c-format, no-boost-format
+msgid "Speed of 100% overhang wall which has 0 overlap with the lower layer."
+msgstr "100% 悬空墙的速度，与下层无重叠。"
+
 # AI Translated
 msgid ""
 "Speed of the externally visible bridge extrusions.\n"
@@ -17794,6 +17815,40 @@ msgstr "降低打印速度 以得到更好的冷却"
 msgid "Enable this option to slow printing speed down to ensure that the final layer time is not shorter than the layer time threshold in \"Max fan speed threshold\", so that the layer can be cooled for a longer time. This can improve the quality for small details."
 msgstr "勾选这个选项，将降低打印速度，使得最终的层打印时间不小于\"最大风扇速度阈值\"里的层时间阈值，从而使得该层获得更久的冷却。这能够改善尖顶和小细节的冷却效果"
 
+msgid "Cooling slowdown logic"
+msgstr "冷却减速逻辑"
+
+msgid ""
+"Determines how the printer slows down when minimum layer time isn't reached.\n"
+"\n"
+"'Uniform cooling' slows down all print features equally (current default behavior).\n"
+"\n"
+"'Consistent surface' prioritizes slowing infill and internal perimeters first, preserving external perimeter speed for better surface finish on glossy filaments. This helps reduce VFA (Vertical Fine Artifacts) and maintains consistent surface shine."
+msgstr ""
+"决定打印机在未达到最短层时间时如何降速。\n"
+"\n"
+"“均匀冷却”对所有打印特征同等降速（当前默认行为）。\n"
+"\n"
+"“表面一致性”优先降低填充和内壁的打印速度，保持外墙速度以获得更好的表面光洁度（尤其是光面耗材）。有助于减少 VFA（垂直细纹）并保持表面光泽一致。"
+
+msgid "Uniform cooling"
+msgstr "均匀冷却"
+
+msgid "Consistent surface"
+msgstr "表面一致性"
+
+msgid "Perimeter transition distance"
+msgstr "外围过渡距离"
+
+msgid ""
+"Distance in millimeters before the end of slowed perimeters where the original print speed is gradually restored. This prevents visible speed transitions at the end of perimeters.\n"
+"\n"
+"Only applies when 'Consistent surface' cooling logic is selected."
+msgstr ""
+"在降速外壁结束前的一段距离内逐渐恢复原始打印速度（毫米），避免外壁末端出现可见的速度突变。\n"
+"\n"
+"仅在冷却减速逻辑选择“表面一致性”时生效。"
+
 msgid "Normal printing"
 msgstr "普通打印"
 
@@ -17802,6 +17857,22 @@ msgstr "除首层之外的默认的打印和空驶的加速度"
 
 msgid "Acceleration of travel moves."
 msgstr "空驶加速度"
+
+msgid "Short travel"
+msgstr "短程移动"
+
+msgid ""
+"Acceleration used for short travel moves near external perimeters. Short travels are moves shorter than the 'Retraction minimum travel' distance.\n"
+"\n"
+"Lower values (e.g., 250-500 mm/s²) reduce ringing artifacts on sharp corners without significantly impacting print time.\n"
+"\n"
+"Set to 0 to disable (uses normal travel acceleration)."
+msgstr ""
+"外墙附近短距离空走使用的加速度。短空走指短于“回抽最小空走距离”的移动。\n"
+"\n"
+"较低的值（如 250-500 mm/s²）可减少尖角处的振纹，且几乎不影响打印时间。\n"
+"\n"
+"设为 0 表示禁用（使用普通空走加速度）。"
 
 msgid "First layer travel"
 msgstr "首层空驶"
@@ -19985,6 +20056,13 @@ msgstr "顶/底部实心填充/墙重叠率"
 #, no-c-format, no-boost-format
 msgid "Top solid infill area is enlarged slightly to overlap with wall for better bonding and to minimize the appearance of pinholes where the top infill meets the walls. A value of 25-30% is a good starting point, minimizing the appearance of pinholes. The percentage value is relative to the inner wall line width."
 msgstr "顶部实心填充区域略微扩大，以便与墙重叠，以获得更好的粘合，并减少顶部填充与墙相接处的小孔出现。25-30%的值是一个很好的起点，可以减少小孔的出现。百分比值相对于内墙线宽。"
+
+msgid "Anchor solid infill by X mm"
+msgstr "顶部实心填充"
+
+#, c-format, boost-format
+msgid "This parameter grows the top/bottom/solid layers by the specified mm to anchor them into the sparse infill and support the perimeters above. Can be a %% of the width of the perimeters."
+msgstr "该参数会将顶/底/实体层向外扩展指定的毫米数，使其锚固到稀疏填充中，并为上方的外壁提供支撑。也可以设为外壁宽度的百分比。"
 
 msgid "This is the speed for internal sparse infill."
 msgstr "内部稀疏填充的打印速度"
@@ -28262,12 +28340,12 @@ msgstr "未配置官方 Full Spectrum 全光谱耗材，将自动使用已配置
 msgid "Manually select filaments from the current list for color mixing."
 msgstr "手动选择当前列表中的耗材进行混色匹配。"
 
-msgid "Automatically select an official filament set for color mixing match. Mix ratio for each color: 0%–70%."
-msgstr "自动选择官方混色耗材套装进行混色匹配。单色混色比例范围：0%–70%。"
+msgid "Automatically select an official filament set for color mixing match. Two-color ratios: 15%–85%; three-color ratios: 15%–70%."
+msgstr "自动选择官方混色耗材套装进行混色匹配。双色混色比例：15%-85%；三色混色比例：15%-70%。"
 
 #, c-format, boost-format
-msgid "The mix ratios for %s in the Color Mapping list are outside the recommended %d%%–%d%% range. Adjust the mix ratios manually for better results."
-msgstr "Color Mapping 列表中 %s 的混色比例超出推荐范围 %d%%–%d%%。请手动调整混色比例以获得更好效果。"
+msgid "The mix ratios for %s in the Color Mapping list are outside the recommended ranges. Adjust the mix ratios manually for better results."
+msgstr "颜色映射列表中 %s 混色比例超出推荐范围。建议手动调整混色比例，以获得更好的颜色效果。"
 
 msgid "Color mapping list limit reached (max 64 colors). Excess colors will be removed."
 msgstr "颜色映射列表已达上限（64 色），超出颜色将被移除。"
@@ -39559,6 +39637,27 @@ msgid ""
 "Did you know that when printing materials that are prone to warping such as ABS, appropriately increasing the heatbed temperature can reduce the probability of warping."
 msgstr ""
 
+# AI Translated
+#~ msgid ""
+#~ "\n"
+#~ "You may need to reconfigure the missing locales, likely by running the \"locale-gen\" and \"dpkg-reconfigure locales\" commands.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "您可能需要重新配置缺失的区域设置，通常可以通过运行 “locale-gen” 和 “dpkg-reconfigure locales” 命令来完成。\n"
+
+#~ msgid "The nozzle hardness required by the filament is higher than the default nozzle hardness of the printer. Please replace the hardened nozzle or filament, otherwise, the nozzle will be attrited or damaged."
+#~ msgstr "打印丝所要求的喷嘴硬度高于打印机默认的喷嘴硬度。请更换硬化的喷嘴或打印丝，否则喷嘴可能被磨损或损坏。"
+
+#~ msgid "Please fix the error above, otherwise printing cannot continue."
+#~ msgstr "请修复上述错误，否则打印无法继续。"
+
+#~ msgid "Automatically select an official filament set for color mixing match. Mix ratio for each color: 0%–70%."
+#~ msgstr "自动选择官方混色耗材套装进行混色匹配。单色混色比例范围：0%–70%。"
+
+#, c-format, boost-format
+#~ msgid "The mix ratios for %s in the Color Mapping list are outside the recommended %d%%–%d%% range. Adjust the mix ratios manually for better results."
+#~ msgstr "Color Mapping 列表中 %s 的混色比例超出推荐范围 %d%%–%d%%。请手动调整混色比例以获得更好效果。"
+
 #~ msgid "Reading"
 #~ msgstr "读取中"
 
@@ -39649,9 +39748,6 @@ msgstr ""
 
 #~ msgid "Split the selected object"
 #~ msgstr "拆分所选对象"
-
-#~ msgid "(Lost color)"
-#~ msgstr "（丢失的颜色）"
 
 #~ msgid "Filament "
 #~ msgstr "耗材丝"

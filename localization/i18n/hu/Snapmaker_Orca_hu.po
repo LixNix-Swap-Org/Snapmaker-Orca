@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Snapmaker Orca\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 12:56+0100\n"
+"POT-Creation-Date: 2026-11-09 13:41+0100\n"
 "Language: hu\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -2639,14 +2639,6 @@ msgid "Switching Snapmaker Orca to language %s failed."
 msgstr ""
 
 # AI Translated
-msgid ""
-"\n"
-"You may need to reconfigure the missing locales, likely by running the \"locale-gen\" and \"dpkg-reconfigure locales\" commands.\n"
-msgstr ""
-"\n"
-"Előfordulhat, hogy újra kell konfigurálnod a hiányzó nyelvi beállításokat, valószínűleg a \"locale-gen\" és a \"dpkg-reconfigure locales\" parancsok futtatásával.\n"
-
-# AI Translated
 msgid "Application will close."
 msgstr "Az alkalmazás bezárul."
 
@@ -3284,6 +3276,9 @@ msgstr "Modell egyszerűsítése"
 
 msgid "Subdivision mesh"
 msgstr "Háló felosztása"
+
+msgid "(Lost color)"
+msgstr "(Elveszett szín)"
 
 msgid "Center"
 msgstr "Közép"
@@ -9751,14 +9746,17 @@ msgstr "Aktuális tálca feloldása"
 msgid "Lock current plate"
 msgstr "Aktuális tálca zárolása"
 
-msgid "Filament grouping"
-msgstr "Filamentcsoportosítás"
+msgid "Customize current plate"
+msgstr "Aktuális tálca testreszabása"
 
 msgid "Edit current plate name"
 msgstr "Aktuális tálcanév szerkesztése"
 
 msgid "Move plate to the front"
 msgstr "Tálca előre helyezése"
+
+msgid "Filament grouping"
+msgstr "Filamentcsoportosítás"
 
 # AI Translated
 #. TRN Plate icon tooltip. %1% is the plate's IDEX/IQEX mode, %2% the mode its process preset sets.
@@ -9774,9 +9772,6 @@ msgstr "IDEX/IQEX mód: %1% (bal kattintás: váltás, jobb kattintás: menü)"
 # AI Translated
 msgid "Warning: this plate uses a parallel IDEX/IQEX mode with multi-material objects. Proceed with caution — verify your G-code handles this combination correctly."
 msgstr "Figyelmeztetés: ez a tálca párhuzamos IDEX/IQEX módot használ többanyagú objektumokkal. Óvatosan folytasd — ellenőrizd, hogy a G-code-od helyesen kezeli-e ezt a kombinációt."
-
-msgid "Customize current plate"
-msgstr "Aktuális tálca testreszabása"
 
 # AI Translated
 #, c-format, boost-format
@@ -10395,7 +10390,7 @@ msgstr "Visszaállítás"
 msgid "The current hot bed temperature is relatively high. The nozzle may be clogged when printing this filament in a closed enclosure. Please open the front door and/or remove the upper glass."
 msgstr "The current heatbed temperature is relatively high. The nozzle may clog when printing this filament in a closed environment. Please open the front door and/or remove the upper glass."
 
-msgid "The nozzle hardness required by the filament is higher than the default nozzle hardness of the printer. Please replace the hardened nozzle or filament, otherwise, the nozzle will be attrited or damaged."
+msgid "The filament is too hard for the current nozzle. Please use a harder nozzle or a softer filament to avoid nozzle wear."
 msgstr "Ez a filament nagyobb keménységű fúvókát igényel. Kérjük, cseréld ki a fúvókát vagy válassz másik filamentet, különben előfordulhat, hogy a fúvóka idő előtt elhasználódik vagy megsérül."
 
 msgid "Enabling traditional timelapse photography may cause surface imperfections. It is recommended to change to smooth mode."
@@ -11151,6 +11146,9 @@ msgid "Yes, Continue"
 msgstr ""
 
 msgid "No, Stop"
+msgstr ""
+
+msgid "Don't ask again next time"
 msgstr ""
 
 msgid "Failed to upload pre-print context. Open anyway?"
@@ -11931,6 +11929,9 @@ msgstr "Utolsó nyomtatási művelet megjegyzése"
 msgid "If enabled, Snapmaker Orca will remember the last selected option in the print button's dropdown (e.g. Print, Export plate sliced file, Export G-code file) and use it as the default on next startup."
 msgstr ""
 
+msgid "Show a dialog asking whether to continue slicing when memory is low"
+msgstr ""
+
 msgid "Camera"
 msgstr "Kamera"
 
@@ -12064,6 +12065,12 @@ msgid "Simplify distant objects"
 msgstr ""
 
 msgid "Draws objects that are small on screen from a reduced copy of their mesh, which speeds up large plates. Selected objects, slicing, picking, measuring, thumbnails and exports always use the full mesh. Not used while wireframe, a section view, layer height editing or one of the tools Simplify, Cut, Mesh Boolean, Measure and Assemble is active. Takes effect immediately."
+msgstr ""
+
+msgid "Enable model shadows"
+msgstr ""
+
+msgid "Render soft shadows of objects on the build plate in the Prepare view. Requires OpenGL 3.3 or later."
 msgstr ""
 
 # AI Translated
@@ -12332,6 +12339,12 @@ msgstr "Bejelentkezési oldalsáv elrejtése"
 # AI Translated
 msgid "Hide the login side panel on the home page."
 msgstr "Elrejti a bejelentkezési oldalsávot a kezdőlapon."
+
+msgid "Enable Snapmaker Space"
+msgstr ""
+
+msgid "When enabled, online models will be displayed on the Home page."
+msgstr ""
 
 msgid "Network test"
 msgstr "Hálózati teszt"
@@ -13303,9 +13316,6 @@ msgstr "Van néhány ismeretlen filament az AMS kiosztásban. Győződj meg ról
 
 msgid "Please check the following:"
 msgstr "Kérlek, ellenőrizd a következőket:"
-
-msgid "Please fix the error above, otherwise printing cannot continue."
-msgstr "Kérlek, javítsd ki a fenti hibát, különben a nyomtatás nem folytatható."
 
 msgid "Please click the confirm button if you still want to proceed with printing."
 msgstr "Ha továbbra is folytatni szeretnéd a nyomtatást, kattints a megerősítés gombra."
@@ -17449,6 +17459,13 @@ msgstr "Túlnyúlás-hűtés aktiválási küszöbértéke"
 msgid "When the overhang exceeds this specified threshold, force the cooling fan to run at the 'Overhang Fan Speed' set below. This threshold is expressed as a percentage, indicating the portion of each line's width that is unsupported by the layer beneath it. Setting this value to 0% forces the cooling fan to run for all outer walls, regardless of the overhang degree."
 msgstr "Ha a túlnyúlás meghaladja ezt a megadott küszöbértéket, a hűtőventilátor az alább beállított \"Túlnyúlások és külső hidak ventilátorsebessége\" értéken fog működni. Ez a küszöb százalékban van megadva, és azt jelöli, hogy az egyes vonalak szélességének mekkora része marad alátámasztás nélkül az alatta lévő réteghez képest. Az érték 0%-ra állítása minden külső falnál bekapcsolja a hűtőventilátort, a túlnyúlás mértékétől függetlenül."
 
+msgid "Overhang threshold for participating cooling"
+msgstr ""
+
+#, no-c-format, no-boost-format
+msgid "Decide which overhang part join the cooling function to slow down the speed. Expressed as percentage which indicates how much width of the line is without support from the lower layer. 100% means forcing cooling for all outer wall no matter how much overhang degree."
+msgstr ""
+
 msgid "External bridge infill direction"
 msgstr "Külső híd kitöltési iránya"
 
@@ -17904,6 +17921,10 @@ msgstr ""
 msgid "mm/s or %"
 msgstr "mm/s vagy %"
 
+#, no-c-format, no-boost-format
+msgid "Speed of 100% overhang wall which has 0 overlap with the lower layer."
+msgstr ""
+
 # AI Translated
 msgid ""
 "Speed of the externally visible bridge extrusions.\n"
@@ -18110,6 +18131,32 @@ msgstr "Nyomtatás lelassítása a jobb hűtés érdekében"
 msgid "Enable this option to slow printing speed down to ensure that the final layer time is not shorter than the layer time threshold in \"Max fan speed threshold\", so that the layer can be cooled for a longer time. This can improve the quality for small details."
 msgstr "Engedélyezd ezt az opciót a nyomtatási sebesség lassításához, hogy a rétegidő ne lehessen kevesebb, mint a \"Max. ventilátor fordulatszám\"-nál megadott küszöbérték. Ezáltal a rétegnek több ideje marad visszahűlni és javulhat a kisebb részletek nyomtatási minősége"
 
+msgid "Cooling slowdown logic"
+msgstr ""
+
+msgid ""
+"Determines how the printer slows down when minimum layer time isn't reached.\n"
+"\n"
+"'Uniform cooling' slows down all print features equally (current default behavior).\n"
+"\n"
+"'Consistent surface' prioritizes slowing infill and internal perimeters first, preserving external perimeter speed for better surface finish on glossy filaments. This helps reduce VFA (Vertical Fine Artifacts) and maintains consistent surface shine."
+msgstr ""
+
+msgid "Uniform cooling"
+msgstr ""
+
+msgid "Consistent surface"
+msgstr ""
+
+msgid "Perimeter transition distance"
+msgstr ""
+
+msgid ""
+"Distance in millimeters before the end of slowed perimeters where the original print speed is gradually restored. This prevents visible speed transitions at the end of perimeters.\n"
+"\n"
+"Only applies when 'Consistent surface' cooling logic is selected."
+msgstr ""
+
 msgid "Normal printing"
 msgstr "Normál nyomtatás"
 
@@ -18118,6 +18165,17 @@ msgstr "Ez az alapértelmezett gyorsulás mind a normál nyomtatáshoz, mind az 
 
 msgid "Acceleration of travel moves."
 msgstr "Az utazó mozgások gyorsulása."
+
+msgid "Short travel"
+msgstr ""
+
+msgid ""
+"Acceleration used for short travel moves near external perimeters. Short travels are moves shorter than the 'Retraction minimum travel' distance.\n"
+"\n"
+"Lower values (e.g., 250-500 mm/s²) reduce ringing artifacts on sharp corners without significantly impacting print time.\n"
+"\n"
+"Set to 0 to disable (uses normal travel acceleration)."
+msgstr ""
 
 msgid "First layer travel"
 msgstr "Első réteg mozgás"
@@ -20312,6 +20370,13 @@ msgstr "Felső/alsó tömör kitöltés és fal átfedése"
 #, no-c-format, no-boost-format
 msgid "Top solid infill area is enlarged slightly to overlap with wall for better bonding and to minimize the appearance of pinholes where the top infill meets the walls. A value of 25-30% is a good starting point, minimizing the appearance of pinholes. The percentage value is relative to the inner wall line width."
 msgstr "A jobb kötés és a felső kitöltés falhoz csatlakozásánál megjelenő apró lyukak csökkentése érdekében kissé megnöveli a felső tömör kitöltés területét, hogy az átfedje a falat. Jó kiindulási érték a 25-30%. A százalékos érték a belső fal vonalszélességéhez viszonyított."
+
+msgid "Anchor solid infill by X mm"
+msgstr ""
+
+#, c-format, boost-format
+msgid "This parameter grows the top/bottom/solid layers by the specified mm to anchor them into the sparse infill and support the perimeters above. Can be a %% of the width of the perimeters."
+msgstr ""
 
 msgid "This is the speed for internal sparse infill."
 msgstr "A belső kitöltés sebessége"
@@ -28694,11 +28759,11 @@ msgstr ""
 msgid "Manually select filaments from the current list for color mixing."
 msgstr ""
 
-msgid "Automatically select an official filament set for color mixing match. Mix ratio for each color: 0%–70%."
+msgid "Automatically select an official filament set for color mixing match. Two-color ratios: 15%–85%; three-color ratios: 15%–70%."
 msgstr ""
 
 #, c-format, boost-format
-msgid "The mix ratios for %s in the Color Mapping list are outside the recommended %d%%–%d%% range. Adjust the mix ratios manually for better results."
+msgid "The mix ratios for %s in the Color Mapping list are outside the recommended ranges. Adjust the mix ratios manually for better results."
 msgstr ""
 
 msgid "Color mapping list limit reached (max 64 colors). Excess colors will be removed."
@@ -40072,6 +40137,20 @@ msgid ""
 msgstr ""
 
 # AI Translated
+#~ msgid ""
+#~ "\n"
+#~ "You may need to reconfigure the missing locales, likely by running the \"locale-gen\" and \"dpkg-reconfigure locales\" commands.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Előfordulhat, hogy újra kell konfigurálnod a hiányzó nyelvi beállításokat, valószínűleg a \"locale-gen\" és a \"dpkg-reconfigure locales\" parancsok futtatásával.\n"
+
+#~ msgid "The nozzle hardness required by the filament is higher than the default nozzle hardness of the printer. Please replace the hardened nozzle or filament, otherwise, the nozzle will be attrited or damaged."
+#~ msgstr "Ez a filament nagyobb keménységű fúvókát igényel. Kérjük, cseréld ki a fúvókát vagy válassz másik filamentet, különben előfordulhat, hogy a fúvóka idő előtt elhasználódik vagy megsérül."
+
+#~ msgid "Please fix the error above, otherwise printing cannot continue."
+#~ msgstr "Kérlek, javítsd ki a fenti hibát, különben a nyomtatás nem folytatható."
+
+# AI Translated
 #~ msgid "Reading"
 #~ msgstr "Beolvasás"
 
@@ -40164,9 +40243,6 @@ msgstr ""
 
 #~ msgid "Split the selected object"
 #~ msgstr "Szétválasztja a kijelölt objektumot"
-
-#~ msgid "(Lost color)"
-#~ msgstr "(Elveszett szín)"
 
 #~ msgid "Filament "
 #~ msgstr "Filament "

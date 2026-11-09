@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Snapmaker Orca\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 12:56+0100\n"
+"POT-Creation-Date: 2026-11-09 13:41+0100\n"
 "PO-Revision-Date: 2025-06-02 17:12+0900\n"
 "Last-Translator: crwusiz <crwusiz@gmail.com>\n"
 "Language-Team: \n"
@@ -2660,14 +2660,6 @@ msgid "Switching Snapmaker Orca to language %s failed."
 msgstr ""
 
 # AI Translated
-msgid ""
-"\n"
-"You may need to reconfigure the missing locales, likely by running the \"locale-gen\" and \"dpkg-reconfigure locales\" commands.\n"
-msgstr ""
-"\n"
-"누락된 로캘을 다시 구성해야 할 수 있습니다. 일반적으로 \"locale-gen\" 및 \"dpkg-reconfigure locales\" 명령을 실행하면 됩니다.\n"
-
-# AI Translated
 msgid "Application will close."
 msgstr "애플리케이션이 종료됩니다."
 
@@ -3308,6 +3300,9 @@ msgstr "모델 단순화"
 
 msgid "Subdivision mesh"
 msgstr "서브디비전 메쉬"
+
+msgid "(Lost color)"
+msgstr "(색상 손실)"
 
 msgid "Center"
 msgstr "중앙"
@@ -9771,14 +9766,17 @@ msgstr "현재 플레이트 잠금 해제"
 msgid "Lock current plate"
 msgstr "현재 플레이트 잠금"
 
-msgid "Filament grouping"
-msgstr "필라멘트 그룹핑"
+msgid "Customize current plate"
+msgstr "사용자 정의 플레이트"
 
 msgid "Edit current plate name"
 msgstr "현재 번호판 이름 수정"
 
 msgid "Move plate to the front"
 msgstr "플레이트를 앞쪽으로 이동"
+
+msgid "Filament grouping"
+msgstr "필라멘트 그룹핑"
 
 # AI Translated
 #. TRN Plate icon tooltip. %1% is the plate's IDEX/IQEX mode, %2% the mode its process preset sets.
@@ -9794,9 +9792,6 @@ msgstr "IDEX/IQEX 모드: %1% (왼쪽 클릭으로 전환, 오른쪽 클릭으�
 # AI Translated
 msgid "Warning: this plate uses a parallel IDEX/IQEX mode with multi-material objects. Proceed with caution — verify your G-code handles this combination correctly."
 msgstr "경고: 이 플레이트는 다중 재료 객체와 함께 IDEX/IQEX 병렬 모드를 사용합니다. 주의해서 진행하고, G-code가 이 조합을 올바르게 처리하는지 확인하세요."
-
-msgid "Customize current plate"
-msgstr "사용자 정의 플레이트"
 
 # AI Translated
 #, c-format, boost-format
@@ -10416,7 +10411,7 @@ msgstr "복원"
 msgid "The current hot bed temperature is relatively high. The nozzle may be clogged when printing this filament in a closed enclosure. Please open the front door and/or remove the upper glass."
 msgstr "현재 베드 온도가 상대적으로 높습니다. 닫힌 공간에서 이 필라멘트를 출력할 때 노즐이 막힐 수 있습니다. 전면 도어를 열거나 상단 유리를 제거하세요."
 
-msgid "The nozzle hardness required by the filament is higher than the default nozzle hardness of the printer. Please replace the hardened nozzle or filament, otherwise, the nozzle will be attrited or damaged."
+msgid "The filament is too hard for the current nozzle. Please use a harder nozzle or a softer filament to avoid nozzle wear."
 msgstr "필라멘트에 필요한 노즐 경도가 프린터의 기본 노즐 경도보다 높습니다. \"경화강\" 노즐을 사용하거나 필라멘트를 교체하세요. 그렇지 않으면 노즐이 마모되거나 손상됩니다."
 
 msgid "Enabling traditional timelapse photography may cause surface imperfections. It is recommended to change to smooth mode."
@@ -11194,6 +11189,9 @@ msgid "Yes, Continue"
 msgstr ""
 
 msgid "No, Stop"
+msgstr ""
+
+msgid "Don't ask again next time"
 msgstr ""
 
 msgid "Failed to upload pre-print context. Open anyway?"
@@ -12008,6 +12006,9 @@ msgstr "마지막 출력 동작 기억"
 msgid "If enabled, Snapmaker Orca will remember the last selected option in the print button's dropdown (e.g. Print, Export plate sliced file, Export G-code file) and use it as the default on next startup."
 msgstr ""
 
+msgid "Show a dialog asking whether to continue slicing when memory is low"
+msgstr ""
+
 msgid "Camera"
 msgstr "카메라"
 
@@ -12155,6 +12156,12 @@ msgid "Simplify distant objects"
 msgstr ""
 
 msgid "Draws objects that are small on screen from a reduced copy of their mesh, which speeds up large plates. Selected objects, slicing, picking, measuring, thumbnails and exports always use the full mesh. Not used while wireframe, a section view, layer height editing or one of the tools Simplify, Cut, Mesh Boolean, Measure and Assemble is active. Takes effect immediately."
+msgstr ""
+
+msgid "Enable model shadows"
+msgstr ""
+
+msgid "Render soft shadows of objects on the build plate in the Prepare view. Requires OpenGL 3.3 or later."
 msgstr ""
 
 # AI Translated
@@ -12430,6 +12437,12 @@ msgstr "로그인 사이드 패널 숨기기"
 # AI Translated
 msgid "Hide the login side panel on the home page."
 msgstr "홈 화면의 로그인 사이드 패널을 숨깁니다."
+
+msgid "Enable Snapmaker Space"
+msgstr ""
+
+msgid "When enabled, online models will be displayed on the Home page."
+msgstr ""
 
 msgid "Network test"
 msgstr "네트워크 테스트"
@@ -13418,9 +13431,6 @@ msgstr "AMS 매핑에 알 수 없는 필라멘트가 있습니다. 필요한 필
 
 msgid "Please check the following:"
 msgstr "다음을 확인하세요:"
-
-msgid "Please fix the error above, otherwise printing cannot continue."
-msgstr "위의 오류를 수정하십시오. 그렇지 않으면 출력를 계속할 수 없습니다."
 
 msgid "Please click the confirm button if you still want to proceed with printing."
 msgstr "그래도 출력을 계속하려면 확인 버튼을 클릭하세요."
@@ -17613,6 +17623,13 @@ msgstr "오버행 냉각 활성화 임계값"
 msgid "When the overhang exceeds this specified threshold, force the cooling fan to run at the 'Overhang Fan Speed' set below. This threshold is expressed as a percentage, indicating the portion of each line's width that is unsupported by the layer beneath it. Setting this value to 0% forces the cooling fan to run for all outer walls, regardless of the overhang degree."
 msgstr "오버행이 지정된 임계값을 초과하면 아래에 설정된 '오버행 팬 속도'로 냉각 팬이 강제로 작동합니다. 이 임계값은 백분율로 표시되며, 각 선 너비에서 그 아래 레이어가 지원하지 않는 부분을 나타냅니다. 이 값을 0%로 설정하면 돌출 정도에 관계없이 모든 외벽에 대해 냉각 팬이 강제로 작동합니다."
 
+msgid "Overhang threshold for participating cooling"
+msgstr ""
+
+#, no-c-format, no-boost-format
+msgid "Decide which overhang part join the cooling function to slow down the speed. Expressed as percentage which indicates how much width of the line is without support from the lower layer. 100% means forcing cooling for all outer wall no matter how much overhang degree."
+msgstr ""
+
 msgid "External bridge infill direction"
 msgstr "외부 브릿지 채우기 방향"
 
@@ -18088,6 +18105,10 @@ msgstr ""
 msgid "mm/s or %"
 msgstr "mm/s 또는 %"
 
+#, no-c-format, no-boost-format
+msgid "Speed of 100% overhang wall which has 0 overlap with the lower layer."
+msgstr ""
+
 # AI Translated
 msgid ""
 "Speed of the externally visible bridge extrusions.\n"
@@ -18299,6 +18320,32 @@ msgstr "레이어 냉각 향상을 위한 감속"
 msgid "Enable this option to slow printing speed down to ensure that the final layer time is not shorter than the layer time threshold in \"Max fan speed threshold\", so that the layer can be cooled for a longer time. This can improve the quality for small details."
 msgstr "이 옵션을 활성화하여 최종 레이어 시간이 \"최대 팬 속도 임계값\" 의 \"레이어 시간\" 임계값보다 짧지 않도록 출력 속도를 낮추어 레이어를 더 오랫동안 냉각할 수 있습니다. 바늘 모양이나 작은 출력물의 냉각 품질을 향상 시킬 수 있습니다"
 
+msgid "Cooling slowdown logic"
+msgstr ""
+
+msgid ""
+"Determines how the printer slows down when minimum layer time isn't reached.\n"
+"\n"
+"'Uniform cooling' slows down all print features equally (current default behavior).\n"
+"\n"
+"'Consistent surface' prioritizes slowing infill and internal perimeters first, preserving external perimeter speed for better surface finish on glossy filaments. This helps reduce VFA (Vertical Fine Artifacts) and maintains consistent surface shine."
+msgstr ""
+
+msgid "Uniform cooling"
+msgstr ""
+
+msgid "Consistent surface"
+msgstr ""
+
+msgid "Perimeter transition distance"
+msgstr ""
+
+msgid ""
+"Distance in millimeters before the end of slowed perimeters where the original print speed is gradually restored. This prevents visible speed transitions at the end of perimeters.\n"
+"\n"
+"Only applies when 'Consistent surface' cooling logic is selected."
+msgstr ""
+
 msgid "Normal printing"
 msgstr "일반 출력"
 
@@ -18307,6 +18354,17 @@ msgstr "초기 레이어를 제외한 모든 일반 출력 및 이동의 기본 
 
 msgid "Acceleration of travel moves."
 msgstr "이동 가속도"
+
+msgid "Short travel"
+msgstr ""
+
+msgid ""
+"Acceleration used for short travel moves near external perimeters. Short travels are moves shorter than the 'Retraction minimum travel' distance.\n"
+"\n"
+"Lower values (e.g., 250-500 mm/s²) reduce ringing artifacts on sharp corners without significantly impacting print time.\n"
+"\n"
+"Set to 0 to disable (uses normal travel acceleration)."
+msgstr ""
 
 # AI Translated
 msgid "First layer travel"
@@ -20560,6 +20618,13 @@ msgstr "상하단 솔리드 채우기/벽 겹침"
 #, no-c-format, no-boost-format
 msgid "Top solid infill area is enlarged slightly to overlap with wall for better bonding and to minimize the appearance of pinholes where the top infill meets the walls. A value of 25-30% is a good starting point, minimizing the appearance of pinholes. The percentage value is relative to the inner wall line width."
 msgstr "상단 솔리드 채우기 영역은 더 나은 접착을 위해 벽과 겹치도록 약간 확대되고 상단 채우기가 벽과 만나는 핀홀의 모양을 최소화합니다. 25-30%의 값은 핀홀의 모양을 최소화하는 좋은 출발점입니다. 백분율 값은 내벽 선 너비를 기준으로 합니다."
+
+msgid "Anchor solid infill by X mm"
+msgstr ""
+
+#, c-format, boost-format
+msgid "This parameter grows the top/bottom/solid layers by the specified mm to anchor them into the sparse infill and support the perimeters above. Can be a %% of the width of the perimeters."
+msgstr ""
 
 msgid "This is the speed for internal sparse infill."
 msgstr "내부 드문 채우기 속도"
@@ -29086,11 +29151,11 @@ msgstr ""
 msgid "Manually select filaments from the current list for color mixing."
 msgstr ""
 
-msgid "Automatically select an official filament set for color mixing match. Mix ratio for each color: 0%–70%."
+msgid "Automatically select an official filament set for color mixing match. Two-color ratios: 15%–85%; three-color ratios: 15%–70%."
 msgstr ""
 
 #, c-format, boost-format
-msgid "The mix ratios for %s in the Color Mapping list are outside the recommended %d%%–%d%% range. Adjust the mix ratios manually for better results."
+msgid "The mix ratios for %s in the Color Mapping list are outside the recommended ranges. Adjust the mix ratios manually for better results."
 msgstr ""
 
 msgid "Color mapping list limit reached (max 64 colors). Excess colors will be removed."
@@ -40411,6 +40476,20 @@ msgid ""
 msgstr ""
 
 # AI Translated
+#~ msgid ""
+#~ "\n"
+#~ "You may need to reconfigure the missing locales, likely by running the \"locale-gen\" and \"dpkg-reconfigure locales\" commands.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "누락된 로캘을 다시 구성해야 할 수 있습니다. 일반적으로 \"locale-gen\" 및 \"dpkg-reconfigure locales\" 명령을 실행하면 됩니다.\n"
+
+#~ msgid "The nozzle hardness required by the filament is higher than the default nozzle hardness of the printer. Please replace the hardened nozzle or filament, otherwise, the nozzle will be attrited or damaged."
+#~ msgstr "필라멘트에 필요한 노즐 경도가 프린터의 기본 노즐 경도보다 높습니다. \"경화강\" 노즐을 사용하거나 필라멘트를 교체하세요. 그렇지 않으면 노즐이 마모되거나 손상됩니다."
+
+#~ msgid "Please fix the error above, otherwise printing cannot continue."
+#~ msgstr "위의 오류를 수정하십시오. 그렇지 않으면 출력를 계속할 수 없습니다."
+
+# AI Translated
 #~ msgid "Reading"
 #~ msgstr "읽는 중"
 
@@ -40503,9 +40582,6 @@ msgstr ""
 
 #~ msgid "Split the selected object"
 #~ msgstr "선택한 객체 분할"
-
-#~ msgid "(Lost color)"
-#~ msgstr "(색상 손실)"
 
 #~ msgid "Filament "
 #~ msgstr "필라멘트 "

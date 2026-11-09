@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 12:56+0100\n"
+"POT-Creation-Date: 2026-11-09 13:41+0100\n"
 "PO-Revision-Date: 2026-07-20 13:33+0200\n"
 "Last-Translator: Manu Goiogana <mgoiogana@gmail.com>\n"
 "Language-Team: \n"
@@ -2586,13 +2586,6 @@ msgstr "%s kendu da."
 msgid "Switching Snapmaker Orca to language %s failed."
 msgstr ""
 
-msgid ""
-"\n"
-"You may need to reconfigure the missing locales, likely by running the \"locale-gen\" and \"dpkg-reconfigure locales\" commands.\n"
-msgstr ""
-"\n"
-"Baliteke falta diren locale-ak berriro konfiguratu behar izatea, ziurrenik “locale-gen” eta “dpkg-reconfigure locales” komandoak exekutatuta.\n"
-
 # AI Translated
 msgid "Application will close."
 msgstr "Aplikazioa itxi egingo da."
@@ -3225,6 +3218,9 @@ msgstr "Modeloa sinplifikatu"
 
 msgid "Subdivision mesh"
 msgstr "Azpibanaketa-sarea"
+
+msgid "(Lost color)"
+msgstr "(Kolorea galdu da)"
 
 msgid "Center"
 msgstr "Zentratu"
@@ -9618,14 +9614,17 @@ msgstr "Desblokeatu uneko plaka"
 msgid "Lock current plate"
 msgstr "Blokeatu uneko plaka"
 
-msgid "Filament grouping"
-msgstr "Filamentuen taldekatzea"
+msgid "Customize current plate"
+msgstr "Pertsonalizatu uneko plaka"
 
 msgid "Edit current plate name"
 msgstr "Editatu uneko plakaren izena"
 
 msgid "Move plate to the front"
 msgstr "Eraman plaka aurrealdera"
+
+msgid "Filament grouping"
+msgstr "Filamentuen taldekatzea"
 
 # AI Translated
 #. TRN Plate icon tooltip. %1% is the plate's IDEX/IQEX mode, %2% the mode its process preset sets.
@@ -9641,9 +9640,6 @@ msgstr "IDEX/IQEX modua: %1% (ezkerreko klik aldatzeko, eskuineko klik menurako)
 # AI Translated
 msgid "Warning: this plate uses a parallel IDEX/IQEX mode with multi-material objects. Proceed with caution — verify your G-code handles this combination correctly."
 msgstr "Abisua: plaka honek IDEX/IQEX modu paraleloa erabiltzen du material anitzeko objektuekin. Jarraitu kontuz — egiaztatu zure G-codeak konbinazio hau behar bezala kudeatzen duela."
-
-msgid "Customize current plate"
-msgstr "Pertsonalizatu uneko plaka"
 
 # AI Translated
 #, c-format, boost-format
@@ -10260,8 +10256,8 @@ msgstr "Berrezarri"
 msgid "The current hot bed temperature is relatively high. The nozzle may be clogged when printing this filament in a closed enclosure. Please open the front door and/or remove the upper glass."
 msgstr "Uneko ohe beroaren tenperatura nahiko altua da. Pita buxatu daiteke filamentua itxitako ganbera batean inprimatzean. Ireki aurreko atea eta/edo kendu goiko beira."
 
-msgid "The nozzle hardness required by the filament is higher than the default nozzle hardness of the printer. Please replace the hardened nozzle or filament, otherwise, the nozzle will be attrited or damaged."
-msgstr "Filamentuak eskatzen duen pitaren gogortasuna inprimagailuaren pitaren gogortasun lehenetsia baino handiagoa da. Ordeztu pita gogortuarekin edo filamentua; bestela, pita higatu edo kaltetu daiteke."
+msgid "The filament is too hard for the current nozzle. Please use a harder nozzle or a softer filament to avoid nozzle wear."
+msgstr ""
 
 msgid "Enabling traditional timelapse photography may cause surface imperfections. It is recommended to change to smooth mode."
 msgstr "Timelapse tradizionala gaitzeak gainazaleko akatsak sor ditzake. Modu leunera aldatzea gomendatzen da."
@@ -11010,6 +11006,9 @@ msgid "Yes, Continue"
 msgstr ""
 
 msgid "No, Stop"
+msgstr ""
+
+msgid "Don't ask again next time"
 msgstr ""
 
 msgid "Failed to upload pre-print context. Open anyway?"
@@ -11773,6 +11772,9 @@ msgstr "Gogoratu azken inprimatze-ekintza"
 msgid "If enabled, Snapmaker Orca will remember the last selected option in the print button's dropdown (e.g. Print, Export plate sliced file, Export G-code file) and use it as the default on next startup."
 msgstr ""
 
+msgid "Show a dialog asking whether to continue slicing when memory is low"
+msgstr ""
+
 msgid "Camera"
 msgstr "Kamera"
 
@@ -11904,6 +11906,12 @@ msgid "Simplify distant objects"
 msgstr ""
 
 msgid "Draws objects that are small on screen from a reduced copy of their mesh, which speeds up large plates. Selected objects, slicing, picking, measuring, thumbnails and exports always use the full mesh. Not used while wireframe, a section view, layer height editing or one of the tools Simplify, Cut, Mesh Boolean, Measure and Assemble is active. Takes effect immediately."
+msgstr ""
+
+msgid "Enable model shadows"
+msgstr ""
+
+msgid "Render soft shadows of objects on the build plate in the Prepare view. Requires OpenGL 3.3 or later."
 msgstr ""
 
 msgid "Phong shading"
@@ -12167,6 +12175,12 @@ msgstr "Ezkutatu saioa hasteko alboko panela"
 
 msgid "Hide the login side panel on the home page."
 msgstr "Ezkutatu saioa hasteko alboko panela hasierako orrian."
+
+msgid "Enable Snapmaker Space"
+msgstr ""
+
+msgid "When enabled, online models will be displayed on the Home page."
+msgstr ""
 
 msgid "Network test"
 msgstr "Sare-proba"
@@ -13118,9 +13132,6 @@ msgstr "AMS mapaketetan filamentuen artean ezezagun batzuk daude. Egiaztatu beha
 
 msgid "Please check the following:"
 msgstr "Egiaztatu honako hau:"
-
-msgid "Please fix the error above, otherwise printing cannot continue."
-msgstr "Konpondu goiko errorea; bestela, inprimaketak ezin izango du jarraitu."
 
 msgid "Please click the confirm button if you still want to proceed with printing."
 msgstr "Egin klik berresteko botoian inprimatzen jarraitu nahi baduzu."
@@ -17208,6 +17219,13 @@ msgstr "Irtenguneen hoztea aktibatzeko atalasea"
 msgid "When the overhang exceeds this specified threshold, force the cooling fan to run at the 'Overhang Fan Speed' set below. This threshold is expressed as a percentage, indicating the portion of each line's width that is unsupported by the layer beneath it. Setting this value to 0% forces the cooling fan to run for all outer walls, regardless of the overhang degree."
 msgstr "Irtenguneak zehaztutako atalase hau gainditzen duenean, behartu hozte-haizagailua behean ezarritako 'Irtengunearen haizagailuaren abiadura'-n martxan jartzera. Atalase hau ehuneko gisa adierazten da, lerro bakoitzaren zabaleraren azpiko geruzak onartzen ez duen zatia adieraziz. Balio hau % 0-ra ezartzeak hozte-haizagailua kanpoko horma guztietan martxan jartzera behartzen du, irtengunearen maila edozein dela ere."
 
+msgid "Overhang threshold for participating cooling"
+msgstr ""
+
+#, no-c-format, no-boost-format
+msgid "Decide which overhang part join the cooling function to slow down the speed. Expressed as percentage which indicates how much width of the line is without support from the lower layer. 100% means forcing cooling for all outer wall no matter how much overhang degree."
+msgstr ""
+
 msgid "External bridge infill direction"
 msgstr "Kanpoko zubien betegarri-norabidea"
 
@@ -17658,6 +17676,10 @@ msgstr ""
 msgid "mm/s or %"
 msgstr "mm/s edo %"
 
+#, no-c-format, no-boost-format
+msgid "Speed of 100% overhang wall which has 0 overlap with the lower layer."
+msgstr ""
+
 # AI Translated
 msgid ""
 "Speed of the externally visible bridge extrusions.\n"
@@ -17864,6 +17886,32 @@ msgstr "Moteldu inprimaketa geruza hobeto hozteko"
 msgid "Enable this option to slow printing speed down to ensure that the final layer time is not shorter than the layer time threshold in \"Max fan speed threshold\", so that the layer can be cooled for a longer time. This can improve the quality for small details."
 msgstr "Gaitu aukera hau inprimatze-abiadura moteltzeko eta azken geruzaren denbora \"Haizagailuaren gehieneko abiaduraren atalasea\" ezarpenean zehaztutakoa baino laburragoa ez izateko. Horrela geruza luzaroago hoztu daiteke eta xehetasun txikien kalitatea hobetu."
 
+msgid "Cooling slowdown logic"
+msgstr ""
+
+msgid ""
+"Determines how the printer slows down when minimum layer time isn't reached.\n"
+"\n"
+"'Uniform cooling' slows down all print features equally (current default behavior).\n"
+"\n"
+"'Consistent surface' prioritizes slowing infill and internal perimeters first, preserving external perimeter speed for better surface finish on glossy filaments. This helps reduce VFA (Vertical Fine Artifacts) and maintains consistent surface shine."
+msgstr ""
+
+msgid "Uniform cooling"
+msgstr ""
+
+msgid "Consistent surface"
+msgstr ""
+
+msgid "Perimeter transition distance"
+msgstr ""
+
+msgid ""
+"Distance in millimeters before the end of slowed perimeters where the original print speed is gradually restored. This prevents visible speed transitions at the end of perimeters.\n"
+"\n"
+"Only applies when 'Consistent surface' cooling logic is selected."
+msgstr ""
+
 msgid "Normal printing"
 msgstr "Inprimatze arrunta"
 
@@ -17872,6 +17920,17 @@ msgstr "Hau da lehen geruzaren ondorengo inprimatze arrunterako eta mugimendueta
 
 msgid "Acceleration of travel moves."
 msgstr "Lekualdatze-mugimenduen azelerazioa."
+
+msgid "Short travel"
+msgstr ""
+
+msgid ""
+"Acceleration used for short travel moves near external perimeters. Short travels are moves shorter than the 'Retraction minimum travel' distance.\n"
+"\n"
+"Lower values (e.g., 250-500 mm/s²) reduce ringing artifacts on sharp corners without significantly impacting print time.\n"
+"\n"
+"Set to 0 to disable (uses normal travel acceleration)."
+msgstr ""
 
 msgid "First layer travel"
 msgstr "Lehen geruzako mugimendua"
@@ -20034,6 +20093,13 @@ msgstr "Goiko/Beheko betegarri solidoaren eta hormaren gainjartzea"
 #, no-c-format, no-boost-format
 msgid "Top solid infill area is enlarged slightly to overlap with wall for better bonding and to minimize the appearance of pinholes where the top infill meets the walls. A value of 25-30% is a good starting point, minimizing the appearance of pinholes. The percentage value is relative to the inner wall line width."
 msgstr "Goiko betegarri solidoaren eremua pixka bat handitzen da hormarekin gainjartzeko, lotura hobetzeko eta goiko betegarria hormekin elkartzen den tokian zulotxoen itxura minimizatzeko. %25-30 inguruko balioa abiapuntu ona da, zulotxoen itxura minimizatuz. Ehunekoa barruko hormaren lerro-zabalerarekiko da."
+
+msgid "Anchor solid infill by X mm"
+msgstr ""
+
+#, c-format, boost-format
+msgid "This parameter grows the top/bottom/solid layers by the specified mm to anchor them into the sparse infill and support the perimeters above. Can be a %% of the width of the perimeters."
+msgstr ""
 
 msgid "This is the speed for internal sparse infill."
 msgstr "Hau da barruko dentsitate baxuko betegarriaren abiadura."
@@ -28199,11 +28265,11 @@ msgstr ""
 msgid "Manually select filaments from the current list for color mixing."
 msgstr ""
 
-msgid "Automatically select an official filament set for color mixing match. Mix ratio for each color: 0%–70%."
+msgid "Automatically select an official filament set for color mixing match. Two-color ratios: 15%–85%; three-color ratios: 15%–70%."
 msgstr ""
 
 #, c-format, boost-format
-msgid "The mix ratios for %s in the Color Mapping list are outside the recommended %d%%–%d%% range. Adjust the mix ratios manually for better results."
+msgid "The mix ratios for %s in the Color Mapping list are outside the recommended ranges. Adjust the mix ratios manually for better results."
 msgstr ""
 
 msgid "Color mapping list limit reached (max 64 colors). Excess colors will be removed."
@@ -39577,6 +39643,19 @@ msgid ""
 "Did you know that when printing materials that are prone to warping such as ABS, appropriately increasing the heatbed temperature can reduce the probability of warping."
 msgstr ""
 
+#~ msgid ""
+#~ "\n"
+#~ "You may need to reconfigure the missing locales, likely by running the \"locale-gen\" and \"dpkg-reconfigure locales\" commands.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Baliteke falta diren locale-ak berriro konfiguratu behar izatea, ziurrenik “locale-gen” eta “dpkg-reconfigure locales” komandoak exekutatuta.\n"
+
+#~ msgid "The nozzle hardness required by the filament is higher than the default nozzle hardness of the printer. Please replace the hardened nozzle or filament, otherwise, the nozzle will be attrited or damaged."
+#~ msgstr "Filamentuak eskatzen duen pitaren gogortasuna inprimagailuaren pitaren gogortasun lehenetsia baino handiagoa da. Ordeztu pita gogortuarekin edo filamentua; bestela, pita higatu edo kaltetu daiteke."
+
+#~ msgid "Please fix the error above, otherwise printing cannot continue."
+#~ msgstr "Konpondu goiko errorea; bestela, inprimaketak ezin izango du jarraitu."
+
 # AI Translated
 #~ msgid "Reading"
 #~ msgstr "Irakurtzen"
@@ -39668,9 +39747,6 @@ msgstr ""
 
 #~ msgid "Split the selected object"
 #~ msgstr "Zatitu hautatutako objektua"
-
-#~ msgid "(Lost color)"
-#~ msgstr "(Kolorea galdu da)"
 
 #~ msgid "Filament "
 #~ msgstr "Filamentua "

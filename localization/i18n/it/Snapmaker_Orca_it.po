@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Snapmaker Orca\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 12:56+0100\n"
+"POT-Creation-Date: 2026-11-09 13:41+0100\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -2652,14 +2652,6 @@ msgid "Switching Snapmaker Orca to language %s failed."
 msgstr ""
 
 # AI Translated
-msgid ""
-"\n"
-"You may need to reconfigure the missing locales, likely by running the \"locale-gen\" and \"dpkg-reconfigure locales\" commands.\n"
-msgstr ""
-"\n"
-"Potrebbe essere necessario riconfigurare i locale mancanti, probabilmente eseguendo i comandi \"locale-gen\" e \"dpkg-reconfigure locales\".\n"
-
-# AI Translated
 msgid "Application will close."
 msgstr "L'applicazione verrà chiusa."
 
@@ -3297,6 +3289,9 @@ msgstr "Semplifica Modello"
 
 msgid "Subdivision mesh"
 msgstr "Suddivisione maglia"
+
+msgid "(Lost color)"
+msgstr "(Colore perso)"
 
 msgid "Center"
 msgstr "Centro"
@@ -9771,14 +9766,17 @@ msgstr "Sblocca il piatto corrente"
 msgid "Lock current plate"
 msgstr "Blocca il piatto corrente"
 
-msgid "Filament grouping"
-msgstr "Raggruppamento filamenti"
+msgid "Customize current plate"
+msgstr "Personalizza il piatto corrente"
 
 msgid "Edit current plate name"
 msgstr "Modifica il nome del piatto corrente"
 
 msgid "Move plate to the front"
 msgstr "Sposta il piatto in avanti"
+
+msgid "Filament grouping"
+msgstr "Raggruppamento filamenti"
 
 # AI Translated
 #. TRN Plate icon tooltip. %1% is the plate's IDEX/IQEX mode, %2% the mode its process preset sets.
@@ -9794,9 +9792,6 @@ msgstr "Modalità IDEX/IQEX: %1% (clic sinistro per cambiarla a rotazione, clic 
 # AI Translated
 msgid "Warning: this plate uses a parallel IDEX/IQEX mode with multi-material objects. Proceed with caution — verify your G-code handles this combination correctly."
 msgstr "Attenzione: questo piatto usa una modalità IDEX/IQEX parallela con oggetti multimateriale. Procedi con cautela e verifica che il tuo G-code gestisca correttamente questa combinazione."
-
-msgid "Customize current plate"
-msgstr "Personalizza il piatto corrente"
 
 # AI Translated
 #, c-format, boost-format
@@ -10415,7 +10410,7 @@ msgstr "Ripristina"
 msgid "The current hot bed temperature is relatively high. The nozzle may be clogged when printing this filament in a closed enclosure. Please open the front door and/or remove the upper glass."
 msgstr "L'attuale temperatura del piano riscaldato è relativamente alta. Se si stampa questo filamento in uno spazio chiuso, l'ugello potrebbe ostruirsi. Si prega di aprire lo sportello anteriore e/o rimuovere il vetro superiore."
 
-msgid "The nozzle hardness required by the filament is higher than the default nozzle hardness of the printer. Please replace the hardened nozzle or filament, otherwise, the nozzle will be attrited or damaged."
+msgid "The filament is too hard for the current nozzle. Please use a harder nozzle or a softer filament to avoid nozzle wear."
 msgstr "La resistenza dell'ugello richiesta dal filamento è superiore a quella dell'ugello predefinito della stampante. Si prega di sostituire l'ugello o il filamento, altrimenti l'ugello potrebbe logorarsi e danneggiarsi."
 
 msgid "Enabling traditional timelapse photography may cause surface imperfections. It is recommended to change to smooth mode."
@@ -11168,6 +11163,9 @@ msgid "Yes, Continue"
 msgstr ""
 
 msgid "No, Stop"
+msgstr ""
+
+msgid "Don't ask again next time"
 msgstr ""
 
 msgid "Failed to upload pre-print context. Open anyway?"
@@ -11949,6 +11947,9 @@ msgstr "Ricorda l'ultima azione di stampa"
 msgid "If enabled, Snapmaker Orca will remember the last selected option in the print button's dropdown (e.g. Print, Export plate sliced file, Export G-code file) and use it as the default on next startup."
 msgstr ""
 
+msgid "Show a dialog asking whether to continue slicing when memory is low"
+msgstr ""
+
 msgid "Camera"
 msgstr "Telecamera"
 
@@ -12090,6 +12091,12 @@ msgid "Simplify distant objects"
 msgstr ""
 
 msgid "Draws objects that are small on screen from a reduced copy of their mesh, which speeds up large plates. Selected objects, slicing, picking, measuring, thumbnails and exports always use the full mesh. Not used while wireframe, a section view, layer height editing or one of the tools Simplify, Cut, Mesh Boolean, Measure and Assemble is active. Takes effect immediately."
+msgstr ""
+
+msgid "Enable model shadows"
+msgstr ""
+
+msgid "Render soft shadows of objects on the build plate in the Prepare view. Requires OpenGL 3.3 or later."
 msgstr ""
 
 # AI Translated
@@ -12366,6 +12373,12 @@ msgstr "Nascondi il pannello laterale di accesso"
 # AI Translated
 msgid "Hide the login side panel on the home page."
 msgstr "Nascondi il pannello laterale di accesso nella pagina iniziale."
+
+msgid "Enable Snapmaker Space"
+msgstr ""
+
+msgid "When enabled, online models will be displayed on the Home page."
+msgstr ""
 
 msgid "Network test"
 msgstr "Test di rete"
@@ -13338,9 +13351,6 @@ msgstr "Ci sono alcuni filamenti sconosciuti nelle mappature AMS. Si prega di ve
 
 msgid "Please check the following:"
 msgstr "Controllare quanto segue:"
-
-msgid "Please fix the error above, otherwise printing cannot continue."
-msgstr "Si prega di correggere l'errore sopra, altrimenti la stampa non potrà proseguire."
 
 msgid "Please click the confirm button if you still want to proceed with printing."
 msgstr "Fai clic sul pulsante di conferma se desideri continuare con la stampa."
@@ -17468,6 +17478,13 @@ msgstr "Soglia di attivazione raffreddamento sporgenze"
 msgid "When the overhang exceeds this specified threshold, force the cooling fan to run at the 'Overhang Fan Speed' set below. This threshold is expressed as a percentage, indicating the portion of each line's width that is unsupported by the layer beneath it. Setting this value to 0% forces the cooling fan to run for all outer walls, regardless of the overhang degree."
 msgstr "Quando una sporgenza supera questa soglia, forza la ventola di raffreddamento a funzionare alla velocità impostata in 'Velocità ventola sporgenze'. Questa soglia è espressa in percentuale, indicando la porzione della larghezza di ogni linea che non è supportata dallo strato sottostante. Impostando questo valore su 0%, forza la ventola di raffreddamento a funzionare per tutte le pareti esterne, indipendentemente dal grado di sporgenza."
 
+msgid "Overhang threshold for participating cooling"
+msgstr ""
+
+#, no-c-format, no-boost-format
+msgid "Decide which overhang part join the cooling function to slow down the speed. Expressed as percentage which indicates how much width of the line is without support from the lower layer. 100% means forcing cooling for all outer wall no matter how much overhang degree."
+msgstr ""
+
 msgid "External bridge infill direction"
 msgstr "Angolo riempimento ponti esterni"
 
@@ -17924,6 +17941,10 @@ msgstr ""
 msgid "mm/s or %"
 msgstr "mm/s o %"
 
+#, no-c-format, no-boost-format
+msgid "Speed of 100% overhang wall which has 0 overlap with the lower layer."
+msgstr ""
+
 # AI Translated
 msgid ""
 "Speed of the externally visible bridge extrusions.\n"
@@ -18130,6 +18151,32 @@ msgstr "Rallenta stampa per miglior raffreddamento degli strati"
 msgid "Enable this option to slow printing speed down to ensure that the final layer time is not shorter than the layer time threshold in \"Max fan speed threshold\", so that the layer can be cooled for a longer time. This can improve the quality for small details."
 msgstr "Abilita questa opzione per rallentare la velocità di stampa in modo che la durata di stampa finale dello strato non sia inferiore alla soglia di durata di stampa dello strato in \"Soglia velocità massima della ventola\", in modo che lo strato possa essere raffreddato più a lungo. Ciò può migliorare la qualità per i piccoli dettagli."
 
+msgid "Cooling slowdown logic"
+msgstr ""
+
+msgid ""
+"Determines how the printer slows down when minimum layer time isn't reached.\n"
+"\n"
+"'Uniform cooling' slows down all print features equally (current default behavior).\n"
+"\n"
+"'Consistent surface' prioritizes slowing infill and internal perimeters first, preserving external perimeter speed for better surface finish on glossy filaments. This helps reduce VFA (Vertical Fine Artifacts) and maintains consistent surface shine."
+msgstr ""
+
+msgid "Uniform cooling"
+msgstr ""
+
+msgid "Consistent surface"
+msgstr ""
+
+msgid "Perimeter transition distance"
+msgstr ""
+
+msgid ""
+"Distance in millimeters before the end of slowed perimeters where the original print speed is gradually restored. This prevents visible speed transitions at the end of perimeters.\n"
+"\n"
+"Only applies when 'Consistent surface' cooling logic is selected."
+msgstr ""
+
 msgid "Normal printing"
 msgstr "Stampa normale"
 
@@ -18138,6 +18185,17 @@ msgstr "Accelerazione predefinita sia per la stampa normale che per gli spostame
 
 msgid "Acceleration of travel moves."
 msgstr "Accelerazione per gli spostamenti."
+
+msgid "Short travel"
+msgstr ""
+
+msgid ""
+"Acceleration used for short travel moves near external perimeters. Short travels are moves shorter than the 'Retraction minimum travel' distance.\n"
+"\n"
+"Lower values (e.g., 250-500 mm/s²) reduce ringing artifacts on sharp corners without significantly impacting print time.\n"
+"\n"
+"Set to 0 to disable (uses normal travel acceleration)."
+msgstr ""
 
 msgid "First layer travel"
 msgstr "Spostamento primo strato"
@@ -20333,6 +20391,13 @@ msgstr "Sovrapposizione riempimento solido superiore/inferiore e parete"
 #, no-c-format, no-boost-format
 msgid "Top solid infill area is enlarged slightly to overlap with wall for better bonding and to minimize the appearance of pinholes where the top infill meets the walls. A value of 25-30% is a good starting point, minimizing the appearance of pinholes. The percentage value is relative to the inner wall line width."
 msgstr "L'area di riempimento solido superiore viene leggermente allargata per sovrapporsi alla parete, garantendo una migliore adesione e riducendo al minimo la comparsa di fori nei punti in cui il riempimento superiore incontra le pareti. Un valore del 25-30% è un buon punto di partenza, riducendo al minimo la comparsa di fori. Il valore percentuale è relativo alla larghezza della linea della parete interna."
+
+msgid "Anchor solid infill by X mm"
+msgstr ""
+
+#, c-format, boost-format
+msgid "This parameter grows the top/bottom/solid layers by the specified mm to anchor them into the sparse infill and support the perimeters above. Can be a %% of the width of the perimeters."
+msgstr ""
 
 msgid "This is the speed for internal sparse infill."
 msgstr "Velocità del riempimento sparso interno."
@@ -28715,11 +28780,11 @@ msgstr ""
 msgid "Manually select filaments from the current list for color mixing."
 msgstr ""
 
-msgid "Automatically select an official filament set for color mixing match. Mix ratio for each color: 0%–70%."
+msgid "Automatically select an official filament set for color mixing match. Two-color ratios: 15%–85%; three-color ratios: 15%–70%."
 msgstr ""
 
 #, c-format, boost-format
-msgid "The mix ratios for %s in the Color Mapping list are outside the recommended %d%%–%d%% range. Adjust the mix ratios manually for better results."
+msgid "The mix ratios for %s in the Color Mapping list are outside the recommended ranges. Adjust the mix ratios manually for better results."
 msgstr ""
 
 msgid "Color mapping list limit reached (max 64 colors). Excess colors will be removed."
@@ -40083,6 +40148,20 @@ msgid ""
 msgstr ""
 
 # AI Translated
+#~ msgid ""
+#~ "\n"
+#~ "You may need to reconfigure the missing locales, likely by running the \"locale-gen\" and \"dpkg-reconfigure locales\" commands.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Potrebbe essere necessario riconfigurare i locale mancanti, probabilmente eseguendo i comandi \"locale-gen\" e \"dpkg-reconfigure locales\".\n"
+
+#~ msgid "The nozzle hardness required by the filament is higher than the default nozzle hardness of the printer. Please replace the hardened nozzle or filament, otherwise, the nozzle will be attrited or damaged."
+#~ msgstr "La resistenza dell'ugello richiesta dal filamento è superiore a quella dell'ugello predefinito della stampante. Si prega di sostituire l'ugello o il filamento, altrimenti l'ugello potrebbe logorarsi e danneggiarsi."
+
+#~ msgid "Please fix the error above, otherwise printing cannot continue."
+#~ msgstr "Si prega di correggere l'errore sopra, altrimenti la stampa non potrà proseguire."
+
+# AI Translated
 #~ msgid "Reading"
 #~ msgstr "Lettura"
 
@@ -40175,9 +40254,6 @@ msgstr ""
 
 #~ msgid "Split the selected object"
 #~ msgstr "Dividi l'oggetto selezionato"
-
-#~ msgid "(Lost color)"
-#~ msgstr "(Colore perso)"
 
 #~ msgid "Filament "
 #~ msgstr "Filamento "

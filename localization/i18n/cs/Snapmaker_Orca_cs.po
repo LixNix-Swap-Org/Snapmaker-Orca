@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 12:56+0100\n"
+"POT-Creation-Date: 2026-11-09 13:41+0100\n"
 "PO-Revision-Date: 2024-11-03 20:59+0100\n"
 "Last-Translator: René Mošner <Renemosner@seznam.cz>\n"
 "Language-Team: \n"
@@ -2666,14 +2666,6 @@ msgid "Switching Snapmaker Orca to language %s failed."
 msgstr ""
 
 # AI Translated
-msgid ""
-"\n"
-"You may need to reconfigure the missing locales, likely by running the \"locale-gen\" and \"dpkg-reconfigure locales\" commands.\n"
-msgstr ""
-"\n"
-"Možná bude nutné znovu nakonfigurovat chybějící lokalizace, pravděpodobně spuštěním příkazů „locale-gen“ a „dpkg-reconfigure locales“.\n"
-
-# AI Translated
 msgid "Application will close."
 msgstr "Aplikace bude ukončena."
 
@@ -3313,6 +3305,9 @@ msgstr "Zjednodušit model"
 
 msgid "Subdivision mesh"
 msgstr "Subdivizní síť"
+
+msgid "(Lost color)"
+msgstr "(Ztracená barva)"
 
 msgid "Center"
 msgstr "Střed"
@@ -9855,15 +9850,18 @@ msgstr "Odemknout aktuální podložku"
 msgid "Lock current plate"
 msgstr "Zamknout aktuální podložku"
 
-# AI Translated
-msgid "Filament grouping"
-msgstr "Seskupení filamentů"
+msgid "Customize current plate"
+msgstr "Přizpůsobit aktuální podložku"
 
 msgid "Edit current plate name"
 msgstr "Upravit název aktuální desky"
 
 msgid "Move plate to the front"
 msgstr "Přesuňte desku do přední pozice"
+
+# AI Translated
+msgid "Filament grouping"
+msgstr "Seskupení filamentů"
 
 # AI Translated
 #. TRN Plate icon tooltip. %1% is the plate's IDEX/IQEX mode, %2% the mode its process preset sets.
@@ -9879,9 +9877,6 @@ msgstr "Režim IDEX/IQEX: %1% (levým kliknutím přepnete, pravým otevřete na
 # AI Translated
 msgid "Warning: this plate uses a parallel IDEX/IQEX mode with multi-material objects. Proceed with caution — verify your G-code handles this combination correctly."
 msgstr "Varování: tato deska používá paralelní režim IDEX/IQEX s vícemateriálovými objekty. Postupujte opatrně — ověřte, že váš G-code tuto kombinaci zvládá správně."
-
-msgid "Customize current plate"
-msgstr "Přizpůsobit aktuální podložku"
 
 # AI Translated
 #, c-format, boost-format
@@ -10503,7 +10498,7 @@ msgstr "Obnovit"
 msgid "The current hot bed temperature is relatively high. The nozzle may be clogged when printing this filament in a closed enclosure. Please open the front door and/or remove the upper glass."
 msgstr "Aktuální teplota podložky je relativně vysoká. Při tisku tohoto materiálu v uzavřené komoře by mohlo dojít k ucpání trysky. Doporučujeme otevřít přední dveře a/nebo odstranit horní sklo."
 
-msgid "The nozzle hardness required by the filament is higher than the default nozzle hardness of the printer. Please replace the hardened nozzle or filament, otherwise, the nozzle will be attrited or damaged."
+msgid "The filament is too hard for the current nozzle. Please use a harder nozzle or a softer filament to avoid nozzle wear."
 msgstr "Tvrdost trysky požadovaná filamentem je vyšší než výchozí tvrdost trysky tiskárny. Vyměňte tvrzenou trysku nebo filament, jinak se tryska opotřebuje nebo poškodí."
 
 msgid "Enabling traditional timelapse photography may cause surface imperfections. It is recommended to change to smooth mode."
@@ -11260,6 +11255,9 @@ msgid "Yes, Continue"
 msgstr ""
 
 msgid "No, Stop"
+msgstr ""
+
+msgid "Don't ask again next time"
 msgstr ""
 
 msgid "Failed to upload pre-print context. Open anyway?"
@@ -12041,6 +12039,9 @@ msgstr "Pamatovat si poslední tiskovou akci"
 msgid "If enabled, Snapmaker Orca will remember the last selected option in the print button's dropdown (e.g. Print, Export plate sliced file, Export G-code file) and use it as the default on next startup."
 msgstr ""
 
+msgid "Show a dialog asking whether to continue slicing when memory is low"
+msgstr ""
+
 msgid "Camera"
 msgstr "Kamera"
 
@@ -12183,6 +12184,12 @@ msgid "Simplify distant objects"
 msgstr ""
 
 msgid "Draws objects that are small on screen from a reduced copy of their mesh, which speeds up large plates. Selected objects, slicing, picking, measuring, thumbnails and exports always use the full mesh. Not used while wireframe, a section view, layer height editing or one of the tools Simplify, Cut, Mesh Boolean, Measure and Assemble is active. Takes effect immediately."
+msgstr ""
+
+msgid "Enable model shadows"
+msgstr ""
+
+msgid "Render soft shadows of objects on the build plate in the Prepare view. Requires OpenGL 3.3 or later."
 msgstr ""
 
 # AI Translated
@@ -12458,6 +12465,12 @@ msgstr "Skrýt boční panel přihlášení"
 
 msgid "Hide the login side panel on the home page."
 msgstr "Tímto zakážete všechny cloudové služby, například Orca Cloud a Bambu Cloud. Zároveň se zastaví i přenos dat do cloudových služeb Bambu. Uživatelé, kteří nepoužívají tiskárny BBL nebo používají pouze režim LAN, mohou tuto funkci bez obav zapnout."
+
+msgid "Enable Snapmaker Space"
+msgstr ""
+
+msgid "When enabled, online models will be displayed on the Home page."
+msgstr ""
 
 msgid "Network test"
 msgstr "Test sítě"
@@ -13434,9 +13447,6 @@ msgstr "V přiřazení AMS jsou některé neznámé filamenty. Zkontrolujte pros
 
 msgid "Please check the following:"
 msgstr "Zkontrolujte prosím následující:"
-
-msgid "Please fix the error above, otherwise printing cannot continue."
-msgstr "Opravte prosím výše uvedenou chybu, jinak nelze v tisku pokračovat."
 
 msgid "Please click the confirm button if you still want to proceed with printing."
 msgstr "Pokud stále chcete pokračovat v tisku, klikněte prosím na tlačítko Potvrdit."
@@ -17641,6 +17651,13 @@ msgstr "Prahová hodnota aktivace chlazení převisů"
 msgid "When the overhang exceeds this specified threshold, force the cooling fan to run at the 'Overhang Fan Speed' set below. This threshold is expressed as a percentage, indicating the portion of each line's width that is unsupported by the layer beneath it. Setting this value to 0% forces the cooling fan to run for all outer walls, regardless of the overhang degree."
 msgstr "Jakmile převis přesáhne tuto zadanou mez, ventilátor chlazení se spustí na hodnotu ‚Rychlost ventilátoru pro převisy‘ nastavenou níže. Tento práh je vyjádřen v procentech a označuje část šířky každé linie, která není podepřena vrstvou pod ní. Nastavení hodnoty na 0 % vynutí spuštění ventilátoru pro všechny vnější stěny bez ohledu na míru převisu."
 
+msgid "Overhang threshold for participating cooling"
+msgstr ""
+
+#, no-c-format, no-boost-format
+msgid "Decide which overhang part join the cooling function to slow down the speed. Expressed as percentage which indicates how much width of the line is without support from the lower layer. 100% means forcing cooling for all outer wall no matter how much overhang degree."
+msgstr ""
+
 msgid "External bridge infill direction"
 msgstr "Směr výplně externího mostu"
 
@@ -18096,6 +18113,10 @@ msgstr ""
 msgid "mm/s or %"
 msgstr "mm/s or %"
 
+#, no-c-format, no-boost-format
+msgid "Speed of 100% overhang wall which has 0 overlap with the lower layer."
+msgstr ""
+
 # AI Translated
 msgid ""
 "Speed of the externally visible bridge extrusions.\n"
@@ -18302,6 +18323,32 @@ msgstr "Zpomalte tisk pro lepší chlazení vrstvy"
 msgid "Enable this option to slow printing speed down to ensure that the final layer time is not shorter than the layer time threshold in \"Max fan speed threshold\", so that the layer can be cooled for a longer time. This can improve the quality for small details."
 msgstr "Povolte tuto volbu pro zpomalení rychlosti tisku, aby doba poslední vrstvy nebyla kratší než prahová hodnota času vrstvy v nastavení „Prahová hodnota maximální rychlosti ventilátoru“, což umožní delší chlazení vrstvy. To může zlepšit kvalitu drobných detailů."
 
+msgid "Cooling slowdown logic"
+msgstr ""
+
+msgid ""
+"Determines how the printer slows down when minimum layer time isn't reached.\n"
+"\n"
+"'Uniform cooling' slows down all print features equally (current default behavior).\n"
+"\n"
+"'Consistent surface' prioritizes slowing infill and internal perimeters first, preserving external perimeter speed for better surface finish on glossy filaments. This helps reduce VFA (Vertical Fine Artifacts) and maintains consistent surface shine."
+msgstr ""
+
+msgid "Uniform cooling"
+msgstr ""
+
+msgid "Consistent surface"
+msgstr ""
+
+msgid "Perimeter transition distance"
+msgstr ""
+
+msgid ""
+"Distance in millimeters before the end of slowed perimeters where the original print speed is gradually restored. This prevents visible speed transitions at the end of perimeters.\n"
+"\n"
+"Only applies when 'Consistent surface' cooling logic is selected."
+msgstr ""
+
 msgid "Normal printing"
 msgstr "Normální tisk"
 
@@ -18310,6 +18357,17 @@ msgstr "Výchozí zrychlení pro běžný tisk i přesuny, kromě první vrstvy.
 
 msgid "Acceleration of travel moves."
 msgstr "Zrychlení cestovních pohybů"
+
+msgid "Short travel"
+msgstr ""
+
+msgid ""
+"Acceleration used for short travel moves near external perimeters. Short travels are moves shorter than the 'Retraction minimum travel' distance.\n"
+"\n"
+"Lower values (e.g., 250-500 mm/s²) reduce ringing artifacts on sharp corners without significantly impacting print time.\n"
+"\n"
+"Set to 0 to disable (uses normal travel acceleration)."
+msgstr ""
 
 msgid "First layer travel"
 msgstr "Přejezdy první vrstvy"
@@ -20514,6 +20572,13 @@ msgstr "Překrytí plné výplně/stěny nahoře/dole"
 #, no-c-format, no-boost-format
 msgid "Top solid infill area is enlarged slightly to overlap with wall for better bonding and to minimize the appearance of pinholes where the top infill meets the walls. A value of 25-30% is a good starting point, minimizing the appearance of pinholes. The percentage value is relative to the inner wall line width."
 msgstr "Oblast horní výplně je mírně zvětšena tak, aby překrývala stěnu, pro lepší propojení a minimalizaci vzniku otvorů ve styku horní výplně se stěnami. Hodnota 25–30 % je vhodným výchozím bodem a minimalizuje výskyt otvorů. Procentuální hodnota je vztažena k šířce čáry vnitřní stěny."
+
+msgid "Anchor solid infill by X mm"
+msgstr ""
+
+#, c-format, boost-format
+msgid "This parameter grows the top/bottom/solid layers by the specified mm to anchor them into the sparse infill and support the perimeters above. Can be a %% of the width of the perimeters."
+msgstr ""
 
 msgid "This is the speed for internal sparse infill."
 msgstr "Rychlost vnitřní řídké výplně."
@@ -28999,11 +29064,11 @@ msgstr ""
 msgid "Manually select filaments from the current list for color mixing."
 msgstr ""
 
-msgid "Automatically select an official filament set for color mixing match. Mix ratio for each color: 0%–70%."
+msgid "Automatically select an official filament set for color mixing match. Two-color ratios: 15%–85%; three-color ratios: 15%–70%."
 msgstr ""
 
 #, c-format, boost-format
-msgid "The mix ratios for %s in the Color Mapping list are outside the recommended %d%%–%d%% range. Adjust the mix ratios manually for better results."
+msgid "The mix ratios for %s in the Color Mapping list are outside the recommended ranges. Adjust the mix ratios manually for better results."
 msgstr ""
 
 msgid "Color mapping list limit reached (max 64 colors). Excess colors will be removed."
@@ -40422,6 +40487,20 @@ msgid ""
 msgstr ""
 
 # AI Translated
+#~ msgid ""
+#~ "\n"
+#~ "You may need to reconfigure the missing locales, likely by running the \"locale-gen\" and \"dpkg-reconfigure locales\" commands.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Možná bude nutné znovu nakonfigurovat chybějící lokalizace, pravděpodobně spuštěním příkazů „locale-gen“ a „dpkg-reconfigure locales“.\n"
+
+#~ msgid "The nozzle hardness required by the filament is higher than the default nozzle hardness of the printer. Please replace the hardened nozzle or filament, otherwise, the nozzle will be attrited or damaged."
+#~ msgstr "Tvrdost trysky požadovaná filamentem je vyšší než výchozí tvrdost trysky tiskárny. Vyměňte tvrzenou trysku nebo filament, jinak se tryska opotřebuje nebo poškodí."
+
+#~ msgid "Please fix the error above, otherwise printing cannot continue."
+#~ msgstr "Opravte prosím výše uvedenou chybu, jinak nelze v tisku pokračovat."
+
+# AI Translated
 #~ msgid "Reading"
 #~ msgstr "Načítání"
 
@@ -40514,9 +40593,6 @@ msgstr ""
 
 #~ msgid "Split the selected object"
 #~ msgstr "Rozdělit vybraný objekt"
-
-#~ msgid "(Lost color)"
-#~ msgstr "(Ztracená barva)"
 
 #~ msgid "Filament "
 #~ msgstr "Filament "

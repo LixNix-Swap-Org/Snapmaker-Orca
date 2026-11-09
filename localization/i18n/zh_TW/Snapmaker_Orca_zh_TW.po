@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Snapmaker Orca\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 12:56+0100\n"
+"POT-Creation-Date: 2026-11-09 13:41+0100\n"
 "PO-Revision-Date: 2025-03-27 19:32+0800\n"
 "Last-Translator: 5idereal <hi@5idereal.cc>\n"
 "Language-Team: \n"
@@ -2623,14 +2623,6 @@ msgid "Switching Snapmaker Orca to language %s failed."
 msgstr ""
 
 # AI Translated
-msgid ""
-"\n"
-"You may need to reconfigure the missing locales, likely by running the \"locale-gen\" and \"dpkg-reconfigure locales\" commands.\n"
-msgstr ""
-"\n"
-"您可能需要重新設定缺少的地區設定，通常是執行「locale-gen」和「dpkg-reconfigure locales」命令。\n"
-
-# AI Translated
 msgid "Application will close."
 msgstr "應用程式將會關閉。"
 
@@ -3267,6 +3259,9 @@ msgstr "簡化模型"
 
 msgid "Subdivision mesh"
 msgstr "細分網格"
+
+msgid "(Lost color)"
+msgstr "（失去顏色）"
 
 msgid "Center"
 msgstr "居中"
@@ -9697,14 +9692,17 @@ msgstr "解鎖列印板"
 msgid "Lock current plate"
 msgstr "鎖定列印板"
 
-msgid "Filament grouping"
-msgstr "線材分組"
+msgid "Customize current plate"
+msgstr "自訂列印板參數"
 
 msgid "Edit current plate name"
 msgstr "編輯列印板名稱"
 
 msgid "Move plate to the front"
 msgstr "更改列印板順序至前"
+
+msgid "Filament grouping"
+msgstr "線材分組"
 
 # AI Translated
 #. TRN Plate icon tooltip. %1% is the plate's IDEX/IQEX mode, %2% the mode its process preset sets.
@@ -9720,9 +9718,6 @@ msgstr "IDEX/IQEX 模式：%1%（左鍵點選可循環切換，右鍵點選開�
 # AI Translated
 msgid "Warning: this plate uses a parallel IDEX/IQEX mode with multi-material objects. Proceed with caution — verify your G-code handles this combination correctly."
 msgstr "警告：此列印板在 IDEX/IQEX 並行模式下使用了多線材物件。請謹慎操作，並確認您的 G-code 能正確處理此組合。"
-
-msgid "Customize current plate"
-msgstr "自訂列印板參數"
 
 # AI Translated
 #, c-format, boost-format
@@ -10340,7 +10335,7 @@ msgstr "恢復"
 msgid "The current hot bed temperature is relatively high. The nozzle may be clogged when printing this filament in a closed enclosure. Please open the front door and/or remove the upper glass."
 msgstr "目前熱床溫度比較高。在封閉的列印設備中列印該線材時，噴嘴可能會堵塞。請打開前門和/或拆下上部玻璃。"
 
-msgid "The nozzle hardness required by the filament is higher than the default nozzle hardness of the printer. Please replace the hardened nozzle or filament, otherwise, the nozzle will be attrited or damaged."
+msgid "The filament is too hard for the current nozzle. Please use a harder nozzle or a softer filament to avoid nozzle wear."
 msgstr "線材所要求的噴嘴硬度高於列印設備預設的噴嘴硬度。請更換硬化噴嘴或線材，否則噴嘴可能被磨損或損壞。"
 
 msgid "Enabling traditional timelapse photography may cause surface imperfections. It is recommended to change to smooth mode."
@@ -11098,6 +11093,9 @@ msgstr "是，繼續"
 
 msgid "No, Stop"
 msgstr "否，停止"
+
+msgid "Don't ask again next time"
+msgstr ""
 
 msgid "Failed to upload pre-print context. Open anyway?"
 msgstr ""
@@ -11877,6 +11875,9 @@ msgstr "記住上次的列印操作"
 msgid "If enabled, Snapmaker Orca will remember the last selected option in the print button's dropdown (e.g. Print, Export plate sliced file, Export G-code file) and use it as the default on next startup."
 msgstr ""
 
+msgid "Show a dialog asking whether to continue slicing when memory is low"
+msgstr ""
+
 msgid "Camera"
 msgstr "攝影機"
 
@@ -12009,6 +12010,12 @@ msgid "Simplify distant objects"
 msgstr ""
 
 msgid "Draws objects that are small on screen from a reduced copy of their mesh, which speeds up large plates. Selected objects, slicing, picking, measuring, thumbnails and exports always use the full mesh. Not used while wireframe, a section view, layer height editing or one of the tools Simplify, Cut, Mesh Boolean, Measure and Assemble is active. Takes effect immediately."
+msgstr ""
+
+msgid "Enable model shadows"
+msgstr ""
+
+msgid "Render soft shadows of objects on the build plate in the Prepare view. Requires OpenGL 3.3 or later."
 msgstr ""
 
 msgid "Phong shading"
@@ -12270,6 +12277,12 @@ msgstr "隱藏登入側邊面板"
 
 msgid "Hide the login side panel on the home page."
 msgstr "隱藏首頁上的登入側邊面板。"
+
+msgid "Enable Snapmaker Space"
+msgstr ""
+
+msgid "When enabled, online models will be displayed on the Home page."
+msgstr ""
 
 msgid "Network test"
 msgstr "網路測試"
@@ -13236,9 +13249,6 @@ msgstr "AMS 設定中存在一些未知的線材。請檢查是否符合所需�
 
 msgid "Please check the following:"
 msgstr "請檢查以下內容："
-
-msgid "Please fix the error above, otherwise printing cannot continue."
-msgstr "請排除上述錯誤，否則無法繼續列印。"
 
 msgid "Please click the confirm button if you still want to proceed with printing."
 msgstr "如果您仍然想繼續列印，請滑鼠左鍵點擊『確定』按鈕。"
@@ -17345,6 +17355,13 @@ msgstr "懸垂冷卻觸發閾值"
 msgid "When the overhang exceeds this specified threshold, force the cooling fan to run at the 'Overhang Fan Speed' set below. This threshold is expressed as a percentage, indicating the portion of each line's width that is unsupported by the layer beneath it. Setting this value to 0% forces the cooling fan to run for all outer walls, regardless of the overhang degree."
 msgstr "當懸垂部分超過此指定的閾值時，強制冷卻風扇以「懸垂風扇速度」設定運行。此閾值以百分比表示，表示每條線寬中未被下層支撐的部分。將此值設為 0% 時，無論懸垂角度如何，都會強制冷卻風扇在所有外牆上運行"
 
+msgid "Overhang threshold for participating cooling"
+msgstr ""
+
+#, no-c-format, no-boost-format
+msgid "Decide which overhang part join the cooling function to slow down the speed. Expressed as percentage which indicates how much width of the line is without support from the lower layer. 100% means forcing cooling for all outer wall no matter how much overhang degree."
+msgstr ""
+
 msgid "External bridge infill direction"
 msgstr "外部橋接結構的填充方向"
 
@@ -17768,6 +17785,10 @@ msgstr ""
 msgid "mm/s or %"
 msgstr "mm/s 或 %"
 
+#, no-c-format, no-boost-format
+msgid "Speed of 100% overhang wall which has 0 overlap with the lower layer."
+msgstr ""
+
 # AI Translated
 msgid ""
 "Speed of the externally visible bridge extrusions.\n"
@@ -17974,6 +17995,32 @@ msgstr "降低列印速度 以得到更好的冷卻"
 msgid "Enable this option to slow printing speed down to ensure that the final layer time is not shorter than the layer time threshold in \"Max fan speed threshold\", so that the layer can be cooled for a longer time. This can improve the quality for small details."
 msgstr "啟用此選項可降低列印速度，確保最終層的列印時間不少於「最大風扇速度臨界值」中的層時間設定值，以延長冷卻時間。此功能有助於提升針狀結構和細小細節的冷卻效果"
 
+msgid "Cooling slowdown logic"
+msgstr ""
+
+msgid ""
+"Determines how the printer slows down when minimum layer time isn't reached.\n"
+"\n"
+"'Uniform cooling' slows down all print features equally (current default behavior).\n"
+"\n"
+"'Consistent surface' prioritizes slowing infill and internal perimeters first, preserving external perimeter speed for better surface finish on glossy filaments. This helps reduce VFA (Vertical Fine Artifacts) and maintains consistent surface shine."
+msgstr ""
+
+msgid "Uniform cooling"
+msgstr ""
+
+msgid "Consistent surface"
+msgstr ""
+
+msgid "Perimeter transition distance"
+msgstr ""
+
+msgid ""
+"Distance in millimeters before the end of slowed perimeters where the original print speed is gradually restored. This prevents visible speed transitions at the end of perimeters.\n"
+"\n"
+"Only applies when 'Consistent surface' cooling logic is selected."
+msgstr ""
+
 msgid "Normal printing"
 msgstr "普通列印"
 
@@ -17982,6 +18029,17 @@ msgstr "除首層之外的預設的列印和空駛的加速度"
 
 msgid "Acceleration of travel moves."
 msgstr "空駛加速度"
+
+msgid "Short travel"
+msgstr ""
+
+msgid ""
+"Acceleration used for short travel moves near external perimeters. Short travels are moves shorter than the 'Retraction minimum travel' distance.\n"
+"\n"
+"Lower values (e.g., 250-500 mm/s²) reduce ringing artifacts on sharp corners without significantly impacting print time.\n"
+"\n"
+"Set to 0 to disable (uses normal travel acceleration)."
+msgstr ""
 
 msgid "First layer travel"
 msgstr "首層空駛"
@@ -20167,6 +20225,13 @@ msgstr "頂部/底部實心填充部分和周邊重疊區域設定"
 #, no-c-format, no-boost-format
 msgid "Top solid infill area is enlarged slightly to overlap with wall for better bonding and to minimize the appearance of pinholes where the top infill meets the walls. A value of 25-30% is a good starting point, minimizing the appearance of pinholes. The percentage value is relative to the inner wall line width."
 msgstr "頂部實心填充區域會略微擴大並與牆重疊，以增強結合，並減少頂部填充與牆交接處出現的針孔。建議從 25-30% 開始，可減少針孔的出現。百分比值相對於內牆線寬。"
+
+msgid "Anchor solid infill by X mm"
+msgstr ""
+
+#, c-format, boost-format
+msgid "This parameter grows the top/bottom/solid layers by the specified mm to anchor them into the sparse infill and support the perimeters above. Can be a %% of the width of the perimeters."
+msgstr ""
 
 msgid "This is the speed for internal sparse infill."
 msgstr "內部稀疏填充的列印速度"
@@ -28461,11 +28526,11 @@ msgstr ""
 msgid "Manually select filaments from the current list for color mixing."
 msgstr ""
 
-msgid "Automatically select an official filament set for color mixing match. Mix ratio for each color: 0%–70%."
+msgid "Automatically select an official filament set for color mixing match. Two-color ratios: 15%–85%; three-color ratios: 15%–70%."
 msgstr ""
 
 #, c-format, boost-format
-msgid "The mix ratios for %s in the Color Mapping list are outside the recommended %d%%–%d%% range. Adjust the mix ratios manually for better results."
+msgid "The mix ratios for %s in the Color Mapping list are outside the recommended ranges. Adjust the mix ratios manually for better results."
 msgstr ""
 
 msgid "Color mapping list limit reached (max 64 colors). Excess colors will be removed."
@@ -39797,6 +39862,20 @@ msgid ""
 msgstr ""
 
 # AI Translated
+#~ msgid ""
+#~ "\n"
+#~ "You may need to reconfigure the missing locales, likely by running the \"locale-gen\" and \"dpkg-reconfigure locales\" commands.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "您可能需要重新設定缺少的地區設定，通常是執行「locale-gen」和「dpkg-reconfigure locales」命令。\n"
+
+#~ msgid "The nozzle hardness required by the filament is higher than the default nozzle hardness of the printer. Please replace the hardened nozzle or filament, otherwise, the nozzle will be attrited or damaged."
+#~ msgstr "線材所要求的噴嘴硬度高於列印設備預設的噴嘴硬度。請更換硬化噴嘴或線材，否則噴嘴可能被磨損或損壞。"
+
+#~ msgid "Please fix the error above, otherwise printing cannot continue."
+#~ msgstr "請排除上述錯誤，否則無法繼續列印。"
+
+# AI Translated
 #~ msgid "Reading"
 #~ msgstr "讀取中"
 
@@ -39883,9 +39962,6 @@ msgstr ""
 
 #~ msgid "Split the selected object"
 #~ msgstr "拆分所選物件"
-
-#~ msgid "(Lost color)"
-#~ msgstr "（失去顏色）"
 
 #~ msgid "Filament "
 #~ msgstr "線材"
