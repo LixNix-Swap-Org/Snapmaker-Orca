@@ -19,6 +19,7 @@ add_executable(${_TEST_NAME}_tests
     test_arachne_walls.cpp
     test_arrange.cpp
     test_assemble_list.cpp
+    test_assembly_transform.cpp
     test_bambu_networking.cpp
     test_belt_brim.cpp
     test_buildvolume.cpp
@@ -32,6 +33,7 @@ add_executable(${_TEST_NAME}_tests
     test_locales_utils.cpp
     test_drc.cpp
     test_gcodereader.cpp
+    test_gcode_layer_count.cpp
     test_toolordering_nozzle_group.cpp
     test_parallel_resolve.cpp
     test_preset_bundle_loading.cpp
@@ -49,6 +51,7 @@ add_executable(${_TEST_NAME}_tests
     test_fill_corner_smoothing.cpp
     test_filament_mixer.cpp
     test_fill_plane_path.cpp
+    test_fill_spacing_zero.cpp
     test_adaptive_infill_field.cpp
     test_geometry.cpp
     test_icns.cpp
@@ -95,6 +98,7 @@ add_executable(${_TEST_NAME}_tests
     test_used_filaments.cpp # Snapmaker Orca: the filaments a plate counts before slicing
     test_wipe_tower_estimate.cpp
     test_wipe_tower.cpp
+    test_wipe_tower_toolchange.cpp
     test_wipe_path.cpp
     test_optimizers.cpp
     test_ordering_strategies.cpp
@@ -102,6 +106,7 @@ add_executable(${_TEST_NAME}_tests
     # test_png_io.cpp
     test_indexed_triangle_set.cpp
     TestMD5.cpp
+    test_flush_vol_calc.cpp
     test_connected_bodies.cpp
     test_texture_displacement.cpp
     test_texture_import.cpp

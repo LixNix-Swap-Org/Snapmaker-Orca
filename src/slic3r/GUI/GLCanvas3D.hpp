@@ -28,6 +28,7 @@
 #include <optional>
 
 #include "GLToolbar.hpp"
+#include "GLPickingBuffer.hpp"
 #include "Event.hpp"
 #include "Selection.hpp"
 #include "ThumbnailView.hpp"     // ThumbnailView enum (kept lightweight, separate from this header)
@@ -69,6 +70,7 @@ class wxSizeEvent;
 class wxIdleEvent;
 class wxKeyEvent;
 class wxMouseEvent;
+class wxMouseCaptureLostEvent;
 class wxTimerEvent;
 class wxPaintEvent;
 class wxGLCanvas;
@@ -102,6 +104,7 @@ class PartPlateList;
 class DesignSketchTool;   // Design tab: interactive 2D sketch tool
 #endif
 struct KeyChord;
+class SoftShadowRenderer;
 
 #if ENABLE_RETINA_GL
 class RetinaHelper;
@@ -637,10 +640,36 @@ public:
     int GetHoverId();
 
 private:
+    enum class EPickingQueryStatus : uint8_t
+    {
+        Hit,
+        NoHit,
+        Unavailable
+    };
+
+    struct VolumePickResult
+    {
+        EPickingQueryStatus status{EPickingQueryStatus::Unavailable};
+        SceneRaycaster::HitResult hit;
+        // Center coordinate of the selected framebuffer pixel in top-left screen space.
+        Vec2d samplePosition{Vec2d::Zero()};
+        // Squared framebuffer-pixel distance from the mouse center.
+        int screenDistanceSquared{0};
+        float depth{1.0f};
+    };
+
+    struct PickingPassResult
+    {
+        SceneRaycaster::HitResult hit;
+        // Mouse-ray position used as the drag interaction anchor.
+        Vec3d interactionPosition{Vec3d(DBL_MAX, DBL_MAX, DBL_MAX)};
+    };
+
     bool m_is_dark = false;
     wxGLCanvas* m_canvas;
     wxGLContext* m_context;
     SceneRaycaster m_scene_raycaster;
+    GLPickingBuffer m_pickingBuffer;
     Bed3D &m_bed;
     // Contains all shortcuts in the format of {shortcut, description}, e.g. {alt + _L("Left mouse button"), _L("Part_selection")}
     std::vector<std::pair<wxString, wxString>> m_shortcuts_assembly_view;
@@ -757,6 +786,8 @@ private:
     bool m_enable_render { true };
     bool m_apply_zoom_to_volumes_filter;
     bool m_picking_enabled;
+    // Invalidated by viewport, camera, pickable Volume, clipping, or active LOD changes.
+    bool m_pickingBufferDirty{ true };
     bool m_moving_enabled;
     bool m_dynamic_background_enabled;
     bool m_multisample_allowed;
@@ -823,6 +854,12 @@ private:
     Tooltip m_tooltip;
     bool m_tooltip_enabled{ true };
     Slope m_slope;
+
+    // Created lazily on the first frame that shows soft shadows
+    std::unique_ptr<SoftShadowRenderer> _softShadowRenderer;
+    // Camera of the last picking buffer pass.
+    Transform3d m_pickingBufferView{ Transform3d::Identity() };
+    Transform3d m_pickingBufferProjection{ Transform3d::Identity() };
 
     OrientSettings m_orient_settings_fff, m_orient_settings_sla;
 
@@ -988,7 +1025,13 @@ public:
     }
 
     float get_explosion_ratio() { return m_explosion_ratio; }
-    void reset_explosion_ratio() { m_explosion_ratio = 1.0; }
+    void reset_explosion_ratio() {
+        if (m_explosion_ratio != 1.0f) {
+            InvalidateSceneAndPickingCaches();
+            m_dirty = true;
+        }
+        m_explosion_ratio = 1.0f;
+    }
     void on_change_color_mode(bool is_dark, bool reinit = true);
     const bool get_dark_mode_status() { return m_is_dark; }
     void set_as_dirty() { m_dirty = true; }
@@ -1065,17 +1108,32 @@ public:
         {
             m_clipping_planes[id] = plane;
             m_sla_caps[id].reset();
+            InvalidatePickingBuffer();
+            InvalidateSceneCache();
+            m_dirty = true;
         }
     }
     void reset_clipping_planes_cache() { m_sla_caps[0].triangles.clear(); m_sla_caps[1].triangles.clear(); }
-    void set_use_clipping_planes(bool use) { m_use_clipping_planes = use; }
+    void set_use_clipping_planes(bool use) {
+        InvalidateSceneAndPickingCaches();
+        m_dirty = true;
+        m_use_clipping_planes = use;
+    }
 
     bool                                get_use_clipping_planes() const { return m_use_clipping_planes; }
     const std::array<ClippingPlane, 2> &get_clipping_planes() const { return m_clipping_planes; };
 
-    void set_use_color_clip_plane(bool use) { m_volumes.set_use_color_clip_plane(use); }
-    void set_color_clip_plane(const Vec3d& cp_normal, double offset) { m_volumes.set_color_clip_plane(cp_normal, offset); }
-    void set_color_clip_plane_colors(const std::array<ColorRGBA, 2>& colors) { m_volumes.set_color_clip_plane_colors(colors); }
+    void set_use_color_clip_plane(bool use) { m_volumes.set_use_color_clip_plane(use); InvalidateSceneCache(); m_dirty = true; }
+    void set_color_clip_plane(const Vec3d& cp_normal, double offset) {
+        m_volumes.set_color_clip_plane(cp_normal, offset);
+        InvalidateSceneCache();
+        m_dirty = true;
+    }
+    void set_color_clip_plane_colors(const std::array<ColorRGBA, 2>& colors) {
+        m_volumes.set_color_clip_plane_colors(colors);
+        InvalidateSceneCache();
+        m_dirty = true;
+    }
 
     bool is_section_view_active() const { return m_section_view->ratio > 0.; }
     double get_section_view_ratio() const { return m_section_view->ratio; }
@@ -1105,16 +1163,32 @@ public:
     void enable_layers_editing(bool enable);
     void enable_picking(bool enable)
     {
+        const bool changed = m_picking_enabled != enable;
+        if (changed)
+            InvalidatePickingBuffer();
         m_picking_enabled = enable;
         // Orca: invalidate hover state when dragging is toggled, otherwise if we turned off dragging
         // while hovering above a volume, the hovering state won't update even if mouse has moved away.
         // Fixes https://github.com/OrcaSlicer/OrcaSlicer/pull/9979#issuecomment-3065575889
         m_hover_volume_idxs.clear();
+        if (_update_volumes_hover_state()) {
+            InvalidateSceneCache();
+            m_dirty = true;
+        } else if (changed) {
+            _set_overlay_as_dirty();
+        }
     }
     void enable_moving(bool enable) { m_moving_enabled = enable; }
     void enable_gizmos(bool enable) { m_gizmos.set_enabled(enable); }
     void enable_selection(bool enable) { m_selection.set_enabled(enable); }
-    void enable_main_toolbar(bool enable) { m_main_toolbar.set_enabled(enable); }
+    void enable_main_toolbar(bool enable)
+    {
+        if (m_main_toolbar.is_enabled() == enable)
+            return;
+
+        m_main_toolbar.set_enabled(enable);
+        m_dirty = true;
+    }
     //BBS: GUI refactor: GLToolbar
     void _update_select_plate_toolbar_stats_item(bool force_selected = false);
     void reset_select_plate_toolbar_selection();
@@ -1138,10 +1212,10 @@ public:
     // The Design tab frames what it selects itself (DesignCanvas::zoom_to_box), as the Fit button does.
     void zoom_to_box(const BoundingBoxf3& box) { _zoom_to_box(box); }
 #endif
-    void enable_dynamic_background(bool enable) { m_dynamic_background_enabled = enable; }
+    void enable_dynamic_background(bool enable) { m_dynamic_background_enabled = enable; InvalidateSceneCache(); set_as_dirty(); }
     void enable_labels(bool enable) { m_labels.enable(enable); }
     void enable_slope(bool enable) { m_slope.enable(enable); }
-    void allow_multisample(bool allow) { m_multisample_allowed = allow; }
+    void allow_multisample(bool allow) { m_multisample_allowed = allow; InvalidateSceneCache(); set_as_dirty(); }
 
     void zoom_to_bed();
     void zoom_to_volumes();
@@ -1289,7 +1363,13 @@ public:
     std::vector<float> get_gcode_layers_times() const { return m_gcode_viewer.get_layers_times(); }
     const std::vector<float>& get_gcode_layers_times_cache() const { return m_gcode_layers_times_cache; }
     void reset_gcode_layers_times_cache() { m_gcode_layers_times_cache.clear(); }
-    void set_volumes_z_range(const std::array<double, 2>& range) { m_volumes.set_range(range[0] - 1e-6, range[1] + 1e-6); }
+    void set_volumes_z_range(const std::array<double, 2>& range)
+    {
+        m_volumes.set_range(range[0] - 1e-6, range[1] + 1e-6);
+        InvalidatePickingBuffer();
+        InvalidateSceneCache();
+        set_as_dirty();
+    }
     size_t get_gcode_extruders_count() { return m_gcode_viewer.get_extruders_count(); }
 
     std::vector<int> load_object(const ModelObject& model_object, int obj_idx, std::vector<int> instance_idxs);
@@ -1318,7 +1398,7 @@ public:
     void bind_event_handlers();
     void unbind_event_handlers();
 
-    void on_size(wxSizeEvent& evt) { m_dirty = true; }
+    void on_size(wxSizeEvent& evt) { m_dirty = true; InvalidatePickingBuffer(); InvalidateSceneCache(); }
     void on_idle(wxIdleEvent& evt);
     void on_char(wxKeyEvent& evt);
     void on_key(wxKeyEvent& evt);
@@ -1337,6 +1417,7 @@ public:
     void on_set_color_timer(wxTimerEvent& evt);
     void on_fps_overlay_timer(wxTimerEvent& evt);
     void on_mouse(wxMouseEvent& evt);
+    void OnMouseCaptureLost(wxMouseCaptureLostEvent& event);
     void on_gesture(wxGestureEvent& evt);
     void on_paint(wxPaintEvent& evt);
     void on_set_focus(wxFocusEvent& evt);
@@ -1369,6 +1450,8 @@ public:
     void do_mirror(const std::string& snapshot_type);
 
     void update_gizmos_on_off_state();
+    /** @brief Refreshes gizmo state after a selection change and schedules a scene frame. */
+    void UpdateGizmosForSelectionChange();
     void reset_all_gizmos() { m_gizmos.reset_all_states(); }
 
     void handle_sidebar_focus_event(const std::string& opt_key, bool focus_on);
@@ -1513,11 +1596,22 @@ public:
     bool make_current_for_postinit();
     // Sizes ImGui's fonts and style for this canvas; the fonts are rebuilt when the size changes.
     void set_imgui_scaling();
+    /** Releases painter-owned GL resources while this canvas and the shared context are valid. */
+    bool ReleasePainterGlResources();
 
 private:
     bool _is_shown_on_screen() const;
 
     void _update_slice_error_status();
+
+    /**
+     * @brief Returns true when soft shadows should be drawn in the current frame.
+     * @param noPartplate True when plates are hidden by the current gizmo.
+     */
+    bool IsSoftShadowVisible(bool noPartplate) const;
+
+    /** @brief Updates the soft shadow cache, or releases it when soft shadows are turned off. */
+    void UpdateSoftShadows(bool shadowsVisible);
 
     void _switch_toolbars_icon_filename();
     bool _init_toolbars();
@@ -1545,8 +1639,31 @@ private:
 
     void _refresh_if_shown_on_screen(bool scene_dirty = true);
 
-    void _picking_pass();
-    void _rectangular_selection_picking_pass();
+    bool UpdateVolumeClippingState();
+    /** @brief Invalidates only GPU picking content. */
+    void InvalidatePickingBuffer();
+    /** @brief Invalidates only the cached scene. */
+    void InvalidateSceneCache();
+    /** @brief Invalidates scene and picking caches when both depend on the same mutation. */
+    void InvalidateSceneAndPickingCaches();
+    bool RenderPickingBuffer(const Camera& camera);
+    VolumePickResult QueryVolumeFromPickingBuffer(const Vec2d& screenPosition, const Camera& camera, int toleranceRadiusPx);
+    PickingPassResult QueryHybridPickingHit(const Vec2d& screenPosition, const Camera& camera, const ClippingPlane& clippingPlane,
+                                            int volumeToleranceRadiusPx);
+
+    /**
+     * @brief Projects a Volume surface hit onto the original mouse ray using the active drag-plane semantics.
+     */
+    Vec3d ComputeVolumeDragAnchor(const Vec2d& screenPosition, const Vec3d& surfacePosition, const Camera& camera);
+    bool RaycastVolume(int volumeIndex, const Vec2d& screenPosition, const Camera& camera,
+                       const ClippingPlane* clippingPlane, SceneRaycaster::HitResult& hit) const;
+    void ResolveSelectedVolumeOverlap(const Vec2d& screenPosition, const Camera& camera,
+                                      const ClippingPlane& clippingPlane, SceneRaycaster::HitResult& volumeHit) const;
+    void ApplyPickingHit(const SceneRaycaster::HitResult& hit);
+    bool ShouldRenderVolumeForPicking(const GLVolume& volume) const;
+
+    std::optional<PickingPassResult> _picking_pass(bool& sinkingContourSceneChanged);
+    bool _rectangular_selection_picking_pass();
     // IMEX ghost picking (ray vs. ghost bbox). Runs at the end of _picking_pass.
     void _picking_pass_imex_ghosts();
     bool _is_fxaa_enabled() const;
@@ -1632,7 +1749,7 @@ private:
     void _render_overlay_toolbars();
     size_t _overlay_signature(const ImDrawData* draw_data) const;
     void _render_style_editor();
-    void _render_volumes_for_picking(const Camera& camera) const;
+    bool _render_volumes_for_picking(const Camera& camera) const;
     void _render_current_gizmo() const;
     void _render_gizmos_overlay();
     void _render_main_toolbar();
@@ -1669,7 +1786,7 @@ private:
      */
     void RenderFitCameraButton(float left, float top, float buttonSize);
 
-    void _update_volumes_hover_state();
+    bool _update_volumes_hover_state();
 
     // Convert the screen space coordinate to world coordinate on the bed.
     Vec3d _mouse_to_bed_3d(const Point& mouse_pos);

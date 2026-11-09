@@ -62,8 +62,8 @@ TEST_CASE("Complete cached slots override direct nozzle data atomically", "[SSWC
     flows     = {"high_flow"};
     REQUIRE(SSWCPProtocol::select_complete_cached_nozzle_info({{"0.4", "standard"}, {"0.4", ""}}, diameters, flows));
     CHECK(diameters == std::vector<std::string>{"0.4", "0.4"});
-    // Incomplete cached flows clear the direct ones: diameters and flows come from one source.
-    CHECK(flows.empty());
+    // Incomplete cached flows must not wipe freshly resolved direct values (see SSWCPProtocol.hpp).
+    CHECK(flows == std::vector<std::string>{"high_flow"});
 }
 
 TEST_CASE("tpu_high_flow is never emitted in any protocol output", "[SSWCPProtocol]")

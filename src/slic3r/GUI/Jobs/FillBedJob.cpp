@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <boost/log/trivial.hpp>
 #include "libslic3r/BoundingBox.hpp"
+#include <cmath>
 #include <cstddef>
 #include "libslic3r/libslic3r.h"
 #include "libslic3r/PrintConfig.hpp"
@@ -36,6 +37,13 @@
 
 namespace Slic3r {
 namespace GUI {
+
+// Minimum grid capacity (rough cell count = floor(W/step_x) * floor(H/step_y))
+// for FillBed to take the fast grid path; otherwise fall back to the NFP arrange.
+// Empirical threshold : NFP path is noticeably slow even with
+// only a few dozen candidate cells, so we prefer the grid path whenever the
+// bed/step ratio leaves room for a reasonable number of copies.
+static constexpr long long FILL_BED_GRID_PATH_MIN_CAPACITY = 50;
 
 //BBS: add partplate related logic
 void FillBedJob::prepare()
@@ -177,12 +185,11 @@ void FillBedJob::prepare()
     const ArrangePolygon &fill_template = m_selected.front();
     double unsel_area = std::accumulate(m_unselected.begin(),
                                         m_unselected.end(), 0.,
-                                        [cur_plate_index, &fill_template](double s, const auto &ap) {
-                                            //BBS: m_unselected instance is in the same partplate
+                                        [&fill_template](double s, const auto &ap) {
+                                            // bed_idx of m_unselected items is normalized to 0 in prepare(), test against 0 instead of cur_plate_index.
                                             const bool exclusion_applies = !ap.is_bed_exclusion ||
                                                 bed_exclusion_applies(fill_template, ap);
-                                            return s + (ap.bed_idx == cur_plate_index && exclusion_applies) * ap.poly.area();
-                                            //return s + (ap.bed_idx == 0) * ap.poly.area();
+                                            return s + (ap.bed_idx == 0 && exclusion_applies) * ap.poly.area();
                                         }) / sc;
 
     double fixed_area = unsel_area + m_selected.size() * poly_area;
@@ -271,62 +278,129 @@ void FillBedJob::process(Ctl &ctl)
     // final align用的是凸包，在有fixed item的情况下可能找到的参考点位置是错的，这里就不做了。见STUDIO-3265
     params.do_final_align = !is_bbl;
 
-    if (m_selected.size() > 100) {
-        // too many items, just find grid empty cells to put them
-        std::vector<BoundingBoxf> occupied_boxes;
-        for (const ArrangePolygon &fixed : m_unselected) {
-            if (fixed.bed_idx != 0 || fixed.is_extrusion_cali_object)
-                continue;
+    // Reuse ap.inflation computed by update_selected_items_inflation for the step, so the spacing matches the NFP path.
+    const ArrangePolygon &tmpl = m_selected.front();
+    const float inflation_mm = unscaled<float>(tmpl.inflation);
+    const Vec2f step = unscaled<float>(get_extents(tmpl.poly).size()) + 2.f * Vec2f(inflation_mm, inflation_mm);
 
-            if (fixed.is_bed_exclusion) {
-                const bool relevant = std::any_of(
-                    m_selected.begin(), m_selected.end(), [&fixed](const ArrangePolygon &item) {
-                        return bed_exclusion_applies(item, fixed);
-                    });
-                if (!relevant)
-                    continue;
-            }
+    // re-click consistency: pick path by grid capacity (stable across clicks).
+    // Use double here so the floor() near-edge result is not perturbed by float rounding.
+    // Use long long for the product so a (pathological) tiny step on a huge bed
+    // cannot overflow signed int.
+    const auto bed_size = get_extents(m_bedpts).size();
+    const double bed_w = unscaled<double>(bed_size.x());
+    const double bed_h = unscaled<double>(bed_size.y());
+    const double step_x = double(step.x());
+    const double step_y = double(step.y());
+    const long long cells_x = (step_x > 0.0) ? (long long)std::floor(bed_w / step_x) : 0;
+    const long long cells_y = (step_y > 0.0) ? (long long)std::floor(bed_h / step_y) : 0;
+    const long long grid_cap = cells_x * cells_y;
 
-            BoundingBox bbox = get_extents(fixed.transformed_poly());
-            bbox.offset(std::max<coord_t>(0, fixed.inflation));
-            occupied_boxes.emplace_back(unscale(bbox.min), unscale(bbox.max));
-        }
+    if (grid_cap > FILL_BED_GRID_PATH_MIN_CAPACITY) {
+        auto offset_on_origin = tmpl.poly.contour.bounding_box().center();
 
-        // Fill the remaining space without disturbing instances which are
-        // already placed. Besides matching the meaning of "Fill bed", this
-        // also prevents candidates rejected by the grid from remaining under
-        // newly placed copies at their old positions.
-        const Vec3d plate_origin = partplate_list.get_curr_plate()->get_origin();
-        for (const ArrangePolygon &existing : m_selected) {
-            if (existing.priority == 0 || existing.bed_idx != 0)
-                continue;
-
-            BoundingBox bbox = get_extents(existing.transformed_poly());
-            bbox.offset(std::max<coord_t>(0, existing.inflation));
-            BoundingBoxf local_box(unscale(bbox.min), unscale(bbox.max));
-            local_box.translate(Vec2d(-plate_origin.x(), -plate_origin.y()));
-            occupied_boxes.emplace_back(std::move(local_box));
-        }
-
-        const Vec2f step = unscaled<float>(get_extents(m_selected.front().poly).size()) +
-                           Vec2f(m_selected.front().brim_width, m_selected.front().brim_width);
+        // Use m_bedpts (already shrunk by bed_shrink + brim_skirt_distance/2) as the safe area, so brim/skirt of edge copies stays inside the bed.
+        BoundingBox shrunk_bb = Polygon{m_bedpts}.bounding_box();
+        BoundingBoxf safe_area_2d(
+            Vec2d(unscale<double>(shrunk_bb.min.x()), unscale<double>(shrunk_bb.min.y())),
+            Vec2d(unscale<double>(shrunk_bb.max.x()), unscale<double>(shrunk_bb.max.y()))
+        );
+        // Conditional bed exclusions block only the items they apply to (checked below).
         const bool has_conditional_exclusions = has_bed_exclusion_regions(m_unselected);
-        const std::vector<Vec2f> empty_cells =
-            Plater::get_empty_cells(step, occupied_boxes, !has_conditional_exclusions);
+        std::vector<Vec2f> empty_cells = Plater::get_empty_cells(step, safe_area_2d, !has_conditional_exclusions);
 
-        size_t cell_index = 0;
-        for (ArrangePolygon &item : m_selected) {
-            if (item.priority != 0)
-                continue;
+        // Items in m_unselected with bed_idx == 0 have already been normalized to plate-0 LOCAL
+        // coordinates in prepare(). They include both real objects and the virtual obstacles of
+        // the current plate (excluded regions / wipe tower / non-preferred regions). These
+        // virtual obstacles must be counted as occupied: the built-in exclude filtering of
+        // Plater::get_empty_cells only takes effect for cur_plate == 0, for cur_plate > 0 it no
+        // longer filters these regions.
+        // Items with bed_idx > 0 are copies injected onto other plates by
+        // preprocess_*_areas(num_plates = MAX_NUM_PLATES), irrelevant to this fill bed run, skip them.
+        // Template instances in m_selected (priority > 0) use world coordinates, their bbox must
+        // be stride-corrected before use.
+        PartPlateList &plist = m_plater->get_partplate_list();
+        const int plate_cols = plist.get_plate_cols();
+        const int cur_plate_index = plist.get_curr_plate_index();
+        const int cur_col = cur_plate_index % plate_cols;
+        const int cur_row = cur_plate_index / plate_cols;
+        const coord_t stride_dx = bed_stride_x(m_plater) * cur_col;
+        const coord_t stride_dy = bed_stride_y(m_plater) * cur_row;
 
-            if (cell_index < empty_cells.size()) {
-                item.translation = scaled<coord_t>(empty_cells[cell_index++]);
-                item.bed_idx = 0;
-            } else {
-                item.bed_idx = arrangement::UNARRANGED;
+        std::vector<BoundingBoxf> occupied;
+        auto add_occupied_local = [&](const ArrangePolygon &ap, bool needs_stride_correction) {
+            BoundingBox sbb = ap.transformed_poly().contour.bounding_box();
+            if (needs_stride_correction) {
+                sbb.translate(-stride_dx, stride_dy);
             }
+            occupied.emplace_back(
+                Vec2d(unscale<double>(sbb.min.x()), unscale<double>(sbb.min.y())),
+                Vec2d(unscale<double>(sbb.max.x()), unscale<double>(sbb.max.y()))
+            );
+        };
+        for (const auto &ap : m_unselected) {
+            if (ap.bed_idx != 0) continue;
+            if (ap.is_bed_exclusion &&
+                std::none_of(m_selected.begin(), m_selected.end(),
+                             [&ap](const ArrangePolygon &item) { return bed_exclusion_applies(item, ap); }))
+                continue;
+            add_occupied_local(ap, false);
+        }
+        for (const auto &ap : m_selected)
+            if (ap.priority > 0)
+                add_occupied_local(ap, true);
+
+        if (!occupied.empty()) {
+            const double half_x = step(0) / 2.0;
+            const double half_y = step(1) / 2.0;
+            // Strict overlap test (with an epsilon tolerance), to avoid irregular holes in the grid caused by floating-point edge touching.
+            auto strict_overlap = [](const BoundingBoxf &a, const BoundingBoxf &b) {
+                const double ix = std::min(a.max.x(), b.max.x()) - std::max(a.min.x(), b.min.x());
+                const double iy = std::min(a.max.y(), b.max.y()) - std::max(a.min.y(), b.min.y());
+                return ix > EPSILON && iy > EPSILON;
+            };
+            empty_cells.erase(
+                std::remove_if(empty_cells.begin(), empty_cells.end(),
+                    [&](const Vec2f &c) {
+                        BoundingBoxf cell(
+                            Vec2d(c.x() - half_x, c.y() - half_y),
+                            Vec2d(c.x() + half_x, c.y() + half_y)
+                        );
+                        for (const auto &bb : occupied)
+                            if (strict_overlap(bb, cell)) return true;
+                        return false;
+                    }),
+                empty_cells.end()
+            );
         }
 
+        // Template instances (priority > 0) stay where they are; new copies (priority == 0) fill
+        // empty_cells in order, the overflow gets bed_idx = -1.
+        // ap.translation of priority > 0 items is in cur_plate WORLD coordinates (from
+        // mi->get_transformation()), and finalize will do `ap.translation += bed_stride_x * ap.col`,
+        // so subtract one stride here to turn the translation into plate-0 LOCAL first; that later
+        // +stride cancels out back to WORLD, so the template ModelInstance can set_offset to its
+        // original position.
+        size_t cell_idx = 0, placed = 0;
+        for (size_t i = 0; i < m_selected.size(); ++i) {
+            if (ctl.was_canceled()) break;
+            if (m_selected[i].priority > 0) {
+                m_selected[i].bed_idx = 0;
+                m_selected[i].translation(X) -= stride_dx;
+                m_selected[i].translation(Y) += stride_dy;
+                continue;
+            }
+            if (cell_idx < empty_cells.size()) {
+                m_selected[i].translation = scaled<coord_t>(empty_cells[cell_idx]);
+                m_selected[i].translation -= offset_on_origin;
+                m_selected[i].bed_idx = 0;
+                ++cell_idx;
+                ++placed;
+                m_selected[i].itemid = static_cast<int>(placed);
+            } else {
+                m_selected[i].bed_idx = -1;
+            }
+        }
     } else {
         arrangement::arrange(m_selected, m_unselected, m_bedpts, params);
     }
@@ -376,12 +450,14 @@ void FillBedJob::finalize(bool canceled, std::exception_ptr &eptr)
             else
                 ap.bed_idx = cur_plate;
 
-            if (m_selected.size() <= 100) {
-                ap.row = ap.bed_idx / plate_cols;
-                ap.col = ap.bed_idx % plate_cols;
-                ap.translation(X) += bed_stride_x(m_plater) * ap.col;
-                ap.translation(Y) -= bed_stride_y(m_plater) * ap.row;
-            }
+            // Translate plate-0 LOCAL coordinates back to cur_plate WORLD coordinates, otherwise
+            // new copies on a non-zero plate would land on plate 0. Both the grid and NFP paths
+            // produce plate-0 LOCAL, so the stride must always be added back (template instances
+            // were pre-corrected by subtracting it once in process, adding it here restores them).
+            ap.row = ap.bed_idx / plate_cols;
+            ap.col = ap.bed_idx % plate_cols;
+            ap.translation(X) += bed_stride_x(m_plater) * ap.col;
+            ap.translation(Y) -= bed_stride_y(m_plater) * ap.row;
 
             ap.apply();
 
@@ -422,9 +498,9 @@ void FillBedJob::finalize(bool canceled, std::exception_ptr &eptr)
         //model_object->ensure_on_bed();
         //BOOST_LOG_TRIVIAL(debug) << __FUNCTION__ << ": model_object->ensure_on_bed()";
 
-        // FillBedJob has already computed and validated the final positions.
-        // The instance tree is synchronized above, so rerunning the general
-        // arranger here would only risk discarding a valid fill result.
+        m_plater->set_prepare_state(Job::JobPrepareState::PREPARE_STATE_MENU);
+        m_plater->arrange();
+
         m_plater->update();
 
         {

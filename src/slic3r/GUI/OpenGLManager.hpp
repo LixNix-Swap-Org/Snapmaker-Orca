@@ -6,6 +6,8 @@
 #include <utility>
 #include "slic3r/GUI/GLShader.hpp"
 
+#include <vector>
+
 class wxWindow;
 class wxGLCanvas;
 class wxGLContext;
@@ -79,6 +81,7 @@ private:
     bool m_gl_initialized{ false };
     wxGLContext* m_context{ nullptr };
     GLShadersManager m_shaders_manager;
+    std::vector<unsigned int> m_pendingBufferDeletes;
     static GLInfo s_gl_info;
     static bool s_compressed_textures_supported;
     static bool s_force_power_of_two_textures;
@@ -92,6 +95,8 @@ public:
 
     bool init_gl(bool popup_error = true);
     wxGLContext* init_glcontext(wxGLCanvas& canvas, const std::pair<int, int>& required_opengl_version, bool enable_compatibility_profile, bool enable_debug);
+    void EnqueueBufferDeletes(std::vector<unsigned int>&& bufferIds);
+    void FlushPendingBufferDeletes();
 
     GLShaderProgram* get_shader(const std::string& shader_name) { return m_shaders_manager.get_shader(shader_name); }
     GLShaderProgram* get_current_shader() { return m_shaders_manager.get_current_shader(); }

@@ -31,7 +31,7 @@
 #include <wx/utils.h>
 #include <wx/webview.h>
 #include "slic3r/GUI/SSWCP.hpp"
-#include "sentry_wrapper/SentryWrapper.hpp"
+#include "app_common/SentryWrapper.hpp"
 
 #include <memory>
 #include <utility>

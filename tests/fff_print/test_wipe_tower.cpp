@@ -570,6 +570,7 @@ static void init_degenerate_raft_print(Print& print)
     print.is_BBL_printer() = false; // make sure the WipeTower2 code path is taken
     init_print(std::vector<TriangleMesh>{ make_cube(20., 20., 10.) }, print, model, config, &object_extruders);
     const StringObjectException validation = print.validate();
+    INFO("validate() error: " << validation.string);
     REQUIRE(validation.string.empty());
 }
 
@@ -603,6 +604,7 @@ static void init_multi_extruder_print(Print& print, const std::string& adhesiven
     print.is_BBL_printer() = false; // make sure the WipeTower2 code path is taken
     init_print(std::vector<TriangleMesh>{ make_cube(20., 20., 10.), make_cube(20., 20., 10.) }, print, model, config, &object_extruders);
     const StringObjectException validation = print.validate();
+    INFO("validate() error: " << validation.string);
     REQUIRE(validation.string.empty());
 }
 

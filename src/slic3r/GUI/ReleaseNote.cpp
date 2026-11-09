@@ -59,7 +59,7 @@
 #include <wx/timer.h>
 #include "Plater.hpp"
 #include "slic3r/GUI/GUI_App.hpp"
-#include "sentry_wrapper/SentryWrapper.hpp"
+#include "app_common/SentryWrapper.hpp"
 
 #include "DeviceCore/DevManager.h"
 #include "DeviceCore/DevStorage.h"
@@ -95,7 +95,6 @@ wxDEFINE_EVENT(EVT_SECONDARY_CHECK_RETRY, wxCommandEvent);
 wxDEFINE_EVENT(EVT_UPDATE_NOZZLE, wxCommandEvent);
 wxDEFINE_EVENT(EVT_UPDATE_TEXT_MSG, wxCommandEvent);
 wxDEFINE_EVENT(EVT_ERROR_DIALOG_BTN_CLICKED, wxCommandEvent);
-wxDEFINE_EVENT(EVT_DOWN_URL_PACK, wxCommandEvent);
 
 ReleaseNoteDialog::ReleaseNoteDialog(Plater *plater /*= nullptr*/)
     : DPIDialog(static_cast<wxWindow *>(wxGetApp().mainframe), wxID_ANY, _L("Release Note"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
@@ -318,11 +317,14 @@ UpdateVersionDialog::UpdateVersionDialog(wxWindow *parent)
     m_text_up_info = new Label(this, Label::Head_14, wxEmptyString, LB_AUTO_WRAP);
     m_text_up_info->SetForegroundColour(wxColour(0x26, 0x2E, 0x30));
 
-    // Store builds get updates from the Microsoft Store: wxID_YES opens the Store
-    // product page there (see the EVT_SLIC3R_VERSION_ONLINE handler) instead of GitHub.
     auto github_link = new HyperLink(this, is_running_in_msix() ? _L("Check on Microsoft Store") : _L("Check on GitHub"), "", LB_AUTO_WRAP);
     github_link->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
-        EndModal(wxID_YES);
+        // Store builds get updates from the Microsoft Store, not the GitHub release page.
+        if (is_running_in_msix())
+            open_ms_store_product_page();
+        else
+            wxLaunchDefaultBrowser(getUrl());
+        wxGetApp().destroy_update_dialog();
     });
 
     m_simplebook_release_note = new wxSimplebook(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSIMPLE_BORDER);
@@ -377,13 +379,10 @@ UpdateVersionDialog::UpdateVersionDialog(wxWindow *parent)
     m_button_download->SetCursor(wxCURSOR_HAND);
 
     m_button_download->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
-        wxCommandEvent event(EVT_DOWN_URL_PACK);
-
-        wxPostEvent(this, event);
-        if (isModal)
-            EndModal(wxID_NO);
-        else
-            Close();  
+        // Open the download page directly and destroy the dialog: Hide() on macOS
+        // leaves a blank zombie window.
+        wxLaunchDefaultBrowser(getUrl());
+        wxGetApp().destroy_update_dialog();
     });
 
     m_button_skip_version = new Button(this, _L("Skip this Version"));
@@ -392,10 +391,7 @@ UpdateVersionDialog::UpdateVersionDialog(wxWindow *parent)
 
     m_button_skip_version->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
         wxGetApp().set_skip_version(true);
-        if (isModal)
-            EndModal(wxID_NO);
-        else
-            Close();        
+        wxGetApp().destroy_update_dialog();
     });
 
     m_cb_stable_only = new CheckBox(this);
@@ -416,11 +412,14 @@ UpdateVersionDialog::UpdateVersionDialog(wxWindow *parent)
     m_button_cancel->SetCursor(wxCURSOR_HAND);
 
     m_button_cancel->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
-        if (isModal)
-            EndModal(wxID_NO);
-        else
-            Close();
+        wxGetApp().destroy_update_dialog();
+    });
 
+    // The title-bar close button must also clear the cached pointer; otherwise
+    // the next update check would use a dangling m_updateDialog.
+    Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent& e) {
+        wxGetApp().destroy_update_dialog();
+        e.Veto();
     });
 
     //sizer_button->Add(m_remind_choice, 0, wxALL | wxEXPAND, FromDIP(5));

@@ -578,6 +578,23 @@ void GLModel::reset()
     }
 #endif // !SLIC3R_OPENGL_ES
 
+    ClearRenderData();
+}
+
+void GLModel::DetachGpuBuffers(std::vector<unsigned int>& bufferIds)
+{
+    if (m_render_data.vbo_id != 0)
+        bufferIds.push_back(m_render_data.vbo_id);
+    if (m_render_data.ibo_id != 0)
+        bufferIds.push_back(m_render_data.ibo_id);
+
+    m_render_data.vbo_id = 0;
+    m_render_data.ibo_id = 0;
+    ClearRenderData();
+}
+
+void GLModel::ClearRenderData()
+{
     m_render_data.vertices_count = 0;
     m_render_data.indices_count  = 0;
     m_render_data.geometry.vertices = std::vector<float>();

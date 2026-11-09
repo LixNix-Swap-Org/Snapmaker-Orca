@@ -235,9 +235,10 @@ std::map<std::string, std::vector<SimpleSettingData>> SettingsFactory::PART_CATE
        {"overhang_2_4_speed", "", 8},
        {"overhang_3_4_speed", "", 9},
        {"overhang_4_4_speed", "", 10},
-       {"bridge_speed", "", 11},
-       {"gap_infill_speed", "", 12},
-       {"internal_bridge_speed", "", 13}}}};
+       {"overhang_totally_speed", "", 11},
+       {"bridge_speed", "", 12},
+       {"gap_infill_speed", "", 13},
+       {"internal_bridge_speed", "", 14}}}};
 
 std::vector<std::string> SettingsFactory::get_options(const bool is_part)
 {
@@ -2516,11 +2517,11 @@ void MenuFactory::append_menu_item_simplify(wxMenu* menu)
         []() {return plater()->can_simplify(); }, m_parent);
 }
 
-void MenuFactory::append_menu_item_smooth_mesh(wxMenu *menu)
+void MenuFactory::append_menu_item_smooth_mesh(wxMenu* menu)
 {
-    wxMenuItem *menu_item = append_menu_item(
-        menu, wxID_ANY, _L("Subdivision mesh"), "", [](wxCommandEvent &) { obj_list()->smooth_mesh(); }, "", menu, []() { return plater()->can_smooth_mesh(); },
-        m_parent);
+    wxMenuItem* menu_item = append_menu_item(
+        menu, wxID_ANY, _L("Subdivision mesh") + _L("(Lost color)"), "", [](wxCommandEvent&) { obj_list()->smooth_mesh(); }, "", menu,
+        []() { return plater()->can_smooth_mesh(); }, m_parent);
 }
 
 void MenuFactory::append_menu_item_center(wxMenu* menu)

@@ -2751,7 +2751,6 @@ void SelectMachineDialog::show_errors(wxString &info)
 void SelectMachineDialog::on_ok_btn(wxCommandEvent &event)
 {
     bool has_slice_warnings = false;
-    bool is_printing_block  = false;
 
     DeviceManager* dev = Slic3r::GUI::wxGetApp().getDeviceManager();
     if (!dev) return;
@@ -2881,15 +2880,6 @@ void SelectMachineDialog::on_ok_btn(wxCommandEvent &event)
         else if (warning.msg == NOT_GENERATE_TIMELAPSE) {
             continue;
         }
-        else if(warning.msg == NOZZLE_HRC_CHECKER){
-            wxString error_info = Plater::get_slice_warning_string(warning);
-            if (error_info.IsEmpty()) {
-                error_info = wxString::Format("%s\n", warning.msg);
-            }
-
-            confirm_text.push_back(ConfirmBeforeSendInfo(error_info));
-            has_slice_warnings = true;
-        }
     }
 
 
@@ -2934,11 +2924,6 @@ void SelectMachineDialog::on_ok_btn(wxCommandEvent &event)
     if (has_slice_warnings)
     {
         ConfirmBeforeSendDialog confirm_dlg(this, wxID_ANY, _L("Warning"));
-        if (is_printing_block)
-        {
-            confirm_dlg.hide_button_ok();
-            confirm_dlg.edit_cancel_button_txt(_L("Close"), true);
-        }
         confirm_dlg.Bind(EVT_SECONDARY_CHECK_CONFIRM, [this, &confirm_dlg](wxCommandEvent& e)
             {
                 confirm_dlg.on_hide();
@@ -2949,55 +2934,39 @@ void SelectMachineDialog::on_ok_btn(wxCommandEvent &event)
         /* use warning color if there are warning and normal messages*/
         /* use indexes if there are several messages*/
         /* add header and ending if there are several messages or has none block warnings*/
-        if (confirm_text.size() > 1 || !is_printing_block)
-        {
-            bool has_warning_msg = false;
-            bool has_normal_msg = false;
+        bool has_warning_msg = false;
+        bool has_normal_msg = false;
 
-            if (confirm_text.size() > 1) {
-                  std::unordered_set<wxString>       seen_texts;
-                  std::vector<ConfirmBeforeSendInfo> unique_texts;
+        if (confirm_text.size() > 1) {
+              std::unordered_set<wxString>       seen_texts;
+              std::vector<ConfirmBeforeSendInfo> unique_texts;
 
-                  for (const auto &item : confirm_text) {
-                      if (seen_texts.insert(item.text).second)
-                      {
-                          unique_texts.push_back(item);
-                      }
+              for (const auto &item : confirm_text) {
+                  if (seen_texts.insert(item.text).second)
+                  {
+                      unique_texts.push_back(item);
                   }
+              }
 
-                  for (size_t i = 0; i < unique_texts.size(); ++i) {
-                      unique_texts[i].text = wxString::Format("%d. %s", i + 1, unique_texts[i].text);
-                      if (unique_texts[i].level == ConfirmBeforeSendInfo::InfoLevel::Warning)
-                          has_warning_msg = true;
-                      else
-                          has_normal_msg = true;
-                  }
-                  confirm_text.swap(unique_texts);
-            }
-
-            std::vector<ConfirmBeforeSendInfo> shown_infos;
-            shown_infos.emplace_back(ConfirmBeforeSendInfo(_L("Please check the following:")));
-            for (const auto& item : confirm_text)
-            {
-                shown_infos.emplace_back(item);
-            }
-
-            if (is_printing_block)
-            {
-                shown_infos.emplace_back(ConfirmBeforeSendInfo(_L("Please fix the error above, otherwise printing cannot continue."), wxEmptyString, ConfirmBeforeSendInfo::InfoLevel::Warning));
-            }
-            else
-            {
-                shown_infos.emplace_back(ConfirmBeforeSendInfo(_L("Please click the confirm button if you still want to proceed with printing.")));
-            }
-
-            confirm_dlg.update_text(shown_infos, has_warning_msg&& has_normal_msg);
-        }
-        else
-        {
-            confirm_dlg.update_text(confirm_text, false);
+              for (size_t i = 0; i < unique_texts.size(); ++i) {
+                  unique_texts[i].text = wxString::Format("%d. %s", i + 1, unique_texts[i].text);
+                  if (unique_texts[i].level == ConfirmBeforeSendInfo::InfoLevel::Warning)
+                      has_warning_msg = true;
+                  else
+                      has_normal_msg = true;
+              }
+              confirm_text.swap(unique_texts);
         }
 
+        std::vector<ConfirmBeforeSendInfo> shown_infos;
+        shown_infos.emplace_back(ConfirmBeforeSendInfo(_L("Please check the following:")));
+        for (const auto& item : confirm_text)
+        {
+            shown_infos.emplace_back(item);
+        }
+        shown_infos.emplace_back(ConfirmBeforeSendInfo(_L("Please click the confirm button if you still want to proceed with printing.")));
+
+        confirm_dlg.update_text(shown_infos, has_warning_msg&& has_normal_msg);
         confirm_dlg.on_show();
     }
     else

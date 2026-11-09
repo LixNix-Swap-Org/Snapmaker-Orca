@@ -273,6 +273,7 @@ set(lisbslic3r_sources
     GCode/TimelapsePosPicker.cpp
     GCode/TimelapsePosPicker.hpp
     GCode.cpp
+    GCode/ExtrusionProcessor.cpp
     GCode/ExtrusionProcessor.hpp
     GCode/FanMover.cpp
     GCode/FanMover.hpp
@@ -711,14 +712,11 @@ target_compile_definitions(libslic3r PUBLIC CGAL_LINKED_WITH_TBB)
 if (USE_SLIC3R_CONSOLE_LOG)
     target_compile_definitions(libslic3r PRIVATE $<$<CONFIG:RelWithDebInfo>:SLIC3R_CONSOLE_LOG>)
 endif()
-# SM Orca: source directory stays PUBLIC so other modules (like libslic3r_gui) can
-# include headers such as SentryWrapper.hpp.
+# Make source directory PUBLIC so other modules (like libslic3r_gui) can include libslic3r headers directly
 target_include_directories(libslic3r PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/TextureToColor PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(libslic3r SYSTEM PUBLIC ${EXPAT_INCLUDE_DIRS})
 
 # Find the OCCT and related libraries
-set(OpenCASCADE_DIR "${CMAKE_PREFIX_PATH}/lib/cmake/occt")
-find_package(OpenCASCADE REQUIRED)
 target_include_directories(libslic3r SYSTEM PUBLIC ${OpenCASCADE_INCLUDE_DIR})
 
 find_package(JPEG REQUIRED)
@@ -790,6 +788,21 @@ if (WIN32)
     endforeach ()
 endif ()
 
+# OCCT is built as a set of static archives with mutual dependencies, and
+# TKService depends on freetype. Static archives are scanned in a single pass.
+# Clang sanitizer builds may need OCCT and freetype wrapped in a linker group
+# so symbols resolve regardless of archive order. Keep this opt-in because the
+# default production link line must remain unchanged on every platform.
+if (ORCA_USE_OCCT_LINK_GROUP AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(OCCT_LINK_LIBRARIES
+        "-Wl,--start-group"
+        ${OCCT_LIBS}
+        ${FREETYPE_LIBRARIES}
+        "-Wl,--end-group"
+    )
+else()
+    set(OCCT_LINK_LIBRARIES ${OCCT_LIBS})
+endif()
 target_link_libraries(libslic3r
     PUBLIC
         Eigen3::Eigen
@@ -803,7 +816,7 @@ target_link_libraries(libslic3r
     PRIVATE
         ${CMAKE_DL_LIBS}
         ${EXPAT_LIBRARIES}
-        ${OCCT_LIBS}
+        ${OCCT_LINK_LIBRARIES}
         boost_libs
         cereal::cereal
         Clipper2

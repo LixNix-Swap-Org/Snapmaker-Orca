@@ -60,7 +60,6 @@ wxDECLARE_EVENT(EVT_SECONDARY_CHECK_RESUME, wxCommandEvent);
 wxDECLARE_EVENT(EVT_UPDATE_NOZZLE, wxCommandEvent);
 wxDECLARE_EVENT(EVT_UPDATE_TEXT_MSG, wxCommandEvent);
 wxDECLARE_EVENT(EVT_ERROR_DIALOG_BTN_CLICKED, wxCommandEvent);
-wxDECLARE_EVENT(EVT_DOWN_URL_PACK, wxCommandEvent);
 
 class ReleaseNoteDialog : public DPIDialog
 {

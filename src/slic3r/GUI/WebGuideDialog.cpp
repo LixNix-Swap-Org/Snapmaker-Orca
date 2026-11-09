@@ -82,7 +82,7 @@
 #include <tbb/parallel_for.h>
 #include <tbb/blocked_range.h>
 #include "ProfileLoadUtil.hpp"
-#include "sentry_wrapper/SentryWrapper.hpp"
+#include "app_common/SentryWrapper.hpp"
 #include "libslic3r/PrintConfig.hpp"
 #include "slic3r/Utils/NetworkAgent.hpp"
 #include "slic3r/Utils/PresetUpdater.hpp"

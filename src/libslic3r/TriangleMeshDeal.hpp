@@ -1,5 +1,8 @@
 #pragma once
 
+#ifndef libslic3r_TriangleMeshDeal_hpp_
+#define libslic3r_TriangleMeshDeal_hpp_
+
 #include "TriangleMesh.hpp"
 
 namespace Slic3r {
@@ -11,3 +14,5 @@ public:
     static TriangleMesh smooth_triangle_mesh(const TriangleMesh &mesh, bool &ok, TriangleMesh *unsmoothed = nullptr);
 };
 } // namespace Slic3r
+
+#endif // libslic3r_TriangleMeshDeal_hpp_

@@ -402,6 +402,13 @@ public:
     // painted volume at full detail. painted_volume receives the ModelVolume when true.
     bool is_mmu_painted_for_render(const ModelObjectPtrs& model_objects, ModelVolume** painted_volume = nullptr) const;
 
+    /**
+     * @brief Renders the painted segment models with the picking color of this volume.
+     *
+     * Used by the picking pass so painted volumes never upload the unpainted full mesh.
+     */
+    void RenderMmuSegmentsForPicking();
+
     void                set_bounding_boxes_as_dirty() {
         m_transformed_bounding_box.reset();
         m_transformed_convex_hull_bounding_box.reset();
@@ -620,6 +627,8 @@ public:
     void set_slope_normal_z(float normal_z) { m_slope.normal_z = normal_z; }
     void set_default_slope_normal_z() { m_slope.normal_z = -::cos(Geometry::deg2rad(90.0f - 45.0f)); }
     void set_show_sinking_contours(bool show) { m_show_sinking_contours = show; }
+    /** @brief Returns whether sinking-contour rendering is enabled for this collection. */
+    bool IsShowingSinkingContours() const { return m_show_sinking_contours; }
 
     // returns true if all the volumes are completely contained in the print volume
     // returns the containment state in the given out_state, if non-null

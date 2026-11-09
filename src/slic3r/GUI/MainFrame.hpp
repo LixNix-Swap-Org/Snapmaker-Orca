@@ -602,6 +602,12 @@ public:
     ResizeEdgePanel* m_edge_right{nullptr};
     void update_edge_panels();
 #endif // __WXGTK__
+
+private:
+    // Initial button state path for the MainFrame constructor; bypasses the
+    // teardown guard in update_slice_print_status (wxGetApp().mainframe does
+    // not point at this frame yet during construction).
+    void update_slice_print_status_impl(SlicePrintEventType event, bool can_slice, bool can_print);
 };
 
 wxDECLARE_EVENT(EVT_HTTP_ERROR, wxCommandEvent);

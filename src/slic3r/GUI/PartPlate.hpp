@@ -282,6 +282,8 @@ private:
     // void render_right_arrow(const ColorRGBA render_color, bool use_lighting) const;
     void render_icon_texture(GLModel &buffer, GLTexture &texture);
     void set_hover_tooltip(const std::string& tooltip);
+    // Tooltip of the icon at hover_id, empty when render_icons() does not draw that icon.
+    std::string get_icon_tooltip(int hover_id) const;
     void render_icons(bool bottom, bool only_name = false, int hover_id = -1);
     // Returns true when IMEX parallel mode is active (non-primary) AND the plate
     // has objects assigned to more than one filament — a combination that warrants caution.
@@ -560,6 +562,10 @@ public:
 
     //remove instance from plate
     int remove_instance(int obj_id, int instance_id);
+
+    //remove every instance registration of obj_id from this plate
+    //（an object may have instances registered on different plates）
+    void remove_object(int obj_id);
 
     //translate instance on the plate
     void translate_all_instance(Vec3d position);
@@ -847,6 +853,9 @@ class PartPlateList : public ObjectBase
     int m_filament_count = 1;
 
     void init();
+    /// @brief Get a print index larger than every key in m_print_list and m_gcode_result_list.
+    /// @return 0 when both lists are empty, otherwise the largest used key + 1.
+    int NextFreePrintIndex() const;
     //compute the origin for printable plate with index i
     Vec3d compute_origin(int index, int column_count);
     //compute the origin for unprintable plate
@@ -1068,6 +1077,14 @@ public:
     /*rendering related functions*/
     void on_change_color_mode(bool is_dark) { m_is_dark = is_dark; }
     void render(const Transform3d& view_matrix, const Transform3d& projection_matrix, bool bottom, bool only_current = false, bool only_body = false, int hover_id = -1, bool render_cali = false, bool show_grid = true, bool hide_chrome = false, bool hide_inactive = false);
+    /** @brief Draws every plate polygon with the currently bound shader; used as soft shadow receivers. */
+    void RenderShadowReceivers();
+
+    /**
+     * @brief Show the tooltip of the hovered plate icon in the overlay pass.
+     * @param hoverId Global plate hover id (plate_index * GRABBER_COUNT + action).
+     */
+    void RenderHoverTooltip(int hoverId);
     void set_render_option(bool bedtype_texture, bool plate_settings);
     void set_render_cali(bool value = true) { render_cali_logo = value; }
     void render_hover_tooltip() const;
@@ -1190,6 +1207,8 @@ private:
     size_t m_next_bedtype_texture{ 0 };
     size_t m_next_cali_texture{ 0 };
     size_t m_next_extruder_only_area_texture{ 0 };
+
+    void show_tooltip(const std::string& tooltip) const;
 };
 
 } // namespace GUI

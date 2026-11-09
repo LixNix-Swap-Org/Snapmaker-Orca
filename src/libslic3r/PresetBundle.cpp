@@ -2938,7 +2938,7 @@ bool PresetBundle::import_json_presets(PresetsConfigSubstitutions &            s
             preset.filament_id = key_values[BBL_JSON_KEY_FILAMENT_ID];
         preset.is_external = true;
         preset.version     = *version;
-        inherit_preset     = collection->find_preset(inherits_value, false, true); // pointer maybe wrong after insert, redo find
+        inherit_preset     = collection->find_preset2(inherits_value, false); // pointer maybe wrong after insert, redo find
         if (inherit_preset) preset.base_id = inherit_preset->setting_id;
         BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << " " << __LINE__ << preset.name << " have filament_id: " << preset.filament_id << " and base_id: " << preset.base_id;
         Preset::normalize(preset.config);
@@ -3430,12 +3430,10 @@ int PresetBundle::validate_presets(const std::string &file_name, DynamicPrintCon
     for(unsigned int index = 0; index < filament_count; index ++)
     {
         std::string filament_preset = filament_preset_name[index];
-        std::string filament_inherits = inherits_values[index+1];
-
-        // filament_preset_name is padded up to filament_count from filament_diameter. Unfilled
-        // slots have no assigned preset, so there's nothing to validate or warn about.
+        // An empty name marks an unused filament slot (3mf arrays are padded to the machine's slot count), not a customized preset
         if (filament_preset.empty())
             continue;
+        std::string filament_inherits = inherits_values[index+1];
 
         validated = this->filaments.validate_preset(filament_preset, filament_inherits);
         if (!validated) {
@@ -9668,6 +9666,9 @@ void PresetBundle::update_multi_material_filament_presets(size_t to_delete_filam
             // extruder-count handler a colour for a slot no per-filament array has yet.
             if (color_opt->values.size() < num_filament_slots)
                 color_opt->values.resize(num_filament_slots, "#26A69A");
+            // filament_colour was just resized to the physical count; multi_colors / colour_mode
+            // must follow
+            EnsureFilamentColorFieldsAligned(this->project_config);
             this->mixed_filaments.auto_generate(color_opt->values);
 
             int   gradient_mode = get_mixed_mode(false) ? 1 : 0;

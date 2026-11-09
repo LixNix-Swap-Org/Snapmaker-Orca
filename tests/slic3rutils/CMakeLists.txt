@@ -1,10 +1,6 @@
 get_filename_component(_TEST_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 add_executable(${_TEST_NAME}_tests
     ${_TEST_NAME}_tests_main.cpp
-    # Snapmaker: fork-side symbols referenced by libslic3r_gui (Sentry, bury, common)
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/sentry_wrapper/SentryWrapper.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/bury_cfg/bury_point.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common_func/common_func.cpp
     test_bambu_filament_ids.cpp
     test_bed_exclusion_fields.cpp
     test_cloud_delete_queue.cpp
@@ -85,7 +81,6 @@ endif ()
 if (MSVC)
     target_link_libraries(${_TEST_NAME}_tests Setupapi.lib)
 endif ()
-target_compile_definitions(${_TEST_NAME}_tests PRIVATE BURY_EXPORTS) # bury_point.cpp is compiled in
 target_compile_definitions(${_TEST_NAME}_tests PRIVATE
     "FILAMENT_ALLOW_LIST_FILE=R\"(${CMAKE_SOURCE_DIR}/resources/profiles/Snapmaker/filament/filament_allow_list.json)\"")
 
@@ -109,7 +104,6 @@ add_executable(gateway_tests
     GatewayProtocol_test.cpp
     GatewayService_test.cpp
     GatewayDevice_test.cpp
-    GatewayFlutterResources_test.cpp
     GatewayAccount_test.cpp
     gateway_nanosvg.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../src/slic3r/Utils/ConnectionProcessManager.cpp
@@ -119,8 +113,7 @@ add_executable(gateway_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/../../src/slic3r/Utils/GatewayAccount.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../src/slic3r/Utils/Http.cpp
     )
-target_link_libraries(gateway_tests test_common libslic3r boost_libs libcurl OpenSSL::SSL OpenSSL::Crypto Catch2::Catch2WithMain)
-target_compile_definitions(gateway_tests PRIVATE GATEWAY_FLUTTER_BUNDLE="${CMAKE_CURRENT_SOURCE_DIR}/../../resources/web/flutter_web/main.dart.js")
+target_link_libraries(gateway_tests test_common libslic3r boost_libs libcurl OpenSSL::SSL OpenSSL::Crypto Catch2::Catch2WithMain app_common)
 if (MSVC)
     target_compile_definitions(gateway_tests PRIVATE _WIN32_WINNT=0x0601 NOMINMAX)
 endif ()

@@ -535,6 +535,23 @@ enum OverhangFanThreshold {
     Overhang_threshold_bridge
 };
 
+// decide which overhang part joins the cooling slowdown
+enum OverhangThresholdParticipatingCooling {
+    Overhang_threshold_participating_cooling_none = 0,
+    Overhang_threshold_participating_cooling_1_4,
+    Overhang_threshold_participating_cooling_2_4,
+    Overhang_threshold_participating_cooling_3_4,
+    Overhang_threshold_participating_cooling_4_4,
+    Overhang_threshold_participating_cooling_bridge
+};
+
+// Cooling slowdown logic - determines how printer slows down for layer cooling
+// Ported from PrusaSlicer 2.9.3 for VFA reduction
+enum CoolingSlowdownLogicType {
+    cslUniformCooling = 0,      // Default: slow down all features equally
+    cslConsistentSurface = 1,   // Prioritize slowing infill/internal perimeters first
+};
+
 // BBS
 enum BedType {
     btDefault = 0,
@@ -1504,6 +1521,7 @@ PRINT_CONFIG_CLASS_DEFINE(
     ((ConfigOptionFloatsNullable,           initial_layer_acceleration))
     ((ConfigOptionFloatsOrPercentsNullable, bridge_acceleration))
     ((ConfigOptionFloatsNullable,           travel_acceleration))
+    ((ConfigOptionFloats,                   travel_short_distance_acceleration))
     ((ConfigOptionFloatsOrPercentsNullable, sparse_infill_acceleration))
     ((ConfigOptionFloatsOrPercentsNullable, internal_solid_infill_acceleration))
 
@@ -1604,6 +1622,7 @@ PRINT_CONFIG_CLASS_DEFINE(
     ((ConfigOptionFloatsOrPercentsNullable,       sparse_infill_line_width))
     ((ConfigOptionPercent,              infill_wall_overlap))
     ((ConfigOptionPercent,              top_bottom_infill_wall_overlap))
+    ((ConfigOptionFloatOrPercent,       external_infill_margin))
     ((ConfigOptionFloatsNullable,       sparse_infill_speed))
     ((ConfigOptionPercent, skeleton_infill_density))
     ((ConfigOptionPercent, skin_infill_density))
@@ -1666,6 +1685,7 @@ PRINT_CONFIG_CLASS_DEFINE(
     ((ConfigOptionFloatsOrPercentsNullable, overhang_2_4_speed))
     ((ConfigOptionFloatsOrPercentsNullable, overhang_3_4_speed))
     ((ConfigOptionFloatsOrPercentsNullable, overhang_4_4_speed))
+    ((ConfigOptionFloatsOrPercents,         overhang_totally_speed))
     ((ConfigOptionBool,                 only_one_wall_top))
 
     //SoftFever
@@ -2130,12 +2150,15 @@ PRINT_CONFIG_CLASS_DERIVED_DEFINE(
     ((ConfigOptionBools,              enable_overhang_bridge_fan))
     ((ConfigOptionInts,               overhang_fan_speed))
     ((ConfigOptionEnumsGeneric,       overhang_fan_threshold))
+    ((ConfigOptionEnumsGeneric,       overhang_threshold_participating_cooling))
     ((ConfigOptionEnum<PrintSequence>,print_sequence))
     ((ConfigOptionEnum<PrintOrder>,   print_order))
     ((ConfigOptionInts,               first_layer_print_sequence))
     ((ConfigOptionInts,               other_layers_print_sequence))
     ((ConfigOptionInt,                other_layers_print_sequence_nums))
     ((ConfigOptionBools,              slow_down_for_layer_cooling))
+    ((ConfigOptionEnumsGeneric,       cooling_slowdown_logic))
+    ((ConfigOptionFloats,             cooling_perimeter_transition_distance))
     ((ConfigOptionInts,               close_fan_the_first_x_layers))
     ((ConfigOptionEnum<DraftShield>,  draft_shield))
     ((ConfigOptionFloat,              extruder_clearance_dist_to_rod))//BBS

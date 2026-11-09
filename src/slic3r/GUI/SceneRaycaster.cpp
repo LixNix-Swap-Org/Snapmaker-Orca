@@ -21,6 +21,15 @@ namespace GUI {
 // EIdBase::Volume must be greater than PartPlateList::MAX_PLATES_COUNT * PartPlate::GRABBER_COUNT
 static_assert((int) SceneRaycaster::EIdBase::Volume > PartPlateList::MAX_PLATES_COUNT * PartPlate::GRABBER_COUNT, "EIdBase::Volume too small");
 
+namespace {
+
+bool IsHitMaskEnabled(SceneRaycaster::EHitMask mask, SceneRaycaster::EHitMask requestedMask)
+{
+    return (static_cast<uint8_t>(mask) & static_cast<uint8_t>(requestedMask)) != 0;
+}
+
+} // namespace
+
 SceneRaycaster::SceneRaycaster() {
 #if ENABLE_RAYCAST_PICKING_DEBUG
     // hit point
@@ -109,7 +118,7 @@ void SceneRaycaster::remove_raycaster(std::shared_ptr<SceneRaycasterItem> item)
 }
 
 SceneRaycaster::HitResult SceneRaycaster::hit(const Vec2d& mouse_pos, const Camera& camera,
-    const ClippingPlane* clipping_plane, SceneRaycaster::EHitMode mode) const
+    const ClippingPlane* clipping_plane, SceneRaycaster::EHitMode mode, EHitMask mask) const
 {
     // Orca: Picking may favor an already selected volume for interaction, while camera
     // navigation must always use the geometrically closest visible scene surface.
@@ -151,7 +160,7 @@ SceneRaycaster::HitResult SceneRaycaster::hit(const Vec2d& mouse_pos, const Came
         }
     };
 
-    VolumeKeeper volume_keeper(mode == EHitMode::Picking);
+    VolumeKeeper volume_keeper(mode == EHitMode::Picking && IsHitMaskEnabled(mask, EHitMask::Volume));
 
     double closest_hit_squared_distance = std::numeric_limits<double>::max();
     auto is_closest = [&closest_hit_squared_distance, &volume_keeper](const Camera& camera, const Vec3f& hit) {
@@ -210,18 +219,19 @@ SceneRaycaster::HitResult SceneRaycaster::hit(const Vec2d& mouse_pos, const Came
 
     // Orca: Gizmo geometry is an interaction target, not a valid depth anchor for camera movement.
     if (mode == EHitMode::Picking) {
-        if (!m_gizmos.empty())
+        if (IsHitMaskEnabled(mask, EHitMask::Gizmo) && !m_gizmos.empty())
             test_raycasters(EType::Gizmo, mouse_pos, camera, ret);
 
-        if (!m_fallback_gizmos.empty() && !ret.is_valid())
+        if (IsHitMaskEnabled(mask, EHitMask::FallbackGizmo) && !m_fallback_gizmos.empty() && !ret.is_valid())
             test_raycasters(EType::FallbackGizmo, mouse_pos, camera, ret);
     }
 
     if (!m_gizmos_on_top || !ret.is_valid()) {
         // Orca: In perspective the bottom of the viewport can see the bed even at a horizontal view.
-        if ((mode == EHitMode::SceneOnly || (mode == EHitMode::Picking && camera.is_looking_downward())) && !m_bed.empty())
+        if (IsHitMaskEnabled(mask, EHitMask::Bed) &&
+            (mode == EHitMode::SceneOnly || (mode == EHitMode::Picking && camera.is_looking_downward())) && !m_bed.empty())
             test_raycasters(EType::Bed, mouse_pos, camera, ret);
-        if (!m_volumes.empty())
+        if (IsHitMaskEnabled(mask, EHitMask::Volume) && !m_volumes.empty())
             test_raycasters(EType::Volume, mouse_pos, camera, ret);
     }
 
@@ -232,6 +242,24 @@ SceneRaycaster::HitResult SceneRaycaster::hit(const Vec2d& mouse_pos, const Came
     *const_cast<std::optional<HitResult>*>(&m_last_hit) = ret;
 #endif // ENABLE_RAYCAST_PICKING_DEBUG
     return ret;
+}
+
+SceneRaycaster::HitResult SceneRaycaster::ResolveHitCandidates(const HitResult& nonVolumeHit, const HitResult& volumeHit,
+                                                               const Camera& camera) const
+{
+    if (!nonVolumeHit.is_valid())
+        return volumeHit;
+
+    if (!volumeHit.is_valid())
+        return nonVolumeHit;
+
+    const bool gizmoHit = nonVolumeHit.type == EType::Gizmo || nonVolumeHit.type == EType::FallbackGizmo;
+    if (m_gizmos_on_top && gizmoHit)
+        return nonVolumeHit;
+
+    const double nonVolumeDistance = (camera.get_position() - nonVolumeHit.position.cast<double>()).squaredNorm();
+    const double volumeDistance = (camera.get_position() - volumeHit.position.cast<double>()).squaredNorm();
+    return nonVolumeDistance <= volumeDistance ? nonVolumeHit : volumeHit;
 }
 
 #if ENABLE_RAYCAST_PICKING_DEBUG

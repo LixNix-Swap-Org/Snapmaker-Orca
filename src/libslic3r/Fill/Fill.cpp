@@ -1397,6 +1397,16 @@ void Layer::make_fills(const FillAdaptive::RegionOctrees* fill_octrees, FillLigh
         f->fixed_angle = surface_fill.params.fixed_angle;
         const FillAdaptive::Octrees *octrees = fill_octrees ? fill_octrees->region(surface_fill.region_id) : nullptr;
         f->adaptive_infill_field   = this->object()->adaptive_infill_field(surface_fill.params.adaptive_infill_mode);
+        // Whether the layer above (same region) carries top surfaces, so that
+        // internal solid infill of this layer sits directly below a top surface.
+        if (this->upper_layer != nullptr && surface_fill.region_id < this->upper_layer->regions().size()) {
+            const LayerRegion *layerm_above = this->upper_layer->regions()[surface_fill.region_id];
+            for (const Surface &s : layerm_above->fill_surfaces.surfaces)
+                if (s.surface_type == stTop) {
+                    f->solid_under_top = true;
+                    break;
+                }
+        }
         f->print_config        = &this->object()->print()->config();
         f->print_object_config = &this->object()->config();
 		if (surface_fill.params.pattern == ipConcentricInternal) {

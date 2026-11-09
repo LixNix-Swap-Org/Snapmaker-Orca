@@ -86,6 +86,10 @@ public:
 
     void data_changed(bool is_serializing) override;
 
+    // Re-sync the in-memory painting session from the model after an external
+    // rewrite of mmu_segmentation_facets (e.g. batch color-match apply).
+    void refresh_from_model();
+
     // The paint material limit follows EnforcerBlockerType::ExtruderMax: TriangleSelector
     // serialization covers the extended (17..32) range through an escape nibble. Mixed-color
     // filaments occupy ordinary slots, so they draw from the same budget as physical ones.

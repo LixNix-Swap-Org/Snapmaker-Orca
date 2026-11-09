@@ -3933,6 +3933,8 @@ void GLGizmoTextureDisplacement::update_from_model_object(bool first_update)
     }
 
     const ModelObject *mo = m_c->selection_info()->model_object();
+    ResetPaintingStroke();
+    DetachTriangleSelectorGlResources();
     m_triangle_selectors.clear();
     // The base keeps the last mesh a fill tool hovered, and render_painter_gizmo() reads it as a hover that is
     // still on: a new set of selectors has none.

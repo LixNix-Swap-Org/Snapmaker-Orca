@@ -16,7 +16,7 @@
 #include "libslic3r/Config.hpp"
 #include <limits>
 
-#include "sentry_wrapper/SentryWrapper.hpp"
+#include "app_common/SentryWrapper.hpp"
 #include <wx/colour.h>
 #include <wx/event.h>
 #include <wx/dcclient.h>

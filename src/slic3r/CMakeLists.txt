@@ -244,6 +244,10 @@ set(SLIC3R_GUI_SOURCES
     GUI/Gizmos/GLGizmoUtils.hpp
     GUI/GLCanvas3D.cpp
     GUI/GLCanvas3D.hpp
+    GUI/GLPickingBuffer.cpp
+    GUI/GLPickingBuffer.hpp
+    GUI/SoftShadowRenderer.cpp
+    GUI/SoftShadowRenderer.hpp
     GUI/SequentialPrintClearance.hpp
     GUI/GLModel.cpp
     GUI/GLModel.hpp
@@ -1020,6 +1024,10 @@ if(ORCA_UPDATER_SIG_KEY_B64)
     set(ORCA_UPDATER_SIG_KEY_AVAILABLE 1)
 endif()
 
+if(WIN32 AND SLIC3R_WIDGET_INSPECTOR)
+    list(APPEND SLIC3R_GUI_SOURCES GUI/WidgetInspector.cpp GUI/WidgetInspector.hpp)
+endif()
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/GeneratedConfig.hpp.in
                ${CMAKE_CURRENT_BINARY_DIR}/GeneratedConfig.hpp
                @ONLY)
@@ -1040,24 +1048,17 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SnapLogBuildConfig.hpp.in
                ${CMAKE_CURRENT_BINARY_DIR}/SnapLogBuildConfig.hpp
                @ONLY)
 
-if (WIN32)
-    add_library(libslic3r_gui STATIC
-        ${SLIC3R_GUI_SOURCES}
-        ../dev-utils/BaseException.cpp
-        ../dev-utils/BaseException.h
-        ../dev-utils/StackWalker.cpp
-        ../dev-utils/StackWalker.h
-    )
-else ()
-    add_library(libslic3r_gui STATIC ${SLIC3R_GUI_SOURCES})
-endif ()
+add_library(libslic3r_gui STATIC ${SLIC3R_GUI_SOURCES})
+if(WIN32 AND SLIC3R_WIDGET_INSPECTOR)
+    target_compile_definitions(libslic3r_gui PRIVATE ORCA_WIDGET_INSPECTOR)
+endif()
 # Snapmaker Orca: Utils/SnapLogClient.{hpp,cpp} are byte-identical copies from Snapmaker upstream and
 # are never edited here, so their warnings stay warnings instead of failing the -Werror build.
 if ((NOT MSVC OR IS_CLANG_CL) AND ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang"))
     set_source_files_properties(Utils/SnapLogClient.cpp PROPERTIES COMPILE_OPTIONS "-Wno-error")
 endif ()
 
-# Snapmaker: ${CMAKE_CURRENT_SOURCE_DIR}/.. exposes src/common_func, src/bury_cfg, src/sentry_wrapper
+# Snapmaker: ${CMAKE_CURRENT_SOURCE_DIR}/.. exposes src/common_func and src/app_common
 target_include_directories(libslic3r_gui PRIVATE Utils ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
 # Snapmaker: vendored Paho MQTT stack (src/mqtt)
@@ -1075,8 +1076,8 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SLIC3R_GUI_SOURCES})
 encoding_check(libslic3r_gui)
 
 # Only BuildCommit.cpp includes the generated header, plus BaseException.cpp on
-# Windows. Both build into libslic3r_gui, so the header only has to exist before
-# that target builds.
+# Windows. They build into libslic3r_gui and app_common (src/CMakeLists.txt), so the
+# header only has to exist before those targets build.
 set(_git_commit_hash_header "${CMAKE_CURRENT_BINARY_DIR}/git_commit_hash.h")
 add_custom_target(git_commit_hash_header
     BYPRODUCTS "${_git_commit_hash_header}"
@@ -1103,6 +1104,21 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_include_directories(libslic3r_gui SYSTEM PUBLIC ${wxWidgets_INCLUDE_DIRS})
     target_compile_definitions(libslic3r_gui PUBLIC ${wxWidgets_DEFINITIONS} $<$<CONFIG:Debug>:${wxWidgets_DEFINITIONS_DEBUG}>)
 endif ()
+
+# Root fix for the L3 layer: app-layer symbols referenced by the GUI library
+# (sentryReportLog / common::get_flutter_version / common::get_profile_version /
+# CBaseException::set_log_folder / bury-point state) are closed over by
+# app_common, making this library's symbol closure self-contained (no reverse
+# dependency on the app exe/DLL or consumer stub files).
+# Note: all target_link_libraries calls on this target use the plain
+# signature; CMake requires one consistent signature per target, so the
+# PRIVATE keyword must not be used here (otherwise a "plain signature has
+# already been used" configure error occurs). Plain is semantically
+# equivalent to PUBLIC - app_common's usage requirements (src/ header path,
+# Win32 system libs) propagate through this link statement to this target's
+# own compilation and to downstream consumers, satisfying resolution of the
+# "app_common/..." headers.
+target_link_libraries(libslic3r_gui app_common)
 
 if (MSVC)
     target_link_libraries(libslic3r_gui Setupapi.lib)
@@ -1218,15 +1234,10 @@ endif()
 if (ORCA_BUILD_PYTHON_STUBGEN_MODULE)
     add_library(orca_stubgen MODULE
         plugin/PythonPluginBridge.cpp
-        # Snapmaker: fork-side symbols referenced by libslic3r_gui (Sentry, bury, common)
-        ../sentry_wrapper/SentryWrapper.cpp
-        ../bury_cfg/bury_point.cpp
-        ../common_func/common_func.cpp
     )
 
     target_compile_definitions(orca_stubgen PRIVATE
         ORCA_PYTHON_STUBGEN_MODULE
-        BURY_EXPORTS
     )
 
     target_include_directories(orca_stubgen PRIVATE

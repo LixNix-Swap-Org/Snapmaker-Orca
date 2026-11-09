@@ -6,6 +6,9 @@
 
 #include <catch2/catch_test_macros.hpp>
 #include "libslic3r/Utils.hpp"
+
+#include <boost/filesystem.hpp>
+#include <fstream>
 #define NANOSVG_IMPLEMENTATION
 #include "nanosvg/nanosvg.h"
 #define NANOSVGRAST_IMPLEMENTATION
@@ -46,4 +49,41 @@ TEST_CASE("string_printf", "[utils]") {
     }
 }
 
+TEST_CASE("collect_log_export_files includes application and control logs", "[utils][logs]")
+{
+    class TemporaryDirectory
+    {
+    public:
+        TemporaryDirectory()
+            : m_path(boost::filesystem::temp_directory_path() / boost::filesystem::unique_path("orca_log_export_test_%%%%-%%%%"))
+        {}
+        ~TemporaryDirectory()
+        {
+            boost::system::error_code error_code;
+            boost::filesystem::remove_all(m_path, error_code);
+        }
+        const boost::filesystem::path& path() const { return m_path; }
+
+    private:
+        boost::filesystem::path m_path;
+    };
+
+    TemporaryDirectory temporary_directory;
+    const auto         application_log = temporary_directory.path() / "log" / "Orca.log";
+    const auto         control_log     = temporary_directory.path() / "snapmaker_control" / "data" / "log" / "control.log";
+    boost::filesystem::create_directories(application_log.parent_path());
+    boost::filesystem::create_directories(control_log.parent_path());
+    {
+        std::ofstream(application_log.string(), std::ios::binary) << "application log";
+        std::ofstream(control_log.string(), std::ios::binary) << "control log";
+    }
+
+    const auto exported_files = Slic3r::collect_log_export_files(temporary_directory.path());
+
+    REQUIRE(exported_files.size() == 2);
+    REQUIRE(exported_files[0].source_path == application_log);
+    REQUIRE(exported_files[0].archive_name == "Orca.log");
+    REQUIRE(exported_files[1].source_path == control_log);
+    REQUIRE(exported_files[1].archive_name == "snapmaker_control/data/log/control.log");
+}
 }

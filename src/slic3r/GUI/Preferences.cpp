@@ -74,7 +74,7 @@
 #include "NetworkPluginDialog.hpp"
 #include "DownloadProgressDialog.hpp"
 
-#include "sentry_wrapper/SentryWrapper.hpp"
+#include "app_common/SentryWrapper.hpp"
 #include "SSWCP.hpp"
 #include "SnapLogWiring.hpp"
 
@@ -1100,6 +1100,13 @@ wxBoxSizer *PreferencesDialog::create_item_checkbox(wxString title, wxString too
         if (param == "allow_filament_temp_mixing" && wxGetApp().plater())
             wxGetApp().plater()->notify_filament_usage_changed();
 
+        if (param == "enable_soft_shadows" && wxGetApp().plater() != nullptr)
+        {
+            GLCanvas3D* const canvas = wxGetApp().plater()->get_view3D_canvas3D();
+            if (canvas != nullptr)
+                canvas->set_as_dirty();
+        }
+
         if (param == PRIVACY_POLICY_FLAGS)
             {
             app_config->set("app", PRIVACY_POLICY_FLAGS, checkbox->GetValue());
@@ -1109,6 +1116,10 @@ wxBoxSizer *PreferencesDialog::create_item_checkbox(wxString title, wxString too
                 if (m_snaplog_upload_checkbox)
                     m_snaplog_upload_checkbox->Enable(checkbox->GetValue());
             }
+
+        if (param == "enable_model_station") {
+            wxGetApp().model_station_notify(checkbox->GetValue());
+        }
 
         // Snapmaker Orca: set_bool() and save() have run above; the client reads the stored values.
         if (param == "snaplog_upload")
@@ -1988,6 +1999,13 @@ void PreferencesDialog::create_items()
     auto item_remember_print_action = create_item_checkbox(_L("Remember last print action"), _L("If enabled, Snapmaker Orca will remember the last selected option in the print button's dropdown (e.g. Print, Export plate sliced file, Export G-code file) and use it as the default on next startup."), "remember_print_action");
     g_sizer->Add(item_remember_print_action);
 
+#ifndef __APPLE__
+    // macOS has no memory-warning dialog: get_available_physical_memory() returns 0
+    // there by product decision, so the guard never fires and the toggle is dead UI.
+    auto item_memory_warning = create_item_checkbox(_L("Show a dialog asking whether to continue slicing when memory is low"), _L("Show a dialog asking whether to continue slicing when memory is low"), "show_memory_usage_warning");
+    g_sizer->Add(item_memory_warning);
+#endif
+
     //// CONTROL > Camera
     g_sizer->Add(create_item_title(_L("Camera")), 1, wxEXPAND);
 
@@ -2096,6 +2114,13 @@ void PreferencesDialog::create_items()
         SETTING_OPENGL_MESH_LOD
     );
     g_sizer->Add(item_mesh_lod);
+
+#ifndef __APPLE__
+    // macOS gets a legacy OpenGL 2.1 context, which cannot render soft shadows
+    auto item_soft_shadows = create_item_checkbox(_L("Enable model shadows"),
+        _L("Render soft shadows of objects on the build plate in the Prepare view. Requires OpenGL 3.3 or later."), "enable_soft_shadows");
+    g_sizer->Add(item_soft_shadows);
+#endif
 
     //// GRAPHICS > Realistic view
     g_sizer->Add(create_item_title(_L("Realistic View")), 1, wxEXPAND);
@@ -2319,6 +2344,9 @@ void PreferencesDialog::create_items()
 
     auto item_hide_login_side_panel = create_item_checkbox(_L("Hide login side panel"), _L("Hide the login side panel on the home page."), "hide_login_side_panel");
     g_sizer->Add(item_hide_login_side_panel);
+
+    auto item_model_station = create_item_checkbox(_L("Enable Snapmaker Space"), _L("When enabled, online models will be displayed on the Home page."), "enable_model_station");
+    g_sizer->Add(item_model_station);
 
     auto item_network_test     = create_item_button(_L("Network test"), _L("Test") + " " + dots, "", _L("Open Network Test"), []() {
         NetworkTestDialog dlg(wxGetApp().mainframe);

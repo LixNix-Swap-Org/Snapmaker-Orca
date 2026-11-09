@@ -2469,7 +2469,6 @@ void Tab::on_value_change(const std::string& opt_key, const boost::any& value)
         } else {
             set_print_bool("dithering_local_z_whole_objects", false);
             set_print_bool("dithering_local_z_infill", false);
-            set_project_bool("dithering_local_z_direct_multicolor", false);
         }
 
         if (dependent_config_changed)
@@ -3670,6 +3669,7 @@ void TabPrint::build()
         optgroup->append_single_option_line("filter_out_gap_fill", "strength_settings_infill#filter-out-tiny-gaps");
         optgroup->append_single_option_line("separated_infills", "strength_settings_infill#separated-infills");
         optgroup->append_single_option_line("infill_wall_overlap", "strength_settings_infill#infill-wall-overlap");
+        optgroup->append_single_option_line("external_infill_margin");
 
         optgroup = page->new_optgroup(L("Advanced"), L"param_advanced");
         optgroup->append_single_option_line("align_infill_direction_to_model", "strength_settings_advanced#align-directions-to-model");
@@ -3725,6 +3725,7 @@ void TabPrint::build()
         line.append_option(optgroup->get_option("overhang_2_4_speed", 0));
         line.append_option(optgroup->get_option("overhang_3_4_speed", 0));
         line.append_option(optgroup->get_option("overhang_4_4_speed", 0));
+        line.append_option(optgroup->get_option("overhang_totally_speed"));
         optgroup->append_line(line);
         optgroup->append_separator();
         line = { L("Bridge"), L("Set speed for external and internal bridges") };
@@ -3746,6 +3747,7 @@ void TabPrint::build()
         optgroup->append_single_option_line("initial_layer_travel_acceleration", "speed_settings_acceleration#initial-layer-travel", 0);
         optgroup->append_single_option_line("top_surface_acceleration", "speed_settings_acceleration#top-surface", 0);
         optgroup->append_single_option_line("travel_acceleration", "speed_settings_acceleration#travel", 0);
+        optgroup->append_single_option_line("travel_short_distance_acceleration", "speed_settings_acceleration#travel");
         optgroup->append_single_option_line("accel_to_decel_enable", "speed_settings_acceleration#enable-accel-to-decel");
         optgroup->append_single_option_line("accel_to_decel_factor", "speed_settings_acceleration#accel-to-decel");
 
@@ -6668,9 +6670,12 @@ void TabFilament::build()
         optgroup->append_single_option_line("slow_down_for_layer_cooling", "material_cooling#slow-printing-down-for-better-layer-cooling");
         optgroup->append_single_option_line("dont_slow_down_outer_wall", "material_cooling#dont-slow-down-outer-walls");
         optgroup->append_single_option_line("slow_down_min_speed", "material_cooling#min-print-speed");
+        optgroup->append_single_option_line("cooling_slowdown_logic");
+        optgroup->append_single_option_line("cooling_perimeter_transition_distance");
 
         optgroup->append_single_option_line("enable_overhang_bridge_fan", "material_cooling#force-cooling-for-overhangs-and-bridges");
         optgroup->append_single_option_line("overhang_fan_threshold", "material_cooling#overhang-cooling-activation-threshold");
+        optgroup->append_single_option_line("overhang_threshold_participating_cooling");
         optgroup->append_single_option_line("overhang_fan_speed", "material_cooling#overhangs-and-external-bridges-fan-speed");
         optgroup->append_single_option_line("internal_bridge_fan_speed", "material_cooling#internal-bridges-fan-speed"); // ORCA: Add support for separate internal bridge fan speed control
         optgroup->append_single_option_line("support_material_interface_fan_speed", "material_cooling#support-interface-fan-speed");
@@ -6903,6 +6908,16 @@ void TabFilament::toggle_options()
         // Orca: toggle dont slow down for external perimeters if
         bool has_slow_down_for_layer_cooling = m_config->opt_bool("slow_down_for_layer_cooling", 0);
         toggle_option("dont_slow_down_outer_wall", has_slow_down_for_layer_cooling, -1, _L("Enable slowing down for layer cooling to use this setting."));
+
+        // cooling slowdown logic and its companion option
+        toggle_option("cooling_slowdown_logic", has_slow_down_for_layer_cooling, -1, _L("Enable slowing down for layer cooling to use this setting."));
+        bool consistent_surface = false;
+        if (has_slow_down_for_layer_cooling) {
+            auto *opt = m_config->option<ConfigOptionEnumsGeneric>("cooling_slowdown_logic");
+            if (opt && !opt->values.empty())
+                consistent_surface = opt->values[0] == (int)cslConsistentSurface;
+        }
+        toggle_option("cooling_perimeter_transition_distance", consistent_surface);
 
         // ORCA: First layer fan speed override only makes sense when no layers are gated off ("No cooling for
         // the first" == 0). Otherwise the override would set layer 0 to a non-zero value while the gate forces

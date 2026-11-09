@@ -609,10 +609,6 @@ static bool custom_gcode_changes_tool(const std::string& custom_gcode, const std
         // return the remaining retraction length to be retracted during the wipe
         if (retraction_length_during_wipe - retraction_length_remaining > EPSILON) 
             return { retraction_length_before_wipe, retraction_length_remaining, retraction_length_after_wipe };
-        
-        // We will always proceed with incrementing the retraction amount before wiping with the difference
-        // and return the maximum allowed wipe amount to be retracted during the wipe move
-        retraction_length_before_wipe += retraction_length_remaining - retraction_length_during_wipe;
 
         return { retraction_length_before_wipe, retraction_length_during_wipe, retraction_length_after_wipe };
     }
@@ -2397,8 +2393,16 @@ static bool custom_gcode_changes_tool(const std::string& custom_gcode, const std
             return emit_local_z_unplanned_toolchange();
 
         assert(m_layer_idx >= 0);
-        if (m_layer_idx >= (int) m_tool_changes.size())
+        if (m_layer_idx >= (int) m_tool_changes.size()) {
+            // Local-Z passes may leave a different tool active after the last
+            // planned tower layer. The remaining object still needs its assigned
+            // filament even though there is no tower G-code left to emit.
+            if (extruder_id >= 0 && gcodegen.writer().need_toolchange(extruder_id)) {
+                const double print_z = gcodegen.writer().get_position().z() - gcodegen.config().z_offset.value;
+                gcode += gcodegen.set_extruder(unsigned(extruder_id), print_z);
+            }
             return gcode;
+        }
         if (gcodegen.wipe_tower_type() == WipeTowerType::Type2) {
             if (gcodegen.writer().need_toolchange(extruder_id) || finish_layer) {
                 if (m_layer_idx < (int) m_tool_changes.size()) {
@@ -2452,12 +2456,20 @@ static bool custom_gcode_changes_tool(const std::string& custom_gcode, const std
             }
         }
 
+        // Sparse tower layers may also omit a transition assumed unnecessary by
+        // the preplan. Never let that suppress an actual runtime tool change.
+        if (extruder_id >= 0 && gcodegen.writer().need_toolchange(extruder_id)) {
+            const double print_z = gcodegen.writer().get_position().z() - gcodegen.config().z_offset.value;
+            gcode += gcodegen.set_extruder(unsigned(extruder_id), print_z);
+        }
         return gcode;
     }
 
     bool WipeTowerIntegration::is_empty_wipe_tower_gcode(GCode &gcodegen, int extruder_id, bool finish_layer)
     {
         assert(m_layer_idx >= 0);
+        if (extruder_id >= 0 && gcodegen.writer().need_toolchange(extruder_id))
+            return false;
         if (m_layer_idx >= (int) m_tool_changes.size())
             return true;
 
@@ -2494,7 +2506,9 @@ static bool custom_gcode_changes_tool(const std::string& custom_gcode, const std
         // (e.g. a single raft layer resolving to the object's extruder) m_final_purge is
         // an empty shell, and emitting it would append a phantom "CP TOOLCHANGE" unload
         // block after the print, so it is skipped in that case.
-        if (gcodegen.wipe_tower_type() == WipeTowerType::Type2 && !m_final_purge.gcode.empty() && !m_tool_changes.empty()) {
+        // Snapmaker: no final purge on multi-tool printers, only a single-extruder MMU unloads.
+        if (gcodegen.wipe_tower_type() == WipeTowerType::Type2 && m_single_extruder_multi_material && !m_final_purge.gcode.empty() &&
+            !m_tool_changes.empty()) {
             if (std::abs(gcodegen.writer().get_position().z() - m_final_purge.print_z) > EPSILON)
                 gcode += gcodegen.change_layer(m_final_purge.print_z);
             gcode += append_tcr2(gcodegen, m_final_purge, -1);
@@ -2506,6 +2520,8 @@ const std::vector<std::string> ColorPrintColors::Colors = {"#C0392B", "#E67E22",
 
 #define EXTRUDER_CONFIG(OPT) m_config.OPT.get_at(m_writer.filament()->extruder_id())
 #define FILAMENT_CONFIG(OPT) m_config.OPT.get_at(get_filament_config_index(m_writer.filament()->id()))
+// For filament keys outside filament_options_with_variant, which hold one value per filament.
+#define FILAMENT_ID_CONFIG(OPT) m_config.OPT.get_at(m_writer.filament()->id())
 #define NOZZLE_CONFIG(OPT) m_config.OPT.get_at(get_nozzle_config_index(m_writer.filament()->id()))
 
 void GCode::PlaceholderParserIntegration::reset()
@@ -4194,7 +4210,12 @@ void GCode::_do_export(Print& print, GCodeOutputStream &file, ThumbnailsGenerato
         if (emitted_layers > 0)
             m_layer_count = emitted_layers;
     }
-    //Set variable for total layer count so it can be used in custom gcode.
+    // Set variable for total layer count so it can be used in custom gcode.
+    // [total_layer_count] is necessarily the pre-export estimate here: templates are
+    // rendered while streaming, before the real layer count exists. Machine-consumed
+    // renderings of it (e.g. "SET_PRINT_STATS_INFO TOTAL_LAYER=") are rewritten with
+    // the real count by GCodeProcessor::run_post_process; human-readable comment
+    // renderings keep the estimate on purpose.
     this->placeholder_parser().set("total_layer_count", m_layer_count);
     // Useful for sequential prints.
     this->placeholder_parser().set("current_object_idx", 0);
@@ -5033,6 +5054,8 @@ void GCode::_do_export(Print& print, GCodeOutputStream &file, ThumbnailsGenerato
     }
     if (this->m_objsWithBrim.empty()) m_brim_done = true;
 
+    // Layer count without the final purge's layer change.
+    int layers_written = -1;
     // SoftFever: calib
     if (print.calib_params().mode == CalibMode::Calib_PA_Line) {
         std::string gcode;
@@ -5260,6 +5283,7 @@ void GCode::_do_export(Print& print, GCodeOutputStream &file, ThumbnailsGenerato
             if (m_second_layer_things_done && print.config().enable_power_loss_recovery.value == PowerLossRecoveryMode::Enable) {
                 file.write(m_writer.enable_power_loss_recovery(PowerLossRecoveryMode::Disable));
             }
+            layers_written = m_layer_index + 1;
             if (m_wipe_tower)
                 // Purge the extruder, pull out the active filament.
                 file.write(m_wipe_tower->finalize(*this));
@@ -5398,7 +5422,10 @@ void GCode::_do_export(Print& print, GCodeOutputStream &file, ThumbnailsGenerato
         file.write_format("; total filament cost = %.2lf\n", print.m_print_statistics.total_cost);
         if (print.m_print_statistics.total_toolchanges > 0)
             file.write_format("; total filament change = %i\n", print.m_print_statistics.total_toolchanges);
-        file.write_format("; total layers count = %i\n", m_layer_count);
+        // m_layer_count is a pre-export estimate that still counts empty layers the exporter
+        // skips (e.g. a cone tip landing exactly on a layer boundary), so it can overshoot;
+        // m_layer_index+1 is the real number of layers written to the file.
+        file.write_format("; total layers count = %i\n", layers_written >= 0 ? layers_written : m_layer_index + 1);
         file.write_format(
             ";%s\n",
             GCodeProcessor::reserved_tag(
@@ -7148,6 +7175,18 @@ static size_t find_skirt_brim_group_idx(const Print& print, ObjectID object_id, 
             return idx;
     }
     return size_t(-1);
+}
+
+// The filament an instance's brim was planned with, unsigned(-1) if none.
+static unsigned int brim_owner_filament(const Print& print, const ObjectInstanceID& instance)
+{
+    const size_t group_idx = find_skirt_brim_group_idx(print, instance.object_id, instance.instance_id);
+    if (group_idx == size_t(-1))
+        return unsigned(-1);
+    for (const Print::SkirtBrimGroup::Brim& brim : print.skirt_brim_groups()[group_idx].brims)
+        if (std::find(brim.instances.begin(), brim.instances.end(), instance) != brim.instances.end())
+            return brim.filament_id;
+    return unsigned(-1);
 }
 
 std::string GCode::generate_object_skirt_group(const Print &print,
@@ -9690,13 +9729,15 @@ LayerResult GCode::process_layer(
     // Brims of instances that no extruder visits on this layer (a first layer printed entirely by
     // Local-Z path passes or by a mixed-color slot) are emitted in the first pass that may print them.
     std::vector<std::pair<const PrintObject*, size_t>> brims_without_visit;
+    // Snapmaker: a brim prints in its owner filament's pass whenever that filament prints this layer.
+    std::map<ObjectInstanceID, unsigned int> brim_owner_pass;
     if (first_layer && !m_objsWithBrim.empty()) {
-        std::set<ObjectInstanceID> visited;
+        std::map<ObjectInstanceID, std::set<unsigned int>> visited;
         for (unsigned int extruder_id : layer_extruders)
             if (auto plan_it = filament_to_print_instances.find(extruder_id); plan_it != filament_to_print_instances.end())
                 for (const InstanceVisit &visit : plan_it->second.second) {
                     const InstanceToPrint &instance = plan_it->second.first[visit.instance_idx];
-                    visited.insert(ObjectInstanceID{ instance.print_object.id(), instance.instance_id });
+                    visited[ObjectInstanceID{ instance.print_object.id(), instance.instance_id }].insert(extruder_id);
                 }
         for (const LayerToPrint &layer_to_print : layers) {
             const PrintObject *brim_object = layer_to_print.original_object;
@@ -9706,7 +9747,14 @@ LayerResult GCode::process_layer(
                 if (single_object_instance_idx != size_t(-1) && brim_instance_id != single_object_instance_idx)
                     continue;
                 const ObjectInstanceID object_instance_id{ brim_object->id(), brim_instance_id };
-                if (m_objsWithBrim.count(object_instance_id) != 0 && visited.count(object_instance_id) == 0)
+                if (m_objsWithBrim.count(object_instance_id) == 0)
+                    continue;
+                const unsigned int owner = brim_owner_filament(print, object_instance_id);
+                const bool owner_prints_layer = std::find(layer_extruders.begin(), layer_extruders.end(), owner) != layer_extruders.end();
+                if (owner_prints_layer)
+                    brim_owner_pass.emplace(object_instance_id, owner);
+                const auto visit_it = visited.find(object_instance_id);
+                if (visit_it == visited.end() || (owner_prints_layer && visit_it->second.count(owner) == 0))
                     brims_without_visit.emplace_back(brim_object, brim_instance_id);
             }
         }
@@ -9846,8 +9894,11 @@ LayerResult GCode::process_layer(
         if (layer_tools.has_wipe_tower && m_wipe_tower)
             m_last_processor_extrusion_role = erWipeTower;
 
-        for (const auto &[brim_object, brim_instance_id] : brims_without_visit)
-            gcode += generate_object_brim(print, *brim_object, brim_instance_id, first_layer, extruder_id, nullptr);
+        for (const auto &[brim_object, brim_instance_id] : brims_without_visit) {
+            const auto owner_it = brim_owner_pass.find(ObjectInstanceID{ brim_object->id(), brim_instance_id });
+            if (owner_it == brim_owner_pass.end() || owner_it->second == extruder_id)
+                gcode += generate_object_brim(print, *brim_object, brim_instance_id, first_layer, extruder_id, nullptr);
+        }
 
         // Belt printers: now that this pass's tool is selected, lay down any ordinary-layer
         // apron band whose brim filament is this extruder, before the object extrusion at
@@ -9890,8 +9941,10 @@ LayerResult GCode::process_layer(
                             gcode += generate_object_brim(print, vobj, instance_to_print.instance_id, first_layer, extruder_id,
                                                           layer_to_print.object_layer);
                     } else {
-                        gcode += generate_object_brim(print, vobj, instance_to_print.instance_id, first_layer, extruder_id,
-                                                      layer_to_print.object_layer);
+                        const auto owner_it = brim_owner_pass.find(ObjectInstanceID{ vobj.id(), instance_to_print.instance_id });
+                        if (owner_it == brim_owner_pass.end() || owner_it->second == extruder_id)
+                            gcode += generate_object_brim(print, vobj, instance_to_print.instance_id, first_layer, extruder_id,
+                                                          layer_to_print.object_layer);
                     }
                 }
 
@@ -11887,7 +11940,7 @@ std::string GCode::_extrude(const ExtrusionPath &path, const std::string &path_d
 
 
     const bool need_overhang_detection = NOZZLE_CONFIG(enable_overhang_speed) ||
-        (FILAMENT_CONFIG(enable_overhang_bridge_fan) && m_enable_cooling_markers);
+        (FILAMENT_ID_CONFIG(enable_overhang_bridge_fan) && m_enable_cooling_markers);
 
     if (need_overhang_detection && !path_on_first_layer && !object_layer_over_raft() &&
         (is_bridge(path.role()) || is_perimeter(path.role()))) {
@@ -11903,64 +11956,50 @@ std::string GCode::_extrude(const ExtrusionPath &path, const std::string &path_d
                 ref_speed = std::min(ref_speed, m_config.scarf_joint_speed.get_abs_value(ref_speed));
             }
             
-            ConfigOptionPercents         overhang_overlap_levels({90, 75, 50, 25, 13, 0});
+            ConfigOptionPercents         overhang_overlap_levels({100, 90, 75, 50, 25, 0});
 
             // ORCA: Lets the path be split where the overhang fan switches, not only where the speed changes.
             // Bridges and overhang perimeters are cooled regardless of overlap.
             float fan_overlap_threshold = -1.f;
-            if (FILAMENT_CONFIG(enable_overhang_bridge_fan) && m_enable_cooling_markers && path.role() != erBridgeInfill &&
+            if (FILAMENT_ID_CONFIG(enable_overhang_bridge_fan) && m_enable_cooling_markers && path.role() != erBridgeInfill &&
                 path.role() != erOverhangPerimeter)
-                fan_overlap_threshold = overhang_fan_overlap_threshold(FILAMENT_CONFIG(overhang_fan_threshold));
+                fan_overlap_threshold = overhang_fan_overlap_threshold(FILAMENT_ID_CONFIG(overhang_fan_threshold));
 
-            if (NOZZLE_CONFIG(slowdown_for_curled_perimeters)){
-                ConfigOptionFloatsOrPercents dynamic_overhang_speeds(
-                    {FloatOrPercent{100, true},
-                     (NOZZLE_CONFIG(overhang_1_4_speed).get_abs_value(ref_speed) < 0.5) ?
-                         FloatOrPercent{100, true} :
-                         FloatOrPercent{NOZZLE_CONFIG(overhang_1_4_speed).get_abs_value(ref_speed) * 100 / ref_speed, true},
-                     (NOZZLE_CONFIG(overhang_2_4_speed).get_abs_value(ref_speed) < 0.5) ?
-                         FloatOrPercent{100, true} :
-                         FloatOrPercent{NOZZLE_CONFIG(overhang_2_4_speed).get_abs_value(ref_speed) * 100 / ref_speed, true},
-                     (NOZZLE_CONFIG(overhang_3_4_speed).get_abs_value(ref_speed) < 0.5) ?
-                         FloatOrPercent{100, true} :
-                         FloatOrPercent{NOZZLE_CONFIG(overhang_3_4_speed).get_abs_value(ref_speed) * 100 / ref_speed, true},
-                     (NOZZLE_CONFIG(overhang_4_4_speed).get_abs_value(ref_speed) < 0.5) ?
-                         FloatOrPercent{100, true} :
-                         FloatOrPercent{NOZZLE_CONFIG(overhang_4_4_speed).get_abs_value(ref_speed) * 100 / ref_speed, true},
-                     (NOZZLE_CONFIG(overhang_4_4_speed).get_abs_value(ref_speed) < 0.5) ?
-                         FloatOrPercent{100, true} :
-                         FloatOrPercent{NOZZLE_CONFIG(overhang_4_4_speed).get_abs_value(ref_speed) * 100 / ref_speed, true}});
+            const double oh1_abs = NOZZLE_CONFIG(overhang_1_4_speed).get_abs_value(ref_speed);
+            const double oh2_abs = NOZZLE_CONFIG(overhang_2_4_speed).get_abs_value(ref_speed);
+            const double oh3_abs = NOZZLE_CONFIG(overhang_3_4_speed).get_abs_value(ref_speed);
+            const double oh4_abs = NOZZLE_CONFIG(overhang_4_4_speed).get_abs_value(ref_speed);
+            const double ohT_abs = NOZZLE_CONFIG(overhang_totally_speed).get_abs_value(ref_speed);
+            ConfigOptionFloatsOrPercents dynamic_overhang_speeds(
+                {FloatOrPercent{100, true},
+                 (oh1_abs < 0.5) ?
+                     FloatOrPercent{100, true} :
+                     FloatOrPercent{oh1_abs * 100 / ref_speed, true},
+                 (oh2_abs < 0.5) ?
+                     FloatOrPercent{100, true} :
+                     FloatOrPercent{oh2_abs * 100 / ref_speed, true},
+                 (oh3_abs < 0.5) ?
+                     FloatOrPercent{100, true} :
+                     FloatOrPercent{oh3_abs * 100 / ref_speed, true},
+                 (oh4_abs < 0.5) ?
+                     FloatOrPercent{100, true} :
+                     FloatOrPercent{oh4_abs * 100 / ref_speed, true},
+                 (ohT_abs > 0.5) ?
+                     FloatOrPercent{ohT_abs * 100 / ref_speed, true} :
+                 (oh4_abs < 0.5) ?
+                     FloatOrPercent{100, true} :
+                     FloatOrPercent{oh4_abs * 100 / ref_speed, true}});
 
-                new_points = m_extrusion_quality_estimator.estimate_extrusion_quality(path, overhang_overlap_levels, dynamic_overhang_speeds,
-                                                                              ref_speed, speed, NOZZLE_CONFIG(slowdown_for_curled_perimeters),
-                                                                              fan_overlap_threshold);
-        	}else{
-                ConfigOptionFloatsOrPercents dynamic_overhang_speeds(
-                                                                     {FloatOrPercent{100, true},
-                     (NOZZLE_CONFIG(overhang_1_4_speed).get_abs_value(ref_speed) < 0.5) ?
-                         FloatOrPercent{100, true} :
-                         FloatOrPercent{NOZZLE_CONFIG(overhang_1_4_speed).get_abs_value(ref_speed) * 100 / ref_speed, true},
-                     (NOZZLE_CONFIG(overhang_2_4_speed).get_abs_value(ref_speed) < 0.5) ?
-                         FloatOrPercent{100, true} :
-                         FloatOrPercent{NOZZLE_CONFIG(overhang_2_4_speed).get_abs_value(ref_speed) * 100 / ref_speed, true},
-                     (NOZZLE_CONFIG(overhang_3_4_speed).get_abs_value(ref_speed) < 0.5) ?
-                         FloatOrPercent{100, true} :
-                         FloatOrPercent{NOZZLE_CONFIG(overhang_3_4_speed).get_abs_value(ref_speed) * 100 / ref_speed, true},
-                      (NOZZLE_CONFIG(overhang_4_4_speed).get_abs_value(ref_speed) < 0.5) ?
-                            FloatOrPercent{100, true} :
-                            FloatOrPercent{NOZZLE_CONFIG(overhang_4_4_speed).get_abs_value(ref_speed) * 100 / ref_speed, true},
-                     FloatOrPercent{NOZZLE_CONFIG(bridge_speed) * 100 / ref_speed, true}});
-
-                new_points = m_extrusion_quality_estimator.estimate_extrusion_quality(path, overhang_overlap_levels, dynamic_overhang_speeds,
-                                                                              ref_speed, speed, NOZZLE_CONFIG(slowdown_for_curled_perimeters),
-                                                                              fan_overlap_threshold);
-            }
-            if (!NOZZLE_CONFIG(enable_overhang_speed))
+            new_points = m_extrusion_quality_estimator.estimate_extrusion_quality(path, overhang_overlap_levels, dynamic_overhang_speeds,
+                                                                                  ref_speed, speed, NOZZLE_CONFIG(slowdown_for_curled_perimeters),
+                                                                                  fan_overlap_threshold);
+            // Snapmaker: overhang speeds slow walls only, bridges keep their own speed.
+            if (!NOZZLE_CONFIG(enable_overhang_speed) || !is_perimeter(path.role()))
                 for (ProcessedPoint &point : new_points)
                     point.speed = speed;
             requires_segmented_extrusion = std::any_of(new_points.begin(), new_points.end(),
                 [speed](const ProcessedPoint &point) { return fabs(double(point.speed) - speed) > 1; }); // Ignore small speed variations (under 1mm/sec)
-            if (FILAMENT_CONFIG(enable_overhang_bridge_fan) && m_enable_cooling_markers && fan_overlap_threshold >= 0.f &&
+            if (FILAMENT_ID_CONFIG(enable_overhang_bridge_fan) && m_enable_cooling_markers && fan_overlap_threshold >= 0.f &&
                 !new_points.empty()) {
                 path_overhang_fan_active = new_points.front().overlap <= fan_overlap_threshold;
                 // An overhang-fan state change needs separate extrusion moves so the cooling buffer can insert
@@ -12105,8 +12144,8 @@ std::string GCode::_extrude(const ExtrusionPath &path, const std::string &path_d
     }
 
 
-    auto overhang_fan_threshold = FILAMENT_CONFIG(overhang_fan_threshold);
-    auto enable_overhang_bridge_fan = FILAMENT_CONFIG(enable_overhang_bridge_fan);
+    auto overhang_fan_threshold = FILAMENT_ID_CONFIG(overhang_fan_threshold);
+    auto enable_overhang_bridge_fan = FILAMENT_ID_CONFIG(enable_overhang_bridge_fan);
 
     if (enable_overhang_bridge_fan &&
         (path.role() == erBridgeInfill || path.role() == erOverhangPerimeter ||
@@ -12121,7 +12160,26 @@ std::string GCode::_extrude(const ExtrusionPath &path, const std::string &path_d
     //    { "95%", Overhang_threshold_bridge }
     std::string comment;
     if (m_enable_cooling_markers) {
-        comment = ";_EXTRUDE_SET_SPEED";
+        auto overhang_boundary_for_cooling = FILAMENT_ID_CONFIG(overhang_threshold_participating_cooling);
+        float min_overlap = std::numeric_limits<float>::max();
+        // Fan-only overhang detection does not take walls out of layer cooling.
+        if (NOZZLE_CONFIG(enable_overhang_speed) && is_perimeter(path.role()))
+            for (const ProcessedPoint &pp : new_points)
+                min_overlap = std::min(min_overlap, pp.overlap);
+        bool cooling_extrude = false;
+        if (!is_bridge(path.role())) {
+            switch (overhang_boundary_for_cooling) {
+            case (int) Overhang_threshold_participating_cooling_none: cooling_extrude = min_overlap > 0.9f; break;
+            case (int) Overhang_threshold_participating_cooling_1_4: cooling_extrude = min_overlap > 0.75f; break;
+            case (int) Overhang_threshold_participating_cooling_2_4: cooling_extrude = min_overlap > 0.5f; break;
+            case (int) Overhang_threshold_participating_cooling_3_4: cooling_extrude = min_overlap > 0.25f; break;
+            case (int) Overhang_threshold_participating_cooling_4_4: cooling_extrude = min_overlap > 0.05f; break;
+            case (int) Overhang_threshold_participating_cooling_bridge:
+            default: cooling_extrude = true; break;
+            }
+        }
+        if (cooling_extrude)
+            comment = ";_EXTRUDE_SET_SPEED";
         if (is_external_perimeter(path.role()))
             comment += ";_EXTERNAL_PERIMETER";
     }
@@ -12152,8 +12210,8 @@ std::string GCode::_extrude(const ExtrusionPath &path, const std::string &path_d
     };
     auto apply_role_based_fan_speed = [
         &path, &append_role_based_fan_marker,
-        supp_interface_fan_speed = FILAMENT_CONFIG(support_material_interface_fan_speed),
-        ironing_fan_speed        = FILAMENT_CONFIG(ironing_fan_speed)
+        supp_interface_fan_speed = FILAMENT_ID_CONFIG(support_material_interface_fan_speed),
+        ironing_fan_speed        = FILAMENT_ID_CONFIG(ironing_fan_speed)
     ] {
         append_role_based_fan_marker(erSupportMaterialInterface, "_SUPP_INTERFACE"sv,
                                      supp_interface_fan_speed >= 0 && path.role() == erSupportMaterialInterface);
@@ -12721,7 +12779,11 @@ std::string GCode::travel_to(const Point& point, ExtrusionRole role, std::string
         const bool is_short_travel = travel.length() < scale_(FILAMENT_CONFIG(retraction_minimum_travel));
 
         if (NOZZLE_CONFIG(default_acceleration) > 0) {
-            if (role == erOverhangPerimeter && is_short_travel) {
+            // use a lower acceleration for short travel moves near external perimeters to reduce ringing / VFA (vertical fine artifacts).
+            const double short_travel_accel = NOZZLE_CONFIG(travel_short_distance_acceleration);
+            if (short_travel_accel > 0.5 && (role == erExternalPerimeter || role == erOverhangPerimeter) && is_short_travel) {
+                acceleration_to_set = (unsigned int) floor(short_travel_accel + 0.5);
+            } else if (role == erOverhangPerimeter && is_short_travel) {
                 const double bridge_acceleration  = m_config.get_abs_value_at("bridge_acceleration", get_nozzle_config_index(m_writer.filament()->id()));
 
                 if (bridge_acceleration > 0)
@@ -13035,7 +13097,9 @@ std::string GCode::retract(bool toolchange, bool is_last_retraction, LiftType li
         return gcode;
 
     // wipe (if it's enabled for this extruder and we have a stored wipe path and no-zero wipe distance)
+    bool wipe_performed = false;
     if (FILAMENT_CONFIG(wipe) && m_wipe.has_path() && scale_(FILAMENT_CONFIG(wipe_distance)) > SCALED_EPSILON) {
+        wipe_performed = true;
         Wipe::RetractionValues wipeRetractions = m_wipe.calculateWipeRetractionLengths(*this, toolchange);
         gcode += toolchange ? m_writer.retract_for_toolchange(true, wipeRetractions.retraction_length_before_wipe) :
                               m_writer.retract(true, wipeRetractions.retraction_length_before_wipe);
@@ -13050,8 +13114,9 @@ std::string GCode::retract(bool toolchange, bool is_last_retraction, LiftType li
         methods even if we performed wipe, since this will ensure the entire retraction
         length is honored in case wipe path was too short.  */
 
-    if ((!this->on_first_layer() || this->config().bottom_surface_pattern != InfillPattern::ipHilbertCurve) &&
-        (role != erTopSolidInfill || this->config().top_surface_pattern != InfillPattern::ipHilbertCurve)) {
+    if (wipe_performed ||
+        ((!this->on_first_layer() || this->config().bottom_surface_pattern != InfillPattern::ipHilbertCurve) &&
+        (role != erTopSolidInfill || this->config().top_surface_pattern != InfillPattern::ipHilbertCurve))) {
         gcode += toolchange ? m_writer.retract_for_toolchange() : m_writer.retract();
     }
 

@@ -604,28 +604,30 @@ std::string Preset::remove_suffix_modified(const std::string &name)
 // Update new extruder fields at the printer profile.
 void Preset::normalize(DynamicPrintConfig &config)
 {
-    size_t n = 1;
     if (config.option("single_extruder_multi_material") == nullptr || config.opt_bool("single_extruder_multi_material")) {
         // BBS
         auto* filament_diameter = dynamic_cast<const ConfigOptionFloats*>(config.option("filament_diameter"));
         if (filament_diameter != nullptr) {
-            n = filament_diameter->values.size();
+            const size_t num_filaments = filament_diameter->values.size();
             // Loaded the FFF Printer settings. Verify, that all extruder dependent values have enough values.
-            config.set_num_filaments((unsigned int) n);
+            config.set_num_filaments((unsigned int) num_filaments);
         }
     } else {
         auto* nozzle_diameter = dynamic_cast<const ConfigOptionFloats*>(config.option("nozzle_diameter"));
         if (nozzle_diameter != nullptr) {
-            n = nozzle_diameter->values.size();
+            const size_t num_extruders = nozzle_diameter->values.size();
             // Loaded the FFF Printer settings. Verify, that all extruder dependent values have enough values.
-            config.set_num_extruders((unsigned int) n);
+            config.set_num_extruders((unsigned int) num_extruders);
         }
     }
 
     const auto &defaults = FullPrintConfig::defaults();
 
-    if (config.option("filament_diameter") != nullptr) {
+    if (const auto *filament_diameter = config.option<ConfigOptionFloats>("filament_diameter")) {
         // This config contains single or multiple filament presets.
+        // Tool count and filament count may differ. Keep filament vectors and flow
+        // segments sized by the filaments, independently of the printer's nozzles.
+        const size_t num_filaments = filament_diameter->values.size();
         // Ensure that the filament preset vector options contain the correct number of values.
         for (const std::string &key : Preset::filament_options()) {
             if (key == "compatible_prints" || key == "compatible_printers")
@@ -642,14 +644,14 @@ void Preset::normalize(DynamicPrintConfig &config)
                     opt = config.option(key, false);
                 }
             }
-            if (opt != nullptr && opt->is_vector() && static_cast<ConfigOptionVectorBase*>(opt)->size() < n)
-                static_cast<ConfigOptionVectorBase*>(opt)->resize(n, defaults.option(key));
+            if (opt != nullptr && opt->is_vector() && static_cast<ConfigOptionVectorBase*>(opt)->size() < num_filaments)
+                static_cast<ConfigOptionVectorBase*>(opt)->resize(num_filaments, defaults.option(key));
         }
         // The following keys are mandatory for the UI, but they are not part of FullPrintConfig, therefore they are handled separately.
         for (const std::string &key : { "filament_settings_id" }) {
             auto *opt = config.option(key, false);
-            if (opt != nullptr && opt->type() == coStrings && static_cast<ConfigOptionStrings*>(opt)->values.size() < n)
-                static_cast<ConfigOptionStrings*>(opt)->values.resize(n, std::string());
+            if (opt != nullptr && opt->type() == coStrings && static_cast<ConfigOptionStrings*>(opt)->values.size() < num_filaments)
+                static_cast<ConfigOptionStrings*>(opt)->values.resize(num_filaments, std::string());
         }
     } else if (config.option("layer_height") != nullptr) {
         // Print config: ensure all expected options exist in the loaded profile.
@@ -1509,6 +1511,7 @@ static std::vector<std::string> s_Preset_print_options{
     "support_line_width",
     "infill_wall_overlap",
     "top_bottom_infill_wall_overlap",
+    "external_infill_margin",
     "bridge_flow",
     "bridge_line_width",
     "internal_bridge_flow",
@@ -1566,6 +1569,7 @@ static std::vector<std::string> s_Preset_print_options{
     "overhang_2_4_speed",
     "overhang_3_4_speed",
     "overhang_4_4_speed",
+    "overhang_totally_speed",
     "initial_layer_infill_speed",
     "only_one_wall_top",
     "timelapse_type",
@@ -1593,6 +1597,7 @@ static std::vector<std::string> s_Preset_print_options{
     "relative_bridge_angle",
     "filter_out_gap_fill",
     "travel_acceleration",
+    "travel_short_distance_acceleration",
     "inner_wall_acceleration",
     "min_width_top_surface",
     "default_jerk",
@@ -1731,8 +1736,8 @@ static std::vector<std::string> s_Preset_filament_options {/*"filament_colour", 
     "graphic_effect_plate_temp", "graphic_effect_plate_temp_initial_layer",
     // "bed_type",
     //BBS:temperature_vitrification
-    "temperature_vitrification", "filament_is_high_temperature", "reduce_fan_stop_start_freq","dont_slow_down_outer_wall", "slow_down_for_layer_cooling", "fan_min_speed",
-    "fan_max_speed", "enable_overhang_bridge_fan", "overhang_fan_speed", "overhang_fan_threshold", "close_fan_the_first_x_layers", "close_additional_fan_first_x_layers", "first_x_layer_fan_speed", "full_fan_speed_layer", "initial_layer_fan_speed", "additional_fan_full_speed_layer", "fan_cooling_layer_time", "slow_down_layer_time", "slow_down_min_speed",
+    "temperature_vitrification", "filament_is_high_temperature", "reduce_fan_stop_start_freq","dont_slow_down_outer_wall", "slow_down_for_layer_cooling", "cooling_slowdown_logic", "cooling_perimeter_transition_distance", "fan_min_speed",
+    "fan_max_speed", "enable_overhang_bridge_fan", "overhang_fan_speed", "overhang_fan_threshold", "overhang_threshold_participating_cooling", "close_fan_the_first_x_layers", "close_additional_fan_first_x_layers", "first_x_layer_fan_speed", "full_fan_speed_layer", "initial_layer_fan_speed", "additional_fan_full_speed_layer", "fan_cooling_layer_time", "slow_down_layer_time", "slow_down_min_speed",
     "filament_start_gcode", "filament_end_gcode", "filament_change_extrusion_role_gcode",
     //exhaust fan control
     "activate_air_filtration","activate_air_filtration_during_print","activate_air_filtration_on_completion","during_print_exhaust_fan_speed","complete_print_exhaust_fan_speed",

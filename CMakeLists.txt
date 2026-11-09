@@ -369,7 +369,9 @@ endif ()
 # Proposal for C++ unit tests and sandboxes
 option(SLIC3R_BUILD_SANDBOXES   "Build development sandboxes" OFF)
 option(BUILD_TESTS       "Build unit tests" OFF)
+option(ORCA_USE_OCCT_LINK_GROUP "Use a Linux OCCT/freetype linker group for Clang sanitizer builds" OFF)
 option(ORCA_TOOLS       "Build Orca tools" OFF)
+option(SLIC3R_WIDGET_INSPECTOR "Build the opt-in wxWidgets widget inspector on Windows" OFF)
 
 if (FLATPAK)
     set(SLIC3R_FHS ON CACHE BOOL "" FORCE)
@@ -929,6 +931,11 @@ if (SLIC3R_GUI)
 
     find_package(LibDataChannel CONFIG REQUIRED)
 endif()
+
+# Configure OCCT in top-level scope so the imported targets are visible to both
+# sibling src/ and tests/ directories.
+set(OpenCASCADE_DIR "${CMAKE_PREFIX_PATH}/lib/cmake/occt")
+find_package(OpenCASCADE REQUIRED)
 
 
 add_library(libcurl INTERFACE)

@@ -79,6 +79,17 @@ class BBLProject;
 class KeyStore;
 struct MeshRepairStats;
 
+// BBS: sanity limit for assemble-view transforms (1e6 mm = 1 km, far beyond any
+// printer scene). Assemble data beyond this limit is treated as corrupted
+// (feedback-amplification defect of Model::InitializeAssemblyPositions) and is
+// reset on layout, or dropped on 3MF load/save.
+constexpr double ASSEMBLY_TRANSFORM_SANITY_LIMIT = 1e6;
+
+// BBS: returns true when an assemble transform is usable for layout and safe to
+// persist: finite entries, translation within ASSEMBLY_TRANSFORM_SANITY_LIMIT
+// and a non-degenerate linear part.
+bool assemble_transform_is_sane(const Transform3d& transform);
+
 namespace UndoRedo {
 	class StackImpl;
 }
@@ -789,6 +800,8 @@ public:
     void                 remap_states(const ModelVolume &mv, const EnforcerBlockerStateMap &state_map);
     indexed_triangle_set get_facets_strict(const ModelVolume& mv, EnforcerBlockerType type) const;
     bool has_facets(const ModelVolume& mv, EnforcerBlockerType type) const;
+    // Includes the implicit NONE roots that serialization omits from m_data.
+    bool has_facets_including_implicit_none(const ModelVolume& mv) const;
     bool empty() const { return m_data.triangles_to_split.empty(); }
 
     // Following method clears the config and increases its timestamp, so the deleted

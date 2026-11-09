@@ -1767,6 +1767,9 @@ public:
     //static float min_skirt_length;
 };
 
+// BBS: map print object with its first layer's first extruder
+std::map<ObjectID, unsigned int> getObjectExtruderMap(const Print& print);
+
 
 // ---------------------------------------------------------------------------------------------
 // Clearance rule for a prime tower compacted by wipe_tower_no_sparse_layers. Shared by the precise

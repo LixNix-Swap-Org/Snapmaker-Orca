@@ -628,6 +628,22 @@ static const t_config_enum_values s_keys_map_OverhangFanThreshold = {
 };
 CONFIG_OPTION_ENUM_DEFINE_STATIC_MAPS(OverhangFanThreshold)
 
+static const t_config_enum_values s_keys_map_OverhangThresholdParticipatingCooling = {
+    { "0%",   Overhang_threshold_participating_cooling_none },
+    { "10%",  Overhang_threshold_participating_cooling_1_4  },
+    { "25%",  Overhang_threshold_participating_cooling_2_4  },
+    { "50%",  Overhang_threshold_participating_cooling_3_4  },
+    { "75%",  Overhang_threshold_participating_cooling_4_4  },
+    { "95%",  Overhang_threshold_participating_cooling_bridge }
+};
+CONFIG_OPTION_ENUM_DEFINE_STATIC_MAPS(OverhangThresholdParticipatingCooling)
+
+static const t_config_enum_values s_keys_map_CoolingSlowdownLogicType = {
+    { "uniform_cooling",    cslUniformCooling },
+    { "consistent_surface", cslConsistentSurface },
+};
+CONFIG_OPTION_ENUM_DEFINE_STATIC_MAPS(CoolingSlowdownLogicType)
+
 // BBS
 static const t_config_enum_values s_keys_map_BedType = {
     { "Default Plate",      btDefault },
@@ -1720,6 +1736,28 @@ void PrintConfigDef::init_fff_params()
     def->enum_labels.emplace_back("95%");
     def->set_default_value(new ConfigOptionEnumsGeneric{ (int)Overhang_threshold_bridge });
 
+    def = this->add("overhang_threshold_participating_cooling", coEnums);
+    def->label = L("Overhang threshold for participating cooling");
+    // xgettext:no-c-format, no-boost-format
+    def->tooltip = L("Decide which overhang part join the cooling function to slow down the speed. "
+                     "Expressed as percentage which indicates how much width of the line is without support from the lower layer. "
+                     "100% means forcing cooling for all outer wall no matter how much overhang degree.");
+    def->enum_keys_map = &ConfigOptionEnum<OverhangThresholdParticipatingCooling>::get_enum_values();
+    def->mode = comAdvanced;
+    def->enum_values.emplace_back("0%");
+    def->enum_values.emplace_back("10%");
+    def->enum_values.emplace_back("25%");
+    def->enum_values.emplace_back("50%");
+    def->enum_values.emplace_back("75%");
+    def->enum_values.emplace_back("100%");
+    def->enum_labels.emplace_back("0%");
+    def->enum_labels.emplace_back("10%");
+    def->enum_labels.emplace_back("25%");
+    def->enum_labels.emplace_back("50%");
+    def->enum_labels.emplace_back("75%");
+    def->enum_labels.emplace_back("100%");
+    def->set_default_value(new ConfigOptionEnumsGeneric{ (int)Overhang_threshold_participating_cooling_bridge });
+
     def = this->add("bridge_angle", coFloat);
     def->label = L("External bridge infill direction");
     def->category = L("Strength");
@@ -2139,6 +2177,18 @@ void PrintConfigDef::init_fff_params()
     def->nullable = true;
     def->set_default_value(new ConfigOptionFloatsOrPercentsNullable{FloatOrPercent(0, false)});
 
+    def = this->add("overhang_totally_speed", coFloatsOrPercents);
+    def->label = "100%";
+    def->category = L("Speed");
+    def->full_label = "100%";
+    // xgettext:no-c-format, no-boost-format
+    def->tooltip = L("Speed of 100% overhang wall which has 0 overlap with the lower layer.");
+    def->sidetext = L("mm/s or %");
+    def->ratio_over = "outer_wall_speed";
+    def->min = 0;
+    def->mode = comAdvanced;
+    def->set_default_value(new ConfigOptionFloatsOrPercents { FloatOrPercent{10., false} });
+
     def = this->add("bridge_speed", coFloats);
     def->label = L("External");
     def->category = L("Speed");
@@ -2405,6 +2455,33 @@ void PrintConfigDef::init_fff_params()
     def->tooltip = L("Enable this option to slow printing speed down to ensure that the final layer time is not shorter than the layer time threshold in \"Max fan speed threshold\", so that the layer can be cooled for a longer time. This can improve the quality for small details.");
     def->set_default_value(new ConfigOptionBools { true });
 
+    // Cooling slowdown logic - ported from PrusaSlicer 2.9.3 for VFA reduction
+    def = this->add("cooling_slowdown_logic", coEnums);
+    def->label = L("Cooling slowdown logic");
+    def->tooltip = L("Determines how the printer slows down when minimum layer time isn't reached.\n\n"
+                     "'Uniform cooling' slows down all print features equally (current default behavior).\n\n"
+                     "'Consistent surface' prioritizes slowing infill and internal perimeters first, "
+                     "preserving external perimeter speed for better surface finish on glossy filaments. "
+                     "This helps reduce VFA (Vertical Fine Artifacts) and maintains consistent surface shine.");
+    def->enum_keys_map = &ConfigOptionEnum<CoolingSlowdownLogicType>::get_enum_values();
+    def->enum_values.push_back("uniform_cooling");
+    def->enum_values.push_back("consistent_surface");
+    def->enum_labels.push_back(L("Uniform cooling"));
+    def->enum_labels.push_back(L("Consistent surface"));
+    def->mode = comDevelop;
+    def->set_default_value(new ConfigOptionEnumsGeneric { (int)cslUniformCooling });
+
+    def = this->add("cooling_perimeter_transition_distance", coFloats);
+    def->label = L("Perimeter transition distance");
+    def->tooltip = L("Distance in millimeters before the end of slowed perimeters where the original print speed "
+                     "is gradually restored. This prevents visible speed transitions at the end of perimeters.\n\n"
+                     "Only applies when 'Consistent surface' cooling logic is selected.");
+    def->sidetext = L("mm");
+    def->min = 0;
+    def->max = 50;
+    def->mode = comDevelop;
+    def->set_default_value(new ConfigOptionFloats { 10.0 });
+
     def = this->add("default_acceleration", coFloats);
     def->label = L("Normal printing");
     def->category = L("Speed");
@@ -2424,6 +2501,19 @@ void PrintConfigDef::init_fff_params()
     def->mode = comAdvanced;
     def->nullable = true;
     def->set_default_value(new ConfigOptionFloatsNullable{10000.0});
+
+    // Short travel acceleration - ported from PrusaSlicer 2.9.3 for VFA reduction
+    def = this->add("travel_short_distance_acceleration", coFloats);
+    def->label = L("Short travel");
+    def->tooltip = L("Acceleration used for short travel moves near external perimeters. "
+                     "Short travels are moves shorter than the 'Retraction minimum travel' distance.\n\n"
+                     "Lower values (e.g., 250-500 mm/s²) reduce ringing artifacts on sharp corners "
+                     "without significantly impacting print time.\n\n"
+                     "Set to 0 to disable (uses normal travel acceleration).");
+    def->sidetext = "mm/s²";
+    def->min = 0;
+    def->mode = comDevelop;
+    def->set_default_value(new ConfigOptionFloats { 250. });
 
     def = this->add("initial_layer_travel_acceleration", coFloatsOrPercents);
     def->label = L("First layer travel");
@@ -2784,7 +2874,7 @@ void PrintConfigDef::init_fff_params()
     def->enum_keys_map = &ConfigOptionEnum<InfillPattern>::get_enum_values();
     def->enum_values   = def_top_fill_pattern->enum_values;
     def->enum_labels   = def_top_fill_pattern->enum_labels;
-    def->set_default_value(new ConfigOptionEnum<InfillPattern>(ipMonotonic));
+    def->set_default_value(new ConfigOptionEnum<InfillPattern>(ipMonotonicLine));
     
     def = this->add("outer_wall_line_width", coFloatsOrPercents);
     // Snapmaker Orca: one column per tool head (print_options_with_variant), written as one value
@@ -5241,6 +5331,18 @@ void PrintConfigDef::init_fff_params()
     def->mode = comAdvanced;
     def->set_default_value(new ConfigOptionPercent(25));
 
+    def = this->add("external_infill_margin", coFloatOrPercent);
+    def->label = L("Anchor solid infill by X mm");
+    def->category = L("Strength");
+    def->tooltip  = L("This parameter grows the top/bottom/solid layers by the specified mm to anchor them into the sparse infill and support the perimeters above."
+                       " Can be a %% of the width of the perimeters.");
+    def->sidetext = L("mm or %");
+    def->ratio_over  = "line_width";
+    def->min      = 0;
+    def->max_literal = 50;
+    def->mode = comAdvanced;
+    def->set_default_value(new ConfigOptionFloatOrPercent());
+
     def = this->add("sparse_infill_speed", coFloats);
     def->label = L("Sparse infill");
     def->category = L("Speed");
@@ -6441,7 +6543,7 @@ void PrintConfigDef::init_fff_params()
     def->tooltip = L("Experimental. For mixed rows with 3 or more physical filaments, allocate Local-Z sublayers directly across all components with carry-over error between layers instead of collapsing them into pair cadence.\n\n"
                      "This can reduce visible banding in multicolor Local-Z blends at the cost of more toolchanges. It is ignored when explicit Local-Z A/B heights are set.");
     def->mode = comAdvanced;
-    def->set_default_value(new ConfigOptionBool(false));
+    def->set_default_value(new ConfigOptionBool(true));
 
     def = this->add("dithering_step_painted_zones_only", coBool);
     def->label = L("Use step size in painted zones only");
@@ -10615,6 +10717,9 @@ void PrintConfigDef::handle_legacy(t_config_option_key &opt_key, std::string &va
         }
     } else if (opt_key == "overhang_fan_threshold" && value == "5%") {
         value = "10%";
+    } else if (opt_key == "overhang_threshold_participating_cooling") {
+        // The last value is keyed "95%"; profiles may write its label "100%".
+        ReplaceString(value, "100%", "95%");
     }else if( opt_key == "wall_infill_order" ) {
         if (value == "inner wall/outer wall/infill" || value == "infill/inner wall/outer wall") {
             opt_key = "wall_sequence";
@@ -10790,7 +10895,7 @@ void PrintConfigDef::handle_legacy(t_config_option_key &opt_key, std::string &va
         "z_hop_type", "z_lift_type", "bed_temperature_difference","long_retraction_when_cut",
         "retraction_distance_when_cut",
         "internal_bridge_support_thickness", "top_area_threshold", "reduce_wall_solid_infill","filament_load_time","filament_unload_time",
-        "smooth_coefficient", "overhang_totally_speed", "silent_mode",
+        "smooth_coefficient", "silent_mode",
         "overhang_speed_classic",
         "anisotropic_surfaces", // superseded by top_surface_fill_order / bottom_surface_fill_order
         // Belt printer keys retired before the first release: the global-mode and
@@ -11267,8 +11372,11 @@ DynamicPrintConfig* DynamicPrintConfig::new_from_defaults_keys(const std::vector
 
 double min_object_distance(const ConfigBase &cfg)
 {
-    const ConfigOptionEnum<PrinterTechnology> *opt_printer_technology = cfg.option<ConfigOptionEnum<PrinterTechnology>>("printer_technology");
-    auto printer_technology = opt_printer_technology ? opt_printer_technology->value : ptUnknown;
+    // Read through the base option + virtual getInt(): a DynamicConfig stores enums as
+    // ConfigOptionEnumGeneric, where a typed downcast would be UB.
+    const ConfigOption *opt_printer_technology = cfg.option("printer_technology");
+    auto printer_technology = (opt_printer_technology != nullptr && opt_printer_technology->type() == coEnum) ?
+        static_cast<PrinterTechnology>(opt_printer_technology->getInt()) : ptUnknown;
 
     double ret = 0.;
 
@@ -11278,13 +11386,13 @@ double min_object_distance(const ConfigBase &cfg)
         //BBS: duplicate_distance seam to be useless
         constexpr double duplicate_distance = 6.;
         auto ecr_opt = cfg.option<ConfigOptionFloat>("extruder_clearance_radius");
-        auto co_opt  = cfg.option<ConfigOptionEnum<PrintSequence>>("print_sequence");
+        const ConfigOption *co_opt = cfg.option("print_sequence");
 
-        if (!ecr_opt || !co_opt)
+        if (!ecr_opt || !co_opt || co_opt->type() != coEnum)
             ret = 0.;
         else {
             // min object distance is max(duplicate_distance, clearance_radius)
-            ret = ((co_opt->value == PrintSequence::ByObject) && ecr_opt->value > duplicate_distance) ?
+            ret = ((static_cast<PrintSequence>(co_opt->getInt()) == PrintSequence::ByObject) && ecr_opt->value > duplicate_distance) ?
                       ecr_opt->value : duplicate_distance;
         }
     }
@@ -11442,10 +11550,10 @@ t_config_option_keys DynamicPrintConfig::normalize_fdm_2(int num_objects, int us
     if (used_filaments > 0 && ept_opt != nullptr) {
         ConfigOptionBool* islh_opt = this->option<ConfigOptionBool>("independent_support_layer_height", true);
         //ConfigOptionBool* alh_opt = this->option<ConfigOptionBool>("adaptive_layer_height");
-        ConfigOptionEnum<PrintSequence>* ps_opt = this->option<ConfigOptionEnum<PrintSequence>>("print_sequence");
-
-        ConfigOptionEnum<TimelapseType>* timelapse_opt = this->option<ConfigOptionEnum<TimelapseType>>("timelapse_type");
-        bool is_smooth_timelapse = timelapse_opt != nullptr && timelapse_opt->value == TimelapseType::tlSmooth;
+        // Read enums via opt_enum() (virtual getInt()): this DynamicConfig may store them
+        // as ConfigOptionEnumGeneric, where a typed downcast would be UB.
+        const bool by_object = this->has("print_sequence") && this->opt_enum<PrintSequence>("print_sequence") == PrintSequence::ByObject;
+        const bool is_smooth_timelapse = this->has("timelapse_type") && this->opt_enum<TimelapseType>("timelapse_type") == TimelapseType::tlSmooth;
 
         ConfigOptionBool *enable_wrapping_opt = this->option<ConfigOptionBool>("enable_wrapping_detection");
         bool enable_wrapping = enable_wrapping_opt != nullptr && enable_wrapping_opt->value;
@@ -11458,7 +11566,7 @@ t_config_option_keys DynamicPrintConfig::normalize_fdm_2(int num_objects, int us
         }
         if (!is_smooth_timelapse && !enable_wrapping
             && (  (used_filaments == 1 && !has_mixed_filament)
-                || (ps_opt->value == PrintSequence::ByObject && num_objects > 1))) {
+                || (by_object && num_objects > 1))) {
             if (ept_opt->value) {
                 ept_opt->value = false;
                 changed_keys.push_back("enable_prime_tower");

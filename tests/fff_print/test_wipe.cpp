@@ -160,7 +160,9 @@ TEST_CASE("Wipe retraction preserves fractional speed with inward wipe disabled"
     const auto &end_tag = GCodeProcessor::reserved_tag(GCodeProcessor::ETags::Wipe_End);
     double before_wipe = 0.;
     double during_wipe = 0.;
+    double after_wipe = 0.;
     bool in_wipe = false;
+    bool wiped = false;
     bool complete = false;
     GCodeReader parser;
     parser.apply_config(config);
@@ -170,9 +172,12 @@ TEST_CASE("Wipe retraction preserves fractional speed with inward wipe disabled"
         if (line.comment().find(start_tag) != std::string_view::npos) {
             in_wipe = true;
         } else if (in_wipe && line.comment().find(end_tag) != std::string_view::npos) {
-            complete = true;
+            in_wipe = false;
+            wiped = true;
         } else if (line.retracting(self)) {
-            (in_wipe ? during_wipe : before_wipe) -= line.dist_E(self);
+            (wiped ? after_wipe : in_wipe ? during_wipe : before_wipe) -= line.dist_E(self);
+        } else if (wiped && (line.extruding(self) || line.dist_XY(self) > EPSILON)) {
+            complete = true;
         } else if (line.extruding(self)) {
             before_wipe = 0.;
         }
@@ -180,10 +185,11 @@ TEST_CASE("Wipe retraction preserves fractional speed with inward wipe disabled"
 
     REQUIRE(complete);
     // At 100 mm/s, the 2 mm wipe lasts 0.02 seconds. The remaining part of
-    // the configured 0.8 mm retraction must be emitted before that wipe.
+    // the configured 0.8 mm retraction is emitted after that wipe.
     const double expected_during = std::stod(retraction_speed) * 2. / 100.;
     CHECK_THAT(during_wipe, Catch::Matchers::WithinAbs(expected_during, 0.00005));
-    CHECK_THAT(before_wipe, Catch::Matchers::WithinAbs(0.8 - expected_during, 0.00005));
+    CHECK_THAT(before_wipe, Catch::Matchers::WithinAbs(0., 0.00005));
+    CHECK_THAT(after_wipe, Catch::Matchers::WithinAbs(0.8 - expected_during, 0.00005));
 }
 
 TEST_CASE("Inward wipe respects the minimum travel for retraction and Z hop", "[Wipe][Regression]")

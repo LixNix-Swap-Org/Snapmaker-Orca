@@ -81,7 +81,7 @@
 
 #include "nlohmann/json.hpp"
 
-#include "sentry_wrapper/SentryWrapper.hpp"
+#include "app_common/SentryWrapper.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem.hpp>
@@ -135,7 +135,7 @@
 #include <wx/stdpaths.h>
 //BBS: add exception handler for win32
 #ifdef WIN32
-#include "dev-utils/BaseException.h"
+#include "app_common/BaseException.h"
 #endif
 #include "slic3r/Utils/MeshInspect.hpp"
 #include "slic3r/Utils/PaintCLI.hpp"
@@ -1799,9 +1799,13 @@ int CLI::run(int argc, char **argv)
                         BOOST_LOG_TRIVIAL(info) << "object "<<o->name <<", id :" << o->id().id << ", from bbl 3mf\n";
                     }*/
 
-                    Semver cli_ver = *Semver::parse(SoftFever_VERSION);
+                    // Snapmaker_Orca: match upstream OrcaSlicer here. Two problems with the old code:
+                    // SLIC3R_VERSION is a legacy constant inherited from BambuStudio (01.10.01.50) that
+                    // does not track the product version, so every 2.x project file was rejected; and
+                    // the comparison rejected older files too, rather than only newer ones.
+                    Semver cli_ver = *Semver::parse(Snapmaker_VERSION);
                     if (!allow_newer_file && ((cli_ver.maj() < file_version.maj()) || ((cli_ver.maj() == file_version.maj()) && (cli_ver.min() < file_version.min())))){
-                        BOOST_LOG_TRIVIAL(error) << boost::format("Version Check: File Version %1% not supported by current cli version %2%")%file_version.to_string() %SoftFever_VERSION;
+                        BOOST_LOG_TRIVIAL(error) << boost::format("Version Check: File Version %1% not supported by current cli version %2%")%file_version.to_string() %Snapmaker_VERSION;
                         record_exit_reson(outfile_dir, CLI_FILE_VERSION_NOT_SUPPORTED, 0, cli_errors[CLI_FILE_VERSION_NOT_SUPPORTED], sliced_info);
                         flush_and_exit(CLI_FILE_VERSION_NOT_SUPPORTED);
                     }

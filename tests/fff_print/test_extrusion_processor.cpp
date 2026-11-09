@@ -89,7 +89,6 @@ constexpr double caged_slope_face_sum = 15.878796; // mm, y + z of the sloped fa
 // The sloped face spans this x range; outside it the box walls run full height.
 constexpr double caged_slope_x_min = 5.0859995;
 constexpr double caged_slope_x_max = 34.914257;
-constexpr double caged_slope_span  = caged_slope_x_max - caged_slope_x_min; // ~29.8 mm
 // The z range the sloped face occupies, from the same fixture vertices.
 constexpr double caged_slope_z_min = 5.711731;
 constexpr double caged_slope_z_max = 15.878796;
@@ -128,20 +127,21 @@ template<typename KeepLine> std::vector<double> outer_wall_feed_rates(const std:
     return feed_rates;
 }
 
-// The caged 45 degree overhang: outer walls crossing the sloped face for most of its width, on the
+// The caged 45 degree overhang: outer wall moves on the sloped face, on the
 // layers where the face genuinely overhangs.
 // Both ends are tested against the slope plane rather than requiring a constant Y. Arachne's
 // variable-width walls drift slightly in Y along the same slope (Y6.186 -> Y6.189 on one move), so
 // a constant-Y filter matches almost nothing under Arachne and silently reduces its coverage.
-// The length test excludes the cage walls: they are only as wide as the box is either side of the
-// slope, but being vertical their y + z sweeps through the slope plane as z rises, so a couple of
-// their fully supported moves would otherwise be counted as part of the span.
+// The x range test excludes the cage walls: they stand either side of the slope, but being
+// vertical their y + z sweeps through the slope plane as z rises, so a couple of their fully
+// supported moves would otherwise be counted as part of the span.
 std::vector<double> caged_slope_feed_rates(const std::string& gcode)
 {
     return outer_wall_feed_rates(gcode, [](const GCodeReader& self, const GCodeReader::GCodeLine& line) {
         const double z = line.new_Z(self);
         return z > caged_span_z_min && z < caged_slope_z_max &&
-               line.dist_XY(self) > 0.5 * caged_slope_span &&
+               std::min(self.x(), line.new_X(self)) > caged_slope_x_min &&
+               std::max(self.x(), line.new_X(self)) < caged_slope_x_max &&
                std::abs(self.y() + z - caged_slope_wall_sum) < caged_wall_tolerance &&
                std::abs(line.new_Y(self) + z - caged_slope_wall_sum) < caged_wall_tolerance;
     });

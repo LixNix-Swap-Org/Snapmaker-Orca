@@ -184,12 +184,22 @@ void GLGizmoFdmSupports::render_painter_gizmo()
 
 bool GLGizmoFdmSupports::on_tool_shortcut(Shortcut shortcut)
 {
+    wchar_t selectedTool = 0;
     switch (shortcut) {
-    case Shortcut::PaintToolFill:    m_current_tool = ImGui::FillButtonIcon; break;
-    case Shortcut::PaintToolSphere:  m_current_tool = ImGui::SphereButtonIcon; break;
-    case Shortcut::PaintToolCircle:  m_current_tool = ImGui::CircleButtonIcon; break;
-    case Shortcut::PaintToolGapFill: m_current_tool = ImGui::GapFillIcon; break;
+    case Shortcut::PaintToolFill:    selectedTool = ImGui::FillButtonIcon; break;
+    case Shortcut::PaintToolSphere:  selectedTool = ImGui::SphereButtonIcon; break;
+    case Shortcut::PaintToolCircle:  selectedTool = ImGui::CircleButtonIcon; break;
+    case Shortcut::PaintToolGapFill: selectedTool = ImGui::GapFillIcon; break;
     default: return false;
+    }
+
+    if (selectedTool != m_current_tool)
+    {
+        const wchar_t oldTool = m_current_tool;
+        // Keep the drag painting with the new tool as a separate stroke.
+        SplitPaintingStroke();
+        m_current_tool = selectedTool;
+        tool_changed(oldTool, m_current_tool);
     }
     return true;
 }
@@ -306,11 +316,8 @@ void GLGizmoFdmSupports::on_render_input_window(float x, float y, float bottom_l
         ImGui::PopStyleVar(3);
 
         if (btn_clicked && m_current_tool != tool_ids[i]) {
+            FinishPaintingInteraction();
             m_current_tool = tool_ids[i];
-            for (auto& triangle_selector : m_triangle_selectors) {
-                triangle_selector->seed_fill_unselect_all_triangles();
-                triangle_selector->request_update_render_data();
-            }
         }
 
         if (ImGui::IsItemHovered()) {
@@ -382,13 +389,11 @@ void GLGizmoFdmSupports::on_render_input_window(float x, float y, float bottom_l
         ImGui::PushItemWidth(sliders_width);
         if (m_imgui->bbl_slider_float_style("##smart_fill_angle", &m_smart_fill_angle, SmartFillAngleMin, SmartFillAngleMax,
                                             format_str.data(), 1.0f, true))
-            for (auto& triangle_selector : m_triangle_selectors) {
-                triangle_selector->seed_fill_unselect_all_triangles();
-                triangle_selector->request_update_render_data();
-            }
+            FinishPaintingInteraction();
         ImGui::SameLine(drag_left_width + sliders_left_width);
         ImGui::PushItemWidth(1.5 * slider_icon_width);
-        ImGui::BBLDragFloat("##smart_fill_angle_input", &m_smart_fill_angle, 0.05f, 0.0f, 0.0f, "%.2f");
+        if (ImGui::BBLDragFloat("##smart_fill_angle_input", &m_smart_fill_angle, 0.05f, 0.0f, 0.0f, "%.2f"))
+            FinishPaintingInteraction();
     } else if (m_current_tool == ImGui::GapFillIcon) {
         m_tool_type = ToolType::GAP_FILL;
         m_cursor_type = TriangleSelector::CursorType::POINTER;
@@ -625,6 +630,9 @@ void GLGizmoFdmSupports::update_from_model_object(bool first_update)
     wxBusyCursor wait;
 
     const ModelObject* mo = m_c->selection_info()->model_object();
+    // Model data replaces these selectors, so drop the active stroke instead of writing it back.
+    ResetPaintingStroke();
+    DetachTriangleSelectorGlResources();
     m_triangle_selectors.clear();
     //BBS: add timestamp logic
     m_volume_timestamps.clear();

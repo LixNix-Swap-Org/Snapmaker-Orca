@@ -419,6 +419,9 @@ void AppConfig::set_defaults()
         set_bool("design_show_bed", true);
 #endif
 
+    if (get("enable_soft_shadows").empty())
+        set_bool("enable_soft_shadows", false);
+
 //#ifdef SUPPORT_SHOW_HINTS
     if (get("show_hints").empty())
         set_bool("show_hints", false);
@@ -691,6 +694,10 @@ void AppConfig::set_defaults()
     //     set_bool("staff_pick_switch", false);
     // }
 
+    if (get("enable_model_station").empty()) {
+        set_bool("enable_model_station", true);
+    }
+
     if (get("sync_system_preset").empty()) {
         set_bool("sync_system_preset", true);
     }
@@ -744,6 +751,9 @@ void AppConfig::set_defaults()
 
     if (get("enable_step_mesh_setting").empty()) {
         set_bool("enable_step_mesh_setting", true);
+    }
+    if (get("show_memory_usage_warning").empty()) {
+        set_bool("show_memory_usage_warning", true);
     }
     // Migrate legacy misspelled keys (linear_defletion/angle_defletion) to the corrected spelling.
     if (get("linear_deflection").empty() && !get("linear_defletion").empty())

@@ -286,6 +286,17 @@ void GLGizmoMmuSegmentation::data_changed(bool is_serializing)
 }
 
 // BBS
+void GLGizmoMmuSegmentation::refresh_from_model()
+{
+    // Same reload pairing data_changed() uses on extruder-count changes, but
+    // unconditional: palette/painting rewrites that keep the total count must also
+    // re-deserialize the selector states, or the stale editing copy would keep
+    // rendering the old mapping and its next update_model_object() would write
+    // that stale copy back over the model.
+    init_extruders_data();
+    init_model_triangle_selectors();
+}
+
 bool GLGizmoMmuSegmentation::on_number_key_down(int number)
 {
     int extruder_idx = number - 1;
@@ -297,14 +308,24 @@ bool GLGizmoMmuSegmentation::on_number_key_down(int number)
 
 bool GLGizmoMmuSegmentation::on_tool_shortcut(Shortcut shortcut)
 {
+    wchar_t selectedTool = 0;
     switch (shortcut) {
-    case Shortcut::PaintToolFill:        m_current_tool = ImGui::FillButtonIcon; break;
-    case Shortcut::PaintToolTriangle:    m_current_tool = ImGui::TriangleButtonIcon; break;
-    case Shortcut::PaintToolSphere:      m_current_tool = ImGui::SphereButtonIcon; break;
-    case Shortcut::PaintToolCircle:      m_current_tool = ImGui::CircleButtonIcon; break;
-    case Shortcut::PaintToolHeightRange: m_current_tool = ImGui::HeightRangeIcon; break;
-    case Shortcut::PaintToolGapFill:     m_current_tool = ImGui::GapFillIcon; break;
+    case Shortcut::PaintToolFill:        selectedTool = ImGui::FillButtonIcon; break;
+    case Shortcut::PaintToolTriangle:    selectedTool = ImGui::TriangleButtonIcon; break;
+    case Shortcut::PaintToolSphere:      selectedTool = ImGui::SphereButtonIcon; break;
+    case Shortcut::PaintToolCircle:      selectedTool = ImGui::CircleButtonIcon; break;
+    case Shortcut::PaintToolHeightRange: selectedTool = ImGui::HeightRangeIcon; break;
+    case Shortcut::PaintToolGapFill:     selectedTool = ImGui::GapFillIcon; break;
     default: return false;
+    }
+
+    if (selectedTool != m_current_tool)
+    {
+        const wchar_t oldTool = m_current_tool;
+        // Keep the drag painting with the new tool as a separate stroke.
+        SplitPaintingStroke();
+        m_current_tool = selectedTool;
+        tool_changed(oldTool, m_current_tool);
     }
     return true;
 }
@@ -624,11 +645,8 @@ void GLGizmoMmuSegmentation::on_render_input_window(float x, float y, float bott
         ImGui::PopStyleVar(3);
 
         if (btn_clicked && m_current_tool != tool_ids[i]) {
+            FinishPaintingInteraction();
             m_current_tool = tool_ids[i];
-            for (auto &triangle_selector : m_triangle_selectors) {
-                triangle_selector->seed_fill_unselect_all_triangles();
-                triangle_selector->request_update_render_data();
-            }
         }
 
         if (ImGui::IsItemHovered()) {
@@ -695,19 +713,18 @@ void GLGizmoMmuSegmentation::on_render_input_window(float x, float y, float bott
             ImGui::SameLine(sliders_left_width);
             ImGui::PushItemWidth(sliders_width);
             if (m_imgui->bbl_slider_float_style("##smart_fill_angle", &m_smart_fill_angle, SmartFillAngleMin, SmartFillAngleMax, format_str.data(), 1.0f, true))
-                for (auto &triangle_selector : m_triangle_selectors) {
-                    triangle_selector->seed_fill_unselect_all_triangles();
-                    triangle_selector->request_update_render_data();
-                }
+                FinishPaintingInteraction();
             ImGui::SameLine(drag_left_width + sliders_left_width);
             ImGui::PushItemWidth(1.5 * slider_icon_width);
-            ImGui::BBLDragFloat("##smart_fill_angle_input", &m_smart_fill_angle, 0.05f, 0.0f, 0.0f, "%.2f");
+            if (ImGui::BBLDragFloat("##smart_fill_angle_input", &m_smart_fill_angle, 0.05f, 0.0f, 0.0f, "%.2f"))
+                FinishPaintingInteraction();
         } else {
             // set to negative value to disable edge detection
             m_smart_fill_angle = -1.f;
         }
                 
-        m_imgui->bbl_checkbox(m_desc["edge_detection"], m_detect_geometry_edge);
+        if (m_imgui->bbl_checkbox(m_desc["edge_detection"], m_detect_geometry_edge))
+            FinishPaintingInteraction();
     } 
     else if (m_current_tool == ImGui::HeightRangeIcon) {
         m_tool_type   = ToolType::BRUSH;
@@ -837,7 +854,11 @@ void GLGizmoMmuSegmentation::update_model_object()
 void GLGizmoMmuSegmentation::init_model_triangle_selectors()
 {
     const ModelObject *mo = m_c->selection_info()->model_object();
+    // Model data replaces these selectors, so drop the active stroke instead of writing it back.
+    ResetPaintingStroke();
+    DetachTriangleSelectorGlResources();
     m_triangle_selectors.clear();
+    m_heightRangeIndices.clear();
     m_volumes_extruder_idxs.clear();
 
     // Don't continue when extruders colors are not initialized
@@ -863,7 +884,8 @@ void GLGizmoMmuSegmentation::init_model_triangle_selectors()
 
         // This mesh does not account for the possible Z up SLA offset.
         const TriangleMesh* mesh = &mv->mesh();
-        m_triangle_selectors.emplace_back(std::make_unique<TriangleSelectorPatch>(*mesh, ebt_colors, 0.2));
+        m_triangle_selectors.emplace_back(
+            std::make_unique<TriangleSelectorPatch>(*mesh, ebt_colors, 0.2, true));
         // Reset of TriangleSelector is done inside TriangleSelectorMmGUI's constructor, so we don't need it to perform it again in deserialize().
         EnforcerBlockerType max_ebt = (EnforcerBlockerType)std::min(m_extruders_colors.size(), (size_t)EnforcerBlockerType::ExtruderMax);
         m_triangle_selectors.back()->deserialize(mv->mmu_segmentation_facets.get_data(), false, max_ebt);
@@ -911,6 +933,10 @@ void GLGizmoMmuSegmentation::update_from_model_object(bool first_update)
 
 void GLGizmoMmuSegmentation::tool_changed(wchar_t old_tool, wchar_t new_tool)
 {
+    const bool pointerPreviewEnabled = new_tool == ImGui::TriangleButtonIcon;
+    for (const std::unique_ptr<TriangleSelectorGUI>& triangleSelector : m_triangle_selectors)
+        triangleSelector->SetPointerPreviewEnabled(pointerPreviewEnabled);
+
     if ((old_tool == ImGui::GapFillIcon && new_tool == ImGui::GapFillIcon) ||
         (old_tool != ImGui::GapFillIcon && new_tool != ImGui::GapFillIcon))
         return;

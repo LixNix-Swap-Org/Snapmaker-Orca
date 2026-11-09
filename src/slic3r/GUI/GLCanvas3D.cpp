@@ -96,6 +96,7 @@
 #include "GUI_Preview.hpp"
 #include "OpenGLManager.hpp"
 #include "Plater.hpp"
+#include "SoftShadowRenderer.hpp"
 #include "MainFrame.hpp"
 #include "WipeTowerDialog.hpp"
 #include "GUI_App.hpp"
@@ -209,8 +210,40 @@ void Slic3r::GUI::GLCanvas3D::load_render_colors()
 
 //static constexpr const float AXES_COLOR[3][3] = { { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f } };
 
+#ifndef ENABLE_GPU_VOLUME_PICKING
+#define ENABLE_GPU_VOLUME_PICKING 1
+#endif
+
 namespace Slic3r {
 namespace GUI {
+
+namespace {
+
+constexpr int VOLUME_PICKING_TOLERANCE_RADIUS_PX = 3;
+
+bool HoverAffectsSinkingContour(const GLVolumeCollection& volumes, const GLVolume& volume)
+{
+    return volumes.IsShowingSinkingContours() && volume.is_sinking() && !volume.is_below_printbed() &&
+           !volume.force_sinking_contours;
+}
+
+struct PickingPixelCandidate
+{
+    uint32_t volumeId{0};
+    int x{0};
+    int y{0};
+    int distanceSquared{0};
+};
+
+void RestoreCapability(GLenum capability, GLboolean enabled)
+{
+    if (enabled)
+        glsafe(::glEnable(capability));
+    else
+        glsafe(::glDisable(capability));
+}
+
+} // namespace
 
 static void pan_camera(Camera& camera, const Vec2d& screen_delta, const Vec3d& anchor)
 {
@@ -1693,6 +1726,7 @@ GLCanvas3D::GLCanvas3D(wxGLCanvas* canvas, Bed3D &bed)
     , m_initialized(false)
     , m_apply_zoom_to_volumes_filter(false)
     , m_picking_enabled(false)
+    , m_pickingBufferDirty(true)
     , m_moving_enabled(false)
     , m_dynamic_background_enabled(false)
     , m_multisample_allowed(false)
@@ -1729,7 +1763,16 @@ GLCanvas3D::GLCanvas3D(wxGLCanvas* canvas, Bed3D &bed)
 
 GLCanvas3D::~GLCanvas3D()
 {
-    if (_set_current()) {
+    const bool contextCurrent = ReleasePainterGlResources();
+    if (!contextCurrent)
+        m_gizmos.DetachPainterGlResources();
+
+    if (contextCurrent)
+        m_pickingBuffer.Reset();
+    else
+        assert(!m_pickingBuffer.IsReady());
+
+    if (contextCurrent) {
         m_scene_cache.reset();
         m_frame_profiler.reset();
         if (m_fxaa_texture_id != 0) {
@@ -1759,6 +1802,9 @@ GLCanvas3D::~GLCanvas3D()
     if (m_section_view->owner == this)
         m_section_view->owner = nullptr;
 
+    if (_softShadowRenderer != nullptr && m_canvas != nullptr && _set_current())
+        _softShadowRenderer->Release();
+
     // Snapmaker: during canvas destruction the sidebar/selection is already being torn down,
     // so reset_volumes() must not notify it (crash fix #492).
     reset_volumes(ResetVolumesMode::CanvasDestruction);
@@ -1766,6 +1812,16 @@ GLCanvas3D::~GLCanvas3D()
     m_sel_plate_toolbar.del_all_item();
     m_sel_plate_toolbar.del_stats_item();
     m_plate_switcher_items.clear();
+}
+
+bool GLCanvas3D::ReleasePainterGlResources()
+{
+    if (m_canvas == nullptr || !_set_current())
+        return false;
+
+    m_gizmos.ReleasePainterGlResources();
+    wxGetApp().get_opengl_manager().FlushPendingBufferDeletes();
+    return true;
 }
 
 void GLCanvas3D::post_event(wxEvent &&event)
@@ -1837,6 +1893,58 @@ bool GLCanvas3D::init()
     m_initialized = true;
 
     return true;
+}
+
+bool GLCanvas3D::IsSoftShadowVisible(bool noPartplate) const
+{
+    if (m_canvas_type != ECanvasType::CanvasView3D || noPartplate)
+        return false;
+
+    if (!wxGetApp().app_config->get_bool("enable_soft_shadows"))
+        return false;
+
+    // Cut and boolean previews clip or replace geometry, so full-object shadows would be misleading
+    const GLGizmosManager::EType gizmoType = m_gizmos.get_current_type();
+    if (gizmoType == GLGizmosManager::Cut || gizmoType == GLGizmosManager::MeshBoolean)
+        return false;
+
+    // The section view and X-Ray do not show the geometry the shadows are cast from.
+    if (is_section_view_active() || _is_xray_view_active())
+        return false;
+
+    if (!wxGetApp().plater()->get_camera().is_looking_downward())
+        return false;
+
+    return SoftShadowRenderer::IsSupported();
+}
+
+void GLCanvas3D::UpdateSoftShadows(bool shadowsVisible)
+{
+    if (!shadowsVisible)
+    {
+        // Keep resources while a gizmo hides shadows temporarily; free them once the option is off.
+        // Dropping the renderer also clears its failure flags, so enabling the option again retries
+        const bool optionEnabled = wxGetApp().app_config->get_bool("enable_soft_shadows");
+        if (!optionEnabled && _softShadowRenderer != nullptr)
+        {
+            _softShadowRenderer->Release();
+            _softShadowRenderer.reset();
+        }
+        return;
+    }
+
+    if (_softShadowRenderer == nullptr)
+        _softShadowRenderer = std::make_unique<SoftShadowRenderer>();
+
+    SoftShadowFrameInput input;
+    input.volumes = &m_volumes;
+    input.interactive = is_dragging();
+    input.renderSlaAuxiliaries = m_render_sla_auxiliaries;
+    _softShadowRenderer->Update(input);
+    // One more frame after a drag rebuild, so the settle rebuild runs once the drag ends. Only after a rebuild:
+    // requesting it on every dragging frame kept redrawing at full rate while the mouse was held still
+    if (input.interactive && _softShadowRenderer->WasRebuilt())
+        request_extra_frame();
 }
 
 void GLCanvas3D::on_change_color_mode(bool is_dark, bool reinit) {
@@ -1926,6 +2034,8 @@ void GLCanvas3D::reset_volumes(ResetVolumesMode mode)
     m_volumes.clear();
     m_section_view_caps.clear();
     m_dirty = true;
+    InvalidatePickingBuffer();
+    InvalidateSceneCache();
 
     if (mode == ResetVolumesMode::CanvasDestruction)
         return;
@@ -2158,6 +2268,9 @@ void GLCanvas3D::toggle_world_axes_visibility(bool force_show)
 
 void GLCanvas3D::toggle_selected_volume_visibility(bool selected_visible)
 {
+    InvalidatePickingBuffer();
+    InvalidateSceneCache();
+    set_as_dirty();
     m_render_sla_auxiliaries = !selected_visible;
     if (selected_visible) {
         const Selection::IndicesList &idxs = m_selection.get_volume_idxs();
@@ -2183,6 +2296,15 @@ void GLCanvas3D::toggle_selected_volume_visibility(bool selected_visible)
             }
         }
     }
+
+    // A scene reload while measuring or assembling copies visibility into the
+    // picking state. Keep both in sync when restoring the other volumes too.
+    // Use the volume ID because multiple instances may share a mesh raycaster.
+    for (const auto& raycaster : *get_raycasters_for_picking(SceneRaycaster::EType::Volume)) {
+        const int volume_idx = SceneRaycaster::decode_id(SceneRaycaster::EType::Volume, raycaster->get_id());
+        if (volume_idx >= 0 && static_cast<size_t>(volume_idx) < m_volumes.volumes.size())
+            raycaster->set_active(m_volumes.volumes[volume_idx]->is_active);
+    }
 }
 
 void GLCanvas3D::toggle_sla_auxiliaries_visibility(bool visible, const ModelObject *mo, int instance_idx)
@@ -2191,6 +2313,9 @@ void GLCanvas3D::toggle_sla_auxiliaries_visibility(bool visible, const ModelObje
         return;
 
     m_render_sla_auxiliaries = visible;
+    InvalidatePickingBuffer();
+    InvalidateSceneCache();
+    set_as_dirty();
 
     std::vector<std::shared_ptr<SceneRaycasterItem>>* raycasters = get_raycasters_for_picking(SceneRaycaster::EType::Volume);
 
@@ -2211,6 +2336,9 @@ void GLCanvas3D::toggle_sla_auxiliaries_visibility(bool visible, const ModelObje
 
 void GLCanvas3D::toggle_model_objects_visibility(bool visible, const ModelObject* mo, int instance_idx, const ModelVolume* mv)
 {
+    InvalidatePickingBuffer();
+    InvalidateSceneCache();
+    set_as_dirty();
     std::vector<std::shared_ptr<SceneRaycasterItem>>* raycasters = get_raycasters_for_picking(SceneRaycaster::EType::Volume);
     for (GLVolume* vol : m_volumes.volumes) {
         // BBS: add partplate logic
@@ -2307,12 +2435,14 @@ void GLCanvas3D::bed_shape_changed()
 {
     refresh_camera_scene_box();
     wxGetApp().plater()->get_camera().requires_zoom_to_bed = true;
+    InvalidateSceneCache();
     m_dirty = true;
 }
 
 void GLCanvas3D::plates_count_changed()
 {
     refresh_camera_scene_box();
+    InvalidateSceneCache();
     m_dirty = true;
 }
 
@@ -2324,11 +2454,15 @@ Camera& GLCanvas3D::get_camera()
 void GLCanvas3D::set_color_by(const std::string& value)
 {
     m_color_by = value;
+    InvalidateSceneCache();
+    set_as_dirty();
 }
 
 void GLCanvas3D::refresh_camera_scene_box()
 {
     wxGetApp().plater()->get_camera().set_scene_box(scene_bounding_box());
+    InvalidatePickingBuffer();
+    InvalidateSceneCache();
 }
 
 BoundingBoxf3 GLCanvas3D::volumes_bounding_box(bool current_plate_only) const
@@ -2350,6 +2484,12 @@ BoundingBoxf3 GLCanvas3D::volumes_bounding_box(bool current_plate_only) const
     for (const GLVolume *volume : m_volumes.volumes) {
         if (!m_apply_zoom_to_volumes_filter || ((volume != nullptr) && volume->zoom_to_volumes)) {
             const auto v_bb     = volume->transformed_bounding_box();
+            // BBS: never let corrupted volumes (astronomic or non-finite AABBs)
+            // blow up the camera-fit bounding box and blank the whole viewport.
+            // 1e8 mm = 100 km, far above any legitimate printer scene.
+            if (!v_bb.min.allFinite() || !v_bb.max.allFinite() || v_bb.min.cwiseAbs().maxCoeff() > 1e8 ||
+                v_bb.max.cwiseAbs().maxCoeff() > 1e8 || (v_bb.max - v_bb.min).maxCoeff() > 1e8)
+                continue;
             if (is_limit && !expand_part_plate_list_box.overlap(v_bb))
                 continue;
             bb.merge(v_bb);
@@ -2540,6 +2680,8 @@ void GLCanvas3D::ZoomToFit()
 void GLCanvas3D::select_view(const std::string& direction)
 {
     wxGetApp().plater()->get_camera().select_view(direction);
+    InvalidatePickingBuffer();
+    InvalidateSceneCache();
     if (m_canvas != nullptr)
         m_canvas->Refresh();
 }
@@ -2652,6 +2794,8 @@ void GLCanvas3D::_render_frame(bool scene_dirty, bool only_init)
     if (!_is_shown_on_screen() || !_set_current() || !wxGetApp().init_opengl())
         return;
 
+    wxGetApp().get_opengl_manager().FlushPendingBufferDeletes();
+
     if (!is_initialized() && !init())
         return;
 
@@ -2717,18 +2861,46 @@ void GLCanvas3D::_render_frame(bool scene_dirty, bool only_init)
     const ImGuiID active_id = ImGui::GetActiveID();
     wxGetApp().imgui()->new_frame();
 
-    if (_update_inactive_plates_visibility())
+    if (_update_inactive_plates_visibility()) {
+        scene_dirty = true;
+        InvalidatePickingBuffer();
+    }
+    if (UpdateVolumeClippingState())
         scene_dirty = true;
 
+    const bool isRectanglePicking = m_rectangle_selection.is_dragging();
+    const bool isRegularPicking = !m_mouse.dragging && m_mouse.position != Vec2d(DBL_MAX, DBL_MAX) && !m_gizmos.is_dragging();
+    const bool isGpuPointPicking = ENABLE_GPU_VOLUME_PICKING != 0 && isRegularPicking;
+    const bool shouldRenderPickingBuffer = m_picking_enabled && !m_benchmarking && (isRectanglePicking || isGpuPointPicking);
+    const bool pickingBufferSizeChanged = !m_pickingBuffer.IsReady() || m_pickingBuffer.GetWidth() != camera.get_viewport()[2] ||
+                                          m_pickingBuffer.GetHeight() != camera.get_viewport()[3];
+    // Also catches camera changes made without an explicit invalidation.
+    if (!m_pickingBufferView.isApprox(camera.get_view_matrix()) || !m_pickingBufferProjection.isApprox(camera.get_projection_matrix()))
+        InvalidatePickingBuffer();
+    const bool shouldUpdatePickingBuffer = shouldRenderPickingBuffer && (m_pickingBufferDirty || pickingBufferSizeChanged);
+
+    if (shouldUpdatePickingBuffer)
+    {
+        const bool rendered = RenderPickingBuffer(camera);
+        if (!rendered && m_pickingBuffer.IsReady())
+            m_pickingBuffer.Reset();
+        m_pickingBufferDirty = !rendered;
+        if (rendered) {
+            m_pickingBufferView = camera.get_view_matrix();
+            m_pickingBufferProjection = camera.get_projection_matrix();
+        }
+    }
+
+    bool sinkingContourSceneChanged = false;
     if (m_picking_enabled && !m_benchmarking) {
-        if (m_rectangle_selection.is_dragging())
+        if (isRectanglePicking)
             // picking pass using rectangle selection
-            _rectangular_selection_picking_pass();
+            sinkingContourSceneChanged = _rectangular_selection_picking_pass();
         //BBS: enable picking when no volumes for partplate logic
         //else if (!m_volumes.empty())
         else {
             // regular picking pass
-            _picking_pass();
+            _picking_pass(sinkingContourSceneChanged);
 
 #if ENABLE_RAYCAST_PICKING_DEBUG
             ImGuiWrapper& imgui = *wxGetApp().imgui();
@@ -2738,6 +2910,9 @@ void GLCanvas3D::_render_frame(bool scene_dirty, bool only_init)
 #endif // ENABLE_RAYCAST_PICKING_DEBUG
         }
     }
+
+    if (sinkingContourSceneChanged)
+        scene_dirty = true;
 
     const bool overlay_tick = m_fps_overlay_tick;
     m_fps_overlay_tick = false;
@@ -2939,6 +3114,8 @@ void GLCanvas3D::_render_frame(bool scene_dirty, bool only_init)
 // capture an overlay-only frame reuses.
 void GLCanvas3D::set_type(ECanvasType type)
 {
+    if (m_canvas_type != type)
+        InvalidateSceneAndPickingCaches();
     m_canvas_type = type;
     // Snapmaker Orca: the plater and the assemble view draw reduced models. The volumes of the
     // preview canvas carry a z range (GLVolume::set_range()), which the render LOD never draws.
@@ -2997,6 +3174,9 @@ void GLCanvas3D::_render_scene(const Camera& camera, const Size& cnv_size)
     if (m_canvas_type == ECanvasType::CanvasView3D || m_canvas_type == ECanvasType::CanvasAssembleView)
         m_volumes.update_lod(camera, _is_lod_allowed(), get_lod_pixel_scale(), _lod_pin_above_z());
 
+    const bool soft_shadows = IsSoftShadowVisible(!is_bed_visible());
+    UpdateSoftShadows(soft_shadows);
+
     // Recorded by PartPlate::render_icons() below, when it runs.
     wxGetApp().plater()->get_partplate_list().clear_hover_tooltip();
     glsafe(::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
@@ -3025,6 +3205,13 @@ void GLCanvas3D::_render_scene(const Camera& camera, const Size& cnv_size)
     /* view3D render*/
     int hover_id = (m_hover_plate_idxs.size() > 0)?m_hover_plate_idxs.front():-1;
     if (m_canvas_type == ECanvasType::CanvasView3D) {
+        // Soft shadows on objects need a depth buffer that holds the objects only, so the bed follows them.
+        if (soft_shadows) {
+            _render_objects(GLVolumeCollection::ERenderType::Opaque, !m_gizmos.is_running());
+            if (_softShadowRenderer != nullptr)
+                _softShadowRenderer->RenderObjectShadows(camera, m_is_dark);
+            m_frame_profiler.mark("objects");
+        }
         // m_show_bed gates the plate list too: hiding the bed but leaving its grid and outline
         // floating would read as a rendering fault rather than a deliberate view option.
         if (show_bed) {
@@ -3044,14 +3231,18 @@ void GLCanvas3D::_render_scene(const Camera& camera, const Size& cnv_size)
         if (m_design_canvas && show_bed)
             // Design tab: replace the plate's corner-origin grid with the origin-centred CAD grid.
             _render_cad_grid(camera.get_view_matrix(), camera.get_projection_matrix());
+        if (soft_shadows && _softShadowRenderer != nullptr)
+            _softShadowRenderer->RenderReceivers(camera, wxGetApp().plater()->get_partplate_list(), m_is_dark);
         m_frame_profiler.mark("plates");
-        //BBS: add outline logic
-        // Depth pass for object-on-object and self shadows; consumed by the gouraud shader below.
-        _render_shadows(camera.get_view_matrix(), camera.get_projection_matrix());
-        m_frame_profiler.mark("shadows");
-        _render_objects(GLVolumeCollection::ERenderType::Opaque, !m_gizmos.is_running());
-        _render_below_plate_volumes();
-        m_frame_profiler.mark("objects");
+        if (!soft_shadows) {
+            //BBS: add outline logic
+            // Depth pass for object-on-object and self shadows; consumed by the gouraud shader below.
+            _render_shadows(camera.get_view_matrix(), camera.get_projection_matrix());
+            m_frame_profiler.mark("shadows");
+            _render_objects(GLVolumeCollection::ERenderType::Opaque, !m_gizmos.is_running());
+            _render_below_plate_volumes();
+            m_frame_profiler.mark("objects");
+        }
         // Collision previews follow the same visibility rule as the bed.
         const bool show_exclusion_intersections = m_show_bed &&
             (!m_main_toolbar.is_enabled() ||
@@ -3339,6 +3530,7 @@ void GLCanvas3D::deselect_all()
     m_gizmos.reset_all_states();
     m_gizmos.update_data();
     post_event(SimpleEvent(EVT_GLCANVAS_OBJECT_SELECT));
+    m_dirty = true;
 }
 
 void GLCanvas3D::exit_gizmo() {
@@ -3396,6 +3588,11 @@ void GLCanvas3D::ensure_on_bed(unsigned int object_idx, bool allow_negative_z)
         if (it != instances_min_z.end())
             volume->set_instance_offset(Z, volume->get_instance_offset(Z) - it->second);
     }
+    if (!instances_min_z.empty()) {
+        InvalidatePickingBuffer();
+        InvalidateSceneCache();
+        set_as_dirty();
+    }
 }
 
 
@@ -3406,7 +3603,14 @@ std::vector<int> GLCanvas3D::load_object(const ModelObject& model_object, int ob
             instance_idxs.emplace_back(i);
         }
     }
-    return m_volumes.load_object(&model_object, obj_idx, instance_idxs, m_color_by, m_initialized);
+    const std::vector<int> loadedVolumeIndices =
+        m_volumes.load_object(&model_object, obj_idx, instance_idxs, m_color_by, m_initialized);
+    if (!loadedVolumeIndices.empty()) {
+        InvalidatePickingBuffer();
+        InvalidateSceneCache();
+        set_as_dirty();
+    }
+    return loadedVolumeIndices;
 }
 
 std::vector<int> GLCanvas3D::load_object(const Model& model, int obj_idx)
@@ -3462,6 +3666,9 @@ void GLCanvas3D::reload_scene(bool refresh_immediately, bool force_full_scene_re
         force_full_scene_refresh = true;
         m_reload_delayed_full = false;
     }
+
+    InvalidatePickingBuffer();
+    InvalidateSceneCache();
 
     m_hover_volume_idxs.clear();
 
@@ -3888,6 +4095,9 @@ void GLCanvas3D::reload_scene(bool refresh_immediately, bool force_full_scene_re
                 Vec3d plate_origin = ppl.get_plate(plate_id)->get_origin();
 
                 const Print* current_print = part_plate->fff_print();
+                if (current_print == nullptr)
+                    continue;
+                const bool tower_generation_done = current_print->is_step_done(psWipeTower);
                 if (part_plate->get_objects_on_this_plate().empty()) continue;
 
                 // Body and brim from this plate's own estimate: m_process->fff_print() is the
@@ -3927,7 +4137,13 @@ void GLCanvas3D::reload_scene(bool refresh_immediately, bool force_full_scene_re
                     }
                 }
 
-                if (!current_print->is_step_done(psWipeTower) || !current_print->wipe_tower_data().wipe_tower_mesh_data) {
+                // Configured support/interface filaments may never be used. Once
+                // slicing has finished, an absent tower is not an estimated tower.
+                if (tower_generation_done && current_print->wipe_tower_data().tool_changes.empty() &&
+                    current_print->wipe_tower_data().local_z_tool_changes.empty())
+                    continue;
+
+                if (!tower_generation_done || !current_print->wipe_tower_data().wipe_tower_mesh_data) {
                     // update for wipe tower position
                     int volume_idx_wipe_tower_new = m_volumes.load_wipe_tower_preview(1000 + plate_id, x + plate_origin(0), y + plate_origin(1),
                                                                                       (float) wipe_tower_size(0), (float) wipe_tower_size(1), (float) wipe_tower_size(2),
@@ -4241,6 +4457,8 @@ void GLCanvas3D::bind_event_handlers()
                 m_navigator_dragging = false;
                 render();
             });
+        // Bound last so it runs first; it skips the event on to the handler above.
+        m_canvas->Bind(wxEVT_MOUSE_CAPTURE_LOST, &GLCanvas3D::OnMouseCaptureLost, this);
         m_event_handlers_bound = true;
 
         m_canvas->Bind(wxEVT_GESTURE_PAN, &GLCanvas3D::on_gesture, this);
@@ -4262,6 +4480,7 @@ void GLCanvas3D::unbind_event_handlers()
         m_canvas->Unbind(wxEVT_KEY_DOWN, &GLCanvas3D::on_key, this);
         m_canvas->Unbind(wxEVT_KEY_UP, &GLCanvas3D::on_key, this);
         m_canvas->Unbind(wxEVT_MOUSEWHEEL, &GLCanvas3D::on_mouse_wheel, this);
+        m_canvas->Unbind(wxEVT_MOUSE_CAPTURE_LOST, &GLCanvas3D::OnMouseCaptureLost, this);
         m_canvas->Unbind(wxEVT_TIMER, &GLCanvas3D::on_timer, this);
         m_canvas->Unbind(EVT_GLCANVAS_RENDER_TIMER, &GLCanvas3D::on_render_timer, this);
         m_canvas->Unbind(wxEVT_LEFT_DOWN, &GLCanvas3D::on_mouse, this);
@@ -4306,6 +4525,8 @@ void GLCanvas3D::on_idle(wxIdleEvent& evt)
     // ever being drawn and the next visible frame jumps several states at once.
     bool mouse3d_controller_applied = _is_shown_on_screen()
         && wxGetApp().plater()->get_mouse3d_controller().apply(wxGetApp().plater()->get_camera());
+    if (mouse3d_controller_applied)
+        InvalidatePickingBuffer();
     m_dirty |= mouse3d_controller_applied;
     m_overlay_dirty |= wxGetApp().plater()->get_notification_manager()->update_notifications(*this);
     auto gizmo = wxGetApp().plater()->get_view3D_canvas3D()->get_gizmos_manager().get_current();
@@ -4634,6 +4855,8 @@ void GLCanvas3D::apply_selection_move(bool slow, bool camera_space)
     trafo_type.set_relative();
     m_selection.translate(displacement, trafo_type);
     m_dirty = true;
+    InvalidatePickingBuffer();
+    InvalidateSceneCache();
 }
 
 void GLCanvas3D::apply_selection_rotate(double angle_z_rad)
@@ -4641,6 +4864,8 @@ void GLCanvas3D::apply_selection_rotate(double angle_z_rad)
     m_selection.setup_cache();
     m_selection.rotate(angle_z_rad * m_selection_edit.direction, TransformationType(TransformationType::World_Relative_Joint));
     m_dirty = true;
+    InvalidatePickingBuffer();
+    InvalidateSceneCache();
 }
 
 void GLCanvas3D::finish_selection_edit()
@@ -4720,7 +4945,7 @@ void GLCanvas3D::on_key(wxKeyEvent& evt)
                 if (evt.ShiftDown() && evt.ControlDown() && keyCode == WXK_SPACE) {
 #if !BBL_RELEASE_TO_PUBLIC
                     wxGetApp().plater()->toggle_render_statistic_dialog();
-                    m_dirty = true;
+                    _set_overlay_as_dirty();
 #endif
                 }
                 else if (keyCode == WXK_SHIFT) {
@@ -4867,6 +5092,8 @@ void GLCanvas3D::on_mouse_wheel(wxMouseEvent& evt)
                 volume->set_bounding_boxes_as_dirty();
             }
             GLVolume::explosion_ratio = m_explosion_ratio;
+            InvalidatePickingBuffer();
+            InvalidateSceneCache();
         }
         return;
     }
@@ -5049,6 +5276,8 @@ void GLCanvas3D::on_gesture(wxGestureEvent &evt)
         camera.auto_type(Camera::EType::Perspective);
     }
     m_dirty = true;
+    InvalidatePickingBuffer();
+    InvalidateSceneCache();
 }
 
 void GLCanvas3D::on_mouse(wxMouseEvent& evt)
@@ -5341,7 +5570,7 @@ void GLCanvas3D::on_mouse(wxMouseEvent& evt)
     else if (evt.Leaving()) {
         // to remove hover on objects when the mouse goes out of this canvas
         m_mouse.position = Vec2d(-1.0, -1.0);
-        m_dirty = true;
+        _set_overlay_as_dirty();
     }
     else if (evt.LeftDClick()) {
         // switch to object panel if double click on object, otherwise switch to global panel if double click on background
@@ -5458,8 +5687,14 @@ void GLCanvas3D::on_mouse(wxMouseEvent& evt)
                         BoundingBoxf3 volume_bbox = m_volumes.volumes[volume_idx]->transformed_bounding_box();
                         volume_bbox.offset(1.0);
                         const bool is_cut_connector_selected = m_selection.is_any_connector();
-                        const Vec3d scene_position = _mouse_to_3d(pos);
-                        if ((!any_gizmo_active || !evt.CmdDown()) && volume_bbox.contains(scene_position) && !is_cut_connector_selected) {
+                        // The volume check and the drag anchor come from the pick the hover uses.
+                        const PickingPassResult pick = QueryHybridPickingHit(pos.cast<double>(), wxGetApp().plater()->get_camera(),
+                                                                             get_raycaster_clipping_plane(), VOLUME_PICKING_TOLERANCE_RADIUS_PX);
+                        const bool hasMatchingVolumeHit = pick.hit.is_valid() && pick.hit.type == SceneRaycaster::EType::Volume &&
+                                                          pick.hit.raycaster_id == volume_idx;
+                        const Vec3d scene_position = pick.interactionPosition;
+                        if ((!any_gizmo_active || !evt.CmdDown()) && hasMatchingVolumeHit &&
+                            volume_bbox.contains(pick.hit.position.cast<double>()) && !is_cut_connector_selected) {
                             m_volumes.volumes[volume_idx]->hover = GLVolume::HS_None;
                             // The dragging operation is initiated.
                             m_mouse.drag.move_volume_idx = volume_idx;
@@ -5524,6 +5759,8 @@ void GLCanvas3D::on_mouse(wxMouseEvent& evt)
                 TransformationType trafo_type;
                 trafo_type.set_relative();
                 m_selection.translate(cur_pos - m_mouse.drag.start_position_3D, trafo_type);
+                InvalidatePickingBuffer();
+                InvalidateSceneCache();
                 // Ghost transforms refresh from _render_imex_ghosts via the live GLVolume
                 // lookup, so no explicit update call is needed here.
                 if (current_printer_technology() == ptFFF) {
@@ -5625,6 +5862,8 @@ void GLCanvas3D::on_mouse(wxMouseEvent& evt)
 
                 camera.auto_type(Camera::EType::Perspective);
                 m_dirty = true;
+                InvalidatePickingBuffer();
+                InvalidateSceneCache();
                 m_mouse.ignore_right_up = true;  // will be reset on button up event even if not right button is pressed
             }
 
@@ -5660,6 +5899,8 @@ void GLCanvas3D::on_mouse(wxMouseEvent& evt)
                         m_mouse.drag.start_position_2D.cast<double>());
                 pan_camera(camera, screen_delta, *m_mouse.drag.camera_pan_anchor);
                 m_dirty = true;
+                InvalidatePickingBuffer();
+                InvalidateSceneCache();
                 m_mouse.ignore_right_up = true;  // will be reset on button up event even if not right button is pressed
             }
 
@@ -5834,13 +6075,20 @@ void GLCanvas3D::on_mouse(wxMouseEvent& evt)
         }
     }
 
-    if (m_moving)
+    if (m_moving && m_mouse.dragging)
         show_sinking_contours();
 
 #ifdef __WXMSW__
 	if (on_enter_workaround)
 		m_mouse.position = Vec2d(-1., -1.);
 #endif /* __WXMSW__ */
+}
+
+void GLCanvas3D::OnMouseCaptureLost(wxMouseCaptureLostEvent& event)
+{
+    m_gizmos.OnMouseCaptureLost();
+    mouse_up_cleanup();
+    event.Skip();
 }
 
 void GLCanvas3D::on_paint(wxPaintEvent& evt)
@@ -5872,7 +6120,7 @@ void GLCanvas3D::on_set_focus(wxFocusEvent& evt)
     ImGui::GetIO().ImeWindowHandle = m_canvas->GetHandle();
 #endif
     m_tooltip_enabled = false;
-    _refresh_if_shown_on_screen();
+    _refresh_if_shown_on_screen(false);
     m_tooltip_enabled = true;
     m_is_touchpad_navigation = wxGetApp().app_config->get_bool("camera_navigation_style");
 }
@@ -6093,6 +6341,8 @@ void GLCanvas3D::do_move(const std::string& snapshot_type, bool force_volume_mov
     wxGetApp().plater()->get_partplate_list().invalidate_all_imex_ghosts();
 
     m_dirty = true;
+    InvalidatePickingBuffer();
+    InvalidateSceneCache();
 }
 
 void GLCanvas3D::do_rotate(const std::string& snapshot_type)
@@ -6201,6 +6451,8 @@ void GLCanvas3D::do_rotate(const std::string& snapshot_type)
     wxGetApp().plater()->get_partplate_list().invalidate_all_imex_ghosts();
 
     m_dirty = true;
+    InvalidatePickingBuffer();
+    InvalidateSceneCache();
 }
 
 void GLCanvas3D::do_scale(const std::string& snapshot_type)
@@ -6299,6 +6551,8 @@ void GLCanvas3D::do_scale(const std::string& snapshot_type)
     wxGetApp().plater()->get_partplate_list().invalidate_all_imex_ghosts();
 
     m_dirty = true;
+    InvalidatePickingBuffer();
+    InvalidateSceneCache();
 }
 
 void GLCanvas3D::do_center()
@@ -6307,6 +6561,9 @@ void GLCanvas3D::do_center()
         return;
 
     m_selection.center();
+    InvalidatePickingBuffer();
+    InvalidateSceneCache();
+    set_as_dirty();
 }
 
 void GLCanvas3D::do_drop()
@@ -6315,6 +6572,9 @@ void GLCanvas3D::do_drop()
         return;
 
     m_selection.drop();
+    InvalidatePickingBuffer();
+    InvalidateSceneCache();
+    set_as_dirty();
 }
 
 void GLCanvas3D::do_center_plate(const int plate_idx) {
@@ -6322,6 +6582,9 @@ void GLCanvas3D::do_center_plate(const int plate_idx) {
         return;
 
     m_selection.center_plate(plate_idx);
+    InvalidatePickingBuffer();
+    InvalidateSceneCache();
+    set_as_dirty();
 }
 
 void GLCanvas3D::do_mirror(const std::string& snapshot_type)
@@ -6408,6 +6671,8 @@ void GLCanvas3D::do_mirror(const std::string& snapshot_type)
     wxGetApp().plater()->get_partplate_list().invalidate_all_imex_ghosts();
 
     m_dirty = true;
+    InvalidatePickingBuffer();
+    InvalidateSceneCache();
 }
 
 void GLCanvas3D::update_gizmos_on_off_state()
@@ -6415,6 +6680,13 @@ void GLCanvas3D::update_gizmos_on_off_state()
     set_as_dirty();
     m_gizmos.update_data();
     m_gizmos.refresh_on_off_state();
+}
+
+void GLCanvas3D::UpdateGizmosForSelectionChange()
+{
+    m_gizmos.update_data();
+    m_gizmos.refresh_on_off_state();
+    m_dirty = true;
 }
 
 void GLCanvas3D::handle_sidebar_focus_event(const std::string& opt_key, bool focus_on)
@@ -7192,6 +7464,8 @@ void GLCanvas3D::_render_3d_navigator()
             }
         }
 
+        InvalidatePickingBuffer();
+        InvalidateSceneCache();
         request_extra_frame();
     }
 
@@ -8331,12 +8605,16 @@ void GLCanvas3D::_zoom_to_box(const BoundingBoxf3& box, double margin_factor)
 {
     wxGetApp().plater()->get_camera().zoom_to_box(box, margin_factor);
     m_dirty = true;
+    InvalidatePickingBuffer();
+    InvalidateSceneCache();
 }
 
 void GLCanvas3D::_update_camera_zoom(double zoom)
 {
     wxGetApp().plater()->get_camera().update_zoom(zoom);
     m_dirty = true;
+    InvalidatePickingBuffer();
+    InvalidateSceneCache();
 }
 
 void GLCanvas3D::_refresh_if_shown_on_screen(bool scene_dirty)
@@ -8351,8 +8629,476 @@ void GLCanvas3D::_refresh_if_shown_on_screen(bool scene_dirty)
     }
 }
 
-void GLCanvas3D::_picking_pass()
+void GLCanvas3D::InvalidatePickingBuffer()
 {
+    m_pickingBufferDirty = true;
+}
+
+void GLCanvas3D::InvalidateSceneCache()
+{
+    m_scene_cache.invalidate();
+}
+
+void GLCanvas3D::InvalidateSceneAndPickingCaches()
+{
+    InvalidateSceneCache();
+    InvalidatePickingBuffer();
+}
+
+bool GLCanvas3D::UpdateVolumeClippingState()
+{
+    const std::array<float, 2> previousZRange = m_volumes.get_z_range();
+    const std::array<double, 4> previousClippingPlane = m_volumes.get_clipping_plane();
+    m_camera_clipping_plane = _get_volumes_clipping_plane();
+
+    if (m_use_clipping_planes) {
+        m_volumes.set_z_range(-m_clipping_planes[0].get_data()[3], m_clipping_planes[1].get_data()[3]);
+    } else {
+        m_volumes.set_z_range(-FLT_MAX, FLT_MAX);
+    }
+
+    GLGizmoBase* currentGizmo = m_gizmos.get_current();
+    if (currentGizmo != nullptr && !currentGizmo->apply_clipping_plane()) {
+        m_volumes.set_clipping_plane(ClippingPlane::ClipsNothing().get_data());
+    } else {
+        m_volumes.set_clipping_plane(m_camera_clipping_plane.get_data());
+    }
+
+    const bool changed = previousZRange != m_volumes.get_z_range() || previousClippingPlane != m_volumes.get_clipping_plane();
+    if (changed)
+        InvalidatePickingBuffer();
+    return changed;
+}
+
+bool GLCanvas3D::RenderPickingBuffer(const Camera& camera)
+{
+    if (!OpenGLManager::are_framebuffers_supported() || m_volumes.volumes.size() > 0x1000000u) {
+        return false;
+    }
+
+    const std::array<int, 4>& viewport = camera.get_viewport();
+    if (viewport[2] <= 0 || viewport[3] <= 0 || !m_pickingBuffer.EnsureSize(viewport[2], viewport[3]) ||
+        !m_pickingBuffer.BeginRender()) {
+        return false;
+    }
+
+    GLint previousViewport[4];
+    GLfloat previousClearColor[4];
+    GLint previousDepthFunction = GL_LESS;
+    GLint previousCullFaceMode = GL_BACK;
+    GLint previousFrontFace = GL_CCW;
+    GLboolean previousDepthMask = GL_TRUE;
+    GLboolean previousColorMask[4];
+
+    const GLboolean blendEnabled = glIsEnabled(GL_BLEND);
+    const GLboolean multisampleEnabled = glIsEnabled(GL_MULTISAMPLE);
+    const GLboolean depthTestEnabled = glIsEnabled(GL_DEPTH_TEST);
+    const GLboolean cullFaceEnabled = glIsEnabled(GL_CULL_FACE);
+    const GLboolean scissorEnabled = glIsEnabled(GL_SCISSOR_TEST);
+    const GLboolean ditherEnabled = glIsEnabled(GL_DITHER);
+
+    glsafe(::glGetIntegerv(GL_VIEWPORT, previousViewport));
+    glsafe(::glGetFloatv(GL_COLOR_CLEAR_VALUE, previousClearColor));
+    glsafe(::glGetIntegerv(GL_DEPTH_FUNC, &previousDepthFunction));
+    glsafe(::glGetIntegerv(GL_CULL_FACE_MODE, &previousCullFaceMode));
+    glsafe(::glGetIntegerv(GL_FRONT_FACE, &previousFrontFace));
+    glsafe(::glGetBooleanv(GL_DEPTH_WRITEMASK, &previousDepthMask));
+    glsafe(::glGetBooleanv(GL_COLOR_WRITEMASK, previousColorMask));
+
+    Slic3r::ScopeGuard restoreState([this, previousViewport, previousClearColor, previousDepthFunction,
+                                     previousCullFaceMode, previousFrontFace, previousDepthMask, previousColorMask,
+                                     blendEnabled, multisampleEnabled, depthTestEnabled, cullFaceEnabled,
+                                     scissorEnabled, ditherEnabled]() {
+        RestoreCapability(GL_BLEND, blendEnabled);
+        RestoreCapability(GL_MULTISAMPLE, multisampleEnabled);
+        RestoreCapability(GL_DEPTH_TEST, depthTestEnabled);
+        RestoreCapability(GL_CULL_FACE, cullFaceEnabled);
+        RestoreCapability(GL_SCISSOR_TEST, scissorEnabled);
+        RestoreCapability(GL_DITHER, ditherEnabled);
+
+        glsafe(::glDepthMask(previousDepthMask));
+        glsafe(::glDepthFunc(previousDepthFunction));
+        glsafe(::glCullFace(previousCullFaceMode));
+        glsafe(::glFrontFace(previousFrontFace));
+        glsafe(::glColorMask(previousColorMask[0], previousColorMask[1], previousColorMask[2], previousColorMask[3]));
+        glsafe(::glClearColor(previousClearColor[0], previousClearColor[1], previousClearColor[2], previousClearColor[3]));
+        glsafe(::glViewport(previousViewport[0], previousViewport[1], previousViewport[2], previousViewport[3]));
+        m_pickingBuffer.EndRender();
+    });
+
+    glsafe(::glViewport(0, 0, viewport[2], viewport[3]));
+    glsafe(::glDisable(GL_BLEND));
+    glsafe(::glDisable(GL_MULTISAMPLE));
+    glsafe(::glDisable(GL_SCISSOR_TEST));
+    glsafe(::glDisable(GL_DITHER));
+    glsafe(::glEnable(GL_DEPTH_TEST));
+    glsafe(::glDepthMask(GL_TRUE));
+    glsafe(::glDepthFunc(GL_LESS));
+    glsafe(::glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE));
+    glsafe(::glClearColor(0.0f, 0.0f, 0.0f, 0.0f));
+    glsafe(::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+
+    if (!_render_volumes_for_picking(camera))
+        return false;
+
+    return true;
+}
+
+GLCanvas3D::VolumePickResult GLCanvas3D::QueryVolumeFromPickingBuffer(const Vec2d& screenPosition, const Camera& camera,
+                                                                      int toleranceRadiusPx)
+{
+    VolumePickResult result;
+
+#if !ENABLE_GPU_VOLUME_PICKING
+    (void)screenPosition;
+    (void)camera;
+    (void)toleranceRadiusPx;
+    return result;
+#else
+    const std::array<int, 4>& viewport = camera.get_viewport();
+    if (!std::isfinite(screenPosition.x()) || !std::isfinite(screenPosition.y())) {
+        result.status = EPickingQueryStatus::NoHit;
+        return result;
+    }
+
+    const int pixelX = static_cast<int>(std::floor(screenPosition.x()));
+    const int pixelYFromTop = static_cast<int>(std::floor(screenPosition.y()));
+    if (pixelX < 0 || pixelYFromTop < 0 || pixelX >= viewport[2] || pixelYFromTop >= viewport[3]) {
+        result.status = EPickingQueryStatus::NoHit;
+        return result;
+    }
+
+    // A stale buffer falls back to the CPU raycast.
+    if (!m_pickingBuffer.IsReady() || m_pickingBuffer.GetWidth() != viewport[2] || m_pickingBuffer.GetHeight() != viewport[3] ||
+        m_pickingBufferDirty || !m_pickingBufferView.isApprox(camera.get_view_matrix()) ||
+        !m_pickingBufferProjection.isApprox(camera.get_projection_matrix()))
+        return result;
+
+    const int readY = m_pickingBuffer.GetHeight() - 1 - pixelYFromTop;
+    const int radius = std::max(0, toleranceRadiusPx);
+    const int left = std::max(0, pixelX - radius);
+    const int right = std::min(m_pickingBuffer.GetWidth() - 1, pixelX + radius);
+    const int bottom = std::max(0, readY - radius);
+    const int top = std::min(m_pickingBuffer.GetHeight() - 1, readY + radius);
+    const int width = right - left + 1;
+    const int height = top - bottom + 1;
+
+    std::vector<GLPickingBuffer::ColorPixel> pixels;
+    if (!m_pickingBuffer.ReadColorRect(left, bottom, width, height, pixels))
+        return result;
+
+    const int centerLocalX = pixelX - left;
+    const int centerLocalY = readY - bottom;
+    const size_t centerIndex = static_cast<size_t>(centerLocalY) * static_cast<size_t>(width) + static_cast<size_t>(centerLocalX);
+    const GLPickingBuffer::ColorPixel& centerPixel = pixels[centerIndex];
+    std::optional<PickingPixelCandidate> candidate;
+    int nearestInvalidDistanceSquared = std::numeric_limits<int>::max();
+
+    if (!centerPixel.IsBackground()) {
+        if (!centerPixel.IsValid())
+            return result;
+
+        candidate = PickingPixelCandidate{centerPixel.DecodeId(), pixelX, readY, 0};
+    } else {
+        int preferredVolumeIndex = -1;
+        if (m_selection.is_single_volume() || m_selection.is_single_modifier()) {
+            const Selection::IndicesList& selectedIndices = m_selection.get_volume_idxs();
+            if (!selectedIndices.empty())
+                preferredVolumeIndex = static_cast<int>(*selectedIndices.begin());
+        }
+
+        const int radiusSquared = radius * radius;
+        for (int localY = 0; localY < height; ++localY) {
+            for (int localX = 0; localX < width; ++localX) {
+                const int candidateX = left + localX;
+                const int candidateY = bottom + localY;
+                const int dx = candidateX - pixelX;
+                const int dy = candidateY - readY;
+                const int distanceSquared = dx * dx + dy * dy;
+                if (distanceSquared == 0 || distanceSquared > radiusSquared)
+                    continue;
+
+                const size_t pixelIndex = static_cast<size_t>(localY) * static_cast<size_t>(width) + static_cast<size_t>(localX);
+                const GLPickingBuffer::ColorPixel& pixel = pixels[pixelIndex];
+                if (pixel.IsBackground())
+                    continue;
+
+                if (!pixel.IsValid()) {
+                    nearestInvalidDistanceSquared = std::min(nearestInvalidDistanceSquared, distanceSquared);
+                    continue;
+                }
+
+                const uint32_t volumeId = pixel.DecodeId();
+                if (volumeId >= m_volumes.volumes.size() || m_volumes.volumes[volumeId] == nullptr ||
+                    !ShouldRenderVolumeForPicking(*m_volumes.volumes[volumeId])) {
+                    nearestInvalidDistanceSquared = std::min(nearestInvalidDistanceSquared, distanceSquared);
+                    continue;
+                }
+
+                const bool isCloser = !candidate.has_value() || distanceSquared < candidate->distanceSquared;
+                const bool isPreferredTie = candidate.has_value() && distanceSquared == candidate->distanceSquared &&
+                                            static_cast<int>(volumeId) == preferredVolumeIndex &&
+                                            static_cast<int>(candidate->volumeId) != preferredVolumeIndex;
+                if (isCloser || isPreferredTie)
+                    candidate = PickingPixelCandidate{volumeId, candidateX, candidateY, distanceSquared};
+            }
+        }
+    }
+
+    if (!candidate.has_value()) {
+        if (nearestInvalidDistanceSquared == std::numeric_limits<int>::max())
+            result.status = EPickingQueryStatus::NoHit;
+        return result;
+    }
+
+    if (nearestInvalidDistanceSquared <= candidate->distanceSquared)
+        return result;
+
+    if (candidate->volumeId >= m_volumes.volumes.size())
+        return result;
+
+    GLVolume* volume = m_volumes.volumes[candidate->volumeId];
+    if (volume == nullptr || !ShouldRenderVolumeForPicking(*volume))
+        return result;
+
+    GLfloat depth = 1.0f;
+    if (!m_pickingBuffer.ReadDepthPoint(candidate->x, candidate->y, depth) || !std::isfinite(depth))
+        return result;
+
+    const Vec4i32 viewportData(camera.get_viewport().data());
+    Vec3d worldPosition;
+    igl::unproject(Vec3d(static_cast<double>(candidate->x) + 0.5, static_cast<double>(candidate->y) + 0.5,
+                         static_cast<double>(depth)),
+                   camera.get_view_matrix().matrix(), camera.get_projection_matrix().matrix(), viewportData, worldPosition);
+    if (!worldPosition.allFinite())
+        return result;
+
+    result.status = EPickingQueryStatus::Hit;
+    result.depth = depth;
+    result.samplePosition = Vec2d(static_cast<double>(candidate->x) + 0.5,
+                                  static_cast<double>(m_pickingBuffer.GetHeight() - 1 - candidate->y) + 0.5);
+    result.screenDistanceSquared = candidate->distanceSquared;
+    result.hit.type = SceneRaycaster::EType::Volume;
+    result.hit.raycaster_id = static_cast<int>(candidate->volumeId);
+    result.hit.position = worldPosition.cast<float>();
+    result.hit.normal = Vec3f::Zero();
+    return result;
+#endif
+}
+
+GLCanvas3D::PickingPassResult GLCanvas3D::QueryHybridPickingHit(const Vec2d& screenPosition, const Camera& camera,
+                                                                const ClippingPlane& clippingPlane,
+                                                                int volumeToleranceRadiusPx)
+{
+    if (!std::isfinite(screenPosition.x()) || !std::isfinite(screenPosition.y())) {
+        return {};
+    }
+
+    const Vec2d samplePosition(std::floor(screenPosition.x()) + 0.5, std::floor(screenPosition.y()) + 0.5);
+    const auto buildCenterResult = [this, &samplePosition](const SceneRaycaster::HitResult& hit) {
+        PickingPassResult result;
+        result.hit = hit;
+        result.interactionPosition = hit.is_valid() ? hit.position.cast<double>()
+                                                   : _mouse_to_bed_3d(samplePosition.cast<coord_t>());
+        return result;
+    };
+
+    const VolumePickResult volumeResult = QueryVolumeFromPickingBuffer(samplePosition, camera, volumeToleranceRadiusPx);
+    if (volumeResult.status == EPickingQueryStatus::Unavailable) {
+        return buildCenterResult(m_scene_raycaster.hit(samplePosition, camera, &clippingPlane, SceneRaycaster::EHitMask::All));
+    }
+
+    const SceneRaycaster::HitResult nonVolumeHit =
+        m_scene_raycaster.hit(samplePosition, camera, nullptr, SceneRaycaster::EHitMask::NonVolume);
+    if (volumeResult.status == EPickingQueryStatus::NoHit)
+        return buildCenterResult(nonVolumeHit);
+
+    SceneRaycaster::HitResult volumeHit = volumeResult.hit;
+    if (volumeResult.screenDistanceSquared > 0) {
+        const SceneRaycaster::HitResult candidateBedHit =
+            m_scene_raycaster.hit(volumeResult.samplePosition, camera, nullptr, SceneRaycaster::EHitMask::Bed);
+        const SceneRaycaster::HitResult visibleCandidate =
+            m_scene_raycaster.ResolveHitCandidates(candidateBedHit, volumeHit, camera);
+        if (visibleCandidate.type == SceneRaycaster::EType::Bed)
+            return buildCenterResult(nonVolumeHit);
+    }
+
+    ResolveSelectedVolumeOverlap(volumeResult.samplePosition, camera, clippingPlane, volumeHit);
+    if (volumeResult.screenDistanceSquared == 0)
+        return buildCenterResult(m_scene_raycaster.ResolveHitCandidates(nonVolumeHit, volumeHit, camera));
+
+    const bool exactGizmoHit =
+        nonVolumeHit.type == SceneRaycaster::EType::Gizmo || nonVolumeHit.type == SceneRaycaster::EType::FallbackGizmo;
+    if (exactGizmoHit)
+        return buildCenterResult(nonVolumeHit);
+
+    const bool exactBedIconHit = nonVolumeHit.type == SceneRaycaster::EType::Bed && nonVolumeHit.raycaster_id >= 0 &&
+                                 nonVolumeHit.raycaster_id % PartPlate::GRABBER_COUNT != 0;
+    if (exactBedIconHit)
+        return buildCenterResult(nonVolumeHit);
+
+    PickingPassResult result;
+    result.hit = volumeHit;
+    result.interactionPosition = ComputeVolumeDragAnchor(samplePosition, volumeHit.position.cast<double>(), camera);
+    return result;
+}
+
+Vec3d GLCanvas3D::ComputeVolumeDragAnchor(const Vec2d& screenPosition, const Vec3d& surfacePosition, const Camera& camera)
+{
+    const Linef3 ray = mouse_ray(screenPosition.cast<coord_t>());
+    Vec3d interactionPosition;
+    if (std::abs(camera.get_dir_forward().z()) < EPSILON) {
+        const Vec3d direction = ray.unit_vector();
+        const double directionSquaredNorm = direction.squaredNorm();
+        if (directionSquaredNorm <= 0.0)
+            return surfacePosition;
+
+        interactionPosition = ray.a + (surfacePosition - ray.a).dot(direction) / directionSquaredNorm * direction;
+    } else {
+        interactionPosition = ray.intersect_plane(surfacePosition.z());
+    }
+
+    return interactionPosition.allFinite() ? interactionPosition : surfacePosition;
+}
+
+bool GLCanvas3D::RaycastVolume(int volumeIndex, const Vec2d& screenPosition, const Camera& camera,
+                               const ClippingPlane* clippingPlane, SceneRaycaster::HitResult& hit) const
+{
+    hit = {};
+    if (volumeIndex < 0 || volumeIndex >= static_cast<int>(m_volumes.volumes.size())) {
+        return false;
+    }
+
+    const GLVolume* volume = m_volumes.volumes[volumeIndex];
+    if (volume == nullptr || !volume->is_active || volume->disabled || volume->mesh_raycaster == nullptr) {
+        return false;
+    }
+
+    Vec3f localPosition = Vec3f::Zero();
+    Vec3f localNormal = Vec3f::Zero();
+    const Transform3d worldMatrix = volume->world_matrix();
+    if (!volume->mesh_raycaster->closest_hit(screenPosition, worldMatrix, camera, localPosition, localNormal, clippingPlane)) {
+        return false;
+    }
+
+    const Vec3d transformedNormal = worldMatrix.matrix().block(0, 0, 3, 3).inverse().transpose() * localNormal.cast<double>();
+    if (transformedNormal.squaredNorm() == 0.0)
+        return false;
+
+    const Vec3f worldNormal = transformedNormal.normalized().cast<float>();
+    if (worldNormal.dot(camera.get_dir_forward().cast<float>()) >= 0.0f)
+        return false;
+
+    hit.type = SceneRaycaster::EType::Volume;
+    hit.raycaster_id = volumeIndex;
+    hit.position = (worldMatrix * localPosition.cast<double>()).cast<float>();
+    hit.normal = worldNormal;
+    return true;
+}
+
+void GLCanvas3D::ResolveSelectedVolumeOverlap(const Vec2d& screenPosition, const Camera& camera,
+                                              const ClippingPlane& clippingPlane, SceneRaycaster::HitResult& volumeHit) const
+{
+    if (!volumeHit.is_valid() || volumeHit.type != SceneRaycaster::EType::Volume || m_use_clipping_planes ||
+        (!m_selection.is_single_volume() && !m_selection.is_single_modifier())) {
+        return;
+    }
+
+    const GLVolume* selectedVolume = m_selection.get_first_volume();
+    const Selection::IndicesList& selectedIndices = m_selection.get_volume_idxs();
+    if (selectedVolume == nullptr || selectedIndices.empty() || selectedVolume->is_wipe_tower || selectedVolume->is_sla_pad() ||
+        selectedVolume->is_sla_support()) {
+        return;
+    }
+
+    const int selectedIndex = static_cast<int>(*selectedIndices.begin());
+    if (selectedIndex == volumeHit.raycaster_id)
+        return;
+
+    SceneRaycaster::HitResult selectedHit;
+    SceneRaycaster::HitResult gpuPickedCpuHit;
+    if (!RaycastVolume(selectedIndex, screenPosition, camera, &clippingPlane, selectedHit) ||
+        !RaycastVolume(volumeHit.raycaster_id, screenPosition, camera, &clippingPlane, gpuPickedCpuHit)) {
+        return;
+    }
+
+    if (selectedHit.position.isApprox(gpuPickedCpuHit.position))
+        volumeHit = selectedHit;
+}
+
+bool GLCanvas3D::ShouldRenderVolumeForPicking(const GLVolume& volume) const
+{
+    if (!volume.is_active || volume.disabled)
+        return false;
+
+    if (m_canvas_type == CanvasAssembleView)
+        return !volume.is_modifier && !volume.is_wipe_tower;
+
+    return m_render_sla_auxiliaries || volume.composite_id.volume_id >= 0;
+}
+
+void GLCanvas3D::ApplyPickingHit(const SceneRaycaster::HitResult& hit)
+{
+    if (!hit.is_valid()) {
+        wxGetApp().plater()->get_partplate_list().reset_hover_id();
+        m_gizmos.set_hover_id(-1);
+        return;
+    }
+
+    switch (hit.type)
+    {
+    case SceneRaycaster::EType::Volume:
+    {
+        if (hit.raycaster_id < 0 || hit.raycaster_id >= static_cast<int>(m_volumes.volumes.size())) {
+            assert(false);
+            break;
+        }
+
+        const GLVolume* volume = m_volumes.volumes[hit.raycaster_id];
+        if (volume != nullptr && ShouldRenderVolumeForPicking(*volume)) {
+            // do not add the volume id if CTRL is pressed while a gizmo that does not allow Ctrl+click selection is active
+            const bool allowVolumeHover = m_gizmos.is_allow_multi_select_parts_or_objects() || !wxGetKeyState(WXK_CONTROL);
+            if (allowVolumeHover)
+                m_hover_volume_idxs.emplace_back(hit.raycaster_id);
+
+            m_gizmos.set_hover_id(-1);
+        }
+        break;
+    }
+
+    case SceneRaycaster::EType::Gizmo:
+    case SceneRaycaster::EType::FallbackGizmo:
+    {
+        const Size& canvasSize = get_canvas_size();
+        const bool inside = m_mouse.position.x() >= 0.0 && m_mouse.position.y() >= 0.0 &&
+                            m_mouse.position.x() < canvasSize.get_width() && m_mouse.position.y() < canvasSize.get_height();
+        m_gizmos.set_hover_id(inside ? hit.raycaster_id : -1);
+        break;
+    }
+
+    case SceneRaycaster::EType::Bed:
+    {
+        const int plateHoverId = hit.raycaster_id;
+        const int maxPlateHoverId = PartPlateList::MAX_PLATES_COUNT * PartPlate::GRABBER_COUNT;
+        if (plateHoverId >= 0 && plateHoverId < maxPlateHoverId) {
+            wxGetApp().plater()->get_partplate_list().set_hover_id(plateHoverId);
+            m_hover_plate_idxs.emplace_back(plateHoverId);
+        } else {
+            wxGetApp().plater()->get_partplate_list().reset_hover_id();
+        }
+        m_gizmos.set_hover_id(-1);
+        break;
+    }
+
+    default:
+        assert(false);
+        break;
+    }
+}
+
+std::optional<GLCanvas3D::PickingPassResult> GLCanvas3D::_picking_pass(bool& sinkingContourSceneChanged)
+{
+    sinkingContourSceneChanged = false;
     if (!m_picking_enabled || m_mouse.dragging || m_mouse.position == Vec2d(DBL_MAX, DBL_MAX) || m_gizmos.is_dragging()) {
 #if ENABLE_RAYCAST_PICKING_DEBUG
         ImGuiWrapper& imgui = *wxGetApp().imgui();
@@ -8360,7 +9106,7 @@ void GLCanvas3D::_picking_pass()
         imgui.text("Picking disabled");
         imgui.end();
 #endif // ENABLE_RAYCAST_PICKING_DEBUG
-        return;
+        return std::nullopt;
     }
 
     m_hover_volume_idxs.clear();
@@ -8368,59 +9114,12 @@ void GLCanvas3D::_picking_pass()
 
     // Orca: Picking and camera navigation must interpret the active gizmo clipping plane identically.
     const ClippingPlane clipping_plane = get_raycaster_clipping_plane();
-    const SceneRaycaster::HitResult hit = m_scene_raycaster.hit(m_mouse.position, wxGetApp().plater()->get_camera(), &clipping_plane);
-    if (hit.is_valid()) {
-        switch (hit.type)
-        {
-        case SceneRaycaster::EType::Volume:
-        {
-            if (0 <= hit.raycaster_id && hit.raycaster_id < (int)m_volumes.volumes.size()) {
-                const GLVolume* volume = m_volumes.volumes[hit.raycaster_id];
-                if (volume->is_active && !volume->disabled && (volume->composite_id.volume_id >= 0 || m_render_sla_auxiliaries)) {
-                    // do not add the volume id if CTRL is pressed while a gizmo that does not allow Ctrl+click selection is active
-                    if (m_gizmos.is_allow_multi_select_parts_or_objects() || !wxGetKeyState(WXK_CONTROL))
-                        m_hover_volume_idxs.emplace_back(hit.raycaster_id);
-                    m_gizmos.set_hover_id(-1);
-                }
-            }
-            else
-                assert(false);
+    const PickingPassResult result = QueryHybridPickingHit(m_mouse.position, wxGetApp().plater()->get_camera(), clipping_plane,
+                                                            VOLUME_PICKING_TOLERANCE_RADIUS_PX);
+    const SceneRaycaster::HitResult& hit = result.hit;
+    ApplyPickingHit(hit);
 
-            break;
-        }
-        case SceneRaycaster::EType::Gizmo:
-        case SceneRaycaster::EType::FallbackGizmo:
-        {
-            const Size& cnv_size = get_canvas_size();
-            const bool inside = 0 <= m_mouse.position.x() && m_mouse.position.x() < cnv_size.get_width() &&
-                0 <= m_mouse.position.y() && m_mouse.position.y() < cnv_size.get_height();
-            m_gizmos.set_hover_id(inside ? hit.raycaster_id : -1);
-            break;
-        }
-        case SceneRaycaster::EType::Bed:
-        {
-            // BBS: add plate picking logic
-            int plate_hover_id = hit.raycaster_id;
-            if (plate_hover_id >= 0 && plate_hover_id < PartPlateList::MAX_PLATES_COUNT * PartPlate::GRABBER_COUNT) {
-                wxGetApp().plater()->get_partplate_list().set_hover_id(plate_hover_id);
-                m_hover_plate_idxs.emplace_back(plate_hover_id);
-            } else {
-                wxGetApp().plater()->get_partplate_list().reset_hover_id();
-            }
-            m_gizmos.set_hover_id(-1);
-            break;
-        }
-        default:
-        {
-            assert(false);
-            break;
-        }
-        }
-    }
-    else
-        m_gizmos.set_hover_id(-1);
-
-    _update_volumes_hover_state();
+    sinkingContourSceneChanged = _update_volumes_hover_state();
 
     // IMEX ghost picking runs unconditionally after the normal pass: ghosts visually
     // occlude the main volumes, so their tooltip/click handling must fire even when a
@@ -8525,6 +9224,8 @@ void GLCanvas3D::_picking_pass()
 
     imgui.end();
 #endif // ENABLE_RAYCAST_PICKING_DEBUG
+
+    return result;
 }
 
 void GLCanvas3D::_picking_pass_imex_ghosts()
@@ -8701,11 +9402,58 @@ void GLCanvas3D::_render_imex_ghost_tooltip()
     imgui.end();
 }
 
-void GLCanvas3D::_rectangular_selection_picking_pass()
+bool GLCanvas3D::_rectangular_selection_picking_pass()
 {
     m_gizmos.set_hover_id(-1);
 
     std::set<int> idxs;
+
+    if (m_picking_enabled) {
+        const Camera& camera = wxGetApp().plater()->get_camera();
+        const std::array<int, 4>& viewport = camera.get_viewport();
+        if (m_pickingBuffer.IsReady() && m_pickingBuffer.GetWidth() == viewport[2] &&
+            m_pickingBuffer.GetHeight() == viewport[3]) {
+            const int bufferWidth = m_pickingBuffer.GetWidth();
+            const int bufferHeight = m_pickingBuffer.GetHeight();
+            const int left = std::max(0, static_cast<int>(std::floor(m_rectangle_selection.get_left())));
+            const int right = std::min(bufferWidth, static_cast<int>(std::ceil(m_rectangle_selection.get_right())));
+            const int bottom = std::max(0, bufferHeight - static_cast<int>(std::ceil(m_rectangle_selection.get_top())));
+            const int top = std::min(bufferHeight, bufferHeight - static_cast<int>(std::floor(m_rectangle_selection.get_bottom())));
+            const int width = right - left;
+            const int height = top - bottom;
+
+            if (width <= 0 || height <= 0) {
+                m_hover_volume_idxs.clear();
+                return _update_volumes_hover_state();
+            }
+
+            std::vector<GLPickingBuffer::ColorPixel> pixels;
+            if (m_pickingBuffer.ReadColorRect(left, bottom, width, height, pixels)) {
+                tbb::spin_mutex mutex;
+                tbb::parallel_for(tbb::blocked_range<size_t>(0, pixels.size(), static_cast<size_t>(width)),
+                                  [this, &pixels, &idxs, &mutex](const tbb::blocked_range<size_t>& range) {
+                    std::set<int> localIds;
+                    for (size_t index = range.begin(); index < range.end(); ++index) {
+                        const GLPickingBuffer::ColorPixel& pixel = pixels[index];
+                        if (!pixel.IsValid())
+                            continue;
+
+                        const uint32_t id = pixel.DecodeId();
+                        if (id < m_volumes.volumes.size())
+                            localIds.insert(static_cast<int>(id));
+                    }
+
+                    if (!localIds.empty()) {
+                        tbb::spin_mutex::scoped_lock lock(mutex);
+                        idxs.insert(localIds.begin(), localIds.end());
+                    }
+                });
+
+                m_hover_volume_idxs.assign(idxs.begin(), idxs.end());
+                return _update_volumes_hover_state();
+            }
+        }
+    }
 
     if (m_picking_enabled) {
         const size_t width  = std::max<size_t>(m_rectangle_selection.get_width(), 1);
@@ -8876,7 +9624,7 @@ void GLCanvas3D::_rectangular_selection_picking_pass()
     }
 
     m_hover_volume_idxs.assign(idxs.begin(), idxs.end());
-    _update_volumes_hover_state();
+    return _update_volumes_hover_state();
 }
 
 bool GLCanvas3D::_is_fxaa_enabled() const
@@ -9984,7 +10732,7 @@ void GLCanvas3D::_render_objects(GLVolumeCollection::ERenderType type, bool with
 
     glsafe(::glEnable(GL_DEPTH_TEST));
 
-    m_camera_clipping_plane = _get_volumes_clipping_plane();
+    UpdateVolumeClippingState();
 
     if (m_picking_enabled)
         // Update the layer editing selection to the first object selected, update the current object maximum Z.
@@ -10020,17 +10768,6 @@ void GLCanvas3D::_render_objects(GLVolumeCollection::ERenderType type, bool with
         }
     }
 
-    const std::array<float, 2> z_range = volumes_z_range(*this);
-    m_volumes.set_z_range(z_range[0], z_range[1]);
-
-    GLGizmosManager& gm = get_gizmos_manager();
-    GLGizmoBase* current_gizmo = gm.get_current();
-    if (current_gizmo && !current_gizmo->apply_clipping_plane()) {
-        m_volumes.set_clipping_plane(ClippingPlane::ClipsNothing().get_data());
-    }
-    else {
-        m_volumes.set_clipping_plane(m_camera_clipping_plane.get_data());
-    }
     if (m_canvas_type == CanvasAssembleView || !m_sinking_contours_enabled)
         m_volumes.set_show_sinking_contours(false);
     else
@@ -10124,9 +10861,9 @@ void GLCanvas3D::_render_objects(GLVolumeCollection::ERenderType type, bool with
                             shader->set_uniform("show_wireframe", false);
                     }*/
                     //BBS:add assemble view related logic
-                    // do not cull backfaces to show broken geometry, if any
+                    // Cull back faces while rendering Volumes to reduce fragment processing.
                 const Camera& camera = wxGetApp().plater()->get_camera();
-                    m_volumes.render(type, m_picking_enabled, camera, cvn_size, [this, canvas_type](const GLVolume& volume) {
+                    m_volumes.render(type, false, camera, cvn_size, [this, canvas_type](const GLVolume& volume) {
                         if (canvas_type == ECanvasType::CanvasAssembleView) {
                             return !volume.is_modifier && !volume.is_wipe_tower;
                         }
@@ -10709,41 +11446,65 @@ void GLCanvas3D::_render_style_editor()
     ImGui::End();
 }
 
-void GLCanvas3D::_render_volumes_for_picking(const Camera& camera) const
+bool GLCanvas3D::_render_volumes_for_picking(const Camera& camera) const
 {
     GLShaderProgram* shader = wxGetApp().get_shader("flat_clip");
     if (shader == nullptr)
-        return;
+        return false;
 
-    // do not cull backfaces to show broken geometry, if any
-    glsafe(::glDisable(GL_CULL_FACE));
+    // Cull back faces to reduce the Picking FBO geometry workload.
+    const GLboolean cullFaceEnabled = glIsEnabled(GL_CULL_FACE);
+    Slic3r::ScopeGuard restoreCullFace([cullFaceEnabled]()
+    {
+        RestoreCapability(GL_CULL_FACE, cullFaceEnabled);
+    });
+    glsafe(::glEnable(GL_CULL_FACE));
 
     const Transform3d& view_matrix = camera.get_view_matrix();
-    for (size_t type = 0; type < 2; ++ type) {
-        GLVolumeWithIdAndZList to_render = volumes_to_render(m_volumes.volumes, (type == 0) ? GLVolumeCollection::ERenderType::Opaque : GLVolumeCollection::ERenderType::Transparent, view_matrix);
-        for (const GLVolumeWithIdAndZ& volume : to_render)
-	        if (!volume.first->disabled && (volume.first->composite_id.volume_id >= 0 || m_render_sla_auxiliaries)) {
-		        // Object picking mode. Render the object with a color encoding the object index.
-                // we reserve color = (0,0,0) for occluders (as the printbed)
-                // so we shift volumes' id by 1 to get the proper color
-                //BBS: remove the bed picking logic
-                const unsigned int id = volume.second.first;
-                //const unsigned int id = 1 + volume.second.first;
-                volume.first->model.set_color(picking_decode(id));
-                shader->start_using();
-                shader->set_uniform("view_model_matrix", view_matrix * volume.first->world_matrix());
-                shader->set_uniform("projection_matrix", camera.get_projection_matrix());
-                shader->set_uniform("volume_world_matrix", volume.first->world_matrix());
-                shader->set_uniform("z_range", m_volumes.get_z_range());
-                shader->set_uniform("clipping_plane", m_volumes.get_clipping_plane());
-                volume.first->picking = true;
-                volume.first->render();
-                volume.first->picking = false;
-                shader->stop_using();
-	        }
-	}
+    shader->start_using();
+    Slic3r::ScopeGuard stopShader([shader]() { shader->stop_using(); });
+    shader->set_uniform("projection_matrix", camera.get_projection_matrix());
+    shader->set_uniform("z_range", m_volumes.get_z_range());
+    shader->set_uniform("clipping_plane", m_volumes.get_clipping_plane());
 
-    glsafe(::glEnable(GL_CULL_FACE));
+    // Keep equal-depth picking deterministic and independent of the current selection.
+    for (size_t volumeIndex = 0; volumeIndex < m_volumes.volumes.size(); ++volumeIndex)
+    {
+        GLVolume* volume = m_volumes.volumes[volumeIndex];
+        if (volume == nullptr || !ShouldRenderVolumeForPicking(*volume))
+            continue;
+
+        const ColorRGBA previousColor = volume->model.get_color();
+        const bool previousPicking = volume->picking;
+        GLWipeTowerVolume* wipeTower = dynamic_cast<GLWipeTowerVolume*>(volume);
+        std::vector<ColorRGBA> previousWipeTowerColors;
+        if (wipeTower != nullptr)
+        {
+            previousWipeTowerColors.reserve(wipeTower->model_per_colors.size());
+            for (const GLModel& model : wipeTower->model_per_colors)
+                previousWipeTowerColors.emplace_back(model.get_color());
+        }
+
+        Slic3r::ScopeGuard restoreVolumeState([volume, previousColor, previousPicking, wipeTower, previousWipeTowerColors]()
+        {
+            volume->model.set_color(previousColor);
+            volume->picking = previousPicking;
+            if (wipeTower != nullptr)
+            {
+                for (size_t index = 0; index < wipeTower->model_per_colors.size() && index < previousWipeTowerColors.size(); ++index)
+                    wipeTower->model_per_colors[index].set_color(previousWipeTowerColors[index]);
+            }
+        });
+
+        const unsigned int id = static_cast<unsigned int>(volumeIndex);
+        volume->model.set_color(picking_decode(id));
+        shader->set_uniform("view_model_matrix", view_matrix * volume->world_matrix());
+        shader->set_uniform("volume_world_matrix", volume->world_matrix());
+        volume->picking = true;
+        volume->render();
+    }
+
+    return true;
 }
 
 void GLCanvas3D::_render_current_gizmo() const
@@ -12168,6 +12929,8 @@ void GLCanvas3D::_render_assemble_control()
             volume->set_bounding_boxes_as_dirty();
         }
         GLVolume::explosion_ratio = m_explosion_ratio;
+        InvalidatePickingBuffer();
+        InvalidateSceneCache();
     }
 }
 void GLCanvas3D::_render_assemble_info() const
@@ -12403,14 +13166,41 @@ void GLCanvas3D::_render_sla_slices()
     }
 }
 
-void GLCanvas3D::_update_volumes_hover_state()
+bool GLCanvas3D::_update_volumes_hover_state()
 {
-    for (GLVolume* v : m_volumes.volumes) {
-        v->hover = GLVolume::HS_None;
+    std::vector<int> oldSensitiveHover;
+    std::vector<int> newSensitiveHover;
+    oldSensitiveHover.reserve(4);
+    newSensitiveHover.reserve(4);
+
+    for (size_t index = 0; index < m_volumes.volumes.size(); ++index) {
+        GLVolume* volume = m_volumes.volumes[index];
+        if (volume == nullptr)
+            continue;
+        if (volume->hover != GLVolume::HS_None && HoverAffectsSinkingContour(m_volumes, *volume))
+            oldSensitiveHover.push_back(static_cast<int>(index));
+        volume->hover = GLVolume::HS_None;
     }
 
+    const auto finalize = [&oldSensitiveHover, &newSensitiveHover]() {
+        std::sort(newSensitiveHover.begin(), newSensitiveHover.end());
+        newSensitiveHover.erase(std::unique(newSensitiveHover.begin(), newSensitiveHover.end()), newSensitiveHover.end());
+        return oldSensitiveHover != newSensitiveHover;
+    };
+
+    const auto setHover = [this, &newSensitiveHover](int index, GLVolume::EHoverState state) {
+        if (index < 0 || index >= static_cast<int>(m_volumes.volumes.size()))
+            return;
+        GLVolume* volume = m_volumes.volumes[static_cast<size_t>(index)];
+        if (volume == nullptr)
+            return;
+        volume->hover = state;
+        if (state != GLVolume::HS_None && HoverAffectsSinkingContour(m_volumes, *volume))
+            newSensitiveHover.push_back(index);
+    };
+
     if (m_hover_volume_idxs.empty())
-        return;
+        return finalize();
 
     bool ctrl_pressed = wxGetKeyState(WXK_CONTROL); // additive select/deselect
     bool shift_pressed = wxGetKeyState(WXK_SHIFT);  // select by rectangle
@@ -12419,7 +13209,7 @@ void GLCanvas3D::_update_volumes_hover_state()
     if (alt_pressed && (shift_pressed || ctrl_pressed)) {
         // illegal combinations of keys
         m_hover_volume_idxs.clear();
-        return;
+        return finalize();
     }
 
     bool selection_modifiers_only = m_selection.is_empty() || m_selection.is_any_modifier();
@@ -12443,7 +13233,7 @@ void GLCanvas3D::_update_volumes_hover_state()
     if (hover_modifiers_only && !hover_from_single_instance) {
         // do not allow to select volumes from different instances
         m_hover_volume_idxs.clear();
-        return;
+        return finalize();
     }
 
     for (int i : m_hover_volume_idxs) {
@@ -12464,20 +13254,24 @@ void GLCanvas3D::_update_volumes_hover_state()
                 );
 
             if (as_volume)
-                volume.hover = deselect ? GLVolume::HS_Deselect : GLVolume::HS_Select;
+                setHover(i, deselect ? GLVolume::HS_Deselect : GLVolume::HS_Select);
             else {
                 int object_idx = volume.object_idx();
                 int instance_idx = volume.instance_idx();
 
-                for (GLVolume* v : m_volumes.volumes) {
-                    if (v->object_idx() == object_idx && v->instance_idx() == instance_idx)
-                        v->hover = deselect ? GLVolume::HS_Deselect : GLVolume::HS_Select;
+                for (size_t index = 0; index < m_volumes.volumes.size(); ++index) {
+                    GLVolume* sameInstanceVolume = m_volumes.volumes[index];
+                    if (sameInstanceVolume != nullptr && sameInstanceVolume->object_idx() == object_idx &&
+                        sameInstanceVolume->instance_idx() == instance_idx) {
+                        setHover(static_cast<int>(index), deselect ? GLVolume::HS_Deselect : GLVolume::HS_Select);
+                    }
                 }
             }
         }
         else if (volume.selected)
-            volume.hover = GLVolume::HS_Hover;
+            setHover(i, GLVolume::HS_Hover);
     }
+    return finalize();
 }
 
 void GLCanvas3D::_perform_layer_editing_action(wxMouseEvent* evt)
@@ -12508,17 +13302,34 @@ Vec3d GLCanvas3D::_mouse_to_3d(const Point& mouse_pos, float* z)
     if (m_canvas == nullptr)
         return Vec3d(DBL_MAX, DBL_MAX, DBL_MAX);
 
-    if (z == nullptr) {
-        const SceneRaycaster::HitResult hit = m_scene_raycaster.hit(mouse_pos.cast<double>(), wxGetApp().plater()->get_camera(), nullptr);
-        return hit.is_valid() ? hit.position.cast<double>() : _mouse_to_bed_3d(mouse_pos);
-    }
-    else {
+    if (z != nullptr) {
         const Camera& camera = wxGetApp().plater()->get_camera();
         const Vec4i32 viewport(camera.get_viewport().data());
         Vec3d out;
         igl::unproject(Vec3d(mouse_pos.x(), viewport[3] - mouse_pos.y(), *z), camera.get_view_matrix().matrix(), camera.get_projection_matrix().matrix(), viewport, out);
         return out;
     }
+
+    const Camera& camera = wxGetApp().plater()->get_camera();
+    const int draggedVolumeIndex = m_mouse.drag.move_volume_idx;
+    if (m_mouse.dragging && draggedVolumeIndex != -1) {
+        SceneRaycaster::HitResult draggedVolumeHit;
+        if (RaycastVolume(draggedVolumeIndex, mouse_pos.cast<double>(), camera, nullptr, draggedVolumeHit)) {
+            return draggedVolumeHit.position.cast<double>();
+        }
+
+        return _mouse_to_bed_3d(mouse_pos);
+    }
+
+    if (m_gizmos.is_dragging() || m_mouse.dragging) {
+        const SceneRaycaster::HitResult dragHit =
+            m_scene_raycaster.hit(mouse_pos.cast<double>(), camera, nullptr, SceneRaycaster::EHitMask::All);
+        return dragHit.is_valid() ? dragHit.position.cast<double>() : _mouse_to_bed_3d(mouse_pos);
+    }
+
+    const ClippingPlane clippingPlane = get_raycaster_clipping_plane();
+    const PickingPassResult result = QueryHybridPickingHit(mouse_pos.cast<double>(), camera, clippingPlane, 0);
+    return result.hit.is_valid() ? result.hit.position.cast<double>() : _mouse_to_bed_3d(mouse_pos);
 }
 
 Vec3d GLCanvas3D::_mouse_to_bed_3d(const Point& mouse_pos)
@@ -13232,8 +14043,10 @@ void GLCanvas3D::_update_selection_from_hover()
     bool ctrl_pressed = wxGetKeyState(WXK_CONTROL);
 
     if (m_hover_volume_idxs.empty()) {
-        if (!ctrl_pressed && (m_rectangle_selection.get_state() == GLSelectionRectangle::Select))
+        if (!ctrl_pressed && m_rectangle_selection.get_state() == GLSelectionRectangle::Select && !m_selection.is_empty()) {
             m_selection.remove_all();
+            m_dirty = true;
+        }
 
         return;
     }

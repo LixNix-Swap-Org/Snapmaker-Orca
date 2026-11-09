@@ -4,7 +4,7 @@
 #include "I18N.hpp"
 #include "slic3r/GUI/GUI_App.hpp"
 #include "slic3r/GUI/MainFrame.hpp"
-#include "sentry_wrapper/SentryWrapper.hpp"
+#include "app_common/SentryWrapper.hpp"
 #include "SSWCP.hpp"
 
 #include <boost/filesystem/path.hpp>

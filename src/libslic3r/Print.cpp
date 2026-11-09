@@ -751,7 +751,10 @@ bool Print::invalidate_state_by_config_options(const ConfigOptionResolver & /* n
         "enable_overhang_bridge_fan",
         "overhang_fan_speed",
         "overhang_fan_threshold",
+        "overhang_threshold_participating_cooling",
         "slow_down_for_layer_cooling",
+        "cooling_slowdown_logic",
+        "cooling_perimeter_transition_distance",
         "default_acceleration",
         "deretraction_speed",
         "close_fan_the_first_x_layers",
@@ -798,6 +801,7 @@ bool Print::invalidate_state_by_config_options(const ConfigOptionResolver & /* n
         "top_surface_acceleration",
         "bridge_acceleration",
         "travel_acceleration",
+        "travel_short_distance_acceleration",
         "sparse_infill_acceleration",
         "internal_solid_infill_acceleration",
         // BBS
@@ -6653,6 +6657,8 @@ bool Print::enable_timelapse_print() const
 void Print::_make_wipe_tower()
 {
     m_wipe_tower_data.clear();
+    // Without tool changes no tower is generated; the conflict check must not see a stale one.
+    m_fake_wipe_tower = FakeWipeTower();
 
     // BBS
     const unsigned int number_of_extruders = (unsigned int)(m_config.filament_colour.values.size());

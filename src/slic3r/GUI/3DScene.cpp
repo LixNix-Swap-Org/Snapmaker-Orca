@@ -802,6 +802,9 @@ void GLVolume::simple_render(GLShaderProgram*        shader,
             else
                 m.render(this->tverts_range, shader);
         }
+    } else if (picking && color_volume) {
+        // Painted volume: the main pass never uploads the full mesh, so reuse its segment models.
+        RenderMmuSegmentsForPicking();
     } else {
         if (tverts_range == std::make_pair<size_t, size_t>(0, -1))
             // Snapmaker Orca: the one draw of the render LOD. The reduced model only under the
@@ -847,6 +850,25 @@ const GUI::GLModel& GLVolume::shadow_model() const
         if (const GUI::GLModel* reduced = m_lod->model(m_lod_level); reduced != nullptr)
             return *reduced;
     return model;
+}
+
+void GLVolume::RenderMmuSegmentsForPicking()
+{
+    const ColorRGBA pickingColor = model.get_color();
+    const bool fullRange = tverts_range == std::make_pair<size_t, size_t>(0, -1);
+    for (GUI::GLModel& segmentModel : mmuseg_models)
+    {
+        if (!segmentModel.is_initialized())
+            continue;
+
+        const ColorRGBA previousColor = segmentModel.get_color();
+        segmentModel.set_color(pickingColor);
+        if (fullRange)
+            segmentModel.render();
+        else
+            segmentModel.render(tverts_range);
+        segmentModel.set_color(previousColor);
+    }
 }
 
 bool GLVolume::is_sla_support() const { return this->composite_id.volume_id == -int(slaposSupportTree); }
@@ -1281,6 +1303,8 @@ void GLVolumeCollection::render(GLVolumeCollection::ERenderType       type,
     glsafe(::glCullFace(GL_BACK));
     if (disable_cullface)
         glsafe(::glDisable(GL_CULL_FACE));
+    else
+        glsafe(::glEnable(GL_CULL_FACE));
 
     const float support_normal_z = get_selection_support_normal_z();
 

@@ -178,6 +178,8 @@ enum class NotificationType
 	BBLUserPresetExceedLimit,
     // Snapmaker: a mixed (virtual) filament references components that cannot be combined.
     FilamentIncompatibleMixed,
+    // Nozzle hardness (HRC) too low for the loaded filament, no fade-out
+    NozzleHrcWarning,
     BBLFilamentPrintableError,
     BBLSliceLimitError,
     BBLSliceMultiExtruderHeightOutside,

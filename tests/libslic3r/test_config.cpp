@@ -1751,6 +1751,16 @@ TEST_CASE("handle_legacy maps the boolean arc fitting values to modes", "[Config
     CHECK(config.opt_enum<ArcFittingMode>("enable_arc_fitting") == mode);
 }
 
+TEST_CASE("A participating cooling threshold written as its label 100% loads as the bridge value", "[Config]") {
+    ConfigSubstitutionContext ctxt(ForwardCompatibilitySubstitutionRule::Disable);
+    DynamicPrintConfig config;
+    config.set_deserialize("overhang_threshold_participating_cooling", "100%,95%,25%", ctxt);
+    CHECK(config.option<ConfigOptionEnumsGeneric>("overhang_threshold_participating_cooling")->values ==
+          std::vector<int>{int(Overhang_threshold_participating_cooling_bridge), int(Overhang_threshold_participating_cooling_bridge),
+                           int(Overhang_threshold_participating_cooling_2_4)});
+    CHECK(config.opt_serialize("overhang_threshold_participating_cooling") == "95%,95%,25%");
+}
+
 TEST_CASE("handle_legacy migrates the adaptive TPMS keys", "[Config]") {
     ConfigSubstitutionContext ctxt(ForwardCompatibilitySubstitutionRule::Enable);
     DynamicPrintConfig config;

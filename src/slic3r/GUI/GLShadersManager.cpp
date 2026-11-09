@@ -15,6 +15,7 @@
 #include <utility>
 using namespace std::literals;
 
+#include <boost/log/trivial.hpp>
 #include <glad/gl.h>
 
 namespace Slic3r {
@@ -33,6 +34,16 @@ std::pair<bool, std::string> GLShadersManager::init()
             return false;
         }
         return true;
+    };
+
+    auto appendOptionalShader = [&append_shader, &error](const std::string& name,
+                                                          const GLShaderProgram::ShaderFilenames& filenames) {
+        const size_t errorLength = error.size();
+        if (append_shader(name, filenames))
+            return;
+
+        error.erase(errorLength);
+        BOOST_LOG_TRIVIAL(warning) << "Selection highlight shader unavailable: " << name;
     };
 
     assert(m_shaders.empty());
@@ -70,6 +81,17 @@ std::pair<bool, std::string> GLShadersManager::init()
 #endif // SLIC3R_OPENGL_ES
     // used to render bed axes and model, selection hints, gcode sequential view marker model, preview shells, options in gcode preview
     valid &= append_shader("gouraud_light", { prefix + "gouraud_light.vs", prefix + "gouraud_light.fs" });
+    // used to bake and composite PCSS soft shadows on the build plate (sampler objects need GL 3.3)
+    if (GUI::wxGetApp().is_gl_version_greater_or_equal_to(3, 3))
+    {
+        appendOptionalShader("shadow_ground_mask", { prefix + "shadow_ground_mask.vs", prefix + "shadow_ground_mask.fs" });
+        appendOptionalShader("shadow_receiver", { prefix + "shadow_receiver.vs", prefix + "shadow_receiver.fs" });
+        appendOptionalShader("shadow_mask_blur", { prefix + "background.vs", prefix + "shadow_mask_blur.fs" });
+        appendOptionalShader("shadow_depth_min", { prefix + "background.vs", prefix + "shadow_depth_min.fs" });
+        // screen-space pass that darkens object pixels lying in the shadow
+        appendOptionalShader("shadow_screen", { prefix + "background.vs", prefix + "shadow_screen.fs" });
+        appendOptionalShader("shadow_screen_composite", { prefix + "background.vs", prefix + "shadow_screen_composite.fs" });
+    }
     //used to render thumbnail
     valid &= append_shader("thumbnail", { prefix + "thumbnail.vs", prefix + "thumbnail.fs"});
     // used to render printbed

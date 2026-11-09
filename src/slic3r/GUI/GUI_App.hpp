@@ -35,7 +35,6 @@
 #include "slic3r/GUI/HttpServer.hpp"
 #include "../Utils/PrintHost.hpp"
 #include "slic3r/GUI/SSWCP.hpp"
-#include "slic3r/Utils/Bonjour.hpp"
 #include "slic3r/GUI/PrinterWebView.hpp"
 #include "libslic3r/Point.hpp"
 
@@ -52,6 +51,7 @@
 #include <wx/string.h>
 #include <wx/snglinst.h>
 #include <wx/msgdlg.h>
+#include <wx/timer.h>
 
 #include <atomic>
 #include <cstdint>
@@ -303,18 +303,43 @@ public:
     };
 
     static std::atomic<bool> m_app_alive; // 标记应用是否存活
+    // Version-check Http callbacks run on detached worker threads; ~GUI_App drains
+    // this counter after m_app_alive goes false, closing the check-then-act window
+    // of the guards before any member is destroyed.
+    static std::atomic<int> m_version_check_cbs_inflight;
+
+    // True once Windows began ending the session; close-path dialogs check it
+    // to auto-discard instead of interacting (Sentry SNAPMAKER_ORCA-1H6).
+    bool in_session_end() const { return m_in_session_end; }
+
+    // A queried session end was cancelled: restore interactive close.
+    void reset_session_end();
 
     static void log_version_info();
 
 private:
+    bool m_in_session_end{ false };
+    wxTimer m_session_end_reset_timer; // fallback reset for a cancelled session end
+
     bool            m_initialized { false };
     bool            m_post_initialized { false };
     // Set when a snapmaker-orca:// URL arrives via MacOpenURL rather than argv; post_init
     // then skips the blank project so the model the URL is loading is kept.
     bool            m_url_open_pending { false };
+#ifdef __APPLE__
+    std::vector<wxString> m_pending_mac_open_urls;
+#endif // __APPLE__
     bool            m_app_conf_exists{ false };
     EAppMode        m_app_mode{ EAppMode::Editor };
+    // Short rebuild flag consumed by other components during teardown.
     bool            m_is_recreating_gui{ false };
+    // Covers the whole recreate_GUI() (including the device-page reload tail)
+    // and is used only to defer the version prompt.
+    bool            m_recreate_in_progress{ false };
+    bool            m_pending_version_event{ false };
+    int             m_pending_version_by_user{ 0 };
+    wxString        m_pending_version_url;
+    int             m_updateDialogByUser{ 0 };
     /// Set only for the duration of profile/preset `MsgUpdateConfig::ShowModal()` (atomic: safe vs updater threads + CallAfter).
     std::atomic<bool> m_profile_config_update_dlg_open{ false };
     std::chrono::steady_clock::time_point m_last_input{ std::chrono::steady_clock::now() };
@@ -733,6 +758,8 @@ private:
 
     void            check_preset_version();
     void            check_new_version_sf(bool show_tips = false, int by_user = 0);
+    // Main-thread deferral of check_new_version_sf for the HTTP callback paths
+    void            defer_check_new_version_sf(bool show_tips = false, int by_user = 0);
     // Gray release: POST /config/get (snapmaker-config) first, falls back to check_new_version_sf on failure
     void            request_version_from_config(bool show_tips = false, int by_user = 0);
     // Offers to migrate user filament presets made against an older release that lost printers their parent
@@ -954,7 +981,10 @@ public:
     PresetUpdater*  preset_updater{ nullptr };
     MainFrame*      mainframe{ nullptr };
     Plater*         plater_{ nullptr };
+    void create_update_dialog();
+    void destroy_update_dialog();
     UpdateVersionDialog* m_updateDialog{nullptr};
+    wxWindow* m_updateDialogParent{nullptr};
 
 	PresetUpdater*  get_preset_updater() { return preset_updater; }
 
@@ -1081,6 +1111,9 @@ private:
     Gateway::AccountSnapshot   m_gateway_account;
     std::atomic<std::uint64_t> m_gateway_account_refresh_generation{0};
     std::vector<std::thread>   m_gateway_account_refresh_workers;
+    std::vector<std::thread>   m_model_station_push_workers;
+    std::mutex                 m_model_station_push_mutex;
+    std::atomic<std::uint64_t> m_model_station_push_generation{0};
 
 public:
     std::unordered_map<void*, std::weak_ptr<SSWCP_Instance>> m_recent_file_subscribers;
@@ -1093,6 +1126,13 @@ public:
     // Push foreground/background state change to all subscribed webview instances
     void notify_foreground_change(const bool active);
     void user_update_privacy_notify(const bool& res);
+    // Model station switch: delivered to the connect CLI (set_app_config);
+    // the CLI relays it to the Flutter pages and the other Orca instances.
+    void model_station_notify(const bool& enabled);
+    void push_model_station_to_gateway();
+    // Off-thread delivery (gateway HTTP must never run on the wx event thread);
+    // serialized by m_model_station_push_mutex, joined in stop_gateway_service().
+    void push_model_station_to_gateway_async(bool enabled);
 
 public:
     bool sm_disconnect_current_machine(bool need_reload_printerview = true);

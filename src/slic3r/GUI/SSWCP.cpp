@@ -15,7 +15,7 @@
 #include "nlohmann/json.hpp"
 #include "slic3r/GUI/Tab.hpp"
 #include "libslic3r/Model.hpp"
-#include "sentry_wrapper/SentryWrapper.hpp"
+#include "app_common/SentryWrapper.hpp"
 #include "slic3r/Utils/SnapLogClient.hpp"
 #include <algorithm>
 #include <cerrno>

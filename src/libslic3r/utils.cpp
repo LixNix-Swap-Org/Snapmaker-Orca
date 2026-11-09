@@ -415,6 +415,33 @@ std::string default_data_dir()
 }
 #endif
 
+static void append_log_export_files(std::vector<LogExportFile>&    export_files,
+                                    const boost::filesystem::path& log_directory,
+                                    const std::string&             archive_prefix)
+{
+    if (!boost::filesystem::exists(log_directory))
+        return;
+
+    for (const auto& entry : boost::filesystem::directory_iterator(log_directory)) {
+        if (!boost::filesystem::is_regular_file(entry.path()))
+            continue;
+
+        const auto filename = entry.path().filename().generic_string();
+        export_files.push_back({entry.path(), archive_prefix.empty() ? filename : archive_prefix + "/" + filename});
+    }
+}
+
+std::vector<LogExportFile> collect_log_export_files(const boost::filesystem::path& data_directory)
+{
+    std::vector<LogExportFile> export_files;
+    append_log_export_files(export_files, data_directory / "log", "");
+    append_log_export_files(export_files, data_directory / "snapmaker_control" / "data" / "log", "snapmaker_control/data/log");
+
+    std::sort(export_files.begin(), export_files.end(),
+              [](const LogExportFile& left, const LogExportFile& right) { return left.archive_name < right.archive_name; });
+    return export_files;
+}
+
 std::string custom_shapes_dir()
 {
     return (boost::filesystem::path(g_data_dir) / "shapes").string();

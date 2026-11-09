@@ -22,7 +22,7 @@
 #include "slic3r/Utils/NetworkAgent.hpp"
 #include "slic3r/Utils/BBLNetworkPlugin.hpp"
 #include "libslic3r/Thread.hpp"
-#include  "sentry_wrapper/SentryWrapper.hpp"
+#include  "app_common/SentryWrapper.hpp"
 #include <boost/beast/core/detail/base64.hpp>
 #include <cstddef>
 #include <istream>

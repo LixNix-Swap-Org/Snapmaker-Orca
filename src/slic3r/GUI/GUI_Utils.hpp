@@ -135,6 +135,11 @@ void update_dark_ui(wxWindow* window);
 
 extern std::deque<wxDialog*> dialogStack;
 
+// End every modal dialog on the stack with wxID_ABORT (Windows session end).
+// Entries are raw pointers: validate against the live top-level window list
+// first, wx may already have deleted a dialog under a running modal loop.
+void abort_all_modal_dialogs();
+
 template<class P> class DPIAware : public P, public wxInspector::wxInspectable
 {
 public:

@@ -29,7 +29,10 @@
 #include <wx/log.h>
 #include <wx/msgdlg.h>
 #include <wx/string.h>
+#include <wx/thread.h>
 #include <wx/version.h>
+
+#include <cassert>
 
 #include "GUI_Init.hpp"
 #include "slic3r/GUI/GLShadersManager.hpp"
@@ -249,6 +252,13 @@ OpenGLManager::~OpenGLManager()
 {
     m_shaders_manager.shutdown();
 
+    if (!m_pendingBufferDeletes.empty()) {
+        // No compatible canvas remains. The driver releases these buffers with the final shared context.
+        BOOST_LOG_TRIVIAL(warning) << m_pendingBufferDeletes.size()
+                                   << " pending buffer IDs will be released with the final OpenGL context";
+        m_pendingBufferDeletes.clear();
+    }
+
     if (m_context != nullptr)
         delete m_context;
 }
@@ -425,6 +435,34 @@ wxGLContext* OpenGLManager::init_glcontext(wxGLCanvas& canvas, const std::pair<i
 
     }
     return m_context;
+}
+
+void OpenGLManager::EnqueueBufferDeletes(std::vector<unsigned int>&& bufferIds)
+{
+    assert(wxIsMainThread());
+    size_t duplicateCount = 0;
+    for (unsigned int bufferId : bufferIds) {
+        if (bufferId == 0)
+            continue;
+        if (std::find(m_pendingBufferDeletes.begin(), m_pendingBufferDeletes.end(), bufferId) ==
+            m_pendingBufferDeletes.end()) {
+            m_pendingBufferDeletes.push_back(bufferId);
+        } else {
+            ++duplicateCount;
+        }
+    }
+    assert(duplicateCount == 0);
+}
+
+void OpenGLManager::FlushPendingBufferDeletes()
+{
+    assert(wxIsMainThread());
+    if (m_pendingBufferDeletes.empty())
+        return;
+
+    const size_t flushedCount = m_pendingBufferDeletes.size();
+    glsafe(::glDeleteBuffers(static_cast<GLsizei>(flushedCount), m_pendingBufferDeletes.data()));
+    m_pendingBufferDeletes.clear();
 }
 
 static const char* const SCENE_CANVAS_NAME = "OrcaSceneCanvas";

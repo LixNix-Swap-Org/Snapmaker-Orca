@@ -394,6 +394,13 @@ inline constexpr float DEFAULT_FILAMENT_DENSITY = 1.245f;
         PrintEstimatedStatistics print_statistics;
         std::vector<CustomGCode::Item> custom_gcode_per_print_z;
         bool spiral_vase_mode;
+        // Main-layer endpoint table, one entry per ";LAYER_CHANGE" tag:
+        // { nominal layer z (from the ";Z:"/" Z_HEIGHT:" tag), { first_move_id, last_move_id } }
+        // in the same move-id basis the viewer uses (moves.size()-1-seams_count).
+        // Lets GCodeViewer fold Subdivide-Mix sublayer travel z values into their
+        // nominal layer so the preview layer count matches the gcode header
+        // "; total layer number".
+        std::vector<std::pair<float, std::pair<size_t, size_t>>> layer_endpoints;
         //BBS
         std::vector<SliceWarning> warnings;
         int nozzle_hrc;
@@ -469,6 +476,7 @@ inline constexpr float DEFAULT_FILAMENT_DENSITY = 1.245f;
             print_statistics = std::forward<Other>(other).print_statistics;
             custom_gcode_per_print_z = std::forward<Other>(other).custom_gcode_per_print_z;
             spiral_vase_mode = std::forward<Other>(other).spiral_vase_mode;
+            layer_endpoints = std::forward<Other>(other).layer_endpoints;
             warnings = std::forward<Other>(other).warnings;
             bed_type = std::forward<Other>(other).bed_type;
             gcode_check_result = std::forward<Other>(other).gcode_check_result;
@@ -598,6 +606,10 @@ inline constexpr float DEFAULT_FILAMENT_DENSITY = 1.245f;
         static const std::string VFlush_Start_Tag;
         static const std::string VFlush_End_Tag;
         static const std::string External_Purge_Tag;
+        //Orca: machine statistics command carrying the layer total (Klipper's SET_PRINT_STATS_INFO)
+        static const std::string Set_Print_Stats_Info_Tag;
+        //Orca: layer total key inside machine statistics lines (e.g. SET_PRINT_STATS_INFO)
+        static const std::string Total_Layer_Tag;
     public:
         // Size of the blocks the post-processing passes write the G-code in
         static constexpr size_t Output_Block_Size = 65536;
@@ -1362,6 +1374,10 @@ inline constexpr float DEFAULT_FILAMENT_DENSITY = 1.245f;
         bool m_in_config_block;
         unsigned int m_g1_line_id;
         unsigned int m_layer_id;
+        // gcode line anchors of the layer-change tags; used in finalize() to rebuild
+        // the layer_endpoints move spans on the final moves array (OptionsZCorrector
+        // relocates moves mid-stream, so streaming move indices would drift).
+        std::vector<unsigned int> m_layer_change_line_ids;
         CpColor m_cp_color;
         SeamsDetector m_seams_detector;
         OptionsZCorrector m_options_z_corrector;

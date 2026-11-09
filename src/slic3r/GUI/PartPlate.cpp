@@ -2419,6 +2419,10 @@ void PartPlate::render_grid(bool bottom) {
 		else
             color = m_partplate_list->m_is_dark ? LINE_TOP_DARK_COLOR : LINE_TOP_COLOR;
 	}
+    // Fix: like the plate background, grid lines do not write depth; at low view angles their line depth
+    // came closer than the soft shadow receiver drawn over the plate and cut holes into the shadow
+    if (!bottom)
+        glsafe(::glDepthMask(GL_FALSE));
     m_gridlines.set_color(color);
     m_gridlines.render();
 
@@ -2451,6 +2455,8 @@ void PartPlate::render_grid(bool bottom) {
 
     m_gridlines_bolder.set_color(color);
     m_gridlines_bolder.render();
+    if (!bottom)
+        glsafe(::glDepthMask(GL_TRUE));
 
     shader->stop_using();
 }
@@ -2524,6 +2530,72 @@ void PartPlate::set_hover_tooltip(const std::string& tooltip)
     m_partplate_list->m_hover_tooltip = tooltip;
 }
 
+std::string PartPlate::get_icon_tooltip(int hover_id) const
+{
+    switch (hover_id) {
+    case 1: return _u8L("Remove current plate (if not last one)");
+    case 2: return _u8L("Auto orient objects on current plate");
+    case 3: return _u8L("Arrange objects on current plate");
+    case 4: return is_locked() ? _u8L("Unlock current plate") : _u8L("Lock current plate");
+    case 5: return m_partplate_list->render_plate_settings ? _u8L("Customize current plate") : std::string();
+    case 6: return _u8L("Edit current plate name");
+    case 7: return _u8L("Move plate to the front");
+    case int(PLATE_FILAMENT_MAP_ID): {
+        PresetBundle* preset = wxGetApp().preset_bundle;
+        const bool dual_bbl = (preset->is_bbl_vendor() && preset->get_printer_extruder_count() == 2);
+        return dual_bbl ? _u8L("Filament grouping") : std::string();
+    }
+    case int(PLATE_IMEX_MODE_ID): {
+        PresetBundle* pb = wxGetApp().preset_bundle;
+        auto* is_imex_opt = pb ? pb->printers.get_edited_preset().config.option<ConfigOptionBool>("is_imex") : nullptr;
+        if (!is_imex_opt || !is_imex_opt->value)
+            return std::string();
+        // Both the mode name and the conflict warning describe the same hovered icon,
+        // and set_hover_tooltip records one string per frame, so they are composed here.
+        std::string hover_tip;
+        // The stored value, not the resolved one: this line carries the click
+        // affordances, and the menu checkmark and the left-click cycle both act
+        // on what the plate stores. Reporting the inherited mode here would leave
+        // one control saying three different things. Where they differ -- a plate
+        // on Primary under a process preset that names a mode, which is what
+        // actually slices -- the inherited mode is named after it, so the tooltip
+        // still tells the user what this plate will print as.
+        std::string cur = get_imex_mode();
+        const std::string effective = get_effective_imex_mode();
+        if (cur == kImexPrimaryMode) cur = _u8L("Primary");
+        // One format string, not two catalog fragments concatenated around a
+        // runtime value: translators need to move the mode name within the
+        // sentence, and the space-padded fragments were untranslatable alone.
+        //
+        // Guarded because this runs on the paint path: boost::format throws if a
+        // TRANSLATED string drops or malforms %1%, and an exception escaping here
+        // would take down the frame rather than show a wrong tooltip. The English
+        // literal is the fallback and cannot itself throw.
+        if (effective != get_imex_mode()) {
+            try {
+                // TRN Plate icon tooltip. %1% is the plate's IDEX/IQEX mode, %2% the mode its process preset sets.
+                hover_tip = (boost::format(_u8L("IDEX/IQEX mode: %1% (process preset: %2%) (left-click to cycle, right-click for menu)")) % cur % effective).str();
+            } catch (const std::exception&) {
+                hover_tip = (boost::format("IDEX/IQEX mode: %1% (process preset: %2%) (left-click to cycle, right-click for menu)") % cur % effective).str();
+            }
+        } else {
+            try {
+                hover_tip = (boost::format(_u8L("IDEX/IQEX mode: %1% (left-click to cycle, right-click for menu)")) % cur).str();
+            } catch (const std::exception&) {
+                hover_tip = (boost::format("IDEX/IQEX mode: %1% (left-click to cycle, right-click for menu)") % cur).str();
+            }
+        }
+        // The warning joins the mode line rather than replacing it: one hover
+        // records one string, and the mode name carries the click affordances.
+        if (has_imex_multimaterial_conflict())
+            hover_tip += (hover_tip.empty() ? "" : "\n\n") +
+                         _u8L("Warning: this plate uses a parallel IDEX/IQEX mode with multi-material objects. Proceed with caution — verify your G-code handles this combination correctly.");
+        return hover_tip;
+    }
+    default: return std::string();
+    }
+}
+
 void PartPlate::render_icons(bool bottom, bool only_name, int hover_id)
 {
 	GLShaderProgram* shader = wxGetApp().get_shader("printbed");
@@ -2546,21 +2618,18 @@ void PartPlate::render_icons(bool bottom, bool only_name, int hover_id)
         if (!only_name) {
             if (hover_id == 1) {
                 render_icon_texture(m_del_icon.model, m_partplate_list->m_del_hovered_texture);
-                set_hover_tooltip(_u8L("Remove current plate (if not last one)"));
             }
             else
                 render_icon_texture(m_del_icon.model, m_partplate_list->m_del_texture);
 
             if (hover_id == 2) {
                 render_icon_texture(m_orient_icon.model, m_partplate_list->m_orient_hovered_texture);
-                set_hover_tooltip(_u8L("Auto orient objects on current plate"));
             }
             else
                 render_icon_texture(m_orient_icon.model, m_partplate_list->m_orient_texture);
 
             if (hover_id == 3) {
                 render_icon_texture(m_arrange_icon.model, m_partplate_list->m_arrange_hovered_texture);
-                set_hover_tooltip(_u8L("Arrange objects on current plate"));
             }
             else
                 render_icon_texture(m_arrange_icon.model, m_partplate_list->m_arrange_texture);
@@ -2569,12 +2638,10 @@ void PartPlate::render_icons(bool bottom, bool only_name, int hover_id)
                 if (this->is_locked()) {
                     render_icon_texture(m_lock_icon.model,
                                         m_partplate_list->m_locked_hovered_texture);
-                    set_hover_tooltip(_u8L("Unlock current plate"));
                 }
                 else {
                     render_icon_texture(m_lock_icon.model,
                                         m_partplate_list->m_lockopen_hovered_texture);
-                    set_hover_tooltip(_u8L("Lock current plate"));
                 }
             } else {
                 if (this->is_locked())
@@ -2588,21 +2655,18 @@ void PartPlate::render_icons(bool bottom, bool only_name, int hover_id)
             if (dual_bbl) {
                 if (hover_id == PLATE_FILAMENT_MAP_ID){
                     render_icon_texture(m_plate_filament_map_icon.model, m_partplate_list->m_plate_set_filament_map_hovered_texture);
-                    set_hover_tooltip(_u8L("Filament grouping"));
                 } else
                     render_icon_texture(m_plate_filament_map_icon.model, m_partplate_list->m_plate_set_filament_map_texture);
             }
 
 			if (hover_id == 6) {
                 render_icon_texture(m_plate_name_edit_icon.model, m_partplate_list->m_plate_name_edit_hovered_texture);
-                set_hover_tooltip(_u8L("Edit current plate name"));
 			}
 			else
                 render_icon_texture(m_plate_name_edit_icon.model, m_partplate_list->m_plate_name_edit_texture);
 
 			if (hover_id == 7) {
                 render_icon_texture(m_move_front_icon.model, m_partplate_list->m_move_front_hovered_texture);
-                set_hover_tooltip(_u8L("Move plate to the front"));
             } else
                 render_icon_texture(m_move_front_icon.model, m_partplate_list->m_move_front_texture);
 
@@ -2614,57 +2678,13 @@ void PartPlate::render_icons(bool bottom, bool only_name, int hover_id)
                     // The icon shows the mode the plate slices as, the one its ghosts follow.
                     const ImexActiveMode& active = m_imex_active_mode;
                     const size_t kind = size_t(active.resolved() ? imex_mode_kind(active.tools) : ImexModeKind::Primary);
-                    // Both the mode name and the conflict warning describe the same hovered icon,
-                    // and set_hover_tooltip records one string per frame, so they are composed here.
-                    std::string hover_tip;
-                    if (hover_id == (int)PLATE_IMEX_MODE_ID) {
+                    if (hover_id == (int)PLATE_IMEX_MODE_ID)
                         render_icon_texture(m_imex_mode_icon.model, m_partplate_list->m_imex_mode_hovered_textures[kind]);
-                        // The stored value, not the resolved one: this line carries the click
-                        // affordances, and the menu checkmark and the left-click cycle both act
-                        // on what the plate stores. Reporting the inherited mode here would leave
-                        // one control saying three different things. Where they differ -- a plate
-                        // on Primary under a process preset that names a mode, which is what
-                        // actually slices -- the inherited mode is named after it, so the tooltip
-                        // still tells the user what this plate will print as.
-                        std::string cur = get_imex_mode();
-                        const std::string effective = get_effective_imex_mode();
-                        if (cur == kImexPrimaryMode) cur = _u8L("Primary");
-                        // One format string, not two catalog fragments concatenated around a
-                        // runtime value: translators need to move the mode name within the
-                        // sentence, and the space-padded fragments were untranslatable alone.
-                        //
-                        // Guarded because this runs on the paint path: boost::format throws if a
-                        // TRANSLATED string drops or malforms %1%, and an exception escaping here
-                        // would take down the frame rather than show a wrong tooltip. The English
-                        // literal is the fallback and cannot itself throw.
-                        if (effective != get_imex_mode()) {
-                            try {
-                                // TRN Plate icon tooltip. %1% is the plate's IDEX/IQEX mode, %2% the mode its process preset sets.
-                                hover_tip = (boost::format(_u8L("IDEX/IQEX mode: %1% (process preset: %2%) (left-click to cycle, right-click for menu)")) % cur % effective).str();
-                            } catch (const std::exception&) {
-                                hover_tip = (boost::format("IDEX/IQEX mode: %1% (process preset: %2%) (left-click to cycle, right-click for menu)") % cur % effective).str();
-                            }
-                        } else {
-                            try {
-                                hover_tip = (boost::format(_u8L("IDEX/IQEX mode: %1% (left-click to cycle, right-click for menu)")) % cur).str();
-                            } catch (const std::exception&) {
-                                hover_tip = (boost::format("IDEX/IQEX mode: %1% (left-click to cycle, right-click for menu)") % cur).str();
-                            }
-                        }
-                    } else {
+                    else
                         render_icon_texture(m_imex_mode_icon.model, m_partplate_list->m_imex_mode_textures[kind]);
-                    }
                     // Warning badge: IMEX parallel mode active alongside multi-material objects
-                    if (has_imex_multimaterial_conflict()) {
+                    if (has_imex_multimaterial_conflict())
                         render_icon_texture(m_imex_warn_icon, m_partplate_list->m_imex_warn_texture);
-                        // The warning joins the mode line rather than replacing it: one hover
-                        // records one string, and the mode name carries the click affordances.
-                        if (hover_id == (int)PLATE_IMEX_MODE_ID)
-                            hover_tip += (hover_tip.empty() ? "" : "\n\n") +
-                                         _u8L("Warning: this plate uses a parallel IDEX/IQEX mode with multi-material objects. Proceed with caution — verify your G-code handles this combination correctly.");
-                    }
-                    if (!hover_tip.empty())
-                        set_hover_tooltip(hover_tip);
                 }
             }
 
@@ -2675,8 +2695,6 @@ void PartPlate::render_icons(bool bottom, bool only_name, int hover_id)
                         render_icon_texture(m_plate_settings_icon.model, m_partplate_list->m_plate_settings_hovered_texture);
                     else
                         render_icon_texture(m_plate_settings_icon.model, m_partplate_list->m_plate_settings_changed_hovered_texture);
-
-                    set_hover_tooltip(_u8L("Customize current plate"));
                 } else {
                     if (!has_plate_settings)
                         render_icon_texture(m_plate_settings_icon.model, m_partplate_list->m_plate_settings_texture);
@@ -2687,6 +2705,12 @@ void PartPlate::render_icons(bool bottom, bool only_name, int hover_id)
 
             if (m_plate_index >= 0 && m_plate_index < MAX_PLATE_COUNT) {
                 render_icon_texture(m_plate_idx_icon, m_partplate_list->m_idx_textures[m_plate_index]);
+            }
+
+            if (hover_id >= 1) {
+                const std::string tooltip = get_icon_tooltip(hover_id);
+                if (!tooltip.empty())
+                    set_hover_tooltip(tooltip);
             }
         }
 		render_plate_name_texture();
@@ -4589,9 +4613,12 @@ void PartPlate::update_object_index(int obj_idx_removed, int obj_idx_max)
 	std::set<std::pair<int, int>> temp_set;
 	std::set<std::pair<int, int>>::iterator it;
 	//update the obj_to_instance_set
+	//the caller must have removed every instance of obj_idx_removed beforehand, so only
+	//objects AFTER it shift back (a leftover == entry would be mis-attributed to the
+	//previous object and corrupted into a negative index when obj_idx_removed is 0)
 	for (it = obj_to_instance_set.begin(); it != obj_to_instance_set.end(); ++it)
 	{
-		if (it->first >= obj_idx_removed)
+		if (it->first > obj_idx_removed)
 			temp_set.insert(std::pair(it->first-1, it->second));
 		else
 			temp_set.insert(std::pair(it->first, it->second));
@@ -4604,7 +4631,7 @@ void PartPlate::update_object_index(int obj_idx_removed, int obj_idx_max)
 	temp_set.clear();
 	for (it = instance_outside_set.begin(); it != instance_outside_set.end(); ++it)
 	{
-		if (it->first >= obj_idx_removed)
+		if (it->first > obj_idx_removed)
 			temp_set.insert(std::pair(it->first - 1, it->second));
 		else
 			temp_set.insert(std::pair(it->first, it->second));
@@ -4612,6 +4639,26 @@ void PartPlate::update_object_index(int obj_idx_removed, int obj_idx_max)
 	instance_outside_set.clear();
 	instance_outside_set = temp_set;
 
+}
+
+void PartPlate::remove_object(int obj_id)
+{
+	//remove every instance registration of obj_id from this plate: an object may
+	//have several instances spread over this plate (and over different plates)
+	for (auto it = obj_to_instance_set.begin(); it != obj_to_instance_set.end(); )
+	{
+		if (it->first == obj_id)
+			it = obj_to_instance_set.erase(it);
+		else
+			++it;
+	}
+	for (auto it = instance_outside_set.begin(); it != instance_outside_set.end(); )
+	{
+		if (it->first == obj_id)
+			it = instance_outside_set.erase(it);
+		else
+			++it;
+	}
 }
 
 void PartPlate::set_vase_mode_related_object_config(int obj_id) {
@@ -5701,7 +5748,8 @@ void PartPlateList::init()
 	assert(first_plate != NULL);
 	m_plate_list.push_back(first_plate);
 
-	m_print_index = 0;
+    // reset(false) keeps old prints (undo path), so never restart from an occupied index
+    m_print_index = NextFreePrintIndex();
 	if (printer_technology == ptFFF)
 	{
 		Print* print = new Print();
@@ -5721,6 +5769,21 @@ void PartPlateList::init()
 	unprintable_plate.set_index(1);
 
 	m_intialized = true;
+}
+
+int PartPlateList::NextFreePrintIndex() const
+{
+    int freeIndex = 0;
+    // std::map keys are sorted, rbegin() is the largest used index
+    if (!m_print_list.empty())
+    {
+        freeIndex = std::max(freeIndex, m_print_list.rbegin()->first + 1);
+    }
+    if (!m_gcode_result_list.empty())
+    {
+        freeIndex = std::max(freeIndex, m_gcode_result_list.rbegin()->first + 1);
+    }
+    return freeIndex;
 }
 
 //compute the origin for printable plate with index i
@@ -6312,6 +6375,12 @@ int PartPlateList::create_plate(bool adjust_position)
 	{
 		Print* print = new Print();
 		GCodeResult* gcode = new GCodeResult();
+        // An occupied index would bind a print not owned by m_print_list
+        if (m_print_list.count(m_print_index) > 0 || m_gcode_result_list.count(m_print_index) > 0)
+        {
+            BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << boost::format(": print index %1% already in use") % m_print_index;
+            m_print_index = NextFreePrintIndex();
+        }
 		m_print_list.emplace(m_print_index, print);
 		m_gcode_result_list.emplace(m_print_index, gcode);
 		plate->set_print(print, gcode, m_print_index);
@@ -7157,6 +7226,23 @@ int PartPlateList::notify_instance_removed(int obj_id, int instance_id)
 				other_instances.insert(obj_inst.second);
 		for (int other_instance : other_instances)
 			notify_instance_removed(obj_id, other_instance);
+		//the whole object is gone: drop every instance registration of obj_id (an
+		//object may have instances registered on different plates, and instance_id
+		//-1 only removed the (obj_id, 0) pair above), invalidate the plates, then
+		//shift back the registration indices of all objects after obj_id
+		for (unsigned int i = 0; i < (unsigned int)m_plate_list.size(); ++i)
+		{
+			PartPlate* plate = m_plate_list[i];
+			assert(plate != NULL);
+
+			plate->remove_object(obj_id);
+			plate->update_slice_result_valid_state();
+			plate->thumbnail_data.reset();
+			plate->no_light_thumbnail_data.reset();
+			plate->top_thumbnail_data.reset();
+			plate->pick_thumbnail_data.reset();
+		}
+		unprintable_plate.remove_object(obj_id);
 
 		//update all the obj_ids which is bigger
 		for (unsigned int i = 0; i < (unsigned int)m_plate_list.size(); ++i)
@@ -7709,7 +7795,12 @@ void PartPlateList::render(const Transform3d& view_matrix, const Transform3d& pr
 
 void PartPlateList::render_hover_tooltip() const
 {
-    if (m_hover_tooltip.empty())
+    show_tooltip(m_hover_tooltip);
+}
+
+void PartPlateList::show_tooltip(const std::string& tooltip) const
+{
+    if (tooltip.empty())
         return;
 
     const auto scale = m_plater->get_current_canvas3D()->get_scale();
@@ -7719,10 +7810,35 @@ void PartPlateList::render_hover_tooltip() const
     ImGui::PushStyleColor(ImGuiCol_Border, {0, 0, 0, 0});
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.00f, 1.00f, 1.00f, 1.00f));
     ImGui::BeginTooltip();
-    ImGui::TextUnformatted(m_hover_tooltip.c_str());
+    ImGui::TextUnformatted(tooltip.c_str());
     ImGui::EndTooltip();
     ImGui::PopStyleColor(3);
     ImGui::PopStyleVar(2);
+}
+
+void PartPlateList::RenderShadowReceivers()
+{
+    const std::lock_guard<std::mutex> localLock(m_plates_mutex);
+    for (PartPlate* plate : m_plate_list)
+    {
+        if (plate == nullptr || !plate->m_triangles.model.is_initialized())
+            continue;
+        plate->m_triangles.model.render();
+    }
+}
+
+void PartPlateList::RenderHoverTooltip(int hoverId)
+{
+    if (hoverId < 0)
+        return;
+
+    const std::lock_guard<std::mutex> localLock(m_plates_mutex);
+    const int plateIndex = hoverId / static_cast<int>(PartPlate::GRABBER_COUNT);
+    const int hoverAction = hoverId % static_cast<int>(PartPlate::GRABBER_COUNT);
+    if (plateIndex >= static_cast<int>(m_plate_list.size()) || m_plate_list[plateIndex] == nullptr)
+        return;
+
+    show_tooltip(m_plate_list[plateIndex]->get_icon_tooltip(hoverAction));
 }
 
 /*int PartPlateList::select_plate_by_hover_id(int hover_id)

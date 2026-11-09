@@ -47,7 +47,7 @@ namespace fs = boost::filesystem;
 #include "wx/private/jsscriptwrapper.h"
 #endif
 
-#include "sentry_wrapper/SentryWrapper.hpp"
+#include "app_common/SentryWrapper.hpp"
 
 #if defined(__linux__)
 #include <mutex>
@@ -243,6 +243,37 @@ public:
     {
     }
 
+    // wxWebViewWebKit::AddScriptMessageHandler() registers a native handler and a user script,
+    // then evaluates the bridge script in the current document through synchronous RunScript().
+    // Keep only that internal evaluation asynchronous: its synchronous event-loop pump can process
+    // quit during startup and destroy this view while the handler installation is still active.
+    // All other RunScript() calls retain the wxWidgets behavior.
+    bool RunScript(const wxString &javascript, wxString *output = nullptr) const override
+    {
+        if (output || !m_installingScriptMessageHandler)
+            return wxWebViewWebKit::RunScript(javascript, output);
+
+        WKWebView *wkWebView = static_cast<WKWebView *>(GetNativeBackend());
+        if (!wkWebView)
+            return false;
+
+        Slic3r::GUI::WKWebView_evaluateJavaScript(wkWebView, javascript, nullptr);
+        return true;
+    }
+
+    bool InstallScriptMessageHandler()
+    {
+        m_installingScriptMessageHandler = true;
+        const bool added = AddScriptMessageHandler("wx");
+        m_installingScriptMessageHandler = false;
+
+        // AddScriptMessageHandler() has already registered the native handler and WKUserScript.
+        // The initial document is about:blank, so flushing the pending URL does not depend on
+        // completion of the asynchronous current-document bridge evaluation.
+        SetScriptMessageHandlerInstalled();
+        return added;
+    }
+
     ~WebViewWebKit() override
     {
         RemoveScriptMessageHandler("wx");
@@ -301,6 +332,8 @@ protected:
     }
 
 private:
+    mutable bool m_installingScriptMessageHandler = false;
+
     static bool IsBlankUrl(const wxString &url)
     {
         return url.empty() || url == wxString("about:blank");
@@ -569,7 +602,12 @@ wxWebView* WebView::CreateWebView(wxWindow * parent, wxString const & url)
                 return;
             BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << ": begin to add script message handler for wx.";
             Slic3r::GUI::wxGetApp().set_adding_script_handler(true);
-            if (!webView->AddScriptMessageHandler("wx"))
+#ifdef __WXMAC__
+            const bool added = static_cast<WebViewWebKit *>(webView)->InstallScriptMessageHandler();
+#else
+            const bool added = webView->AddScriptMessageHandler("wx");
+#endif
+            if (!added)
                 wxLogError("Could not add script message handler");
             // The call above pumps the event loop. A view destroyed meanwhile has taken its
             // WebViewRef along, so the ref is only written while the view is still registered.

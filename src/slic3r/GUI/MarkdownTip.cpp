@@ -23,7 +23,7 @@
 #include <wx/file.h>
 #include <wx/webview.h>
 #include <wx/window.h>
-#include "sentry_wrapper/SentryWrapper.hpp"
+#include "app_common/SentryWrapper.hpp"
 
 namespace fs = boost::filesystem;
 

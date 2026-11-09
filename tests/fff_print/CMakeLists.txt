@@ -45,6 +45,11 @@ add_executable(${_TEST_NAME}_tests
 	test_tree_support.cpp
 	test_trianglemesh.cpp
 	test_wipe.cpp
+	test_pressure_equalizer.cpp
+	test_fanmover.cpp
+	test_small_area_infill_flow_compensator.cpp
+	test_cooling_buffer.cpp
+	test_adaptive_pa.cpp
 	test_wipe_tower.cpp
 	)
 # libslic3r_cgal links CGAL privately, so the GMP/MPFR libraries are needed at link time.

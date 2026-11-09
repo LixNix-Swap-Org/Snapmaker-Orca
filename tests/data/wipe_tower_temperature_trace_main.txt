@@ -167,6 +167,4 @@ M104 S0 T0 ; set nozzle temperature ;cooldown
 T1 ; change extruder
 M109 S240 T1 ; set nozzle temperature and wait for it to be reached
 ; CP TOOLCHANGE END
-; CP TOOLCHANGE START
-; CP TOOLCHANGE END
 M104 S0 ; turn off temperature
