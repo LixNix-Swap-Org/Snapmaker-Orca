@@ -190,12 +190,19 @@ DynamicPrintConfig load_project_2_4()
     return config;
 }
 
+struct RenameMapAccess : PresetCollection
+{
+    using PresetCollection::update_map_system_profile_renamed;
+};
+
 std::unique_ptr<PresetBundle> load_snapmaker_bundle()
 {
     auto bundle = std::make_unique<PresetBundle>();
     bundle->load_vendor_configs_from_json(PROFILES_DIR, "Snapmaker", PresetBundle::LoadSystem,
                                           ForwardCompatibilitySubstitutionRule::EnableSilent, nullptr,
                                           /*allow_cache=*/false);
+    // The 2.4 files name presets renamed since; the application resolves them through this map.
+    (bundle->filaments.*(&RenameMapAccess::update_map_system_profile_renamed))();
     return bundle;
 }
 
@@ -244,8 +251,8 @@ void check_head_2_prints_high_flow(PresetBundle &bundle)
     const DynamicPrintConfig composed = composed_per_head(bundle);
     // The shipped presets give the expected numbers: this application keeps its own values for a
     // system preset, the file only says which presets and which flow types.
-    const Preset *snapspeed = bundle.filaments.find_preset("Snapmaker PLA SnapSpeed @U1", false, true);
-    const Preset *petg_hf   = bundle.filaments.find_preset("Snapmaker PETG HF", false, true);
+    const Preset *snapspeed = bundle.filaments.find_preset("Snapmaker PLA SnapSpeed @U1 0.4 nozzle", false, true);
+    const Preset *petg_hf   = bundle.filaments.find_preset("Snapmaker PETG HF @U1 0.4 nozzle", false, true);
     const Preset *process   = bundle.prints.find_preset(U1_PROCESS, false, true);
     REQUIRE(snapspeed != nullptr);
     REQUIRE(petg_hf != nullptr);
@@ -260,7 +267,7 @@ void check_head_2_prints_high_flow(PresetBundle &bundle)
     CHECK_THAT(speed->get_at(1), Catch::Matchers::WithinAbs(petg_speed->get_at(1), 1e-9));
     const auto *pressure_advance = composed.option<ConfigOptionFloats>("pressure_advance");
     CHECK_THAT(pressure_advance->get_at(1), Catch::Matchers::WithinAbs(petg_hf->config.option<ConfigOptionFloats>("pressure_advance")->get_at(1), 1e-9));
-    // The High Flow column of "Snapmaker PETG HF" sets a retraction, its Standard column takes the printer's.
+    // The High Flow column of "Snapmaker PETG HF @U1 0.4 nozzle" sets a retraction, its Standard column takes the printer's.
     const auto *retraction = composed.option<ConfigOptionFloatsNullable>("filament_retraction_length");
     REQUIRE(retraction->size() == 4);
     CHECK_FALSE(retraction->is_nil(1));
@@ -341,7 +348,8 @@ TEST_CASE("A Snapmaker Orca 2.4 project loads with its High Flow tool head and t
     CHECK(bundle.last_flow_import_report.empty());
     CHECK(bundle.printers.get_edited_preset().name == U1_MACHINE);
     CHECK(bundle.prints.get_edited_preset().name == U1_PROCESS);
-    CHECK(bundle.filament_presets == std::vector<std::string>{"Snapmaker PLA SnapSpeed @U1", "Snapmaker PETG HF", "Snapmaker PLA Basic @U1", "Snapmaker PLA Matte @U1"});
+    CHECK(bundle.filament_presets == std::vector<std::string>{"Snapmaker PLA SnapSpeed @U1 0.4 nozzle", "Snapmaker PETG HF @U1 0.4 nozzle",
+                                                              "Snapmaker PLA Basic @U1 0.4 nozzle", "Snapmaker PLA Matte @U1 0.4 nozzle"});
     check_head_2_prints_high_flow(bundle);
 
     SECTION("saved as a project of this application and loaded again, it is the same plate") {
@@ -423,7 +431,7 @@ TEST_CASE("Values changed in a Snapmaker Orca 2.4 project land in the column the
     CHECK_THAT(petg->config.option<ConfigOptionFloats>("filament_max_volumetric_speed")->values, Catch::Matchers::Approx(std::vector<double>{20., 33.}));
     // The neighbours keep their own values.
     const Preset *snapspeed = bundle.filaments.find_preset(bundle.filament_presets[0], false);
-    const Preset *shipped   = bundle.filaments.find_preset("Snapmaker PLA SnapSpeed @U1", false, true);
+    const Preset *shipped   = bundle.filaments.find_preset("Snapmaker PLA SnapSpeed @U1 0.4 nozzle", false, true);
     REQUIRE(snapspeed != nullptr);
     REQUIRE(shipped != nullptr);
     CHECK_THAT(snapspeed->config.option<ConfigOptionFloats>("filament_max_volumetric_speed")->values,
@@ -504,7 +512,7 @@ TEST_CASE("A user filament preset of Snapmaker Orca 2.4 keeps its High Flow valu
     bundle.prints.load_presets(user_dir.string(), "process", substitutions, ForwardCompatibilitySubstitutionRule::Enable, nullptr, PresetOrigin(), true);
 
     const Preset *filament = bundle.filaments.find_preset("My SnapSpeed 2.4", false);
-    const Preset *parent   = bundle.filaments.find_preset("Snapmaker PLA SnapSpeed @U1", false, true);
+    const Preset *parent   = bundle.filaments.find_preset("Snapmaker PLA SnapSpeed @U1 0.4 nozzle", false, true);
     REQUIRE(filament != nullptr);
     REQUIRE(parent != nullptr);
     CHECK(strings_of(filament->config, "filament_extruder_variant") == std::vector<std::string>{STANDARD, HIGH_FLOW});
@@ -610,7 +618,7 @@ TEST_CASE("The shipped U1 0.4 mm plate is a schema 2 project even with every too
     PresetBundle &bundle = *loaded;
     REQUIRE(bundle.printers.select_preset_by_name(U1_MACHINE, true));
     REQUIRE(bundle.prints.select_preset_by_name(U1_PROCESS, true));
-    bundle.filament_presets = {"Snapmaker PLA SnapSpeed @U1", "Snapmaker PETG HF", "Snapmaker PLA Matte @U1", "Snapmaker ABS @U1 0.4 nozzle"};
+    bundle.filament_presets = {"Snapmaker PLA SnapSpeed @U1 0.4 nozzle", "Snapmaker PETG HF @U1 0.4 nozzle", "Snapmaker PLA Matte @U1 0.4 nozzle", "Snapmaker ABS @U1 0.4 nozzle"};
     REQUIRE(bundle.filaments.select_preset_by_name(bundle.filament_presets.front(), true));
     bundle.project_config.option<ConfigOptionInts>("filament_map", true)->values = {1, 2, 3, 4};
     bundle.project_config.option<ConfigOptionEnumsGeneric>("nozzle_volume_type", true)->values = std::vector<int>(4, int(nvtStandard));
@@ -629,7 +637,7 @@ DynamicPrintConfig all_standard_0_4_project(PresetBundle &bundle)
 {
     REQUIRE(bundle.printers.select_preset_by_name(U1_MACHINE, true));
     REQUIRE(bundle.prints.select_preset_by_name(U1_PROCESS, true));
-    bundle.filament_presets = {"Snapmaker PLA SnapSpeed @U1", "Snapmaker PETG HF", "Snapmaker PLA Matte @U1", "Snapmaker ABS @U1 0.4 nozzle"};
+    bundle.filament_presets = {"Snapmaker PLA SnapSpeed @U1 0.4 nozzle", "Snapmaker PETG HF @U1 0.4 nozzle", "Snapmaker PLA Matte @U1 0.4 nozzle", "Snapmaker ABS @U1 0.4 nozzle"};
     REQUIRE(bundle.filaments.select_preset_by_name(bundle.filament_presets.front(), true));
     bundle.project_config.option<ConfigOptionInts>("filament_map", true)->values = {1, 2, 3, 4};
     bundle.project_config.option<ConfigOptionEnumsGeneric>("nozzle_volume_type", true)->values = std::vector<int>(4, int(nvtStandard));
@@ -876,7 +884,7 @@ TEST_CASE("A user filament preset of Snapmaker Orca 2.4 with High Flow values ke
 {
     const auto    loaded = load_snapmaker_bundle();
     PresetBundle &bundle = *loaded;
-    const Preset *parent = bundle.filaments.find_preset("Generic PETG", false, true);
+    const Preset *parent = bundle.filaments.find_preset("Generic PETG @U1 0.4 nozzle", false, true);
     REQUIRE(parent != nullptr);
     REQUIRE(strings_of(parent->config, "filament_extruder_variant") == std::vector<std::string>{STANDARD});
 
@@ -921,11 +929,11 @@ TEST_CASE("The project config lists a filament's High Flow column right after it
     PresetBundle &bundle = *loaded;
     REQUIRE(bundle.printers.select_preset_by_name(U1_MACHINE, true));
     REQUIRE(bundle.prints.select_preset_by_name(U1_PROCESS, true));
-    bundle.filament_presets = {"Generic PETG", "Generic PLA", "Generic PLA", "Generic PLA"};
+    bundle.filament_presets = {"Generic PETG @U1 0.4 nozzle", "Generic PLA @U1 0.4 nozzle", "Generic PLA @U1 0.4 nozzle", "Generic PLA @U1 0.4 nozzle"};
     bundle.project_config.option<ConfigOptionStrings>("filament_colour", true)->values.assign(4, "#FFFFFF");
     bundle.project_config.option<ConfigOptionInts>("filament_map", true)->values = {1, 2, 3, 4};
     bundle.project_config.option<ConfigOptionEnumsGeneric>("nozzle_volume_type", true)->values = {int(nvtStandard), int(nvtHighFlow), int(nvtStandard), int(nvtStandard)};
-    REQUIRE(bundle.filaments.select_preset_by_name("Generic PETG", true));
+    REQUIRE(bundle.filaments.select_preset_by_name("Generic PETG @U1 0.4 nozzle", true));
     DynamicPrintConfig &petg = bundle.filaments.get_edited_preset().config;
     REQUIRE(filament_add_flow_column(petg, nvtHighFlow));
     petg.option<ConfigOptionInts>("nozzle_temperature")->values[1] = 265;

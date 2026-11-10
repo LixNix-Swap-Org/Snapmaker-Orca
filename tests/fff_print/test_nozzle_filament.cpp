@@ -29,7 +29,7 @@ namespace {
 const char *const U1_MACHINE = "Snapmaker U1 (0.4 nozzle)";
 const char *const U1_PROCESS = "0.20mm Standard @Snapmaker U1 (0.4 nozzle)";
 const char *const PLA_02     = "Generic PLA @U1 0.2 nozzle";
-const char *const PLA_04     = "Generic PLA";
+const char *const PLA_04     = "Generic PLA @U1 0.4 nozzle";
 
 // A U1 plate with a 0.2 mm nozzle on tool head 1 and 0.4 mm nozzles on the others, filament i on
 // tool head i, the two given presets in the first two slots, the prime tower on.

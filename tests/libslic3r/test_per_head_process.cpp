@@ -51,7 +51,7 @@ const char *const HQ_010_02     = "0.10mm High Quality @Snapmaker U1 (0.2 nozzle
 const char *const STD_030_06    = "0.30mm Standard @Snapmaker U1 (0.6 nozzle)";
 const char *const STD_018_06    = "0.18mm Standard @Snapmaker U1 (0.6 nozzle)";
 const char *const STD_024_08    = "0.24mm Standard @Snapmaker U1 (0.8 nozzle)";
-const char *const PLA_04        = "Generic PLA";
+const char *const PLA_04        = "Generic PLA @U1 0.4 nozzle";
 const char *const J1_04         = "Snapmaker J1 (0.4 nozzle)";
 const char *const J1_PLA        = "PolyLite PLA @J1";
 

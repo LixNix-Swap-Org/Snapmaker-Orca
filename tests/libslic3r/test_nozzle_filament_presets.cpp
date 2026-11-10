@@ -38,10 +38,10 @@ const char *const U1_08 = "Snapmaker U1 (0.8 nozzle)";
 const char *const U1_PROCESS_04 = "0.20mm Standard @Snapmaker U1 (0.4 nozzle)";
 
 const char *const PLA_02 = "Generic PLA @U1 0.2 nozzle";
-const char *const PLA_04 = "Generic PLA";
+const char *const PLA_04 = "Generic PLA @U1 0.4 nozzle";
 const char *const PLA_06 = "Generic PLA @U1 0.6 nozzle";
 const char *const PLA_08 = "Generic PLA @U1 0.8 nozzle";
-const char *const TPU_04 = "Generic TPU";
+const char *const TPU_04 = "Generic TPU @U1 0.4 nozzle";
 
 // Every case loads its own bundle, so no case depends on what another one selected.
 std::unique_ptr<PresetBundle> load_snapmaker_bundle()
@@ -168,13 +168,13 @@ TEST_CASE("version_for finds the preset of a family for a machine preset", "[Noz
     CHECK(version_name(PLA_02, U1_08) == PLA_08);
     CHECK(version_name(PLA_06, U1_06) == PLA_06);
 
-    CHECK(version_name("Snapmaker PLA SnapSpeed @U1", U1_06) == "Snapmaker PLA SnapSpeed @U1 0.6 nozzle");
-    CHECK(version_name("Snapmaker PLA SnapSpeed @U1 0.6 nozzle", U1_04) == "Snapmaker PLA SnapSpeed @U1");
+    CHECK(version_name("Snapmaker PLA SnapSpeed @U1 0.4 nozzle", U1_06) == "Snapmaker PLA SnapSpeed @U1 0.6 nozzle");
+    CHECK(version_name("Snapmaker PLA SnapSpeed @U1 0.6 nozzle", U1_04) == "Snapmaker PLA SnapSpeed @U1 0.4 nozzle");
     // The A250 preset shares the alias, not the parent: no version of the U1 family, and the U1
     // presets are no versions of it.
-    CHECK(system_filament(*bundle, "Snapmaker PLA SnapSpeed").alias == system_filament(*bundle, "Snapmaker PLA SnapSpeed @U1").alias);
+    CHECK(system_filament(*bundle, "Snapmaker PLA SnapSpeed").alias == system_filament(*bundle, "Snapmaker PLA SnapSpeed @U1 0.4 nozzle").alias);
     CHECK(version_name("Snapmaker PLA SnapSpeed", U1_04).empty());
-    CHECK(version_name("Snapmaker PLA SnapSpeed @U1", "Snapmaker A250 (0.4 nozzle)").empty());
+    CHECK(version_name("Snapmaker PLA SnapSpeed @U1 0.4 nozzle", "Snapmaker A250 (0.4 nozzle)").empty());
 
     // No 0.2 version of the TPU.
     CHECK(version_name(TPU_04, U1_02).empty());
@@ -665,7 +665,7 @@ TEST_CASE("update_compatible keeps and repairs the slots per tool head", "[Nozzl
         select_reference_mix(*bundle, { PLA_04, PLA_02, "Generic TPU @U1 0.8 nozzle", "Snapmaker PLA SnapSpeed @U1 0.6 nozzle" });
         const std::vector<std::string> before = aliases(*bundle);
         bundle->update_compatible(PresetSelectCompatibleType::Always);
-        CHECK(bundle->filament_presets == std::vector<std::string>{ PLA_02, PLA_04, TPU_04, "Snapmaker PLA SnapSpeed @U1" });
+        CHECK(bundle->filament_presets == std::vector<std::string>{ PLA_02, PLA_04, TPU_04, "Snapmaker PLA SnapSpeed @U1 0.4 nozzle" });
         CHECK(aliases(*bundle) == before);
     }
     SECTION("Never touches nothing") {
@@ -1145,7 +1145,7 @@ namespace {
 
 const char *const USER_U1  = "Snapmaker U1";
 const char *const MATTE_02 = "Snapmaker PLA Matte @U1 0.2 nozzle";
-const char *const MATTE_04 = "Snapmaker PLA Matte @U1";
+const char *const MATTE_04 = "Snapmaker PLA Matte @U1 0.4 nozzle";
 const char *const MATTE_06 = "Snapmaker PLA Matte @U1 0.6 nozzle";
 const char *const MATTE_08 = "Snapmaker PLA Matte @U1 0.8 nozzle";
 
@@ -1425,7 +1425,7 @@ TEST_CASE("The log line of a slot names the trigger, the tool head, its size and
     target.head_size   = 0.4;
     target.preset_size = 0.4;
     CHECK(NozzleFilament::describe_target(target, "FlowType", { int(nvtStandard), int(nvtHighFlow) }) ==
-          "NozzleFilament: trigger=FlowType filament=2 head=2 size=0.4 flow=High Flow from=\"Generic PLA\" to=\"Generic PLA\" reason=Unchanged preset_size=0.4");
+          "NozzleFilament: trigger=FlowType filament=2 head=2 size=0.4 flow=High Flow from=\"Generic PLA @U1 0.4 nozzle\" to=\"Generic PLA @U1 0.4 nozzle\" reason=Unchanged preset_size=0.4");
     // A tool head beyond the flow types counts as Standard; a kept user preset names the version for the size.
     target.head        = 3;
     target.head_size   = 0.2;
@@ -1532,7 +1532,7 @@ TEST_CASE("A tool head adopts the per-extruder machine values of its size preset
 TEST_CASE("A user filament saved from a slot is pinned to the machine preset of the slot's extruder", "[NozzleFilament][FilamentFlow]")
 {
     auto bundle = load_snapmaker_bundle();
-    const char *const PETG_04 = "Generic PETG";
+    const char *const PETG_04 = "Generic PETG @U1 0.4 nozzle";
     const char *const PETG_06 = "Generic PETG @U1 0.6 nozzle";
     // The 0.6 mm printer preset with a 0.4 mm nozzle on extruder 2.
     select_u1(*bundle, { 0.6, 0.4, 0.6, 0.6 }, { PETG_06, PETG_04, PETG_06, PETG_06 }, U1_06);
@@ -1545,7 +1545,7 @@ TEST_CASE("A user filament saved from a slot is pinned to the machine preset of 
 TEST_CASE("A second user preset of a material keeps a user preset of another size where it is", "[NozzleFilament][FilamentFlow]")
 {
     auto bundle = load_snapmaker_bundle();
-    const char *const PETG_04 = "Generic PETG";
+    const char *const PETG_04 = "Generic PETG @U1 0.4 nozzle";
     const char *const PETG_06 = "Generic PETG @U1 0.6 nozzle";
     add_user_filament(*bundle, "My PETG @0.6", PETG_06);
     add_user_filament(*bundle, "My PETG", PETG_04);
@@ -1568,7 +1568,7 @@ TEST_CASE("A second user preset of a material keeps a user preset of another siz
 TEST_CASE("A user filament saved from a slot is pinned to the machine preset of the slot's extruder with the nozzle size rule off", "[NozzleFilament][FilamentFlow]")
 {
     auto bundle = load_snapmaker_bundle();
-    const char *const PETG_04 = "Generic PETG";
+    const char *const PETG_04 = "Generic PETG @U1 0.4 nozzle";
     const char *const PETG_06 = "Generic PETG @U1 0.6 nozzle";
     select_u1(*bundle, { 0.6, 0.4, 0.6, 0.6 }, { PETG_06, PETG_04, PETG_06, PETG_06 }, U1_06);
     bundle->nozzle_filament_enabled = false;
@@ -1579,7 +1579,7 @@ TEST_CASE("A user filament saved from a slot is pinned to the machine preset of 
 TEST_CASE("A filament saved under a new name takes over only the slots whose extruder it fits", "[NozzleFilament][FilamentFlow]")
 {
     auto bundle = load_snapmaker_bundle();
-    const char *const PETG_04 = "Generic PETG";
+    const char *const PETG_04 = "Generic PETG @U1 0.4 nozzle";
     const char *const PETG_06 = "Generic PETG @U1 0.6 nozzle";
     const char *const COPY    = "Generic PETG - Copy";
     // Slot 1 on a 0.6 mm extruder and slot 2 on a 0.4 mm one hold the same preset.
@@ -1605,7 +1605,7 @@ TEST_CASE("A filament saved under a new name takes over only the slots whose ext
 TEST_CASE("High Flow values are offered for a filament a High Flow extruder may print", "[NozzleFilament][FilamentFlow]")
 {
     auto bundle = load_snapmaker_bundle();
-    const char *const PETG_04 = "Generic PETG";
+    const char *const PETG_04 = "Generic PETG @U1 0.4 nozzle";
     const char *const PETG_06 = "Generic PETG @U1 0.6 nozzle";
     // The 0.6 mm printer preset with a 0.4 mm High Flow nozzle on extruder 2.
     select_u1(*bundle, { 0.6, 0.4, 0.6, 0.6 }, { PETG_06, PETG_04, PETG_06, PETG_06 }, U1_06);

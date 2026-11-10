@@ -94,7 +94,7 @@ void select_reference_setup(PresetBundle &bundle)
 {
     REQUIRE(bundle.printers.select_preset_by_name(U1_MACHINE, true));
     REQUIRE(bundle.prints.select_preset_by_name(U1_PROCESS, true));
-    bundle.filament_presets = {"Snapmaker PLA SnapSpeed @U1", "Snapmaker PETG HF", "Snapmaker PLA Matte @U1",
+    bundle.filament_presets = {"Snapmaker PLA SnapSpeed @U1 0.4 nozzle", "Snapmaker PETG HF @U1 0.4 nozzle", "Snapmaker PLA Matte @U1 0.4 nozzle",
                                "Snapmaker ABS @U1 0.4 nozzle"};
     REQUIRE(bundle.filaments.select_preset_by_name(bundle.filament_presets.front(), true));
     bundle.project_config.option<ConfigOptionInts>("filament_map", true)->values = {1, 2, 3, 4};
@@ -208,8 +208,8 @@ TEST_CASE("Converted Snapmaker filaments carry a Standard and a High Flow column
     const auto    loaded = load_snapmaker_bundle();
     PresetBundle &bundle = *loaded;
 
-    SECTION("Snapmaker PETG HF") {
-        const DynamicPrintConfig &petg = system_config(bundle.filaments, "Snapmaker PETG HF");
+    SECTION("Snapmaker PETG HF @U1 0.4 nozzle") {
+        const DynamicPrintConfig &petg = system_config(bundle.filaments, "Snapmaker PETG HF @U1 0.4 nozzle");
         CHECK(petg.option<ConfigOptionStrings>("filament_extruder_variant")->values == std::vector<std::string>{STANDARD, HIGH_FLOW});
         CHECK(vector_size(petg, "filament_max_volumetric_speed") == 2);
         CHECK(vector_size(petg, "nozzle_temperature") == 2);
@@ -224,7 +224,7 @@ TEST_CASE("Converted Snapmaker filaments carry a Standard and a High Flow column
     }
 
     SECTION("every variant key of a converted filament is as wide as its column list") {
-        for (const char *name : {"Snapmaker PETG HF", "Snapmaker PLA SnapSpeed @U1", "Snapmaker PLA Matte @U1", "Snapmaker ABS @U1 0.4 nozzle"}) {
+        for (const char *name : {"Snapmaker PETG HF @U1 0.4 nozzle", "Snapmaker PLA SnapSpeed @U1 0.4 nozzle", "Snapmaker PLA Matte @U1 0.4 nozzle", "Snapmaker ABS @U1 0.4 nozzle"}) {
             const DynamicPrintConfig &filament = system_config(bundle.filaments, name);
             for (const std::string &key : filament_options_with_variant) {
                 if (filament.option(key) == nullptr || filament.option(key)->is_scalar())
@@ -246,7 +246,7 @@ TEST_CASE("Converted Snapmaker filaments carry a Standard and a High Flow column
     }
 
     SECTION("pressure advance, fan, ramming and purge values are tuned per flow type") {
-        const DynamicPrintConfig &matte = system_config(bundle.filaments, "Snapmaker PLA Matte @U1");
+        const DynamicPrintConfig &matte = system_config(bundle.filaments, "Snapmaker PLA Matte @U1 0.4 nozzle");
         CHECK_THAT(matte.option<ConfigOptionFloats>("pressure_advance")->values, Catch::Matchers::Approx(std::vector<double>{0.02, 0.024}));
         CHECK(matte.option<ConfigOptionBools>("enable_pressure_advance")->values == std::vector<unsigned char>{0, 1});
         CHECK(matte.option<ConfigOptionInts>("additional_cooling_fan_speed")->values == std::vector<int>{80, 100});
@@ -255,9 +255,9 @@ TEST_CASE("Converted Snapmaker filaments carry a Standard and a High Flow column
         CHECK_THAT(abs.option<ConfigOptionFloats>("fan_max_speed")->values, Catch::Matchers::Approx(std::vector<double>{50., 60.}));
         CHECK_THAT(abs.option<ConfigOptionFloats>("filament_multitool_ramming_flow")->values, Catch::Matchers::Approx(std::vector<double>{20., 30.}));
         CHECK_THAT(abs.option<ConfigOptionFloats>("filament_multitool_ramming_volume")->values, Catch::Matchers::Approx(std::vector<double>{10., 5.}));
-        CHECK_THAT(abs.option<ConfigOptionFloats>("filament_minimal_purge_on_wipe_tower")->values, Catch::Matchers::Approx(std::vector<double>{30., 15.}));
+        CHECK_THAT(abs.option<ConfigOptionFloats>("filament_minimal_purge_on_wipe_tower")->values, Catch::Matchers::Approx(std::vector<double>{15., 15.}));
 
-        for (const char *name : {"Snapmaker PLA Matte @U1", "Snapmaker ABS @U1 0.4 nozzle", "Snapmaker PVA @U1"}) {
+        for (const char *name : {"Snapmaker PLA Matte @U1 0.4 nozzle", "Snapmaker ABS @U1 0.4 nozzle", "Snapmaker PVA @U1 0.4 nozzle"}) {
             const DynamicPrintConfig &filament = system_config(bundle.filaments, name);
             for (const std::string &key : promoted_filament_variant_keys()) {
                 INFO(name << ": " << key);

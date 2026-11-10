@@ -1176,7 +1176,7 @@ namespace {
 
 const char *const OWNER_MACHINE  = "Snapmaker U1 (0.4 nozzle)";
 const char *const OWNER_PROCESS  = "0.20mm High Quality @Snapmaker U1 (0.4 nozzle)";
-const char *const OWNER_FILAMENT = "Snapmaker PLA Matte @U1";
+const char *const OWNER_FILAMENT = "Snapmaker PLA Matte @U1 0.4 nozzle";
 
 struct OwnerPlateSlice
 {
@@ -1372,7 +1372,7 @@ TEST_CASE("On a plate of four nozzle sizes the High Flow tool head prints at the
 
 namespace {
 
-const char *const MATTE_0_4 = "Snapmaker PLA Matte @U1";
+const char *const MATTE_0_4 = "Snapmaker PLA Matte @U1 0.4 nozzle";
 const char *const MATTE_0_6 = "Snapmaker PLA Matte @U1 0.6 nozzle";
 const std::vector<double> OFFSIZE_DIAMETERS{0.6, 0.4, 0.6, 0.6};
 

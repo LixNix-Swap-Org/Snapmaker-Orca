@@ -722,7 +722,7 @@ TEST_CASE("A user preset that lowers a Standard value keeps the High Flow value 
     load_shipped_allow_list(); // evaluate() rates the filament on the High Flow tool head
     const auto    loaded = load_snapmaker_bundle();
     PresetBundle &bundle = *loaded;
-    const char   *parent_name = "Snapmaker PLA SnapSpeed @U1";
+    const char   *parent_name = "Snapmaker PLA SnapSpeed @U1 0.4 nozzle";
 
     const boost::filesystem::path user_dir = boost::filesystem::temp_directory_path() / boost::filesystem::unique_path("high-flow-user-%%%%-%%%%");
     boost::filesystem::create_directories(user_dir / "filament");

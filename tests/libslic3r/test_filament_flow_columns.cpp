@@ -197,7 +197,7 @@ TEST_CASE("Every per-column filament key keeps both columns through save and loa
     ScopedTemporaryDir dir("orca_filament_columns");
 
     SECTION("a user preset of a one-column preset, given High Flow values") {
-        const Preset *parent = bundle->filaments.find_preset("Generic PETG", false, true);
+        const Preset *parent = bundle->filaments.find_preset("Generic PETG @U1 0.4 nozzle", false, true);
         REQUIRE(parent != nullptr);
         REQUIRE(texts_of(parent->config, "filament_extruder_variant") == std::vector<std::string>{STANDARD});
         DynamicPrintConfig child = parent->config;
@@ -207,7 +207,7 @@ TEST_CASE("Every per-column filament key keeps both columns through save and loa
         check_round_trip(child, loaded.config);
     }
     SECTION("a user preset of a two-column Snapmaker preset") {
-        const Preset *parent = bundle->filaments.find_preset("Snapmaker PLA SnapSpeed @U1", false, true);
+        const Preset *parent = bundle->filaments.find_preset("Snapmaker PLA SnapSpeed @U1 0.4 nozzle", false, true);
         REQUIRE(parent != nullptr);
         REQUIRE(texts_of(parent->config, "filament_extruder_variant") == std::vector<std::string>{STANDARD, HIGH_FLOW});
         DynamicPrintConfig child = parent->config;
@@ -220,7 +220,7 @@ TEST_CASE("Every per-column filament key keeps both columns through save and loa
 TEST_CASE("A saved filament preset writes its columns in full and without nil", "[FilamentFlow]")
 {
     auto bundle = load_snapmaker_bundle();
-    const Preset *parent = bundle->filaments.find_preset("Generic PETG", false, true);
+    const Preset *parent = bundle->filaments.find_preset("Generic PETG @U1 0.4 nozzle", false, true);
     REQUIRE(parent != nullptr);
     REQUIRE(texts_of(parent->config, "filament_extruder_variant") == std::vector<std::string>{STANDARD});
     REQUIRE(texts_of(parent->config, "filament_flow_ratio") == std::vector<std::string>{"0.95"});
@@ -392,7 +392,7 @@ namespace {
 
 const char *const U1_MACHINE = "Snapmaker U1 (0.4 nozzle)";
 const char *const U1_PROCESS = "0.20mm Standard @Snapmaker U1 (0.4 nozzle)";
-const char *const PETG       = "Generic PETG";
+const char *const PETG       = "Generic PETG @U1 0.4 nozzle";
 
 void select_plate_with_high_flow_petg(PresetBundle &bundle, const std::vector<std::string> &slots)
 {

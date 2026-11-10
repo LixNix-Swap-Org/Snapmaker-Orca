@@ -160,7 +160,7 @@ struct FirstRun
         for (const std::string &name : u1_model().default_materials)
             if (const Preset *preset = bundle.filaments.find_preset(name, false); preset != nullptr && preset->is_visible && preset->is_compatible)
                 return name;
-        return "Generic PLA";
+        return "Generic PLA @U1 0.4 nozzle";
     }
 
     std::string report()
@@ -385,33 +385,40 @@ TEST_CASE("The default material rule ranks the filaments of a Snapmaker printer"
     };
 
     SECTION("the ranks") {
-        const std::string default_material = "Snapmaker PLA SnapSpeed @U1";
+        const std::string default_material = "Generic PLA @U1 0.4 nozzle";
         REQUIRE(std::find(model.default_materials.begin(), model.default_materials.end(), default_material) != model.default_materials.end());
         CHECK(bundle->default_material_rank(preset(default_material.c_str())) == 3);
-        CHECK(bundle->default_material_rank(preset("Generic PLA")) == 2);
-        CHECK(bundle->default_material_rank(preset("Generic PLA Silk")) == 2);
-        CHECK(bundle->default_material_rank(preset("Snapmaker PLA Basic @U1")) == 1);
-        CHECK(bundle->default_material_rank(preset("Generic ABS")) == 0);
+        CHECK(bundle->default_material_rank(preset("Generic PLA High Speed @U1 0.4 nozzle")) == 2);
+        CHECK(bundle->default_material_rank(preset("Generic PLA Silk @U1 0.4 nozzle")) == 2);
+        CHECK(bundle->default_material_rank(preset("Snapmaker PLA SnapSpeed @U1 0.4 nozzle")) == 1);
+        CHECK(bundle->default_material_rank(preset("Snapmaker PLA Basic @U1 0.4 nozzle")) == 1);
+        CHECK(bundle->default_material_rank(preset("Generic ABS @U1 0.4 nozzle")) == 0);
         CHECK(bundle->default_material_rank(preset("Snapmaker ABS @U1 0.4 nozzle")) == 0);
         CHECK(bundle->default_material_rank(bundle->filaments.default_preset()) == 0);
     }
 
     SECTION("a filament of another printer selected: the fallback name, the editor and the broken slots take the default material") {
-        // Printer switch with no filament chosen: the editor holds a PLA of another printer (the
-        // U1's default_filament_profile "Snapmaker PLA"); the U1's alphabetically first is Generic ABS.
+        // A default material that only the default material rank puts ahead of Generic PLA.
+        const std::string default_material = "Snapmaker PLA SnapSpeed @U1 0.4 nozzle";
+        for (VendorProfile::PrinterModel &m : bundle->vendors.at(SNAPMAKER).models)
+            if (m.id == U1_MODEL)
+                m.default_materials = { default_material };
+        REQUIRE(bundle->default_material_rank(preset(default_material.c_str())) == 3);
+        // Printer switch with no filament chosen: the editor holds a PLA of another printer (the U1's
+        // default_filament_profile "Generic PLA" names no U1 preset); the U1's alphabetically first is Generic ABS.
         REQUIRE(bundle->filaments.select_preset_by_name("Snapmaker PLA @J1", true));
         REQUIRE_FALSE(bundle->filaments.get_selected_preset().is_compatible);
         // The replacement of a placeholder slot (load_selections / update_selections) and of a
         // new slot without a tool head of another size.
-        CHECK(bundle->filament_slot_fallback_name() == "Snapmaker PLA SnapSpeed @U1");
-        CHECK(bundle->first_slot_fit(0).name == "Snapmaker PLA SnapSpeed @U1");
+        CHECK(bundle->filament_slot_fallback_name() == default_material);
+        CHECK(bundle->first_slot_fit(0).name == default_material);
         // The editor's filament and the slots whose preset is gone.
         bundle->filament_presets.assign(4, "no such filament");
         bundle->update_compatible(PresetSelectCompatibleType::Always);
         INFO("slots: " << joined(bundle->filament_presets));
-        CHECK(bundle->filaments.get_edited_preset().name == "Snapmaker PLA SnapSpeed @U1");
+        CHECK(bundle->filaments.get_edited_preset().name == default_material);
         for (const std::string &slot : bundle->filament_presets)
-            CHECK(slot == "Snapmaker PLA SnapSpeed @U1");
+            CHECK(slot == default_material);
     }
 
     SECTION("a chosen material is kept, the rule only breaks ties") {
