@@ -829,7 +829,7 @@ SCENARIO("union_ is idempotent", "[ClipperUtils]") {
     }
 }
 
-SCENARIO("closing∘opening round-trips a clean shape", "[ClipperUtils]") {
+SCENARIO("closing after opening round-trips a clean shape", "[ClipperUtils]") {
     GIVEN("a clean square") {
         Polygon square { { 0, 0 }, { 100, 0 }, { 100, 100 }, { 0, 100 } };
         WHEN("opening then closing with delta 5") {

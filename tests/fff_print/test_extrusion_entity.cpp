@@ -244,7 +244,7 @@ TEST_CASE("ExtrusionEntity: string_to_role exact golden", "[ExtrusionEntity]") {
     REQUIRE(ExtrusionEntity::string_to_role("inner wall") == erNone); // case-sensitive
 }
 
-TEST_CASE("ExtrusionEntity: role↔string full round-trip", "[ExtrusionEntity]") {
+TEST_CASE("ExtrusionEntity: role to string full round-trip", "[ExtrusionEntity]") {
     for (const auto& p : kRoleStringMap) {
         DYNAMIC_SECTION(p.str) {
             REQUIRE(ExtrusionEntity::string_to_role(ExtrusionEntity::role_to_string(p.role)) == p.role);

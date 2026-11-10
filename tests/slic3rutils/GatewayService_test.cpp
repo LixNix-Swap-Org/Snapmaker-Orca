@@ -155,7 +155,7 @@ struct UnresponsiveWebSocketServer
     asio::io_context                         io_context;
     asio::ip::tcp::acceptor                  acceptor{io_context, asio::ip::tcp::endpoint{asio::ip::tcp::v4(), 0}};
     websocket::stream<asio::ip::tcp::socket> stream{io_context};
-    std::thread                              thread{[this] { io_context.run(); }};
+    std::thread                              thread;
 
     UnresponsiveWebSocketServer()
     {
@@ -167,6 +167,8 @@ struct UnresponsiveWebSocketServer
                     stream.next_layer().close();
             });
         });
+        // run() returns at once while no work is queued.
+        thread = std::thread([this] { io_context.run(); });
     }
 
     ~UnresponsiveWebSocketServer()
