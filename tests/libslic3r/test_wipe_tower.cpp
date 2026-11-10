@@ -105,6 +105,37 @@ TEST_CASE("Brim width estimate matches each generator's loop quantization", "[Wi
     CHECK_THAT(WipeTower::estimate_brim_real_width(0.f, 0.4f, 0.2f, true), WithinAbs(0.f, 1e-6f));
 }
 
+TEST_CASE("A tool change plans rows of at least one purge line", "[WipeTower]") {
+    // 2.0 mm nozzles at 1.25 mm layers: 15 mm3 is 5.4 mm of 2.5 mm line, the ramming lines are 5 mm.
+    // Up to 15 mm wide, at most one line is left beside them: three rows of one line.
+    const auto [width, narrow, depth] = GENERATE(table<float, bool, double>({
+        { 30.f, false, 2.5 }, { 2.f, true, 7.5 }, { 10.f, true, 7.5 }, { 12.5f, true, 7.5 }, { 12.51f, true, 7.5 },
+        { 14.9f, true, 7.5 }, { 15.f, true, 7.5 } }));
+    WipeTower2::ToolChangeGeometry g;
+    g.widest_line_width = g.old_line_width = g.new_line_width = 2.5f;
+    g.layer_height                     = 1.25f;
+    g.ramming_line_width_multiplicator = 2.f;
+    g.wipe_volume                      = 15.f;
+    g.tower_width                      = width;
+    const WipeTower2::ToolChangeDepth d = WipeTower2::toolchange_depth(g);
+    CHECK(d.narrow == narrow);
+    CHECK_THAT(d.total(), WithinAbs(depth, 1e-4));
+}
+
+TEST_CASE("A tool change plans its ram rows over the span it rams across", "[WipeTower]") {
+    // 10 mm3 is 1.7 mm of 5 mm ramming line, rammed 3.75 mm in from each side: two rows in 9 mm, none in 7.5 mm.
+    const auto [width, depth] = GENERATE(table<float, double>({ { 9.f, 10. }, { 7.5f, 0. } }));
+    WipeTower2::ToolChangeGeometry g;
+    g.widest_line_width = g.old_line_width = g.new_line_width = 2.5f;
+    g.layer_height                     = 1.25f;
+    g.ramming_line_width_multiplicator = 2.f;
+    g.ramming                          = true;
+    g.ramming_volume                   = 10.f;
+    g.wipe_volume                      = 15.f;
+    g.tower_width                      = width;
+    CHECK_THAT(WipeTower2::toolchange_depth(g).ramming_depth, WithinAbs(depth, 1e-4));
+}
+
 // ---------------------------------------------------------------------------------------------
 // "No sparse layers": the compaction rule and the clearance it demands of the plate.
 // ---------------------------------------------------------------------------------------------

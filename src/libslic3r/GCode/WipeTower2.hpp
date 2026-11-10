@@ -84,6 +84,7 @@ public:
         float ramming_depth   = 0.f;
         float first_wipe_line = 0.f;
         float wiping_depth    = 0.f; // whole rows of the purging tool
+        bool  narrow          = false; // at most one purge line beside the ramming lines: rows of one line
         float total() const { return ramming_depth + wiping_depth; }
     };
     static ToolChangeDepth toolchange_depth(const ToolChangeGeometry &geometry);

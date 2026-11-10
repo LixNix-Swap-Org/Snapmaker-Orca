@@ -1669,7 +1669,7 @@ void WipeTower2::toolchange_Unload(WipeTowerWriter2&                 writer,
     float e_done    = 0;       // measures E move done from each segment
 
     // Do ramming when SEMM and ramming is enabled or when multi tool head when ramming is enabled on the multi tool.
-    const bool do_ramming = tool_ramming_enabled(m_current_tool);
+    const bool do_ramming = tool_ramming_enabled(m_current_tool) && xr - xl > float(EPSILON);
     const bool cold_ramming = m_is_mk4mmu3;
     // Snapmaker: the ramming pressure advance (enable_change_pressure_when_wiping) is set on the old
     // tool, still active until toolchange_Change(), and restored after the ram to its filament's value.
@@ -2525,17 +2525,22 @@ WipeTower2::ToolChangeDepth WipeTower2::toolchange_depth(const ToolChangeGeometr
     // The ram uses the OLD tool's own line width and the wipe the NEW tool's; the planned depths
     // must match the widths toolchange_Unload() / toolchange_Wipe() will actually use.
     const float ramming_lw        = g.old_line_width * g.ramming_line_width_multiplicator;
-    const float width             = g.tower_width - g.widest_line_width - 2.f * ramming_lw;
+    const float row_width         = g.tower_width - g.widest_line_width - 2.f * ramming_lw;
+    out.narrow                    = !(row_width > g.new_line_width);
+    const float width             = out.narrow ? g.new_line_width : row_width;
+    // toolchange_Unload() rams 1.5 wall lines in from each side.
+    const float ram_width         = std::min(width, g.tower_width - 3.f * g.widest_line_width);
+    const bool  ramming           = g.ramming && ram_width > float(EPSILON);
     const float length_to_extrude = volume_to_length(g.ramming_volume, ramming_lw, g.layer_height);
     // Orca: ramming depth only when toolchange_Unload() will actually ram, otherwise the unprinted
     // reservation leaves blank bands between the purge boxes.
-    const float num_lines = g.ramming ? std::max(1.0f, std::ceil(length_to_extrude / width)) : 0.f;
+    const float num_lines = ramming ? std::max(1.0f, std::ceil(length_to_extrude / ram_width)) : 0.f;
     out.ramming_depth     = num_lines * ramming_lw * g.ramming_step_multiplicator * g.extra_spacing_ramming;
     // first_wipe_line rides for free on the last (partially used) ramming row, which is already
     // covered by ramming_depth. Without ramming that row does not exist (and with a boundary wipe
     // start the ram band is quantized to whole rows), so the whole wipe volume needs reserved depth.
-    out.first_wipe_line = (g.ramming && !g.boundary_wipe_start) ?
-        -(width * ((length_to_extrude / width) - int(length_to_extrude / width)) - width) : 0.f;
+    out.first_wipe_line = (ramming && !g.boundary_wipe_start) ?
+        -(ram_width * ((length_to_extrude / ram_width) - int(length_to_extrude / ram_width)) - ram_width) : 0.f;
     const float first_wipe_volume = length_to_volume(out.first_wipe_line, g.new_line_width * g.extra_flow, g.layer_height);
     out.wiping_depth = get_wipe_depth(g.wipe_volume - first_wipe_volume, g.layer_height, g.new_line_width, g.new_line_width,
                                       g.extra_flow, g.extra_spacing_wipe, width);
@@ -2913,10 +2918,19 @@ void WipeTower2::generate(std::vector<std::vector<WipeTower::ToolChangeResult>>&
         // already include the extra-spacing factors, so sqrt(depth * width) preserves the
         // purge area. Replan every toolchange for the new width, then re-derive the depths.
         float max_depth = 0.f;
-        for (const auto& current_plan : m_plan)
+        bool  rams      = false;
+        for (const auto& current_plan : m_plan) {
             max_depth = std::max(max_depth, current_plan.depth);
+            for (const auto& toolchange : current_plan.tool_changes)
+                rams = rams || tool_ramming_enabled(toolchange.old_tool);
+            for (const auto& toolchange : current_plan.local_z_tool_changes)
+                rams = rams || tool_ramming_enabled(toolchange.old_tool);
+        }
         if (max_depth > EPSILON) {
             m_wipe_tower_width = align_ceil(std::sqrt(max_depth * m_wipe_tower_width), m_perimeter_width);
+            // toolchange_Unload() rams 1.5 wall lines in from each side; keep one line between them.
+            if (rams)
+                m_wipe_tower_width = std::max(m_wipe_tower_width, 4.f * m_perimeter_width);
             for (size_t idx = 0; idx < m_plan.size(); ++idx) {
                 for (auto& toolchange : m_plan[idx].tool_changes)
                     toolchange = set_toolchange(toolchange.old_tool, toolchange.new_tool,

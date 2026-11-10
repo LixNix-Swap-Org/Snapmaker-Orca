@@ -107,7 +107,7 @@ TEST_CASE("A Type2 tower reserves the planned depth of every tool change", "[Wip
     config.set_key_value("filament_multitool_ramming", new ConfigOptionBools({false, false}));
     config.set_key_value("filament_multitool_ramming_volume", new ConfigOptionFloats({10., 10.}));
     config.set_key_value("filament_multitool_ramming_flow", new ConfigOptionFloats({10., 10.}));
-    // 0.2 -> 0.8: the 1.0 mm lines of the new tool on 48.5 mm rows (50 - the 1.0 mm wall - two
+    // 0.2 -> 0.8: the 1.0 mm lines of the new tool on 48 mm rows (50 - the 1.0 mm wall - two
     // 0.5 mm ramming lines of the old tool), 522 mm of line = 11 whole rows of 1.0 mm, plus the wall.
     WipeTower2::ToolChangeGeometry g;
     g.tower_width                      = 50.f;
@@ -123,7 +123,7 @@ TEST_CASE("A Type2 tower reserves the planned depth of every tool change", "[Wip
     const double without_ramming = estimate(config, 2, 0.2, 5.).depth;
     CHECK_THAT(without_ramming, WithinAbs(planned.total() + 1., 1e-4));
 
-    // The old tool rams 10 mm3 as three 0.5 mm lines (109 mm of line on 48.5 mm rows): with the gap
+    // The old tool rams 10 mm3 as three 0.5 mm lines (109 mm of line over its 47 mm span): with the gap
     // wall the purge restarts below the band, so the band adds its whole depth.
     config.set_key_value("filament_multitool_ramming", new ConfigOptionBools({true, true}));
     g.ramming             = true;

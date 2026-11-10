@@ -214,7 +214,7 @@ WipeTowerFootprint estimate_wipe_tower_footprint(const ConfigBase &config, WipeT
                                                                                       : std::vector<std::vector<float>>();
     const float widest_line   = float((nozzle_opt != nullptr && !nozzle_opt->values.empty()
                                        ? *std::max_element(nozzle_opt->values.begin(), nozzle_opt->values.end()) : nozzle_diameter) * 1.25);
-    auto type2_depth = [&](double tower_width) {
+    auto type2_depth = [&](double tower_width, bool *narrow = nullptr, bool *rams = nullptr) {
         const bool   semm      = opt_bool("single_extruder_multi_material");
         const bool   gap_wall  = opt_bool("prime_tower_skip_points") && opt_bool("wipe_tower_wall_gap") &&
                                  opt_enum("wipe_tower_wall_type", int(WipeTowerWallType::wtwRectangle)) != int(WipeTowerWallType::wtwCone);
@@ -263,7 +263,12 @@ WipeTowerFootprint estimate_wipe_tower_footprint(const ConfigBase &config, WipeT
             g.extra_flow                       = float(extra_flow);
             g.extra_spacing_wipe               = float(extra_spacing * extra_flow);
             g.extra_spacing_ramming            = float(extra_spacing);
-            depth += WipeTower2::toolchange_depth(g).total();
+            const WipeTower2::ToolChangeDepth planned = WipeTower2::toolchange_depth(g);
+            if (narrow != nullptr && planned.narrow)
+                *narrow = true;
+            if (rams != nullptr && g.ramming)
+                *rams = true;
+            depth += planned.total();
         }
         return depth + widest_line;
     };
@@ -280,7 +285,18 @@ WipeTowerFootprint estimate_wipe_tower_footprint(const ConfigBase &config, WipeT
             // WipeTower2::generate() squares the rib tower: the width becomes sqrt(depth x width)
             // (rounded up to the wall line), every change is planned again for it, and the depth
             // follows from that plan.
-            const double square = std::ceil(std::sqrt(type2_depth(width) * width) / widest_line) * widest_line;
+            bool         rams      = false;
+            const double unsquared = type2_depth(width, nullptr, &rams);
+            double       square    = std::ceil(std::sqrt(unsquared * width) / widest_line) * widest_line;
+            // generate() squares the rows without the wall; follow it where its rows are one purge line.
+            const float rows_square = std::ceil(std::sqrt(float(unsquared - widest_line) * float(width)) / widest_line) * widest_line;
+            bool        narrow      = false;
+            type2_depth(rows_square, &narrow);
+            if (narrow)
+                square = rows_square;
+            // generate() keeps a ramming tower at least four wall lines wide.
+            if (rams)
+                square = std::max(square, 4. * widest_line);
             side = WipeTower::rib_footprint_side(float(square), float(type2_depth(square)), float(rib_width), float(extra_rib_length), float(max_object_height));
         } else {
             // Type2 squares the tower from its purge volume; Type1 with no purge list (a lone

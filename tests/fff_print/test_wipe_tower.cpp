@@ -368,6 +368,78 @@ TEST_CASE("Generating the tower keeps its reported width current", "[WipeTower]"
     CHECK(data.width <= data.depth + EPSILON);
 }
 
+TEST_CASE("A tower too narrow for its ramming lines is generated as reserved", "[WipeTower]")
+{
+    // 2.5 mm lines: in 10 mm (the rib squares to it) 5 or 3.5 mm ramming lines leave -2.5 or 0.5 mm, so three rows and the wall.
+    // In 7.5 mm nothing is left for the ram; only a ramming rib widens to 10 mm and rams one 5 mm row above the three.
+    const auto [wall_type, width, ratio, ramming, tower_width, depth] = GENERATE(table<std::string, std::string, std::string, std::string, double, double>({
+        { "rib", "30", "2", "0,0", 10., 10. }, { "rib", "30", "1.4", "0,0", 10., 10. }, { "rectangle", "10", "2", "0,0", 10., 10. },
+        { "rectangle", "10", "1.4", "0,0", 10., 10. }, { "rectangle", "7.5", "2", "1,1", 7.5, 10. }, { "rib", "7.5", "2", "0,0", 7.5, 10. },
+        { "rib", "7.5", "2", "1,1", 10., 15. } }));
+    const DynamicPrintConfig config = multifilament_config(2, {
+        { "outer_wall_filament_id",               "2" },
+        { "enable_prime_tower",                   "1" },
+        { "wipe_tower_type",                      "type2" },
+        { "wipe_tower_wall_type",                 wall_type },
+        { "prime_tower_width",                    width },
+        { "nozzle_diameter",                      "2.0" },
+        { "layer_height",                         "1.25" },
+        { "initial_layer_print_height",           "1.25" },
+        { "prime_volume",                         "15" },
+        { "filament_minimal_purge_on_wipe_tower", "15,15" },
+        { "ramming_line_width_ratio",             ratio },
+        { "filament_multitool_ramming",           ramming },
+        { "filament_multitool_ramming_volume",    "10,10" },
+        { "filament_multitool_ramming_flow",      "10,10" },
+        { "prime_tower_skip_points",              "1" },
+        { "wipe_tower_wall_gap",                  "1" },
+        { "wipe_tower_extra_spacing",             "100%" },
+        { "wipe_tower_extra_flow",                "100%" },
+        { "wipe_tower_rib_width",                 "8" },
+        { "wipe_tower_extra_rib_length",          "0" },
+        { "prime_tower_brim_width",               "3" },
+        { "purge_in_prime_tower",                 "0" },
+        { "single_extruder_multi_material",       "0" },
+        { "timelapse_type",                       "0" },
+        { "enable_wrapping_detection",            "0" },
+        { "raft_layers",                          "0" },
+        { "wipe_tower_x",                         "40" }, // inside the 200x200 test bed
+        { "wipe_tower_y",                         "40" } });
+
+    Print print;
+    Model model;
+    init_print({ cube(20) }, print, model, config);
+    print.apply(model, config);
+    // Read before process() regenerates the data in place.
+    const WipeTowerData &reserved       = print.wipe_tower_data(2);
+    const double         reserved_width = reserved.width, reserved_depth = reserved.depth, reserved_brim = reserved.brim_width;
+
+    print.process();
+    REQUIRE(print.has_wipe_tower());
+    const WipeTowerData &data = print.wipe_tower_data();
+    CHECK_THAT(data.width, Catch::Matchers::WithinAbs(tower_width, 1e-4));
+    CHECK_THAT(data.depth, Catch::Matchers::WithinAbs(depth, 1e-4));
+    CHECK_THAT(reserved_brim, Catch::Matchers::WithinAbs(data.brim_width, 1e-4));
+
+    REQUIRE(data.wipe_tower_mesh_data.has_value());
+    const BoundingBox built   = get_extents(data.wipe_tower_mesh_data->bottom);
+    const double      built_x = unscaled(built.size().x());
+    const double      built_y = unscaled(built.size().y());
+    INFO("reserved " << reserved_width << " x " << reserved_depth << ", built " << built_x << " x " << built_y);
+    if (wall_type == "rib") {
+        // The built first layer rounds the rib ends off inside the reserved square.
+        CHECK_THAT(reserved_width, Catch::Matchers::WithinAbs(WipeTower::rib_footprint_side(float(tower_width), float(depth), 8.f, 0.f, 20.f), 1e-4));
+        CHECK_THAT(reserved_depth, Catch::Matchers::WithinAbs(reserved_width, 1e-9));
+        CHECK(built_x <= reserved_width + 2. * reserved_brim + 1e-3);
+        CHECK(built_y <= reserved_depth + 2. * reserved_brim + 1e-3);
+    } else {
+        CHECK_THAT(reserved_width, Catch::Matchers::WithinAbs(tower_width, 1e-4));
+        CHECK_THAT(reserved_depth, Catch::Matchers::WithinAbs(depth, 1e-4));
+        CHECK_THAT(built_x, Catch::Matchers::WithinAbs(reserved_width + 2. * reserved_brim, 1e-3));
+        CHECK_THAT(built_y, Catch::Matchers::WithinAbs(reserved_depth + 2. * reserved_brim, 1e-3));
+    }
+}
+
 TEST_CASE("A single-filament plate reserves a tower only when one is actually printed", "[WipeTower]")
 {
     // The estimate has to answer this the way Print::apply does: reporting no tower for one
