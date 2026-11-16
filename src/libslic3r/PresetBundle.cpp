@@ -1554,24 +1554,20 @@ void PresetBundle::reset_project_embedded_presets()
     //update filament_presets
     for (size_t i = 0; i < filament_presets.size(); ++ i)
     {
-        Preset* selected_filament = this->filaments.find_preset(filament_presets[i], false);
+        Preset* selected_filament = this->filaments.find_preset2(filament_presets[i], false);
         if (!selected_filament) {
-            //it should be the project embedded presets
+            // The project preset may have been removed. Resolve the printer's default as well,
+            // since it may still refer to a renamed system preset.
             Preset& current_printer = this->printers.get_selected_preset();
             const std::vector<std::string> &prefered_filament_profiles = current_printer.config.option<ConfigOptionStrings>("default_filament_profile")->values;
-            const std::string prefered_filament_profile = prefered_filament_profiles.empty() ? std::string() : prefered_filament_profiles.front();
-            if (!prefered_filament_profile.empty()) {
+            if (!prefered_filament_profiles.empty()) {
                 // Check if preferred filament exists and is visible
-                const Preset* preferred_preset = this->filaments.find_preset(prefered_filament_profile, false);
-                if (preferred_preset && preferred_preset->is_visible) {
-                    filament_presets[i] = prefered_filament_profile;
-                } else {
-                    // Fall back to first visible filament
-                    filament_presets[i] = this->filaments.first_visible().name;
-                }
-            } else
-                filament_presets[i] = this->filaments.first_visible().name;
+                Preset* preferred_preset = this->filaments.find_preset2(prefered_filament_profiles.front(), false);
+                if (preferred_preset && preferred_preset->is_visible)
+                    selected_filament = preferred_preset;
+            }
         }
+        filament_presets[i] = selected_filament ? selected_filament->name : this->filaments.first_visible().name;
     }
 }
 
@@ -2692,7 +2688,7 @@ PresetsConfigSubstitutions PresetBundle::import_presets(std::vector<std::string>
             bool has_bundle_structure = false;
             BundleMetadata metadata;
             fs::path metadata_path = temp_folder / BUNDLE_STRUCTURE_JSON_NAME;
-            status = mz_zip_reader_extract_file_to_file(&zip_archive, BUNDLE_STRUCTURE_JSON_NAME, encode_path(metadata_path.string().c_str()).c_str(), MZ_ZIP_FLAG_CASE_SENSITIVE);
+            status = mz_zip_reader_extract_file_to_file(&zip_archive, BUNDLE_STRUCTURE_JSON_NAME, metadata_path.string().c_str(), MZ_ZIP_FLAG_CASE_SENSITIVE);
             if (status) {
                 if (metadata.load_from_json(metadata_path.string())) {
                     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << " Found bundle_id: " << metadata.id << " from " << BUNDLE_STRUCTURE_JSON_NAME;
@@ -2775,7 +2771,7 @@ PresetsConfigSubstitutions PresetBundle::import_presets(std::vector<std::string>
                     // create target file path
                     std::string target_file_path = boost::filesystem::path(temp_folder / file_name).make_preferred().string();
 
-                    status = mz_zip_reader_extract_to_file(&zip_archive, i, encode_path(target_file_path.c_str()).c_str(), MZ_ZIP_FLAG_CASE_SENSITIVE);
+                    status = mz_zip_reader_extract_to_file(&zip_archive, i, target_file_path.c_str(), MZ_ZIP_FLAG_CASE_SENSITIVE);
                     // target file is opened
                     if (MZ_FALSE == status) {
                         BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << " Failed to open target file: " << target_file_path;
@@ -4048,7 +4044,7 @@ void PresetBundle::save_changes_for_preset(const std::string& new_name, Preset::
     // if we want to save just some from selected options
     if (!unselected_options.empty()) {
         // revert unselected options to the old values
-        presets.get_edited_preset().config.apply_only(presets.get_selected_preset().config, unselected_options);
+        revert_unselected_options(presets, presets.get_edited_preset().config, unselected_options);
     }
 
     // Save the preset into Slic3r::data_dir / presets / section_name / preset_name.ini
@@ -4063,6 +4059,63 @@ void PresetBundle::save_changes_for_preset(const std::string& new_name, Preset::
         // synchronize the first filament presets.
         set_filament_preset(0, filaments.get_selected_preset_name());
     }
+}
+
+void PresetBundle::revert_unselected_options(PresetCollection& presets, DynamicPrintConfig& config, const std::vector<std::string>& unselected_options)
+{
+    const DynamicPrintConfig& saved = presets.get_selected_preset().config;
+    DynamicPrintConfig        storage;
+    const DynamicPrintConfig& reference = presets.type() == Preset::TYPE_PRINT    ? PerHeadProcess::reference_in_layout_of(config, saved, storage) :
+                                          presets.type() == Preset::TYPE_FILAMENT ? filament_reference_in_layout_of(config, saved, storage) :
+                                                                                    saved;
+    config.apply_only(reference, unselected_options);
+    if (presets.type() != Preset::TYPE_PRINT || !PerHeadProcess::is_wide(config))
+        return;
+
+    // A reverted extruder column takes its mark from the selected preset (PerHeadProcess I3, I4).
+    const PerHeadProcess::Layout                          layout = PerHeadProcess::layout_of(config);
+    std::set<size_t>                                      heads;
+    std::vector<std::pair<std::string, NozzleVolumeType>> shared;
+    for (const std::string& option : unselected_options) {
+        const size_t hash = option.find('#');
+        if (hash == std::string::npos)
+            continue;
+        const std::string key    = option.substr(0, hash);
+        const size_t      column = size_t(std::atoi(option.c_str() + hash + 1));
+        if (column >= layout.size() || layout.ids[column] < 0 || PerHeadProcess::head_editable_keys().count(key) == 0)
+            continue;
+        if (layout.ids[column] == 0) {
+            shared.emplace_back(key, PerHeadProcess::variant_names_type(layout.variants[column], nvtHighFlow) ? nvtHighFlow : nvtStandard);
+            continue;
+        }
+        const size_t head   = size_t(layout.ids[column] - 1);
+        const bool   marked = PerHeadProcess::is_marked(reference, column, key);
+        if (marked == PerHeadProcess::is_marked(config, column, key))
+            continue;
+        if (marked)
+            PerHeadProcess::set_head_value(config, head, key, int(column));
+        else
+            PerHeadProcess::clear_head_value(config, head, key);
+        heads.insert(head);
+    }
+    // Extruder columns without a value of their own follow a reverted shared column (I3).
+    for (const auto& [key, flow] : shared)
+        PerHeadProcess::set_shared_value(config, key, flow);
+    // An extruder left with values of the selected preset only takes back the nozzle size recorded for them.
+    for (size_t head : heads) {
+        const std::vector<std::string> keys       = PerHeadProcess::head_override_keys(config, head);
+        const std::vector<std::string> saved_keys = PerHeadProcess::head_override_keys(reference, head);
+        if (keys.empty() || !std::includes(saved_keys.begin(), saved_keys.end(), keys.begin(), keys.end()))
+            continue;
+        const auto*               from   = reference.option<ConfigOptionStrings>(PerHeadProcess::nozzle_key);
+        std::vector<std::string>& stamps = config.option<ConfigOptionStrings>(PerHeadProcess::nozzle_key, true)->values;
+        stamps.resize(std::max(stamps.size(), head + 1));
+        stamps[head] = from != nullptr && head < from->values.size() ? from->values[head] : std::string();
+        while (!stamps.empty() && stamps.back().empty())
+            stamps.pop_back();
+    }
+    if (PerHeadProcess::marker_empty(config))
+        PerHeadProcess::narrow(config);
 }
 
 void PresetBundle::load_installed_filaments(AppConfig &config)
@@ -7259,6 +7312,9 @@ void PresetBundle::load_config_file_config(const std::string &name_or_path, bool
 
 	this->update_compatible(PresetSelectCompatibleType::Never);
     this->update_multi_material_filament_presets();
+    // The call above does not resize the colour and map arrays, which must match filament_presets.
+    if (printer_technology == ptFFF && this->filament_presets.size() > this->project_config.option<ConfigOptionStrings>("filament_colour")->values.size())
+        this->set_num_filaments(this->filament_presets.size());
 
     // A "published" 3MF project overlays the author-selected published keys onto the user's
     // currently-selected (edited) process preset. Keys that cannot be applied are collected for

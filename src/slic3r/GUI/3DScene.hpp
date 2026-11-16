@@ -51,7 +51,6 @@ extern Slic3r::ColorRGBA              adjust_color_for_rendering(const Slic3r::C
 
 namespace Slic3r {
 namespace GUI {
-    class Size;
     struct Camera;
     class MeshLod;
 }
@@ -257,7 +256,7 @@ public:
 
     // Snapmaker Orca: render LOD, the reduced models of this mesh, shared by its instances; null if
     // none. MeshLodCache / MeshLodPool supersede upstream #737 / #844 (g_meshVolumesMap,
-    // SimplifyMesh() ...). Never set for GLWipeTowerVolume, whose render_with_outline() is render().
+    // SimplifyMesh() ...). Never set for GLWipeTowerVolume.
     std::shared_ptr<GUI::MeshLod> m_lod;
     // Written by GLVolumeCollection::update_lod() only, once per scene pass, and read by the
     // colour pass (draw_model()) and the shadow pass (shadow_model()) of that scene pass, so the
@@ -392,9 +391,6 @@ public:
 
     virtual void        render();
 
-    //BBS: add outline related logic and add virtual specifier
-    virtual void render_with_outline(const GUI::Size& cnv_size);
-
     //BBS: add simple render function for thumbnail
     void simple_render(GLShaderProgram* shader, ModelObjectPtrs& model_objects, std::vector<ColorRGBA>& extruder_colors, bool ban_light =false, bool ban_color_volume = false);
     // Snapmaker Orca: whether simple_render() draws this volume from its painted (multi material
@@ -437,10 +433,11 @@ class GLWipeTowerVolume : public GLVolume {
 public:
     GLWipeTowerVolume(const std::vector<ColorRGBA>& colors);
     void render() override;
-    void render_with_outline(const GUI::Size& cnv_size) override { render(); }
 
     std::vector<GUI::GLModel> model_per_colors;
     bool                              IsTransparent();
+    const std::vector<ColorRGBA>&     colors() const { return m_colors; }
+    std::vector<ColorRGBA>&           colors() { return m_colors; }
 
 private:
     std::vector<ColorRGBA> m_colors;
@@ -567,7 +564,6 @@ public:
 
     float get_selection_support_normal_z() const;
     // Render the volumes by OpenGL.
-    //BBS: add outline drawing logic
     // Snapmaker: the camera is optional; when supplied the renderer additionally performs CPU
     // frustum culling. Pass nullptr (or use the matrix-only overload below) when the caller
     // renders through a matrix pair that does not belong to the plater camera (thumbnails, ...).
@@ -575,12 +571,13 @@ public:
                 bool                                  disable_cullface,
                 const Transform3d &                   view_matrix,
                 const Transform3d&                    projection_matrix,
-                const GUI::Size&                      cnv_size,
                 std::function<bool(const GLVolume &)> filter_func   = std::function<bool(const GLVolume &)>(),
                 bool                                  partly_inside_enable =true,
                 // Per-extruder printable heights (extruder_printable_height); null / size<=1
                 // leaves the shader's extruder_printable_heights flag at 0.0 (single-extruder = inert).
                 std::vector<double> *                 printable_heights = nullptr,
+                // Collects the selected volumes drawn, marked in the stencil for SelectionOutline.
+                std::vector<GLVolume*> *              outlined_volumes = nullptr,
                 // Snapmaker: when non-null, volumes outside the camera frustum are skipped.
                 const GUI::Camera *                   camera = nullptr
            ) const;
@@ -589,10 +586,10 @@ public:
     void render(ERenderType                           type,
                 bool                                  disable_cullface,
                 const GUI::Camera&                    camera,
-                const GUI::Size&                      cnv_size,
                 std::function<bool(const GLVolume &)> filter_func   = std::function<bool(const GLVolume &)>(),
                 bool                                  partly_inside_enable =true,
-                std::vector<double> *                 printable_heights = nullptr
+                std::vector<double> *                 printable_heights = nullptr,
+                std::vector<GLVolume*> *              outlined_volumes = nullptr
            ) const;
 
     // Clear the geometry

@@ -817,9 +817,7 @@ TEST_CASE("Local-Z plans follow repeated object and part filament changes", "[Mi
     config.set("enable_prime_tower", false);
     config.set("flush_into_infill", true);
 
-    bool assign_part = false;
-    SECTION("Object assignment") {}
-    SECTION("Part assignment") { assign_part = true; }
+    const bool assign_part = GENERATE(false, true);
     ModelConfig& assignment = assign_part ? volume->config : object->config;
 
     Print print;
@@ -850,13 +848,12 @@ TEST_CASE("Local-Z plans follow repeated object and part filament changes", "[Mi
 TEST_CASE("Local-Z two-color sublayers preserve requested ratios within height bounds", "[MixedFilament][LocalZ][Ratios]")
 {
     MixedAutoGenerateGuard auto_generate(false);
-    bool                   painted           = false;
-    bool                   independent_rows  = false;
-    bool                   direct_multicolor = true;
-    SECTION("Whole object") {}
-    SECTION("Painted surface") { painted = true; }
-    SECTION("Independent mixed regions") { independent_rows = true; }
-    SECTION("Whole object without direct multicolor") { direct_multicolor = false; }
+    const auto [variant, painted, independent_rows, direct_multicolor] = GENERATE(table<const char *, bool, bool, bool>({
+        { "Whole object",                           false, false, true },
+        { "Painted surface",                        true,  false, true },
+        { "Independent mixed regions",              false, true,  true },
+        { "Whole object without direct multicolor", false, false, false } }));
+    CAPTURE(variant);
 
     struct RatioCase
     {
@@ -1107,8 +1104,9 @@ TEST_CASE("Filament changes retain slices without whole-object Local-Z", "[Mixed
     config.set("enable_prime_tower", false);
     config.set("dithering_local_z_mode", true);
     config.set("dithering_local_z_whole_objects", true);
-    SECTION("Local-Z disabled") { config.set("dithering_local_z_mode", false); }
-    SECTION("Full domain disabled") { config.set("dithering_local_z_whole_objects", false); }
+    const std::string disabled = GENERATE(as<std::string>{}, "dithering_local_z_mode", "dithering_local_z_whole_objects");
+    CAPTURE(disabled);
+    config.set(disabled, false);
 
     Print print;
     print.set_status_silent();
@@ -1194,59 +1192,65 @@ TEST_CASE("Local-Z layers preserve mixed infill when purge overrides are enabled
     }
 
     bool expect_subdivision = true;
-    SECTION("Mixed object is collected after an ordinary purge object") {}
+    const auto check_flushing = [&]() {
+        // The second object must protect the whole shared layer, even the first object's support and infill.
+        PrintObject *mixed_object = *(print.objects().end() - 1);
+        mixed_object->set_local_z_plan({interval}, std::move(plans));
+        ToolOrdering ordering(print, 0);
+        LayerTools&  mixed_layer = ordering.tools_for_layer(0.4);
+        CHECK(mixed_layer.has_local_z_subdivision == expect_subdivision);
+        auto& wiping = mixed_layer.wiping_extrusions();
+        for (const PrintObject* object : print.objects()) {
+            const auto& fill = static_cast<const ExtrusionEntityCollection&>(*object->get_layer(1)->get_region(0)->fills.entities.front());
+            CHECK(wiping.is_overriddable(fill, print.config(), *object, region) == !expect_subdivision);
+            CHECK(wiping.is_support_overriddable(erSupportMaterial, *object) == !expect_subdivision);
+            CHECK(wiping.is_support_overriddable(erSupportMaterialInterface, *object) == !expect_subdivision);
+        }
+        const float remaining = wiping.mark_wiping_extrusions(print, 0, 1, 1.f);
+        CHECK(remaining == (expect_subdivision ? 1.f : 0.f));
+        wiping.ensure_perimeters_infills_order(print);
+        CHECK(wiping.is_anything_overridden() == !expect_subdivision);
+
+        for (double print_z : {0.2, 0.6}) {
+            LayerTools& ordinary_layer = ordering.tools_for_layer(print_z);
+            CHECK_FALSE(ordinary_layer.has_local_z_subdivision);
+            auto& ordinary_wiping = ordinary_layer.wiping_extrusions();
+            CHECK(ordinary_wiping.mark_wiping_extrusions(print, 0, 1, 1.f) == 0.f);
+            CHECK(ordinary_wiping.is_anything_overridden());
+        }
+
+        ToolOrdering sequential(*print.objects().back(), 0);
+        CHECK(sequential.tools_for_layer(0.4).has_local_z_subdivision == expect_subdivision);
+        ToolOrdering ordinary_sequential(*print.objects().front(), 0);
+        CHECK_FALSE(ordinary_sequential.tools_for_layer(0.4).has_local_z_subdivision);
+    };
+
+    SECTION("Mixed object is collected after an ordinary purge object") { check_flushing(); }
     SECTION("Single-pass intervals keep ordinary flushing")
     {
         interval.sublayer_count = 1;
         expect_subdivision      = false;
+        check_flushing();
     }
     SECTION("Unmixed intervals keep ordinary flushing")
     {
         interval.has_mixed_paint = false;
         expect_subdivision       = false;
+        check_flushing();
     }
     SECTION("Unsplit plans keep ordinary flushing")
     {
         for (SubLayerPlan& plan : plans)
             plan.split_interval = false;
         expect_subdivision = false;
+        check_flushing();
     }
     SECTION("Missing plans keep ordinary flushing")
     {
         plans.clear();
         expect_subdivision = false;
+        check_flushing();
     }
-
-    // The second object must protect the whole shared layer, even the first object's support and infill.
-    PrintObject *mixed_object = *(print.objects().end() - 1);
-    mixed_object->set_local_z_plan({interval}, std::move(plans));
-    ToolOrdering ordering(print, 0);
-    LayerTools&  mixed_layer = ordering.tools_for_layer(0.4);
-    CHECK(mixed_layer.has_local_z_subdivision == expect_subdivision);
-    auto& wiping = mixed_layer.wiping_extrusions();
-    for (const PrintObject* object : print.objects()) {
-        const auto& fill = static_cast<const ExtrusionEntityCollection&>(*object->get_layer(1)->get_region(0)->fills.entities.front());
-        CHECK(wiping.is_overriddable(fill, print.config(), *object, region) == !expect_subdivision);
-        CHECK(wiping.is_support_overriddable(erSupportMaterial, *object) == !expect_subdivision);
-        CHECK(wiping.is_support_overriddable(erSupportMaterialInterface, *object) == !expect_subdivision);
-    }
-    const float remaining = wiping.mark_wiping_extrusions(print, 0, 1, 1.f);
-    CHECK(remaining == (expect_subdivision ? 1.f : 0.f));
-    wiping.ensure_perimeters_infills_order(print);
-    CHECK(wiping.is_anything_overridden() == !expect_subdivision);
-
-    for (double print_z : {0.2, 0.6}) {
-        LayerTools& ordinary_layer = ordering.tools_for_layer(print_z);
-        CHECK_FALSE(ordinary_layer.has_local_z_subdivision);
-        auto& ordinary_wiping = ordinary_layer.wiping_extrusions();
-        CHECK(ordinary_wiping.mark_wiping_extrusions(print, 0, 1, 1.f) == 0.f);
-        CHECK(ordinary_wiping.is_anything_overridden());
-    }
-
-    ToolOrdering sequential(*print.objects().back(), 0);
-    CHECK(sequential.tools_for_layer(0.4).has_local_z_subdivision == expect_subdivision);
-    ToolOrdering ordinary_sequential(*print.objects().front(), 0);
-    CHECK_FALSE(ordinary_sequential.tools_for_layer(0.4).has_local_z_subdivision);
 }
 
 TEST_CASE("Mixed filament painted-region resolver collapses ordinary mixed rows to the active physical extruder", "[MixedFilament]")
@@ -1355,62 +1359,76 @@ TEST_CASE("Painting the assigned mixed filament preserves a continuous perimeter
 
     bool assign_part = false;
     bool paint_top   = false;
-    SECTION("Object assignment") {}
-    SECTION("Part assignment") { assign_part = true; }
-    SECTION("Region collapse disabled") { config.set("mixed_filament_region_collapse", false); }
+    const auto check_continuous_perimeter = [&]() {
+        (assign_part ? volume->config : object->config).set("extruder", mixed_id);
+
+        // Leave the other faces at the assigned mix. Top paint also covers a zone
+        // whose local cadence starts later than the object's first layer.
+        TriangleSelector selector(volume->mesh());
+        selector.set_facet(paint_top ? 2 : 4, EnforcerBlockerType(mixed_id));
+        selector.set_facet(paint_top ? 3 : 5, EnforcerBlockerType(mixed_id));
+        REQUIRE(volume->mmu_segmentation_facets.set(selector));
+
+        Print print;
+        print.set_status_silent();
+        print.apply(model, config);
+        REQUIRE(print.objects().size() == 1);
+        PrintObject* print_object = print.get_object(0);
+        print_object->slice();
+        REQUIRE(print_object->layer_count() > 1);
+
+        for (const Layer* layer : print_object->layers()) {
+            size_t populated_regions = 0;
+            for (const LayerRegion* region : layer->regions()) {
+                if (region->slices.empty())
+                    continue;
+                ++populated_regions;
+                CHECK(region->region().config().outer_wall_filament_id.value == mixed_id);
+                REQUIRE(region->slices.surfaces.size() == 1);
+                CHECK_THAT(region->slices.surfaces.front().area() * SCALING_FACTOR * SCALING_FACTOR,
+                           Catch::Matchers::WithinAbs(100., 0.001));
+            }
+            CHECK(populated_regions == 1);
+        }
+
+        // With ordinary layer mixing, the painted boundary must not break the wall loop.
+        if (!config.opt_bool("dithering_local_z_mode")) {
+            print.process();
+            for (const Layer* layer : print_object->layers()) {
+                size_t perimeter_count = 0;
+                for (const LayerRegion* region : layer->regions()) {
+                    const ExtrusionEntityCollection perimeters = region->perimeters.flatten();
+                    perimeter_count += perimeters.size();
+                    for (const ExtrusionEntity* perimeter : perimeters.entities)
+                        CHECK(perimeter->is_loop());
+                }
+                CHECK(perimeter_count == 1);
+            }
+        }
+    };
+
+    SECTION("Object assignment") { check_continuous_perimeter(); }
+    SECTION("Part assignment")
+    {
+        assign_part = true;
+        check_continuous_perimeter();
+    }
+    SECTION("Region collapse disabled")
+    {
+        config.set("mixed_filament_region_collapse", false);
+        check_continuous_perimeter();
+    }
     SECTION("Painting starts at the top surface")
     {
         paint_top = true;
         config.set("top_shell_layers", 2);
+        check_continuous_perimeter();
     }
     SECTION("Full-domain Local-Z")
     {
         config.set("dithering_local_z_mode", true);
         config.set("dithering_local_z_whole_objects", true);
-    }
-    (assign_part ? volume->config : object->config).set("extruder", mixed_id);
-
-    // Leave the other faces at the assigned mix. Top paint also covers a zone
-    // whose local cadence starts later than the object's first layer.
-    TriangleSelector selector(volume->mesh());
-    selector.set_facet(paint_top ? 2 : 4, EnforcerBlockerType(mixed_id));
-    selector.set_facet(paint_top ? 3 : 5, EnforcerBlockerType(mixed_id));
-    REQUIRE(volume->mmu_segmentation_facets.set(selector));
-
-    Print print;
-    print.set_status_silent();
-    print.apply(model, config);
-    REQUIRE(print.objects().size() == 1);
-    PrintObject* print_object = print.get_object(0);
-    print_object->slice();
-    REQUIRE(print_object->layer_count() > 1);
-
-    for (const Layer* layer : print_object->layers()) {
-        size_t populated_regions = 0;
-        for (const LayerRegion* region : layer->regions()) {
-            if (region->slices.empty())
-                continue;
-            ++populated_regions;
-            CHECK(region->region().config().outer_wall_filament_id.value == mixed_id);
-            REQUIRE(region->slices.surfaces.size() == 1);
-            CHECK_THAT(region->slices.surfaces.front().area() * SCALING_FACTOR * SCALING_FACTOR, Catch::Matchers::WithinAbs(100., 0.001));
-        }
-        CHECK(populated_regions == 1);
-    }
-
-    // With ordinary layer mixing, the painted boundary must not break the wall loop.
-    if (!config.opt_bool("dithering_local_z_mode")) {
-        print.process();
-        for (const Layer* layer : print_object->layers()) {
-            size_t perimeter_count = 0;
-            for (const LayerRegion* region : layer->regions()) {
-                const ExtrusionEntityCollection perimeters = region->perimeters.flatten();
-                perimeter_count += perimeters.size();
-                for (const ExtrusionEntity* perimeter : perimeters.entities)
-                    CHECK(perimeter->is_loop());
-            }
-            CHECK(perimeter_count == 1);
-        }
+        check_continuous_perimeter();
     }
 }
 
@@ -1431,10 +1449,39 @@ TEST_CASE("Same-mix painting preserves other material overrides", "[MixedFilamen
     selector.set_facet(5, EnforcerBlockerType(mixed_id));
 
     int expected_physical_id = 1;
+    const auto check_overrides = [&]() {
+        REQUIRE(volume->mmu_segmentation_facets.set(selector));
+
+        DynamicPrintConfig config = mixed_region_print_config(single_custom_mixed_definition(2, 3, 4242));
+        config.set("elefant_foot_compensation", 0.);
+        config.set_deserialize_strict("outer_wall_line_width", "0.4");
+        Print print;
+        print.set_status_silent();
+        print.apply(model, config);
+        REQUIRE(print.objects().size() == 1);
+        PrintObject* print_object = print.get_object(0);
+        print_object->slice();
+
+        bool found_physical_override = false;
+        bool found_mixed_parent      = false;
+        for (const Layer* layer : print_object->layers()) {
+            for (const LayerRegion* region : layer->regions()) {
+                if (region->slices.empty())
+                    continue;
+                const int filament_id = region->region().config().outer_wall_filament_id.value;
+                found_physical_override |= filament_id == expected_physical_id;
+                found_mixed_parent |= filament_id == mixed_id;
+            }
+        }
+        CHECK(found_physical_override);
+        CHECK(found_mixed_parent);
+    };
+
     SECTION("Physical paint over the same mixed parent")
     {
         selector.set_facet(8, EnforcerBlockerType(expected_physical_id));
         selector.set_facet(9, EnforcerBlockerType(expected_physical_id));
+        check_overrides();
     }
     SECTION("Same mixed paint over a different part material")
     {
@@ -1446,37 +1493,14 @@ TEST_CASE("Same-mix painting preserves other material overrides", "[MixedFilamen
         other_selector.set_facet(5, EnforcerBlockerType(mixed_id));
         REQUIRE(other_volume->mmu_segmentation_facets.set(other_selector));
         expected_physical_id = 3;
+        check_overrides();
     }
     SECTION("Painting overrides a different infill material")
     {
         volume->config.set("sparse_infill_filament_id", 1);
         expected_physical_id = 3;
+        check_overrides();
     }
-    REQUIRE(volume->mmu_segmentation_facets.set(selector));
-
-    DynamicPrintConfig config = mixed_region_print_config(single_custom_mixed_definition(2, 3, 4242));
-    config.set("elefant_foot_compensation", 0.);
-    config.set_deserialize_strict("outer_wall_line_width", "0.4");
-    Print print;
-    print.set_status_silent();
-    print.apply(model, config);
-    REQUIRE(print.objects().size() == 1);
-    PrintObject* print_object = print.get_object(0);
-    print_object->slice();
-
-    bool found_physical_override = false;
-    bool found_mixed_parent      = false;
-    for (const Layer* layer : print_object->layers()) {
-        for (const LayerRegion* region : layer->regions()) {
-            if (region->slices.empty())
-                continue;
-            const int filament_id = region->region().config().outer_wall_filament_id.value;
-            found_physical_override |= filament_id == expected_physical_id;
-            found_mixed_parent |= filament_id == mixed_id;
-        }
-    }
-    CHECK(found_physical_override);
-    CHECK(found_mixed_parent);
 }
 
 TEST_CASE("ExtrusionPath copies preserve inset index", "[MixedFilament]")

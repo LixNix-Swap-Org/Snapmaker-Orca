@@ -1,4 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/generators/catch_generators.hpp>
 
 #include "libslic3r/GCode.hpp"
 #include "libslic3r/Print.hpp"
@@ -21,9 +22,10 @@ TEST_CASE("Tower skips must not suppress required object tool changes", "[WipeTo
     const std::vector<std::vector<WipeTower::ToolChangeResult>> local_z;
     const std::vector<std::vector<WipeTower::box_coordinates>>  reserves;
     const WipeTower::ToolChangeResult                           final_purge{};
-    SECTION("Above the last planned tower layer") {}
-    SECTION("Sparse tower layers without a planned tool change")
-    {
+    // Above the last planned tower layer, or on sparse tower layers without a planned tool change.
+    const bool sparse_layers = GENERATE(false, true);
+    CAPTURE(sparse_layers);
+    if (sparse_layers) {
         WipeTower::ToolChangeResult sparse{};
         sparse.initial_tool = sparse.new_tool = 0;
         sparse.layer_height                   = .2f;

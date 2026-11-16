@@ -1259,7 +1259,7 @@ void GLToolbar::render_background(float left, float top, float right, float bott
         const float internal_left   = left + border_w;
         const float internal_right  = right - border_w;
         const float internal_top    = top - border_h;
-        const float internal_bottom = bottom + border_w;
+        const float internal_bottom = bottom + border_h;
 
         const float left_uv   = 0.0f;
         const float right_uv  = 1.0f;

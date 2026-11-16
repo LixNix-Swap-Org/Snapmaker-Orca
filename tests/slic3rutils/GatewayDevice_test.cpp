@@ -339,6 +339,18 @@ TEST_CASE("GatewayDevice query_machine_info rejects malformed payloads", "[gatew
 {
     ServiceFixture fixture;
     REQUIRE(fixture.service->is_connected());
+    const auto check_rejected = [&fixture]() {
+        std::string              model = "untouched";
+        std::vector<std::string> nozzles{"untouched"};
+        std::vector<std::string> flows{"untouched"};
+        std::string              name = "untouched";
+        REQUIRE_FALSE(GatewayDevice::query_machine_info(fixture.service, model, nozzles, flows, name));
+        // Outputs are not modified on failure.
+        REQUIRE(model == "untouched");
+        REQUIRE(nozzles == std::vector<std::string>{"untouched"});
+        REQUIRE(flows == std::vector<std::string>{"untouched"});
+        REQUIRE(name == "untouched");
+    };
 
     SECTION("empty machine_type")
     {
@@ -346,6 +358,7 @@ TEST_CASE("GatewayDevice query_machine_info rejects malformed payloads", "[gatew
         snapshot["data"]["info"]["product"]["machine_type"] = "";
         snapshot["data"]["identity"].erase("productName");
         fixture.http->device_response = snapshot.dump();
+        check_rejected();
     }
     SECTION("missing product")
     {
@@ -353,6 +366,7 @@ TEST_CASE("GatewayDevice query_machine_info rejects malformed payloads", "[gatew
         snapshot["data"]["info"].erase("product");
         snapshot["data"]["identity"].erase("productName");
         fixture.http->device_response = snapshot.dump();
+        check_rejected();
     }
     SECTION("missing machine_type key")
     {
@@ -360,18 +374,8 @@ TEST_CASE("GatewayDevice query_machine_info rejects malformed payloads", "[gatew
         snapshot["data"]["info"]["product"].erase("machine_type");
         snapshot["data"]["identity"].erase("productName");
         fixture.http->device_response = snapshot.dump();
+        check_rejected();
     }
-
-    std::string              model = "untouched";
-    std::vector<std::string> nozzles{"untouched"};
-    std::vector<std::string> flows{"untouched"};
-    std::string              name = "untouched";
-    REQUIRE_FALSE(GatewayDevice::query_machine_info(fixture.service, model, nozzles, flows, name));
-    // Outputs are not modified on failure.
-    REQUIRE(model == "untouched");
-    REQUIRE(nozzles == std::vector<std::string>{"untouched"});
-    REQUIRE(flows == std::vector<std::string>{"untouched"});
-    REQUIRE(name == "untouched");
 }
 
 TEST_CASE("GatewayDevice query_machine_info reports http errors", "[gateway][device]")

@@ -19,7 +19,7 @@ system parent's class), the one whose layer height is nearest to the extruder's 
 goes to the thinner preset. When the extruder's size has no preset of that class, the rule walks a
 ladder: `High Quality` and `Color Mixing` ask for `High Quality`, then `Standard`; every other class
 asks for itself, then `Standard`. Without any class match the machine preset's default process
-preset is taken, then the first compatible preset by name. The 32 speed, acceleration and jerk keys
+preset is taken, then the first compatible preset by name. The 33 speed, acceleration and jerk keys
 come from that preset; a value changed in the selected preset under "All extruders" is kept on
 every extruder, and a value set for one extruder on the Speed or Quality page beats everything while
 the extruder carries the nozzle size it was set for.

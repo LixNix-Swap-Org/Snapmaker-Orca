@@ -23,12 +23,12 @@ TEST_CASE("Assembly transforms preserve usable poses", "[Model][Assembly]")
 TEST_CASE("Assembly transforms reject corrupted poses", "[Model][Assembly]")
 {
     Transform3d transform = Transform3d::Identity();
-    SECTION("Collapsed axis") { transform.linear()(2, 2) = 0.0; }
-    SECTION("Linearly dependent nonzero columns") { transform.linear().col(1) = transform.linear().col(0); }
-    SECTION("Nearly collapsed axis") { transform.linear()(2, 2) = 1e-9; }
-    SECTION("Excessive scaling") { transform.scale(1e7); }
-    SECTION("Excessive translation") { transform.translation().x() = 1e15; }
-    SECTION("Nonfinite translation") { transform.translation().x() = std::numeric_limits<double>::infinity(); }
-    SECTION("Nonfinite linear part") { transform.linear()(0, 0) = std::numeric_limits<double>::quiet_NaN(); }
-    REQUIRE_FALSE(assemble_transform_is_sane(transform));
+    const auto check_rejected = [&transform]() { REQUIRE_FALSE(assemble_transform_is_sane(transform)); };
+    SECTION("Collapsed axis") { transform.linear()(2, 2) = 0.0; check_rejected(); }
+    SECTION("Linearly dependent nonzero columns") { transform.linear().col(1) = transform.linear().col(0); check_rejected(); }
+    SECTION("Nearly collapsed axis") { transform.linear()(2, 2) = 1e-9; check_rejected(); }
+    SECTION("Excessive scaling") { transform.scale(1e7); check_rejected(); }
+    SECTION("Excessive translation") { transform.translation().x() = 1e15; check_rejected(); }
+    SECTION("Nonfinite translation") { transform.translation().x() = std::numeric_limits<double>::infinity(); check_rejected(); }
+    SECTION("Nonfinite linear part") { transform.linear()(0, 0) = std::numeric_limits<double>::quiet_NaN(); check_rejected(); }
 }

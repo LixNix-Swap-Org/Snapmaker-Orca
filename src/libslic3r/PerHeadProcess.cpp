@@ -32,9 +32,9 @@ const std::set<std::string>& composed_keys()
     static const std::set<std::string> keys = {
         // speeds
         "initial_layer_speed", "initial_layer_infill_speed", "outer_wall_speed", "inner_wall_speed", "small_perimeter_speed",
-        "sparse_infill_speed", "internal_solid_infill_speed", "top_surface_speed", "overhang_1_4_speed", "overhang_2_4_speed",
-        "overhang_3_4_speed", "overhang_4_4_speed", "bridge_speed", "internal_bridge_speed", "gap_infill_speed", "support_speed",
-        "support_interface_speed",
+        "small_support_perimeter_speed", "sparse_infill_speed", "internal_solid_infill_speed", "top_surface_speed", "overhang_1_4_speed",
+        "overhang_2_4_speed", "overhang_3_4_speed", "overhang_4_4_speed", "bridge_speed", "internal_bridge_speed", "gap_infill_speed",
+        "support_speed", "support_interface_speed",
         // accelerations
         "default_acceleration", "bridge_acceleration", "initial_layer_acceleration", "outer_wall_acceleration",
         "inner_wall_acceleration", "sparse_infill_acceleration", "internal_solid_infill_acceleration", "top_surface_acceleration",
@@ -335,7 +335,7 @@ std::vector<Source> compute_sources(const PresetBundle &bundle, bool with_choice
         const bool    home_size = machine == &printer && (home <= 0. || same_height(state.head_size[head], home));
         source.chosen           = with_choices ? chosen_of(bundle, head) : std::string();
         // Without a system parent every key counts as edited (all_edited_keys): nothing can be
-        // composed, a choice included (it would take all 32 keys with no way to tell what the user
+        // composed, a choice included (it would take every composed key with no way to tell what the user
         // edited). The guard stays ahead of the choice.
         if (parent == nullptr) {
             source.reason = Reason::NoParent;
@@ -1525,7 +1525,8 @@ const std::set<std::string> &head_editable_keys()
 {
     static const std::set<std::string> keys = [] {
         std::set<std::string> out(value_keys().begin(), value_keys().end());
-        for (const char *uniform : {"enable_overhang_speed", "slowdown_for_curled_perimeters", "small_perimeter_threshold"})
+        for (const char *uniform :
+             {"enable_overhang_speed", "slowdown_for_curled_perimeters", "small_perimeter_threshold", "small_support_perimeter_threshold"})
             out.erase(uniform);
         return out;
     }();

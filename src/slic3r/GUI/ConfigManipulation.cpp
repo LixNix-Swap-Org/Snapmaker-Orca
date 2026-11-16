@@ -1172,7 +1172,7 @@ void ConfigManipulation::toggle_print_fff_options(DynamicPrintConfig *config, in
 
     // Orca:
     for (auto el : {"small_support_perimeter_speed", "small_support_perimeter_threshold"})
-        toggle_field(el, config->opt_bool("enable_support"), -1, enable_support_reason);
+        toggle_field(el, config->opt_bool("enable_support"), variant_index, enable_support_reason);
 
     // BBS
     //toggle_field("support_material_synchronize_layers", have_support_soluble);
@@ -1421,7 +1421,7 @@ void ConfigManipulation::toggle_print_fff_options(DynamicPrintConfig *config, in
     for (auto el : { "lateral_lattice_angle_1", "lateral_lattice_angle_2"})
         toggle_line(el, lattice_options, -1, _L("Select the Lateral Lattice sparse infill pattern to use this setting."));
 
-    bool lightning_options = config->opt_enum<InfillPattern>("sparse_infill_pattern") == InfillPattern::ipLightning;
+    bool lightning_options = config->opt_enum<InfillPattern>("sparse_infill_pattern") == InfillPattern::ipLightning && have_infill;
     for (auto el : { "lightning_overhang_angle", "lightning_prune_angle", "lightning_straightening_angle" })
         toggle_line(el, lightning_options, -1, _L("Select the Lightning sparse infill pattern to use this setting."));
         

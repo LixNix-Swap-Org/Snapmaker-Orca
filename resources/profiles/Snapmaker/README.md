@@ -65,15 +65,17 @@ preset's; without an exact height the nearest one of the same class; else the ma
 `default_print_profile`. So a 0.2 mm head at a preferred 0.12 mm under `0.20mm Standard` prints with
 `0.12mm Standard @Snapmaker U1 (0.2 nozzle)`, at 0.10 mm with `0.10mm High Quality`.
 
-Composed are 32 of the 42 variant keys: the 17 role speeds, the 8 accelerations and the 7 jerk /
-junction deviation keys. The 7 travel keys, `enable_overhang_speed`, `slowdown_for_curled_perimeters`
-and `small_perimeter_threshold` stay the selected preset's on every head. Line widths, walls, shells,
-infill, support, layer heights and the prime tower stay the selected preset's as well (widths given
-in percent already follow each nozzle). A value the user changed in the selected preset against its
-system parent keeps the user's value on every head. An override on a part is an absolute value and
-applies on every tool head that prints the part, also on one that otherwise prints with the speeds of
-its own nozzle size. A head switched to High Flow takes its source's High Flow column when the source
-has one, else the selected preset's High Flow column, never the source's Standard column.
+Composed are 42 of the 54 variant value keys: the 18 role speeds, the 8 accelerations, the 7 jerk /
+junction deviation keys and the nine line widths (flow-independent: a High Flow head takes the
+Standard widths of its size). The 7 travel keys, `enable_overhang_speed`,
+`slowdown_for_curled_perimeters`, `small_perimeter_threshold`, `small_support_perimeter_threshold`
+and `top_solid_infill_flow_ratio` stay the selected preset's on every head. Walls, shells, infill,
+support, layer heights and the prime tower stay the selected preset's as well. A value the user
+changed in the selected preset against its system parent keeps the user's value on every head. An
+override on a part is an absolute value and applies on every tool head that prints the part, also on
+one that otherwise prints with the speeds of its own nozzle size. A head switched to High Flow takes
+its source's High Flow column when the source has one, else the selected preset's High Flow column,
+never the source's Standard column.
 
 The project records the preset of every head in `extruder_process_preset` (one name per tool head,
 empty for a head that prints with the selected preset); a load compares the record with the current
@@ -92,11 +94,12 @@ every printer with more than one extruder, except a Bambu two-head printer, whos
 name their tool heads in `print_extruder_id` and keep mainline's row. Under All the fields edit the
 shared columns of the preset (the Standard / High Flow toggle picks the column when the preset has
 two); under a tool head they show the value that head prints with (its own, else the composed
-source's, else the shared value) and an edit sets the value for that head alone. 38 of the 42
-variant keys can be set per tool head (the 39 value keys other than `enable_overhang_speed`,
-`slowdown_for_curled_perimeters` and `small_perimeter_threshold`, which stay uniform; `travel_speed_z`
-has no field). An edit under All skips a tool head that has a value of its own for the key; the line
-under the selector says so and offers the clear of the values set.
+source's, else the shared value) and an edit sets the value for that head alone. 50 of the 54 variant
+value keys can be set per tool head (all but `enable_overhang_speed`,
+`slowdown_for_curled_perimeters`, `small_perimeter_threshold` and
+`small_support_perimeter_threshold`, which stay uniform; `travel_speed_z` has no field). An edit
+under All skips a tool head that has a value of its own for the key; the line under the selector says
+so and offers the clear of the values set.
 
 Storage (`src/libslic3r/PerHeadProcess.hpp`): while at least one value is set per tool head the
 preset is laid out as the parent's flow columns with id 0 (the shared columns) followed by the

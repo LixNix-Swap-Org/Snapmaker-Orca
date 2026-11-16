@@ -13,9 +13,6 @@ ProcessorCount(NPROC)
 #    per INSTALL.md, disables the tests with it; no-tests states that explicitly at no cost.
 #    no-apps does not exist before 3.0 and Configure rejects unknown options: going back to a
 #    1.1.1 URL means removing it again.
-#  - deps/CMakeLists.txt probes the Flatpak runtime with find_package(OpenSSL 1.1...<3.2). Keep
-#    that range: it must not match the GNOME runtime's OpenSSL (3.x, newer than 3.2), so that the
-#    Flatpak builds this copy into /app, which is where python3.cmake's --with-openssl points.
 #  - dep_CURL, dep_Sentry (macOS: links libssl/libcrypto into libsentry.dylib) and dep_python3
 #    (_ssl, _hashlib) embed or compile against this library. ExternalProject stamps do not
 #    cascade, so an existing deps tree needs those three rebuilt by hand after a version change.
@@ -35,6 +32,7 @@ else()
 endif()
 
 set(_openssl_dir ${DESTDIR})
+set(_openssl_extra_cflags "")
 
 if(WIN32)
     set(_openssl_msvc_env CC=cl CXX=cl RC=rc CL=/FS)
@@ -43,21 +41,14 @@ if(WIN32)
     # spaces, e.g. exported by CLion, silently produces no .obj files and the
     # lib step fails with LNK1181). Pin the upstream toolchain.
     # Keep rc.exe resolved from the MSVC developer environment as well. The
-    # absolute Windows SDK path contains spaces and OpenSSL's Configure writes it to
-    # the generated nmake file without quoting, which skips .res generation.
+    # absolute Windows SDK path contains spaces and OpenSSL writes it to the
+    # generated nmake file without quoting, which skips .res generation.
     # /FS serializes access to OpenSSL's shared generated PDB when cl is
     # driven through nmake from a Ninja configure step.
     set(_conf_cmd ${CMAKE_COMMAND} -E env ${_openssl_msvc_env} perl Configure )
     set(_cross_comp_prefix_line "")
-    if("${DEPS_ARCH}" STREQUAL "arm64")
-        # OpenSSL's VC configs pass /Gs0, which puts a __chkstk probe in every
-        # function. MSVC 14.51 and 14.52 (VS 2026) for ARM64 emit that call
-        # before the prologue saves LR, so the function returns into itself;
-        # in tls_parse_all_extensions that breaks every TLS handshake. 14.44
-        # (VS 2022) is unaffected. Restore cl's default threshold: Configure
-        # appends /Gs4096 after /Gs0, and the later option wins.
-        set(_openssl_extra_cflags /Gs4096)
-    endif()
+    # 1.1.1's VC configs passed /Gs0, which needed a /Gs4096 override on ARM64
+    # (MSVC 14.51/14.52 mis-emit the __chkstk probe). 3.x no longer sets /Gs.
     set(_make_cmd ${CMAKE_COMMAND} -E env ${_openssl_msvc_env} nmake)
     set(_install_cmd ${CMAKE_COMMAND} -E env ${_openssl_msvc_env} nmake install_sw )
 else()
@@ -74,10 +65,10 @@ else()
     else()
         # A static library that is embedded into a shared object must not export
         # its symbols. On Linux the running process also loads the system OpenSSL
-        # 3.x (WebKitGTK/gnutls pull in libcrypto.so.3), and CPython's _ssl and
+        # (WebKitGTK/gnutls pull in libcrypto.so.3), and CPython's _ssl and
         # _hashlib are dlopened (RTLD_LOCAL) DSOs that each embed this OpenSSL.
         # With default visibility their unversioned OpenSSL references are
-        # preempted by that global 3.x copy, mixing the 1.1.1 and 3.x ABIs and
+        # preempted by that global copy, mixing two OpenSSL builds and
         # corrupting the heap (ssl.create_default_context() aborts). Hidden
         # visibility makes each embedded copy self-contained. Linux-only: macOS
         # binds dylibs with a two-level namespace (no interposition) and ships no
@@ -103,26 +94,31 @@ endif()
 
 ExternalProject_Add(dep_OpenSSL
     #EXCLUDE_FROM_ALL ON
-    URL "https://github.com/openssl/openssl/releases/download/openssl-3.5.7/openssl-3.5.7.tar.gz"
-    URL_HASH SHA256=A8C0D28A529CA480F9F36CF5792E2CD21984552A3C8E4AA11A24AA31AEAC98E8
+    # 3.5 is the long-term-support series (supported until April 2030).
+    URL "https://github.com/openssl/openssl/releases/download/openssl-3.5.9/openssl-3.5.9.tar.gz"
+    URL_HASH SHA256=603f5602e2eef00d77fbd429d34dcd5822bb301757a1bc9cdb24c670f1eb859a
     DOWNLOAD_DIR ${DEP_DOWNLOAD_DIR}/OpenSSL
 	CONFIGURE_COMMAND ${_conf_cmd} ${_cross_arch}
         "--openssldir=${_openssl_dir}"
         "--prefix=${DESTDIR}"
         # OpenSSL's linux-x86_64 target sets multilib=64, so it installs to
         # <prefix>/lib64 while every other dep uses <prefix>/lib. CPython's
-        # --with-openssl only ever emits -L<dir>/lib, so it misses the bundled
-        # static libs and silently links the system OpenSSL instead. Pin libdir
-        # so the prefix stays single-layout.
+        # --with-openssl only ever emits -L<dir>/lib, so it would miss the
+        # bundled static libs and silently link the system OpenSSL instead.
+        # Pin libdir so the prefix stays single-layout.
         "--libdir=lib"
         ${_cross_comp_prefix_line}
         ${_openssl_extra_cflags}
+        # 3.x raises the default security level from 1 to 2. Keep 1, the level
+        # 1.1.1 shipped with: it still accepts the 1024-bit RSA and DH that old
+        # self-signed printer certificates and firmware TLS stacks use. TLS
+        # 1.0 and 1.1 need level 0 in 3.x and stay refused at either level.
+        -DOPENSSL_TLS_SECURITY_LEVEL=1
         no-shared
         no-asm
         no-apps
-        no-tests
-        no-ssl3-method
         no-dynamic-engine
+        no-tests
     BUILD_IN_SOURCE ON
     BUILD_COMMAND ${_make_cmd} build_libs
     INSTALL_COMMAND ${_install_cmd}

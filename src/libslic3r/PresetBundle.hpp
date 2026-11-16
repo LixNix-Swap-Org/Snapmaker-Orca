@@ -889,6 +889,8 @@ public:
     // Unselected option would be reverted to the beginning values
     //BBS: add project embedded preset logic
     void                        save_changes_for_preset(const std::string& new_name, Preset::Type type, const std::vector<std::string>& unselected_options, bool save_to_project = false);
+    // Snapmaker Orca: reverts the options of `config` to the selected preset laid out like it, marks of extruder values included.
+    static void revert_unselected_options(PresetCollection& presets, DynamicPrintConfig& config, const std::vector<std::string>& unselected_options);
 
     std::pair<PresetsConfigSubstitutions, std::string> load_system_models_from_json(ForwardCompatibilitySubstitutionRule compatibility_rule);
     std::pair<PresetsConfigSubstitutions, std::string> load_system_filaments_json(ForwardCompatibilitySubstitutionRule compatibility_rule);

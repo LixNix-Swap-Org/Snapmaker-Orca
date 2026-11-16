@@ -4,6 +4,7 @@ add_executable(${_TEST_NAME}_tests
 	test_helpers.cpp
 	test_helpers.hpp
 	test_adaptive_pressure_advance.cpp
+	test_bridge.cpp
 	test_calib.cpp
 	test_cooling.cpp
 	test_extrusion_entity.cpp
@@ -28,6 +29,7 @@ add_executable(${_TEST_NAME}_tests
 	test_per_head_process.cpp # Snapmaker Orca: process speeds per tool head, what only a slice shows
 	test_painted_segmentation.cpp # Snapmaker Orca: painted segmentation with outer-wall overrides and layer runs
 	test_multimaterial_segmentation.cpp
+	test_painted_modifier.cpp
 	test_perimeters.cpp
 	# Seam geometry and pipeline regressions share the existing Print fixtures.
 	test_precise_seam.cpp
@@ -51,6 +53,7 @@ add_executable(${_TEST_NAME}_tests
 	test_cooling_buffer.cpp
 	test_adaptive_pa.cpp
 	test_wipe_tower.cpp
+	test_triangle_mesh_slicer.cpp
 	)
 # libslic3r_cgal links CGAL privately, so the GMP/MPFR libraries are needed at link time.
 # They are not propagated to this test target; find them under the deps prefix or the

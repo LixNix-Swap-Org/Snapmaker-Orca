@@ -50,60 +50,67 @@ TEST_CASE("Tree support preserves external bridge infill with zero top Z distanc
 
     bool expect_bridge  = true;
     bool expect_support = true;
-    SECTION("Automatic tree support with a zero top Z distance") {}
+    const auto check_bridges = [&]() {
+        Print print;
+        Model model;
+        Test::init_print({short_bridge_mesh()}, print, model, config);
+        print.process();
+
+        REQUIRE(print.objects().size() == 1);
+        REQUIRE_FALSE(print.objects().front()->layers().empty());
+        if (expect_support)
+            CHECK_FALSE(print.objects().front()->support_layers().empty());
+        // The bed-contacting first layer must remain ordinary bottom infill.
+        for (const LayerRegion* region : print.objects().front()->layers().front()->regions())
+            CHECK_FALSE(contains_external_bridge(region->fills));
+
+        bool found_bridge = false;
+        for (const PrintObject* object : print.objects())
+            for (const Layer* layer : object->layers())
+                for (const LayerRegion* region : layer->regions())
+                    found_bridge |= contains_external_bridge(region->fills);
+
+        CHECK(found_bridge == expect_bridge);
+
+        // Preview obtains its feature types from the exported G-code role tags. reserved_tag() picks its
+        // dialect from a mutable static that do_export() rewrites to the print's BBL flag, so sync it
+        // before building the expectation or the first section compares "; FEATURE: " against ";TYPE:".
+        GCodeProcessor::s_IsBBLPrinter = print.is_BBL_printer();
+        const std::string bridge_tag = ";" + GCodeProcessor::reserved_tag(GCodeProcessor::ETags::Role) +
+                                       ExtrusionEntity::role_to_string(erBridgeInfill) + "\n";
+        const std::string gcode = Test::gcode(print);
+        CHECK((gcode.find(bridge_tag) != std::string::npos) == expect_bridge);
+    };
+
+    SECTION("Automatic tree support with a zero top Z distance") { check_bridges(); }
     SECTION("Automatic tree support with a nonzero top Z distance")
     {
         config.set_key_value("support_top_z_distance", new ConfigOptionFloat(0.2));
+        check_bridges();
     }
     SECTION("A positive bridge-length limit also preserves external bridges")
     {
         config.set_key_value("max_bridge_length", new ConfigOptionFloat(10.));
         expect_support = false;
+        check_bridges();
     }
     SECTION("Critical-only tree support cannot promise full bottom coverage")
     {
         config.set_key_value("support_critical_regions_only", new ConfigOptionBool(true));
         expect_support = false;
+        check_bridges();
     }
     SECTION("Disabled support preserves external bridges")
     {
         config.set_key_value("enable_support", new ConfigOptionBool(false));
         expect_support = false;
+        check_bridges();
     }
     SECTION("Normal automatic support with a zero gap retains supported bottom infill")
     {
         config.set_key_value("support_type", new ConfigOptionEnum<SupportType>(stNormalAuto));
         config.set_key_value("bridge_no_support", new ConfigOptionBool(false));
         expect_bridge = false;
+        check_bridges();
     }
-
-    Print print;
-    Model model;
-    Test::init_print({short_bridge_mesh()}, print, model, config);
-    print.process();
-
-    REQUIRE(print.objects().size() == 1);
-    REQUIRE_FALSE(print.objects().front()->layers().empty());
-    if (expect_support)
-        CHECK_FALSE(print.objects().front()->support_layers().empty());
-    // The bed-contacting first layer must remain ordinary bottom infill.
-    for (const LayerRegion* region : print.objects().front()->layers().front()->regions())
-        CHECK_FALSE(contains_external_bridge(region->fills));
-
-    bool found_bridge = false;
-    for (const PrintObject* object : print.objects())
-        for (const Layer* layer : object->layers())
-            for (const LayerRegion* region : layer->regions())
-                found_bridge |= contains_external_bridge(region->fills);
-
-    CHECK(found_bridge == expect_bridge);
-
-    // Preview obtains its feature types from the exported G-code role tags. reserved_tag() picks its
-    // dialect from a mutable static that do_export() rewrites to the print's BBL flag, so sync it
-    // before building the expectation or the first section compares "; FEATURE: " against ";TYPE:".
-    GCodeProcessor::s_IsBBLPrinter = print.is_BBL_printer();
-    const std::string bridge_tag = ";" + GCodeProcessor::reserved_tag(GCodeProcessor::ETags::Role) +
-                                   ExtrusionEntity::role_to_string(erBridgeInfill) + "\n";
-    const std::string gcode = Test::gcode(print);
-    CHECK((gcode.find(bridge_tag) != std::string::npos) == expect_bridge);
 }

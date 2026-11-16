@@ -26,15 +26,20 @@ static void init_cooling_config(FullPrintConfig &config)
     config.slow_down_for_layer_cooling.values   = { true };
     config.auxiliary_fan.value                  = false;
     config.gcode_flavor.value                   = gcfMarlinFirmware;
+    // Junction deviation: a lone move starts and stops at rest, so 10 mm/s at 1000 mm/s^2 adds 0.01 s.
+    config.machine_max_junction_deviation.values     = { 0.01 };
+    config.machine_max_acceleration_extruding.values = { 1000., 1000. };
+    config.machine_max_acceleration_x.values         = { 1000., 1000. };
 }
 
 // A single extrusion move; F600 == 10 mm/s, so `length` mm takes `length/10` s.
 // The ;_EXTRUDE_SET_SPEED marker makes the line count toward the layer time and
 // be adjustable (otherwise layer time is forced to 0 in parse_layer_gcode).
+// Marker on its own F line, as GCode writes it: the layer timer replaces that line when slowed.
 static std::string layer_with_length(float length)
 {
     char buf[128];
-    std::snprintf(buf, sizeof(buf), "G1 X%.0f Y0 E1 F600 ;_EXTRUDE_SET_SPEED\n", length);
+    std::snprintf(buf, sizeof(buf), "G1 F600 ;_EXTRUDE_SET_SPEED\nG1 X%.0f Y0 E1\n;_EXTRUDE_END\n", length);
     return std::string(buf);
 }
 
@@ -89,13 +94,18 @@ SCENARIO("CoolingBuffer fan speed three-segment interpolation", "[CoolingBuffer]
             REQUIRE(run(10.f, 5).find("M106 S255") != std::string::npos);
         }
         THEN("an intermediate layer interpolates fan (between thresholds)") {
-            REQUIRE(run(100.f, 5).find("M106 S153") != std::string::npos);
+            // 10.01s: 100 - 80 * 0.5025 = 59.8, floored to 59% (S150).
+            REQUIRE(run(100.f, 5).find("M106 S150") != std::string::npos);
         }
         THEN("a long layer turns the fan off (above cooling threshold)") {
             REQUIRE(run(150.f, 5).find("M106 S0") != std::string::npos);
         }
-        THEN("exactly at the cooling threshold (12s) turns the fan off") {
-            // layer_time < fan_cooling_layer_time is strict, so 12s falls to off.
+        THEN("a layer just under the cooling threshold keeps a low fan") {
+            // 11.91s: 100 - 80 * 0.9775 = 21.8, floored to 21% (S53).
+            REQUIRE(run(119.f, 5).find("M106 S53") != std::string::npos);
+        }
+        THEN("a layer just past the cooling threshold turns the fan off") {
+            // 12.01s, past fan_cooling_layer_time.
             REQUIRE(run(120.f, 5).find("M106 S0") != std::string::npos);
         }
     }

@@ -26,6 +26,18 @@ endif ()
 # ** THIS INCLUDES BUILD ARGS. **
 # ...if you can find a way around this size limitation, be my guest.
 
+# wxUSE_EXPAT=sys makes wxxml compile against the expat installed in the deps
+# prefix. That library is static, and upstream expat headers declare its API
+# __declspec(dllimport) unless XML_STATIC is defined, which wx never does.
+if (WIN32)
+    set(_wx_expat_static
+        "-DCMAKE_C_FLAGS:STRING=${CMAKE_C_FLAGS} -DXML_STATIC"
+        "-DCMAKE_CXX_FLAGS:STRING=${CMAKE_CXX_FLAGS} -DXML_STATIC"
+    )
+else ()
+    set(_wx_expat_static "")
+endif ()
+
 # With a precompiled header, clang-cl can omit an exception type's copy constructor from its throw info,
 # so copies of the exception share and double-free their data: https://github.com/llvm/llvm-project/issues/53486
 if (MSVC AND CMAKE_C_COMPILER_ID STREQUAL "Clang")
@@ -68,6 +80,7 @@ orcaslicer_add_cmake_project(
         -DwxUSE_LIBTIFF=OFF
         -DwxUSE_LIBWEBP=builtin
         -DwxUSE_EXPAT=sys
+        ${_wx_expat_static}
         -DwxUSE_NANOSVG=OFF
 )
 

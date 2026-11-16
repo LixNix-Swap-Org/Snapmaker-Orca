@@ -356,9 +356,6 @@ public:
         , m_filpar(filament_parameters)
         , m_printer_model(printer_model)
     {
-        // ORCA: This class is only used by non BBL printers, so set the parameter appropriately.
-        // This fixes an issue where the wipe tower was using BBL tags resulting in statistics for purging in the purge tower not being displayed.
-        GCodeProcessor::s_IsBBLPrinter = false;
         // adds tag for analyzer:
         std::ostringstream str;
         str << ";" << GCodeProcessor::reserved_tag(GCodeProcessor::ETags::Height) << m_layer_height
@@ -447,7 +444,7 @@ public:
     }
 
     WipeTowerWriter2& switch_filament_monitoring(bool enable) {
-        flush_planner_queue();
+        m_gcode += flush_planner_queue_command(m_gcode_flavor);
         m_gcode += enable ? "M591 R\n" : "M591 S0\n";
         return *this;
     }
@@ -696,9 +693,10 @@ public:
     }
 
     // Set extruder temperature, don't wait by default.
-    WipeTowerWriter2& set_extruder_temp(int temperature, bool wait = false, const std::string& comment = std::string())
+    WipeTowerWriter2& set_extruder_temp(int temperature, bool wait = false, const std::string& comment = std::string(), bool sync = true)
     {
-        flush_planner_queue();
+        if (sync) // sync the temperature change with motion
+            m_gcode += flush_planner_queue_command(m_gcode_flavor);
         m_gcode += "M" + std::to_string(wait ? 109 : 104) + " S" + std::to_string(temperature);
         if (!comment.empty())
             m_gcode += " " + comment;
@@ -758,7 +756,9 @@ public:
 
     WipeTowerWriter2& flush_planner_queue()
     {
-        m_gcode += flush_planner_queue_command(m_gcode_flavor);
+        // Toolchange boundaries: on Klipper M400 here only stalls the toolhead over the tower.
+        if (m_gcode_flavor != gcfKlipper)
+            m_gcode += flush_planner_queue_command(m_gcode_flavor);
         return *this;
     }
 
@@ -1363,11 +1363,8 @@ std::vector<WipeTower::ToolChangeResult> WipeTower2::prime(
         toolchange_Load(writer, cleaning_box); // Prime the tool.
         if (idx_tool + 1 == tools.size()) {
             // Last tool should not be unloaded, but it should be wiped enough to become of a pure color.
-            // Snapmaker: guard idx_tool == 0 so tools[idx_tool - 1] cannot index out of bounds.
-            if (idx_tool == 0)
-                toolchange_Wipe(writer, cleaning_box, wipe_volumes[tools[idx_tool]][tool], false, true);
-            else
-                toolchange_Wipe(writer, cleaning_box, wipe_volumes[tools[idx_tool - 1]][tool], false, true);
+            const float wipe_volume = idx_tool == 0 ? 0.f : wipe_volumes[tools[idx_tool - 1]][tool];
+            toolchange_Wipe(writer, cleaning_box, wipe_volume, false, true);
         } else {
             // Ram the hot material out of the melt zone, retract the filament into the cooling tubes and let it cool.
             //writer.travel(writer.x(), writer.y() + m_perimeter_width, 7200);
@@ -1502,7 +1499,7 @@ WipeTower::ToolChangeResult WipeTower2::emit_planned_tool_change(const WipeTower
             if (interface_temp > 0 && interface_temp != base_temp && !m_wait_for_temp_on_wipe_tower)
                 writer.set_extruder_temp(interface_temp, true);
             if (m_enable_tower_interface_cooldown_during_tower && interface_temp > 0 && interface_temp != base_temp)
-                writer.set_extruder_temp(base_temp, false);
+                writer.set_extruder_temp(base_temp, false, {}, m_gcode_flavor != gcfKlipper); // a cooldown back to base isn't timing-critical
             float pre_dist = m_filpar[tool].tower_interface_pre_extrusion_dist;
             float pre_len = m_filpar[tool].tower_interface_pre_extrusion_length;
             if (pre_dist > 0.f && pre_len > 0.f) {
@@ -1515,7 +1512,7 @@ WipeTower::ToolChangeResult WipeTower2::emit_planned_tool_change(const WipeTower
         if (interface_layer) {
             int interface_temp = m_filpar[tool].interface_print_temperature;
             if (!m_enable_tower_interface_cooldown_during_tower && interface_temp > 0 && interface_temp != base_temp)
-                writer.set_extruder_temp(base_temp, false);
+                writer.set_extruder_temp(base_temp, false, {}, m_gcode_flavor != gcfKlipper); // on Klipper M400 would stall the head over the tower
         }
         writer.append(";" + GCodeProcessor::reserved_tag(GCodeProcessor::ETags::Wipe_Tower_End) + "\n");
         ++m_num_tool_changes;
@@ -1547,6 +1544,12 @@ WipeTower::ToolChangeResult WipeTower2::emit_planned_tool_change(const WipeTower
 
 WipeTower::ToolChangeResult WipeTower2::tool_change(size_t tool)
 {
+    // Snapmaker: no final unload on a tower that never changes tools.
+    if (is_no_tool_sentinel(tool) && std::none_of(m_plan.begin(), m_plan.end(), [](const WipeTowerInfo &layer) {
+            return !layer.tool_changes.empty() || !layer.local_z_tool_changes.empty();
+        }))
+        return {};
+
     const WipeTowerInfo::ToolChange *planned_tool_change = nullptr;
     if (!is_no_tool_sentinel(tool)) {
         for (const WipeTowerInfo::ToolChange &entry : m_layer_info->tool_changes) {
@@ -1914,7 +1917,8 @@ void WipeTower2::toolchange_Unload(WipeTowerWriter2&                 writer,
             cleaning_box.ld.y() + m_depth_traversed + wipe_start_offset_after_ram(0.f, new_tool, is_first_layer()) + m_perimeter_width));
     }
 
-    writer.resume_preview().flush_planner_queue();
+    // Sync even on Klipper: [change_filament_gcode] and Tn must not run while the unload is still queued.
+    writer.resume_preview().append(flush_planner_queue_command(m_gcode_flavor));
 }
 
 // Change the tool, set a speed override for soluble and flex materials.
@@ -2041,7 +2045,7 @@ void WipeTower2::toolchange_Change(
     if (wait_for_temp_here && !wait_beside_tower)
         writer.set_extruder_temp(wait_for_temp, true, wait_for_temp_tag());
 
-    writer.append("[deretraction_from_wipe_tower_generator]");
+    writer.append("[deretraction_from_wipe_tower_generator]\n");
 
     // The toolchange Tn command will be inserted later, only in case that the user does
     // not provide a custom toolchange gcode.

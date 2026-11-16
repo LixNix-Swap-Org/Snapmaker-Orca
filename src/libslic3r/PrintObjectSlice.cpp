@@ -56,6 +56,7 @@
 //! macro used to mark string used at localization, return same string
 #define L(s) Slic3r::I18N::translate(s)
 
+
 namespace Slic3r {
 
 bool PrintObject::clip_multipart_objects = true;
@@ -190,7 +191,8 @@ static std::vector<ExPolygons> slice_volume(
 static inline bool model_volume_needs_slicing(const ModelVolume &mv)
 {
     ModelVolumeType type = mv.type();
-    return type == ModelVolumeType::MODEL_PART || type == ModelVolumeType::NEGATIVE_VOLUME || type == ModelVolumeType::PARAMETER_MODIFIER;
+    return type == ModelVolumeType::MODEL_PART || type == ModelVolumeType::NEGATIVE_VOLUME || type == ModelVolumeType::PARAMETER_MODIFIER ||
+           type == ModelVolumeType::PAINTED_MODIFIER;
 }
 
 // Slice printable volumes, negative volumes and modifier volumes, sorted by ModelVolume::id().
@@ -248,26 +250,31 @@ static std::vector<VolumeSlices> slice_volumes_inner(
             MeshSlicingParamsEx params { params_base };
             if (! model_volume->is_negative_volume())
                 params.extra_offset = extra_offset;
-            if (layer_ranges.size() == 1) {
-                if (const PrintObjectRegions::LayerRangeRegions &layer_range = layer_ranges.front(); layer_range.has_volume(model_volume->id())) {
-                    if (model_volume->is_model_part() && print_config.spiral_mode) {
-                        auto it = std::find_if(layer_range.volume_regions.begin(), layer_range.volume_regions.end(),
-                            [model_volume](const auto &slice){ return model_volume == slice.model_volume; });
+            if (model_volume->is_model_part() && print_config.spiral_mode) {
+                if (const auto layer_range_it = std::find_if(layer_ranges.begin(), layer_ranges.end(),
+                        [model_volume](const auto &layer_range) { return layer_range.has_volume(model_volume->id()); });
+                    layer_range_it != layer_ranges.end()) {
+                    if (const auto volume_region_it = std::find_if(layer_range_it->volume_regions.begin(), layer_range_it->volume_regions.end(),
+                            [model_volume](const auto &slice) { return model_volume == slice.model_volume; });
+                        volume_region_it != layer_range_it->volume_regions.end()) {
                         params.mode = MeshSlicingParams::SlicingMode::PositiveLargestContour;
                         // Slice the bottom layers with SlicingMode::Regular.
                         // This needs to be in sync with LayerRegion::make_perimeters() spiral_mode!
-                        const PrintRegionConfig &region_config = it->region->config();
+                        const PrintRegionConfig &region_config = volume_region_it->region->config();
                         params.slicing_mode_normal_below_layer = size_t(region_config.bottom_shell_layers.value);
                         for (; params.slicing_mode_normal_below_layer < zs.size() && zs[params.slicing_mode_normal_below_layer] < region_config.bottom_shell_thickness - EPSILON;
                             ++ params.slicing_mode_normal_below_layer);
                     }
+                }
+            }
+            if (layer_ranges.size() == 1) {
+                if (const PrintObjectRegions::LayerRangeRegions &layer_range = layer_ranges.front(); layer_range.has_volume(model_volume->id())) {
                     out.push_back({
                         model_volume->id(),
                         slice_volume(*model_volume, zs, params, throw_on_cancel_callback)
                     });
                 }
             } else {
-                assert(! print_config.spiral_mode);
                 slicing_ranges.clear();
                 for (const PrintObjectRegions::LayerRangeRegions &layer_range : layer_ranges)
                     if (layer_range.has_volume(model_volume->id()))
@@ -325,6 +332,7 @@ static std::vector<PrintObjectRegions::LayerRangeRegions>::const_iterator layer_
 
 static std::vector<std::vector<ExPolygons>> slices_to_regions(
     const PrintConfig                                        &print_config,
+    bool                                                      overlap_area_carving,
     const PrintObject                                        &print_object,
     ModelVolumePtrs                                           model_volumes,
     const PrintObjectRegions                                 &print_object_regions,
@@ -434,7 +442,7 @@ static std::vector<std::vector<ExPolygons>> slices_to_regions(
         }
         tbb::parallel_for(
             tbb::blocked_range<size_t>(0, zs_complex.size()),
-            [&slices_by_region, &print_object_regions, &zs_complex, &layer_ranges_regions_to_slices, clip_multipart_objects, &throw_on_cancel_callback]
+            [&slices_by_region, &print_object_regions, &zs_complex, &layer_ranges_regions_to_slices, clip_multipart_objects, &throw_on_cancel_callback, overlap_area_carving]
                 (const tbb::blocked_range<size_t> &range) {
                 float z              = zs_complex[range.begin()].second;
                 auto  it_layer_range = layer_range_first(print_object_regions.layer_ranges, z);
@@ -499,7 +507,7 @@ static std::vector<std::vector<ExPolygons>> slices_to_regions(
                     for (int idx_region = 0; idx_region < int(layer_range.volume_regions.size()); ++ idx_region)
                         if (! temp_slices[idx_region].expolygons.empty()) {
                             const PrintObjectRegions::VolumeRegion &region = layer_range.volume_regions[idx_region];
-                            if (region.model_volume->is_modifier()) {
+                            if (region.model_volume->is_region_modifier()) {
                                 assert(region.parent > -1);
                                 bool next_region_same_modifier = idx_region + 1 < int(temp_slices.size()) && layer_range.volume_regions[idx_region + 1].model_volume == region.model_volume;
                                 RegionSlice &parent_slice = temp_slices[region.parent];
@@ -516,13 +524,23 @@ static std::vector<std::vector<ExPolygons>> slices_to_regions(
                                     temp_slices[idx_region + 1].expolygons = std::move(source);
                             } else if ((region.model_volume->is_model_part() && clip_multipart_objects) || region.model_volume->is_negative_volume()) {
                                 // Clip every non-zero region preceding it.
-                                // Pre-pass: accumulate per-layer XY area per print_object_region_id
+                                // Overlap carving contract (developer switch enable_overlap_area_carving):
+                                //   off (default) - upstream legacy: the part listed last carves everything
+                                //     before it ("last listed wins").
+                                //   on  - exactly what 2.4.1 shipped (ddc522ba21): on each layer the smaller
+                                //     slice area wins, and while the two areas stay within 1.5x the region
+                                //     listed first wins. Same-region pairs, null-region pairs and negative
+                                //     volumes take the plain diff in both states.
+                                // Pre-pass: accumulate per-layer XY area per print_object_region_id (2.4.1
+                                // semantics: areas are sampled before this region's carvings start and go
+                                // stale as the loop below mutates temp_slices - kept verbatim).
                                 std::unordered_map<int, double> region_area_map;
-                                for (int i = 0; i < int(temp_slices.size()); ++i) {
-                                    const RegionSlice &ts = temp_slices[i];
-                                    if (ts.region_id >= 0 && !ts.expolygons.empty())
-                                        region_area_map[ts.region_id] += area(ts.expolygons);
-                                }
+                                if (overlap_area_carving)
+                                    for (int i = 0; i < int(temp_slices.size()); ++i) {
+                                        const RegionSlice &ts = temp_slices[i];
+                                        if (ts.region_id >= 0 && !ts.expolygons.empty())
+                                            region_area_map[ts.region_id] += area(ts.expolygons);
+                                    }
                                 for (int idx_region2 = 0; idx_region2 < idx_region; ++ idx_region2)
                                     if (! temp_slices[idx_region2].expolygons.empty()) {
                                         // Skip trim_overlap for now, because it slow down the performace so much for some special cases
@@ -532,21 +550,26 @@ static std::vector<std::vector<ExPolygons>> slices_to_regions(
                                                 // Negative volume: always subtract with diff_ex
                                                 temp_slices[idx_region2].expolygons = diff_ex(temp_slices[idx_region2].expolygons, temp_slices[idx_region].expolygons);
                                             } else if (region.region && region2.region && region.region->print_object_region_id() != region2.region->print_object_region_id()) {
-                                                // Different print regions: smaller per-layer XY area carves larger
-                                                int pid_current = region.region->print_object_region_id();
-                                                int pid_other   = region2.region->print_object_region_id();
-                                                double area_current = region_area_map[pid_current];
-                                                double area_other   = region_area_map[pid_other];
-                                                // Hysteresis guard: only switch carving direction if area ratio is significant
-                                                bool smaller_carves = false;
-                                                if (std::max(area_current, area_other) / std::min(area_current, area_other) < 1.5)
-                                                    smaller_carves = (pid_current <= pid_other);
-                                                else
-                                                    smaller_carves = (area_current <= area_other);
-                                                if (smaller_carves)
+                                                if (overlap_area_carving) {
+                                                    // 2.4.1: smaller per-layer XY area carves larger
+                                                    int pid_current = region.region->print_object_region_id();
+                                                    int pid_other   = region2.region->print_object_region_id();
+                                                    double area_current = region_area_map[pid_current];
+                                                    double area_other   = region_area_map[pid_other];
+                                                    // Hysteresis guard: only switch carving direction if area ratio is significant
+                                                    bool smaller_carves = false;
+                                                    if (std::max(area_current, area_other) / std::min(area_current, area_other) < 1.5)
+                                                        smaller_carves = (pid_current <= pid_other);
+                                                    else
+                                                        smaller_carves = (area_current <= area_other);
+                                                    if (smaller_carves)
+                                                        temp_slices[idx_region2].expolygons = diff_ex(temp_slices[idx_region2].expolygons, temp_slices[idx_region].expolygons);
+                                                    else
+                                                        temp_slices[idx_region].expolygons = diff_ex(temp_slices[idx_region].expolygons, temp_slices[idx_region2].expolygons);
+                                                } else {
+                                                    // Legacy upstream: last listed wins
                                                     temp_slices[idx_region2].expolygons = diff_ex(temp_slices[idx_region2].expolygons, temp_slices[idx_region].expolygons);
-                                                else
-                                                    temp_slices[idx_region].expolygons = diff_ex(temp_slices[idx_region].expolygons, temp_slices[idx_region2].expolygons);
+                                                }
                                             } else {
                                                 // Same print region: the later volume carves the earlier one.
                                                 temp_slices[idx_region2].expolygons = diff_ex(temp_slices[idx_region2].expolygons, temp_slices[idx_region].expolygons);
@@ -936,7 +959,7 @@ void PrintObject::slice()
     m_belt_min_z              = 0.;
     m_belt_global_z_offset    = 0.;
     this->clear_layers();
-    m_layers = new_layers(this, generate_object_layers(m_slicing_params, layer_height_profile, m_config.precise_z_height.value));
+    m_layers = new_layers(this, generate_object_layers(m_slicing_params, layer_height_profile, this->precise_z_height()));
     if (has_surface_emboss_mixed_volume(*this)) {
         reset_surface_emboss_mixed_debug_file(*this);
         BOOST_LOG_TRIVIAL(warning) << "Surface emboss mixed debug enabled"
@@ -6334,6 +6357,12 @@ void PrintObject::slice_volumes()
             print->config(), this->config(), this->trafo_centered(),
             this->model_object()->volumes, m_shared_regions->layer_ranges, slice_zs, throw_on_cancel_callback,
             &m_belt_min_z);
+        // A painted modifier was sliced as its whole host, keep only what its paint covers.
+        for (const ModelVolume *model_volume : this->model_object()->volumes)
+            if (model_volume->is_painted_modifier())
+                if (auto it = std::find_if(objSliceByVolume.begin(), objSliceByVolume.end(), [model_volume](const VolumeSlices &vs) { return vs.volume_id == model_volume->id(); });
+                    it != objSliceByVolume.end())
+                    it->slices = painted_modifier_segmentation(*this, *model_volume, it->slices, throw_on_cancel_callback);
     }
 
     //BBS: "model_part" volumes are grouded according to their connections
@@ -6344,7 +6373,7 @@ void PrintObject::slice_volumes()
     firstLayerObjSliceByVolume = objSliceByVolume;
 
     std::vector<std::vector<ExPolygons>> region_slices =
-        slices_to_regions(print->config(), *this, this->model_object()->volumes, *m_shared_regions, slice_zs,
+        slices_to_regions(print->config(), print->config().enable_overlap_area_carving, *this, this->model_object()->volumes, *m_shared_regions, slice_zs,
                           std::move(objSliceByVolume), PrintObject::clip_multipart_objects, throw_on_cancel_callback);
 
     for (size_t region_id = 0; region_id < region_slices.size(); ++ region_id) {

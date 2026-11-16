@@ -4,6 +4,9 @@
 
 #include "slic3r/GUI/GUI_App.hpp"
 #include "slic3r/GUI/InstanceCheck.hpp"
+#ifdef __APPLE__
+#include "slic3r/GUI/DeepLinkHandlerMac.h"
+#endif
 #include "slic3r/GUI/format.hpp"
 #include "slic3r/GUI/MainFrame.hpp"
 #include "slic3r/GUI/I18N.hpp"
@@ -65,6 +68,9 @@ int GUI_Run(GUI_InitParams &params)
 //      gui->autosave = m_config.opt_string("autosave");
         GUI::GUI_App::SetInstance(gui);
         gui->init_params = &params;
+#ifdef __APPLE__
+        register_mac_deep_link_handler();
+#endif
 
 #ifdef _WIN32
         // argv[0] from boost::nowide::narrow() is UTF-8, but wxEntry expects

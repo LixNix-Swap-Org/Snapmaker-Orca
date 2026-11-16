@@ -8,6 +8,8 @@ add_executable(${_TEST_NAME}_tests
     ${_TEST_NAME}_tests.cpp
     test_3mf.cpp
     test_amf.cpp
+    # Import naming policy is independent of the GUI and slicing pipeline.
+    test_import_names.cpp
     # Round-trip seam metadata and active/dormant volume settings in both formats.
     test_precise_seam_3mf.cpp
     # Pure perimeter extraction is independent of Print/Layer fixtures.
@@ -27,6 +29,7 @@ add_executable(${_TEST_NAME}_tests
     test_clipper_offset.cpp
     test_clipper_utils.cpp
     test_cut_connectors.cpp
+    test_cut.cpp
     test_config.cpp
     test_config_variant_expansion.cpp
     test_custom_gcode.cpp
@@ -37,6 +40,7 @@ add_executable(${_TEST_NAME}_tests
     test_toolordering_nozzle_group.cpp
     test_parallel_resolve.cpp
     test_preset_bundle_loading.cpp
+    test_preset_collection.cpp
     test_preset_setting_id.cpp
     test_preset_diff.cpp
     test_filament_flow_columns.cpp # Snapmaker Orca: Standard / High Flow columns of a filament preset
@@ -47,6 +51,7 @@ add_executable(${_TEST_NAME}_tests
     test_edge_grid.cpp
     test_elephant_foot_compensation.cpp
     test_extrusion_entity.cpp
+    test_overlap_carving.cpp
     test_exclusion_volumes.cpp
     test_fill_corner_smoothing.cpp
     test_filament_mixer.cpp
@@ -78,6 +83,7 @@ add_executable(${_TEST_NAME}_tests
     test_sswcp_protocol.cpp # Snapmaker Orca: device protocol conversion (upstream #807)
     test_snapmaker_hf_profiles.cpp # Snapmaker Orca: High Flow columns of the shipped U1 profiles
     test_obj.cpp
+    test_painted_modifier.cpp
     test_step.cpp
     test_stl.cpp
     test_triangle_mesh_deal.cpp
@@ -100,13 +106,21 @@ add_executable(${_TEST_NAME}_tests
     test_wipe_tower.cpp
     test_wipe_tower_toolchange.cpp
     test_wipe_path.cpp
+    test_slicing.cpp
     test_optimizers.cpp
     test_ordering_strategies.cpp
+    test_parameter_utils.cpp
     test_shortest_path.cpp
     # test_png_io.cpp
     test_indexed_triangle_set.cpp
     TestMD5.cpp
     test_flush_vol_calc.cpp
+    test_triangulation.cpp
+    test_tesselate.cpp
+    test_arc_fitter.cpp
+    test_wipe_tower2.cpp
+    test_variable_width.cpp
+    test_arachne.cpp
     test_connected_bodies.cpp
     test_texture_displacement.cpp
     test_texture_import.cpp

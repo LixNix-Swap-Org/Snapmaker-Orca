@@ -282,6 +282,24 @@ struct Updates
 
 static bool reload_configs_update_gui();
 
+// Orca: whether the bundle for `vendor_name` is meant for this user.
+// A vendor only appears in AppConfig::vendors() once one of its printer models
+// has been selected, so an unlisted vendor is not in use and its cache must not
+// prompt. The two Orca bundles are never selected that way but are always
+// needed. `explicitly_allowed` carries vendors the user has just confirmed in
+// check_new_vendors(); they are installed before any of their printers is
+// selected, so they cannot be enabled yet.
+// Snapmaker Orca: the Snapmaker bundle takes the place of the Orca default bundle.
+static bool is_vendor_wanted(const AppConfig::VendorMap &enabled_vendors,
+                             const std::set<std::string> &explicitly_allowed,
+                             const std::string &vendor_name)
+{
+    return vendor_name == PresetBundle::SM_BUNDLE
+        || vendor_name == PresetBundle::ORCA_FILAMENT_LIBRARY
+        || enabled_vendors.find(vendor_name) != enabled_vendors.end()
+        || explicitly_allowed.find(vendor_name) != explicitly_allowed.end();
+}
+
 wxDEFINE_EVENT(EVT_REQUEST_SERVER_FAIL, wxCommandEvent);
 wxDEFINE_EVENT(EVT_NO_PRESET_UPDATE, wxCommandEvent);
 wxDEFINE_EVENT(EVT_SLIC3R_VERSION_ONLINE, wxCommandEvent);
@@ -357,7 +375,8 @@ struct PresetUpdater::priv
 	bool install_bundles_rsrc(const std::vector<std::string>& bundles, bool snapshot) const;
 	void check_installed_vendor_profiles() const;
     Updates get_printer_config_updates(bool update = false) const;
-	Updates get_config_updates(const Semver& old_slic3r_version) const;
+	Updates get_config_updates(const Semver& old_slic3r_version,
+	                           const std::set<std::string>& explicitly_allowed_vendors = {}) const;
 	bool perform_updates(Updates &&updates, bool snapshot = true) const;
 	void set_waiting_updates(Updates u);
 };
@@ -384,8 +403,7 @@ void PresetUpdater::priv::set_download_prefs(AppConfig *app_config)
 {
 	version_check_url = app_config->version_check_url();
 
-	// Snapmaker OTA is the fork's update channel: it is not gated on mainline's
-	// `enable_ota` flag (default false), which only concerns the Orca CDN.
+	// Snapmaker OTA is the fork's update channel: no dev-build gate, SoftFever_VERSION always ends in -dev here.
 	auto profile_update_url = app_config->get_preset_upgrade_url();
 	if (!profile_update_url.empty())
 		enabled_config_update = true;
@@ -1632,11 +1650,7 @@ void PresetUpdater::priv::check_installed_vendor_profiles() const
     // A vendor is named by its profile or, where the build ships preset caches
     // instead of the raw profile JSONs, by its cache alone.
     for (const std::string &vendor_name : vendor_names_in(rsrc_path)) {
-        // enabled_vendors lists the vendors whose printer models the user picked, and neither of
-        // these two is ever in it. Snapmaker Orca: the Snapmaker bundle is the one refreshed always.
-        const auto is_vendor_enabled = (vendor_name == PresetBundle::SM_BUNDLE)
-                                       || (vendor_name == PresetBundle::ORCA_FILAMENT_LIBRARY)
-                                       || (enabled_vendors.find(vendor_name) != enabled_vendors.end());
+        const auto is_vendor_enabled = is_vendor_wanted(enabled_vendors, {}, vendor_name);
         if (is_vendor_installed(vendor_name)) {
             if (is_vendor_enabled) {
                 // Orca: whichever form of the vendor resources ships at the newer
@@ -1718,7 +1732,8 @@ Updates PresetUpdater::priv::get_printer_config_updates(bool update) const
 // Version of slic3r that was running the last time and which was read out from PrusaSlicer.ini is provided
 // as a parameter.
 // Orca: OTA profile updates should be loacated in ota/profiles folder
-Updates PresetUpdater::priv::get_config_updates(const Semver &old_slic3r_version) const
+Updates PresetUpdater::priv::get_config_updates(const Semver &old_slic3r_version,
+                                               const std::set<std::string> &explicitly_allowed_vendors) const
 {
 	Updates updates;
 
@@ -1734,6 +1749,8 @@ Updates PresetUpdater::priv::get_config_updates(const Semver &old_slic3r_version
         return boost::iends_with(name, ".stl") || boost::iends_with(name, ".png") || boost::iends_with(name, ".svg") ||
                boost::iends_with(name, ".jpeg") || boost::iends_with(name, ".jpg") || boost::iends_with(name, ".3mf");
     };
+
+	const auto &enabled_vendors = GUI::wxGetApp().app_config->vendors();
 
 	// Orca (PR #130): vendor changelogs are captured in memory during
 	// sync_vendor_config()/check_new_vendors(), not written beside the cache.
@@ -1763,6 +1780,11 @@ Updates PresetUpdater::priv::get_config_updates(const Semver &old_slic3r_version
 		const std::string vendor_name = path.stem().string();
 		if (!seen_vendors.insert(vendor_name).second)
 			continue;
+		if (!is_vendor_wanted(enabled_vendors, explicitly_allowed_vendors, vendor_name)) {
+			BOOST_LOG_TRIVIAL(info) << "[Orca Updater]:ignoring cached update for " << vendor_name
+			                        << ": the vendor is not enabled";
+			continue;
+		}
 		auto print_in_cache = (cache_profile_path / vendor_name / PRESET_PRINT_NAME);
 		auto filament_in_cache = (cache_profile_path / vendor_name / PRESET_FILAMENT_NAME);
 		auto machine_in_cache = (cache_profile_path / vendor_name / PRESET_PRINTER_NAME);
@@ -2057,6 +2079,9 @@ void PresetUpdater::check_vendor_update(const std::string& vendor_id)
     return;
     if (!p->enabled_config_update) return;
     if (vendor_id.empty()) return;
+    // Stealth mode can be switched off mid-session, so it is checked before the vendor is marked
+    // as checked: the next printer change after that still queries the server.
+    if (GUI::wxGetApp().app_config->get_stealth_mode()) return;
 
     if (!p->checked_vendors.insert(vendor_id).second)
         return;
@@ -2326,12 +2351,14 @@ void PresetUpdater::priv::check_new_vendors(const std::set<std::string>& system_
                     // into data_dir()/system.
                     GUI::wxGetApp().CallAfter([this, new_vendor_ids] {
                         AppConfig* app_config = GUI::wxGetApp().app_config;
-                        Updates    updates    = get_config_updates(app_config->orig_version());
 
                         // Only install the vendors just confirmed; leave any other unrelated
                         // pending cached update (from a background sync_vendor_config()) alone,
-                        // still gated behind its own notification/confirmation.
+                        // still gated behind its own notification/confirmation. The confirmed
+                        // ids are passed in because a new vendor is not enabled yet and would
+                        // otherwise be filtered out of the ordinary update scan.
                         std::set<std::string> confirmed(new_vendor_ids.begin(), new_vendor_ids.end());
+                        Updates    updates    = get_config_updates(app_config->orig_version(), confirmed);
                         Updates                filtered;
                         for (auto& update : updates.updates)
                             if (confirmed.count(update.vendor))

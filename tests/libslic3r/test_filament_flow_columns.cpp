@@ -698,12 +698,13 @@ TEST_CASE("Opening a project with High Flow values leaves the system filament un
     project.option<ConfigOptionFloats>("filament_max_volumetric_speed")->values[1] = 22.;
     const std::set<std::string> different{"filament_max_volumetric_speed"};
 
+    const bool user_preset = GENERATE(true, false);
+    CAPTURE(user_preset);
     std::string original_name;
-    SECTION("a user preset made from Generic PETG") {
+    if (user_preset) {
         project.option<ConfigOptionString>("inherits", true)->value = PETG;
         original_name                                                = "My PETG from the project";
-    }
-    SECTION("Generic PETG itself with changes") {
+    } else {
         project.option<ConfigOptionString>("inherits", true)->value.clear();
         original_name = PETG;
     }

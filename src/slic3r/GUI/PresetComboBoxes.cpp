@@ -1654,8 +1654,11 @@ void PlaterPresetComboBox::update()
     if (m_type == Preset::TYPE_FILAMENT)
     {
         // Snapmaker: multi-colour aware swatch (filament_multi_colors / filament_colour_mode).
+        // The slot can lie past the colour arrays: it still lists its presets, with a blank swatch.
         //unsigned char rgb[3];
-        std::string filament_color = m_preset_bundle->project_config.opt_string("filament_colour", (unsigned int) m_filament_idx);
+        const auto *filament_colours = m_preset_bundle->project_config.option<ConfigOptionStrings>("filament_colour");
+        std::string filament_color   = filament_colours != nullptr && size_t(m_filament_idx) < filament_colours->values.size() ?
+                                           filament_colours->values[m_filament_idx] : std::string("#F0F0F0");
         wxColor clr(filament_color);
         const int picker_size = std::max(1, 20 * m_em_unit / 10);
         clr_picker->SetMinSize(wxSize(picker_size, picker_size));

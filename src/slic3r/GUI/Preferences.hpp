@@ -38,7 +38,7 @@ namespace Slic3r { namespace GUI {
 #define DESIGN_LEFT_MARGIN 25
 
 // The tabs other dialogs open Preferences on.
-enum class PreferencesTab { General, Control, Graphics, Online };
+enum class PreferencesTab { General, Files, Behaviour, Control, Graphics, Online };
 
 class PreferencesDialog : public DPIDialog
 {
@@ -91,6 +91,8 @@ public:
     ::CheckBox * m_snaplog_upload_checkbox = {nullptr};
     ::TextInput *m_backup_interval_textinput = {nullptr};
     ::SpinInput *m_dim_previous_layers_brightness_input = {nullptr};
+    // Disabled while persistent outlines are off.
+    wxWindow *   m_persistent_outline_color_button = {nullptr};
     ::ComboBox * m_network_version_combo     = {nullptr};
     std::vector<NetworkLibraryVersionInfo> m_available_versions;
 
@@ -104,7 +106,7 @@ public:
     wxBoxSizer *create_item_title(wxString title);
     wxBoxSizer *create_item_label(wxString label, const wxString tooltip = "", const wxString wiki_url = "");
     wxBoxSizer *create_item_combobox(wxString title, wxString tooltip, std::string param, std::vector<wxString> vlist, std::function<void(wxString)> onchange = {}, const wxString wiki_url = "");
-    wxBoxSizer *create_item_combobox(wxString title, wxString tooltip, std::string param, std::vector<wxString> vlist, std::vector<std::string> config_name_index, const wxString wiki_url = "");
+    wxBoxSizer *create_item_combobox(wxString title, wxString tooltip, std::string param, std::vector<wxString> vlist, std::vector<std::string> config_name_index, std::function<void(std::string)> onchange = {}, const wxString wiki_url = "");
     wxBoxSizer *create_item_region_combobox(wxString title, wxString tooltip);
     wxBoxSizer *create_item_language_combobox(wxString title, wxString tooltip);
     wxBoxSizer *create_item_loglevel_combobox(wxString title, wxString tooltip, std::vector<wxString> vlist);

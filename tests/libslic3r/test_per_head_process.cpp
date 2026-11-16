@@ -191,19 +191,22 @@ std::vector<std::string> source_names(const std::vector<PerHeadProcess::Source> 
 
 } // namespace
 
-TEST_CASE("The composed key set is the 32 speed, acceleration and jerk keys of the variant keys", "[PerHeadProcess][PerHeadWidth][phs_key_set]")
+TEST_CASE("The composed key set is the 33 speed, acceleration and jerk keys of the variant keys", "[PerHeadProcess][PerHeadWidth][phs_key_set]")
 {
     const std::set<std::string> &composed = PerHeadProcess::composed_keys();
-    // 32 speeds, accelerations and jerk keys plus the nine line widths.
-    CHECK(composed.size() == 41);
-    // 52 value keys (42 speeds, accelerations, jerk and switches, the nine line widths of the Quality
+    // 33 speeds, accelerations and jerk keys plus the nine line widths.
+    CHECK(composed.size() == 42);
+    // 54 value keys (44 speeds, accelerations, jerk, switches and thresholds, the nine line widths of the Quality
     // page and the top surface flow ratio), the ids, the variants and the marker of the values set per tool head.
-    CHECK(print_options_with_variant.size() == 55);
+    CHECK(print_options_with_variant.size() == 57);
     CHECK(print_options_with_variant.count(PerHeadProcess::override_key) == 1);
     CHECK(composed.count(PerHeadProcess::override_key) == 0);
-    // 49 keys can be set per tool head: the value keys without the three uniform switches.
+    // 50 keys can be set per tool head: the value keys without the four uniform ones.
     const std::set<std::string> &editable = PerHeadProcess::head_editable_keys();
-    CHECK(editable.size() == 49);
+    CHECK(editable.size() == 50);
+    // The small support perimeter speed is treated like the small perimeter speed.
+    CHECK(composed.count("small_support_perimeter_speed") == 1);
+    CHECK(editable.count("small_support_perimeter_speed") == 1);
     // The nine line widths: flow-independent, editable per tool head and composed from the width
     // source; the Locked Zag widths stay scalar and outside every set.
     const std::set<std::string> &widths = PerHeadProcess::flow_independent_keys();
@@ -227,7 +230,7 @@ TEST_CASE("The composed key set is the 32 speed, acceleration and jerk keys of t
         CHECK(widths.count(scalar) == 0);
         CHECK(print_config_def.get(scalar)->type == coFloatOrPercent);
     }
-    for (const char *uniform : {"enable_overhang_speed", "slowdown_for_curled_perimeters", "small_perimeter_threshold"}) {
+    for (const char *uniform : {"enable_overhang_speed", "slowdown_for_curled_perimeters", "small_perimeter_threshold", "small_support_perimeter_threshold"}) {
         INFO(uniform);
         CHECK(editable.count(uniform) == 0);
     }
@@ -238,9 +241,10 @@ TEST_CASE("The composed key set is the 32 speed, acceleration and jerk keys of t
         INFO(key);
         CHECK(print_options_with_variant.count(key) == 1);
     }
-    // Uniform: the travel keys, the behaviour switches and the small perimeter threshold.
+    // Uniform: the travel keys, the behaviour switches and the small perimeter thresholds.
     for (const char *key : {"travel_speed", "travel_speed_z", "initial_layer_travel_speed", "travel_acceleration", "initial_layer_travel_acceleration",
-                            "travel_jerk", "initial_layer_travel_jerk", "enable_overhang_speed", "slowdown_for_curled_perimeters", "small_perimeter_threshold"}) {
+                            "travel_jerk", "initial_layer_travel_jerk", "enable_overhang_speed", "slowdown_for_curled_perimeters", "small_perimeter_threshold",
+                            "small_support_perimeter_threshold"}) {
         INFO(key);
         CHECK(composed.count(key) == 0);
         CHECK(print_options_with_variant.count(key) == 1);
@@ -338,6 +342,24 @@ TEST_CASE("The composer writes one column per slot of the narrowing and takes th
     }
 }
 
+TEST_CASE("A tool head of another size takes the small support perimeter speed from its source and keeps the selected threshold", "[PerHeadProcess][phs_compose_small_support]")
+{
+    DynamicPrintConfig full = four_head_printer({nvtStandard, nvtStandard, nvtHighFlow, nvtStandard}, /*stats=*/false);
+    add_flow_only_process(full);
+    full.option<ConfigOptionFloatsOrPercentsNullable>("small_support_perimeter_speed", true)->values = {FloatOrPercent{50., true}, FloatOrPercent{60., true}};
+    full.option<ConfigOptionFloatsNullable>("small_support_perimeter_threshold", true)->values     = {0., 2.};
+    const std::unique_ptr<Preset> source = single_column_source();
+    source->config.option<ConfigOptionFloatsOrPercentsNullable>("small_support_perimeter_speed", true)->values = {FloatOrPercent{20., false}};
+    source->config.option<ConfigOptionFloatsNullable>("small_support_perimeter_threshold", true)->values     = {5.};
+    std::vector<PerHeadProcess::Source> sources = sources_with_head(1, *source);
+
+    REQUIRE(PerHeadProcess::compose(full, {}, sources));
+    // Head 2 from the source, the other heads from the selected preset's column of their flow.
+    CHECK(full.opt_serialize("small_support_perimeter_speed") == "50%,20,60%,50%");
+    // The selected preset's column on every head, the source's value ignored.
+    CHECK(full.opt_serialize("small_support_perimeter_threshold") == "0,0,2,0");
+}
+
 TEST_CASE("Without a derived source the composer leaves the config untouched", "[PerHeadProcess][phs_compose_noop]")
 {
     DynamicPrintConfig full = four_head_printer({nvtStandard, nvtStandard, nvtHighFlow, nvtStandard}, /*stats=*/false);
@@ -392,7 +414,7 @@ TEST_CASE("On the shipped U1 presets each off-size tool head follows the process
         CHECK(sources[1].reason == PerHeadProcess::Reason::Derived);
         CHECK(sources[2].reason == PerHeadProcess::Reason::Derived);
         CHECK(sources[3].reason == PerHeadProcess::Reason::HomeSize);
-        CHECK(sources[1].composed_keys.size() == 41);
+        CHECK(sources[1].composed_keys.size() == 42);
         CHECK(sources[1].kept_keys.empty());
 
         // One slot per tool head on the U1 (no nozzle stats): the off-size heads carry the 0.2 / 0.6
@@ -458,7 +480,7 @@ TEST_CASE("On the shipped U1 presets each off-size tool head follows the process
         const std::vector<PerHeadProcess::Source> sources = PerHeadProcess::head_sources(*bundle);
         REQUIRE(sources.size() == 4);
         CHECK(sources[1].kept_keys == std::vector<std::string>{"default_acceleration"});
-        CHECK(sources[1].composed_keys.size() == 40);
+        CHECK(sources[1].composed_keys.size() == 41);
         const DynamicPrintConfig composed = bundle->full_config_for_print(false);
         CHECK(floats_of(composed, "default_acceleration") == std::vector<double>{3000., 3000., 3000., 3000.});
         CHECK(floats_of(composed, "outer_wall_speed") == std::vector<double>{200., 120., 120., 200.});
@@ -1943,7 +1965,7 @@ TEST_CASE("The High Flow rule applies to a High Flow tool head without High Flow
         CHECK(sources[1].derived);
         REQUIRE(sources[1].preset != nullptr);
         CHECK(sources[1].preset->name == STD_020_04);
-        CHECK(sources[1].composed_keys.size() == 41);
+        CHECK(sources[1].composed_keys.size() == 42);
         CHECK(sources[1].kept_keys.empty());
         CHECK(PerHeadProcess::reads_high_flow(sources[1], nvtHighFlow, printer));
         // A Standard head of the home size is not derived; the other sizes keep the size rule.

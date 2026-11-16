@@ -13,7 +13,7 @@ endif()
 set(Snapmaker_VERSION "2.5.0")
 set(MIN_FIRM_VER "1.0.0")
 # Mainline OrcaSlicer base version this fork is synced to (used by upstream code paths)
-set(SoftFever_VERSION "2.5.0-dev")
+set(SoftFever_VERSION "2.6.0-dev")
 string(REGEX MATCH "^([0-9]+)\\.([0-9]+)\\.([0-9]+)"
        Snapmaker_VERSION_MATCH ${Snapmaker_VERSION})
 set(ORCA_VERSION_MAJOR ${CMAKE_MATCH_1})
