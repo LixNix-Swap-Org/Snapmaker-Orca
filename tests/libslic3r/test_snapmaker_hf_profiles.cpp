@@ -1,5 +1,6 @@
 #include <catch2/catch_all.hpp>
 
+#include <algorithm>
 #include <cstdlib>
 #include <fstream>
 #include <memory>
@@ -64,14 +65,14 @@ std::vector<std::string> column_values(const DynamicPrintConfig &config, const s
     return static_cast<const ConfigOptionVectorBase *>(opt)->vserialize();
 }
 
-// The value a key has in the machine preset's parents, read from the shipped JSON files.
+// The value a key has in a preset of `subdir` or its parents, read from the shipped JSON files.
 // Returns an empty vector when no parent sets the key.
-std::vector<std::string> parent_json_values(const std::string &first_parent, const std::string &key)
+std::vector<std::string> parent_json_values(const std::string &first_parent, const std::string &key, const char *subdir = "machine")
 {
-    const fs::path machine_dir = fs::path(PROFILES_DIR) / "Snapmaker" / "machine";
-    std::string    name        = first_parent;
+    const fs::path preset_dir = fs::path(PROFILES_DIR) / "Snapmaker" / subdir;
+    std::string    name       = first_parent;
     while (!name.empty()) {
-        std::ifstream in((machine_dir / (name + ".json")).string());
+        std::ifstream in((preset_dir / (name + ".json")).string());
         REQUIRE(in.good());
         nlohmann::json j = nlohmann::json::parse(in);
         if (j.contains(key)) {
@@ -233,6 +234,24 @@ TEST_CASE("Converted Snapmaker filaments carry a Standard and a High Flow column
                 CHECK(vector_size(filament, key) == 2);
             }
         }
+    }
+
+    SECTION("every U1 0.4 filament whose shipped file names high_flow is converted") {
+        // The loader drops filament_flow_support, so the shipped files name the filaments with High Flow values.
+        size_t converted = 0;
+        for (const Preset &preset : bundle.filaments) {
+            const auto *printers = preset.config.option<ConfigOptionStrings>("compatible_printers");
+            if (!preset.is_system || printers == nullptr || printers->values != std::vector<std::string>{U1_MACHINE})
+                continue;
+            const std::vector<std::string> flows = parent_json_values(preset.name, "filament_flow_support", "filament");
+            if (std::none_of(flows.begin(), flows.end(), [](const std::string &flow) { return flow.find("high_flow") != std::string::npos; }))
+                continue;
+            INFO(preset.name);
+            CHECK(preset.config.option<ConfigOptionStrings>("filament_extruder_variant")->values == std::vector<std::string>{STANDARD, HIGH_FLOW});
+            CHECK(vector_size(preset.config, "filament_max_volumetric_speed") == 2);
+            ++converted;
+        }
+        CHECK(converted == 22);
     }
 
     SECTION("a filament that was not converted keeps its single column") {

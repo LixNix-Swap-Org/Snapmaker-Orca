@@ -11,7 +11,7 @@ for later syncs with the 2.4 profiles; the slicer ignores them.
 |---|---|---|
 | `machine/Snapmaker U1 (0.4 nozzle).json` | 8: Standard and High Flow for each of the four tool heads | `extruder_variant_list`, `printer_extruder_id` (1,1,2,2,3,3,4,4), `printer_extruder_variant` |
 | `process/0.20mm Standard @Snapmaker U1 (0.4 nozzle).json` | 2: Standard, High Flow, shared by all tool heads | `print_extruder_id` (1,1), `print_extruder_variant` |
-| the 15 Snapmaker-brand U1 0.4 filaments whose `filament_flow_support` names `high_flow` | 2: Standard, High Flow | `filament_extruder_variant` |
+| the 22 Snapmaker-brand U1 0.4 filaments whose `filament_flow_support` names `high_flow` | 2: Standard, High Flow | `filament_extruder_variant` |
 | every other preset | 1 | none, or a single `Direct Drive Standard` |
 
 `default_nozzle_volume_type` is `Standard` for every tool head, so nothing changes until a tool

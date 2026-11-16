@@ -130,8 +130,8 @@ TEST_CASE("The U1 filaments come as one preset per nozzle size and family", "[No
         CHECK_FALSE(preset.alias.empty());
         families[{ preset.system_inherits, preset.alias }][list->values.front()].push_back(preset.name);
     }
-    CHECK(presets == 129);
-    CHECK(families.size() == 43);
+    CHECK(presets == 152);
+    CHECK(families.size() == 48);
 
     std::map<std::string, size_t> coverage;
     for (const auto &[family, members] : families) {
@@ -146,9 +146,9 @@ TEST_CASE("The U1 filaments come as one preset per nozzle size and family", "[No
         }
         ++coverage[pattern];
     }
-    CHECK(coverage["XXXX"] == 18);
-    CHECK(coverage[".XXX"] == 15);
-    CHECK(coverage[".X.."] == 9);
+    CHECK(coverage["XXXX"] == 20);
+    CHECK(coverage[".XXX"] == 21);
+    CHECK(coverage[".X.."] == 6);
     CHECK(coverage["XXX."] == 1);
     CHECK(coverage.size() == 4);
 }
@@ -796,7 +796,7 @@ TEST_CASE("After a printer preset change the kept names yield the versions of th
             continue;
         families.emplace_back(preset.name, NozzleFilament::version_for(bundle->filaments, preset, machine(*bundle, U1_02)) != nullptr);
     }
-    REQUIRE(families.size() == 43);
+    REQUIRE(families.size() == 48);
 
     // Tab::select_preset restores the filament names after the printer preset changed; every head
     // is on the size of the new printer preset, so nothing is mixed and the rule alone moves the slots.
@@ -824,8 +824,8 @@ TEST_CASE("After a printer preset change the kept names yield the versions of th
         }
         CHECK(bundle->apply_nozzle_filament_targets(targets) == size_t(std::count_if(targets.begin(), targets.end(), [](const auto &t) { return t.switches(); })));
     }
-    CHECK(switched == 19);
-    CHECK(no_version == 24);
+    CHECK(switched == 21);
+    CHECK(no_version == 27);
 }
 
 TEST_CASE("Broken slots are repaired per tool head", "[NozzleFilament][nozzle_filament_repair]")
@@ -1464,7 +1464,7 @@ TEST_CASE("Repro: a printer sync sets sizes and flow types, and every slot takes
 
 // Snapmaker Orca: adopt_extruder_values_from_size_preset() on a nozzle size change. The U1 sizes
 // differ in retraction length (0.4 / 1.5 / 1.4 / 1.5), minimum travel (1 / 1 / 3 / 1), wipe distance
-// (2 / 2 / 1 / 2) and nozzle type (0.6: stainless steel); the 0.4 preset has two columns per head.
+// (2 / 2 / 1 / 2) and nozzle type (0.4: stainless steel); the 0.4 preset has two columns per head.
 TEST_CASE("A tool head adopts the per-extruder machine values of its size preset", "[NozzleFilament][SizeChange]")
 {
     auto          bundle = load_snapmaker_bundle();
@@ -1477,11 +1477,16 @@ TEST_CASE("A tool head adopts the per-extruder machine values of its size preset
     DynamicPrintConfig config = p04->config;
     const auto values_of = [&config](const char *key) { return static_cast<const ConfigOptionVectorBase *>(config.option(key))->vserialize(); };
 
-    SECTION("0.4 to 0.2 on head 1: the retraction length of both variant columns of the head")
+    SECTION("0.4 to 0.2 on head 1: the retraction length and nozzle type of both variant columns of the head")
     {
         const std::vector<std::string> changed = adopt_extruder_values_from_size_preset(config, p02->config, &p04->config, 0, nozzle_size_extruder_options());
-        CHECK(changed == std::vector<std::string>{"retraction_length"});
+        CHECK(changed == std::vector<std::string>{"nozzle_type", "retraction_length"});
         CHECK(extruder_option_columns(config, "retraction_length", 0) == std::vector<size_t>{0, 1});
+        const std::vector<std::string> type = values_of("nozzle_type");
+        REQUIRE(type.size() == 8);
+        CHECK(type[0] == "hardened_steel");
+        CHECK(type[1] == "hardened_steel");
+        CHECK(type[2] == "stainless_steel");
         const std::vector<std::string> retraction = values_of("retraction_length");
         REQUIRE(retraction.size() == 8);
         CHECK(retraction[0] == "0.4");
@@ -1495,10 +1500,10 @@ TEST_CASE("A tool head adopts the per-extruder machine values of its size preset
         CHECK(changed == std::vector<std::string>{"nozzle_type", "retraction_length", "retraction_minimum_travel", "wipe_distance"});
         const std::vector<std::string> type = values_of("nozzle_type");
         REQUIRE(type.size() == 8);
-        CHECK(type[4] == "stainless_steel");
-        CHECK(type[5] == "stainless_steel");
-        CHECK(type[0] == "hardened_steel");
-        CHECK(type[7] == "hardened_steel");
+        CHECK(type[4] == "hardened_steel");
+        CHECK(type[5] == "hardened_steel");
+        CHECK(type[0] == "stainless_steel");
+        CHECK(type[7] == "stainless_steel");
         CHECK(values_of("retraction_length")[4] == "1.4");
         CHECK(values_of("retraction_minimum_travel")[5] == "3");
         CHECK(values_of("wipe_distance")[4] == "1");
@@ -1510,7 +1515,7 @@ TEST_CASE("A tool head adopts the per-extruder machine values of its size preset
         REQUIRE(z_hop != nullptr);
         z_hop->values[0] = 0.9;
         const std::vector<std::string> changed = adopt_extruder_values_from_size_preset(config, p02->config, &p04->config, 0, nozzle_size_extruder_options());
-        CHECK(changed == std::vector<std::string>{"retraction_length"});
+        CHECK(changed == std::vector<std::string>{"nozzle_type", "retraction_length"});
         CHECK(values_of("z_hop")[0] == "0.9");
     }
     SECTION("without the preset of the previous size every value the size preset differs in is adopted")
@@ -1519,7 +1524,7 @@ TEST_CASE("A tool head adopts the per-extruder machine values of its size preset
         REQUIRE(z_hop != nullptr);
         z_hop->values[0] = 0.9;
         const std::vector<std::string> changed = adopt_extruder_values_from_size_preset(config, p02->config, nullptr, 0, nozzle_size_extruder_options());
-        CHECK(changed == std::vector<std::string>{"retraction_length", "z_hop"});
+        CHECK(changed == std::vector<std::string>{"nozzle_type", "retraction_length", "z_hop"});
         CHECK(values_of("z_hop")[0] == "0.4");
         CHECK(values_of("z_hop")[1] == "0.4");
     }

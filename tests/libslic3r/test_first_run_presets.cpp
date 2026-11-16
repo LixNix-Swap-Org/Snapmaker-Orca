@@ -404,8 +404,9 @@ TEST_CASE("The default material rule ranks the filaments of a Snapmaker printer"
             if (m.id == U1_MODEL)
                 m.default_materials = { default_material };
         REQUIRE(bundle->default_material_rank(preset(default_material.c_str())) == 3);
-        // Printer switch with no filament chosen: the editor holds a PLA of another printer (the U1's
-        // default_filament_profile "Generic PLA" names no U1 preset); the U1's alphabetically first is Generic ABS.
+        // Printer switch with no filament chosen: the editor holds a PLA of another printer and the printer's
+        // default_filament_profile names no U1 preset; the U1's alphabetically first is Generic ABS.
+        bundle->printers.get_edited_preset().config.option<ConfigOptionStrings>("default_filament_profile", true)->values = { "Generic PLA" };
         REQUIRE(bundle->filaments.select_preset_by_name("Snapmaker PLA @J1", true));
         REQUIRE_FALSE(bundle->filaments.get_selected_preset().is_compatible);
         // The replacement of a placeholder slot (load_selections / update_selections) and of a
