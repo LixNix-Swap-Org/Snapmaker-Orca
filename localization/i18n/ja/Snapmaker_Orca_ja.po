@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Snapmaker Orca\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-09 13:41+0100\n"
+"POT-Creation-Date: 2026-11-16 21:34+0100\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -491,6 +491,7 @@ msgstr "サポートをブロックする"
 msgid "Erase"
 msgstr "消去"
 
+#. TRN Variable layer height tool: the plain wheel resizes the edit area only with the cursor on a layer height bar.
 msgid "Mouse wheel"
 msgstr "マウスホイール"
 
@@ -678,6 +679,47 @@ msgstr "ファジー壁面ペイントを終了"
 # AI Translated
 msgid "Paint-on fuzzy skin editing"
 msgstr "ファジー壁面ペイントの編集"
+
+msgid "Painted modifier"
+msgstr ""
+
+msgid "Modifier"
+msgstr "モディファイア"
+
+msgid "New painted modifier"
+msgstr ""
+
+#. TRN - Input label. Be short as possible
+#. Size in emboss direction
+#. TRN - Input label. Be short as possible
+msgid "Depth"
+msgstr "深さ"
+
+msgid ""
+"How far the painted area reaches into the part, measured from the painted surface.\n"
+"0 reaches across the whole part, up to the nearest unpainted surface."
+msgstr ""
+
+msgid "The part this modifier was painted on has been removed."
+msgstr ""
+
+msgid "Paint the modifier area"
+msgstr ""
+
+msgid "Erase the modifier area"
+msgstr ""
+
+msgid "Change painted modifier depth"
+msgstr ""
+
+msgid "Entering painted modifier"
+msgstr ""
+
+msgid "Leaving painted modifier"
+msgstr ""
+
+msgid "Painted modifier editing"
+msgstr ""
 
 msgid "Move"
 msgstr "移動"
@@ -938,12 +980,6 @@ msgid "Shape"
 msgstr "形状"
 
 #. TRN - Input label. Be short as possible
-#. Size in emboss direction
-#. TRN - Input label. Be short as possible
-msgid "Depth"
-msgstr "深さ"
-
-#. TRN - Input label. Be short as possible
 #. Angle between Y axis and text line direction.
 #. TRN - Input label. Be short as possible
 msgid "Rotation"
@@ -1096,8 +1132,9 @@ msgstr "カット後"
 msgid "Cut to parts"
 msgstr "パーツに割り切る"
 
-msgid "Reset cutting plane and remove connectors"
-msgstr "カット面をリセットし、コネクターを削除"
+#. TRN: Part assignments are the upper/lower cut groups changed by right-clicking parts.
+msgid "Reset the cutting plane, remove connectors, and clear part assignments."
+msgstr ""
 
 # AI Translated
 msgid "Reset Cut"
@@ -1378,9 +1415,6 @@ msgstr "カット"
 
 msgid "Click to change part type into negative volume."
 msgstr "クリックすると、パーツタイプをマイナスボリュームに変更します。"
-
-msgid "Modifier"
-msgstr "モディファイア"
 
 msgid "Click to change part type into modifier."
 msgstr "クリックすると、パーツタイプをモディファイアに変更します。"
@@ -2831,6 +2865,9 @@ msgstr "サポート補強を追加"
 msgid "Add Precise Seam"
 msgstr "精密継ぎ目を追加"
 
+msgid "Add Painted Modifier"
+msgstr ""
+
 msgid "Add text"
 msgstr "テキストの追加"
 
@@ -2938,6 +2975,9 @@ msgstr "提案"
 
 msgid "Text"
 msgstr "テキスト"
+
+msgid "Add a modifier whose shape is painted on the part"
+msgstr ""
 
 msgid "Height Range Modifier"
 msgstr "高さ範囲修正"
@@ -3190,6 +3230,15 @@ msgstr "オブジェクトの向きを自動的に調整する"
 
 msgid "Paste Process Settings"
 msgstr "プロセス設定を貼り付け"
+
+msgid "Edit Painting"
+msgstr ""
+
+msgid "Paint the area of the selected painted modifier"
+msgstr ""
+
+msgid "Delete the selected painted modifier"
+msgstr ""
 
 msgid "Edit"
 msgstr "編集"
@@ -3532,11 +3581,11 @@ msgstr "最後のソリッドパーツは削除できません。"
 msgid "Delete part"
 msgstr "パーツを削除"
 
-msgid "The target object contains only one part and can not be split."
-msgstr "対象のオブジェクトにはパーツが1つしかなく、分割できません。"
-
 msgid "Split to parts"
 msgstr "パーツに分割"
+
+msgid "The target object contains only one part and can not be split."
+msgstr "対象のオブジェクトにはパーツが1つしかなく、分割できません。"
 
 msgid "Assembly"
 msgstr "アセンブリ"
@@ -3597,6 +3646,13 @@ msgstr "最初に選択したのがオブジェクトの場合、次に選択で
 
 msgid "If the first selected item is a part, the second should be a part in the same object."
 msgstr "最初に選択したがパーツの場合、次に選択できるのが同じオブジェクトのパーツ"
+
+#, boost-format
+msgid "Painted modifier %1%"
+msgstr ""
+
+msgid "Add painted modifier"
+msgstr ""
 
 msgid "The type of the last solid object part cannot be changed."
 msgstr "オブジェクトの最後のパーツはタイプを変更できません。"
@@ -6544,6 +6600,9 @@ msgstr "無効なパターンです。N、N#K、またはオプション#K付き
 msgid "Invalid format. Expected vector format: \"%1%\""
 msgstr "無効なフォーマット、%1%であるはずです。"
 
+msgid "The excluded bed area is invalid. It must be a simple, non-self-intersecting polygon."
+msgstr ""
+
 # AI Translated
 msgid "System agents"
 msgstr "システムエージェント"
@@ -6968,6 +7027,16 @@ msgstr "半径"
 msgid "Keep min"
 msgstr "最小限に抑える"
 
+#. TRN Variable layer height tool, checkbox shown with several objects selected: give each object its own
+#. layer heights instead of one profile they all share.
+msgid "Each object separately"
+msgstr ""
+
+#. TRN Variable layer height tool: each selected object has a layer height bar at the right edge of the 3D view.
+#. Painting over an object in the 3D view, or over its bar, edits the layer heights of that object.
+msgid "Paint over an object or its bar to edit its layers."
+msgstr ""
+
 msgid "Add detail"
 msgstr "詳細を追加"
 
@@ -6982,6 +7051,13 @@ msgstr "スムージング"
 
 msgid "Increase/decrease edit area"
 msgstr "編集領域を拡大/縮小"
+
+msgid "Increase/decrease edit area on the bar"
+msgstr ""
+
+#. TRN "Adaptive", "Smooth" and "Reset" are the buttons of the variable layer height tool.
+msgid "Variable layer height: only the three tallest selected objects have a bar. The others still take Adaptive, Smooth and Reset."
+msgstr ""
 
 msgid "Sequence"
 msgstr "順番"
@@ -7309,6 +7385,9 @@ msgstr "アイコンを中クリック"
 msgid "Set viewing angle"
 msgstr "視点の角度を設定"
 
+msgid "Follow camera"
+msgstr ""
+
 msgid "Paint Toolbar"
 msgstr "ペイント ツールバー"
 
@@ -7445,8 +7524,25 @@ msgstr "ライブビュー再試行"
 msgid "Resolution"
 msgstr "分解能"
 
+msgid "Custom camera source"
+msgstr "カスタムカメラソース"
+
+# AI Translated
+msgid "Camera stream URL"
+msgstr "カメラストリームのURL"
+
+# AI Translated
+msgid "URL of an MJPEG stream or of a web page that shows the camera, for example http://192.168.1.10:8080/?action=stream"
+msgstr "MJPEGストリームまたはカメラを表示するWebページのURL。例: http://192.168.1.10:8080/?action=stream"
+
+msgid "Enable"
+msgstr "有効化"
+
 msgid "Show \"Live Video\" guide page."
 msgstr "「ライブビュー」ガイドを表示"
+
+msgid "Disable"
+msgstr "無効"
 
 msgid "Connect Printer (LAN)"
 msgstr "プリンターとの接続（LAN）"
@@ -8499,6 +8595,9 @@ msgstr "ストレージ"
 msgid "Camera Setting"
 msgstr "カメラ設定"
 
+msgid "Switch Camera View"
+msgstr "カメラビューを切り替え"
+
 msgid "Control"
 msgstr "コントロール"
 
@@ -9206,6 +9305,10 @@ msgstr "新しいネットワークプラグインが利用可能"
 msgid "Details"
 msgstr "詳細"
 
+# AI Translated
+msgid "Updates are available for your OrcaCloud plugins."
+msgstr "OrcaCloudプラグインの更新があります。"
+
 msgid "New printer config available."
 msgstr "新しいプリンター設定が利用可能です。"
 
@@ -9362,6 +9465,24 @@ msgstr ""
 
 msgid "Error loading shaders"
 msgstr "シェーダーの読込みにエラーが発生しました"
+
+#. TRN The OpenGL context could not be made current, so nothing can be drawn in the 3D view.
+msgid "OpenGL could not be activated for the 3D view, so it cannot be shown."
+msgstr ""
+
+#. TRN %1% is the name of a graphics card or display adapter as Windows reports it, such as "Microsoft Basic Display Adapter".
+#, boost-format
+msgid "The window is on a display driven by \"%1%\"."
+msgstr ""
+
+msgid "Make sure the display adapter driving this window's display is enabled and its driver is installed and up to date."
+msgstr ""
+
+msgid "If the computer has more than one graphics card, connecting the monitor to another one may help."
+msgstr ""
+
+msgid "If the problem remains, close any overlay or screen capture software and try again."
+msgstr ""
 
 msgctxt "Layers"
 msgid "Top"
@@ -10381,10 +10502,6 @@ msgstr "フィラメントのタイプと色の情報が同期されましたが
 msgid "Do you want to save changes to \"%1%\"?"
 msgstr "変更を\"%1%\"に保存しますか？"
 
-# AI Translated
-msgid "UV Editor"
-msgstr "UVエディター"
-
 #, c-format, boost-format
 msgid "Successfully unmounted. The device %s (%s) can now be safely removed from the computer."
 msgstr "デバイス %s(%s)をお取出しできます"
@@ -10417,6 +10534,17 @@ msgstr "サイドバーを折りたたむ"
 #, c-format, boost-format
 msgid "Loading file: %s"
 msgstr "ファイルを読込む: %s"
+
+# AI Translated
+msgid "Some imported objects contain modifiers or parts with individual settings. They are shown as assemblies so that these settings remain visible."
+msgstr "インポートした一部のオブジェクトには、個別の設定を持つモディファイアまたはパーツが含まれています。これらの設定を確認できるよう、アセンブリとして表示されます。"
+
+# AI Translated
+msgid "Geometry import"
+msgstr "ジオメトリのインポート"
+
+msgid "The file does not contain any geometry data."
+msgstr "このファイルにはジオメトリデータが含まれていません。"
 
 msgid "Load 3MF"
 msgstr "3mfを読込み"
@@ -10487,8 +10615,10 @@ msgstr "一部の公開された設定を適用できませんでした:"
 msgid "Some filament slots were changed:"
 msgstr "一部のフィラメントスロットが変更されました:"
 
-msgid "Component name(s) inside step file not in UTF-8 format!"
-msgstr "ファイルのエンコーディング方式はUTF-8形式ではありません"
+# AI Translated
+# Needs human review: Rewrote a person's translation: Lost 'component names inside the STEP file'
+msgid "Component name(s) inside STEP file not in UTF-8 format!"
+msgstr "STEPファイル内のコンポーネント名がUTF-8形式ではありません！"
 
 msgid "Because of unsupported text encoding, garbage characters may appear!"
 msgstr "文字化けがあるようです、ご確認ください"
@@ -10557,8 +10687,8 @@ msgstr "プリンター情報を同期してプリセットを自動的に切り
 msgid "This project contains a model made in the Design tab and no other geometry. Enable \"CAD feature (experimental)\" in Preferences and restart to see and edit it; it is kept when the project is saved."
 msgstr "このプロジェクトには、デザインタブで作成されたモデルのみが含まれ、他のジオメトリはありません。表示して編集するには、設定で「CAD機能 (実験的)」を有効にして再起動してください。このモデルはプロジェクトの保存時に保持されます。"
 
-msgid "The file does not contain any geometry data."
-msgstr "このファイルにはジオメトリデータが含まれていません。"
+msgid "The invalid area has been removed, so please define it again using a valid polygon."
+msgstr ""
 
 msgid "Your object appears to be too large, do you want to scale it down to fit the print bed automatically?"
 msgstr "オブジェクトが大きすぎのようです、ベッドに合わせてスケールしますか？"
@@ -10814,6 +10944,10 @@ msgid ""
 msgstr ""
 "次のIDEX/IQEX並列モードの懸念事項が検出されました:\n"
 "\n"
+
+# AI Translated
+msgid "UV Editor"
+msgstr "UVエディター"
 
 #, c-format, boost-format
 msgid ""
@@ -11682,11 +11816,50 @@ msgstr "起動後「毎日のヒント」を表示"
 msgid "If enabled, useful hints are displayed at startup."
 msgstr "有効になる場合、起動時にヒントを表示されます。"
 
-msgid "Downloads folder"
-msgstr "ダウンロードフォルダ"
+msgid "Features"
+msgstr "機能"
 
-msgid "Target folder for downloaded items"
-msgstr "ダウンロードアイテムの保存先フォルダ"
+msgid "Multi device management"
+msgstr "マルチデバイス管理"
+
+msgid "With this option enabled, you can send a task to multiple devices at the same time and manage multiple devices."
+msgstr "このオプションを有効にすると、複数のデバイスに同時にタスクを送信し、複数のデバイスを管理できます。"
+
+# AI Translated
+msgid "CAD feature (experimental)"
+msgstr "CAD機能 (実験的)"
+
+# AI Translated
+msgid "With this option enabled, the Design tab is shown, where models can be built and edited parametrically. This feature is experimental and still under development."
+msgstr "このオプションを有効にすると、デザインタブが表示され、モデルをパラメトリックに作成・編集できます。この機能は実験的なもので、現在も開発中です。"
+
+msgid "Pop up to select filament grouping mode"
+msgstr "フィラメントグルーピングモード選択のポップアップ"
+
+msgid "Clear my choice on..."
+msgstr "選択をクリア..."
+
+msgid "Unsaved projects"
+msgstr "未保存のプロジェクト"
+
+msgid "Clear my choice on the unsaved projects."
+msgstr "未保存のプロジェクトの選択をクリアします。"
+
+msgid "Unsaved presets"
+msgstr "未保存のプリセット"
+
+msgid "Clear my choice on the unsaved presets."
+msgstr "未保存のプリセットの選択をクリアします。"
+
+msgid "Synchronizing printer preset"
+msgstr "プリンタープリセットを同期中"
+
+msgid "Clear my choice for synchronizing printer preset after loading the file."
+msgstr "ファイルロード後のプリンタープリセット同期の選択をクリアします。"
+
+# AI Translated
+msgid "Files"
+msgstr "ファイル"
 
 msgid "Load All"
 msgstr "すべてロード"
@@ -11712,6 +11885,17 @@ msgstr "自動バックアップ"
 msgid "Backup your project periodically to help with restoring from an occasional crash."
 msgstr "定期的にプロジェクトをバックアップして、クラッシュからの復元に備えます。"
 
+# AI Translated
+msgid "Store full source file paths in projects"
+msgstr "プロジェクトにソースファイルの絶対パスを保存"
+
+# AI Translated
+msgid "If enabled, saved projects store the absolute path to imported source files (STEP/STL/...), so \"Reload from disk\" still works when the source file is kept in a different folder than the project. If disabled, only the filename is stored, which keeps projects portable and avoids embedding absolute paths."
+msgstr "有効にすると、保存されたプロジェクトにインポート元ファイル (STEP/STL/...) の絶対パスが保存され、ソースファイルをプロジェクトと別のフォルダに置いていても「ディスクから再読み込み」が機能します。無効にするとファイル名のみが保存されるため、プロジェクトの可搬性が保たれ、絶対パスの埋め込みを避けられます。"
+
+msgid "Recent files"
+msgstr "最近のファイル"
+
 msgid "Maximum recent files"
 msgstr "最大最近のファイル数"
 
@@ -11721,18 +11905,61 @@ msgstr "最近のファイルの最大数"
 msgid "Add STL/STEP files to recent files list"
 msgstr "STL/STEPファイルを最近のファイルリストに追加"
 
+# AI Translated
+msgid "Folder paths"
+msgstr "フォルダパス"
+
+msgid "Downloads folder"
+msgstr "ダウンロードフォルダ"
+
+msgid "Target folder for downloaded items"
+msgstr "ダウンロードアイテムの保存先フォルダ"
+
+# AI Translated
+msgid "File import"
+msgstr "ファイルのインポート"
+
+# AI Translated
+msgid "Ask how to handle unsupported characters in imported names"
+msgstr "インポートした名前に含まれる非対応の文字の処理方法を確認する"
+
+# AI Translated
+msgid "Show the removal or replacement choices when original names contain unsupported characters."
+msgstr "元の名前に非対応の文字が含まれている場合に、削除または置換の選択肢を表示します。"
+
+# AI Translated
+msgid "3MF import"
+msgstr "3MFのインポート"
+
+# AI Translated
+msgid "Show options when importing"
+msgstr "インポート時にオプションを表示"
+
+# AI Translated
+msgid "Show original-name and sorting options when importing a 3MF without project settings into the current project."
+msgstr "プロジェクト設定のない3MFを現在のプロジェクトにインポートするときに、元の名前と並べ替えのオプションを表示します。"
+
+# AI Translated
+msgid "Keep original names"
+msgstr "元の名前を保持"
+
+# AI Translated
+msgid "Use the body names stored in the imported file when it contains them."
+msgstr "インポートしたファイルにボディ名が保存されている場合は、その名前を使用します。"
+
 msgid "Don't warn when loading 3MF with modified G-code"
 msgstr "変更されたG-code付き3MFをロード時に警告しない"
 
-msgid "Show options when importing STEP file"
-msgstr "STEPファイルインポート時にオプションを表示"
+# AI Translated
+msgid "STEP import"
+msgstr "STEPのインポート"
 
 msgid "If enabled, a parameter settings dialog will appear during STEP file import."
 msgstr "有効にすると、STEPファイルインポート時にパラメータ設定ダイアログが表示されます。"
 
 # AI Translated
-msgid "STEP importing: linear deflection"
-msgstr "STEPインポート: 線形偏差"
+msgid "Linear deflection"
+msgstr "線形偏差"
 
 # AI Translated
 msgid ""
@@ -11747,8 +11974,8 @@ msgstr ""
 "デフォルト: 0.003 mm。"
 
 # AI Translated
-msgid "STEP importing: angle deflection"
-msgstr "STEPインポート: 角度偏差"
+msgid "Angle deflection"
+msgstr "角度偏差"
 
 # AI Translated
 msgid ""
@@ -11763,18 +11990,30 @@ msgstr ""
 "デフォルト: 0.5。"
 
 # AI Translated
-msgid "STEP importing: Split into multiple objects"
-msgstr "STEPインポート: 複数オブジェクトに分割"
+msgid "Split into multiple objects"
+msgstr "複数のオブジェクトに分割"
 
 # AI Translated
 msgid ""
 "If enabled, compound and compsolid shapes in imported STEP files are split into multiple objects.\n"
 "Used as the default in the import dialog, or directly when the import dialog is disabled.\n"
-"Default: disabled."
+"Default: enabled."
 msgstr ""
 "有効にすると、インポートしたSTEPファイル内のコンパウンドおよびコンプソリッド形状が複数のオブジェクトに分割されます。\n"
 "インポートダイアログの初期値として、またはインポートダイアログが無効な場合は直接使用されます。\n"
-"デフォルト: 無効。"
+"デフォルト: 有効。"
+
+# AI Translated
+msgid "AMF import"
+msgstr "AMFのインポート"
+
+# AI Translated
+msgid "Show body grouping, original-name and sorting options when importing geometry into the current project."
+msgstr "現在のプロジェクトにジオメトリをインポートするときに、ボディのグループ化、元の名前、並べ替えのオプションを表示します。"
+
+# AI Translated
+msgid "DRC export"
+msgstr "DRCのエクスポート"
 
 msgid "Quality level for Draco export"
 msgstr "Dracoエクスポートの品質レベル"
@@ -11791,13 +12030,161 @@ msgstr ""
 "0 = 可逆圧縮（ジオメトリは完全な精度で保持されます）。有効な非可逆値の範囲は8〜30です。\n"
 "低い値はファイルサイズが小さくなりますがジオメトリの詳細が失われます。高い値はファイルサイズが大きくなりますがより多くの詳細が保持されます。"
 
-# AI Translated
-msgid "Store full source file paths in projects"
-msgstr "プロジェクトにソースファイルの絶対パスを保存"
+msgid "Associate files to Snapmaker Orca"
+msgstr "ファイルをSnapmaker Orcaに関連付ける"
 
 # AI Translated
-msgid "If enabled, saved projects store the absolute path to imported source files (STEP/STL/...), so \"Reload from disk\" still works when the source file is kept in a different folder than the project. If disabled, only the filename is stored, which keeps projects portable and avoids embedding absolute paths."
-msgstr "有効にすると、保存されたプロジェクトにインポート元ファイル (STEP/STL/...) の絶対パスが保存され、ソースファイルをプロジェクトと別のフォルダに置いていても「ディスクから再読み込み」が機能します。無効にするとファイル名のみが保存されるため、プロジェクトの可搬性が保たれ、絶対パスの埋め込みを避けられます。"
+msgid "File associations for the Microsoft Store version are managed by Windows Settings."
+msgstr "Microsoft Store版のファイル関連付けはWindowsの設定で管理されます。"
+
+# AI Translated
+msgid "Open Windows Default Apps Settings"
+msgstr "Windowsの既定のアプリ設定を開く"
+
+msgid "Associate 3MF files to Snapmaker Orca"
+msgstr ""
+
+msgid "If enabled, this sets Snapmaker Orca as the default application to open 3MF files."
+msgstr ""
+
+msgid "Associate DRC files to Snapmaker Orca"
+msgstr ""
+
+msgid "If enabled, sets Snapmaker Orca as default application to open DRC files."
+msgstr ""
+
+msgid "Associate STL files to Snapmaker Orca"
+msgstr ""
+
+msgid "If enabled, this sets Snapmaker Orca as the default application to open STL files."
+msgstr ""
+
+msgid "Associate STEP files to Snapmaker Orca"
+msgstr ""
+
+msgid "If enabled, this sets Snapmaker Orca as the default application to open STEP files."
+msgstr ""
+
+msgid "Associate web links to Snapmaker Orca"
+msgstr ""
+
+msgid "Behaviour"
+msgstr "動作"
+
+msgid "Auto flush after changing..."
+msgstr "変更後に自動フラッシュ..."
+
+msgid "Auto calculate flushing volumes when selected values changed"
+msgstr "選択した値が変更されたときにフラッシングボリュームを自動計算"
+
+msgid "Auto arrange plate after cloning"
+msgstr "クローン後にプレートを自動配置"
+
+msgid "Auto slice after changes"
+msgstr "変更後に自動スライス"
+
+msgid "If enabled, Snapmaker Orca will re-slice automatically whenever slicing-related settings change."
+msgstr ""
+
+msgid "Delay in seconds before auto slicing starts, allowing multiple edits to be grouped. Use 0 to slice immediately."
+msgstr "自動スライス開始前の遅延（秒）。複数の編集をグループ化できます。即座にスライスするには0を使用してください。"
+
+# AI Translated
+msgid "Show options when adding a primitive"
+msgstr "プリミティブ追加時にオプションを表示"
+
+# AI Translated
+msgid "If enabled, a dialog asks for the dimensions of a primitive shape before it is added."
+msgstr "有効にすると、プリミティブ形状を追加する前に寸法を尋ねるダイアログが表示されます。"
+
+msgid "Remove mixed temperature restriction"
+msgstr "混合温度制限を解除"
+
+msgid "With this option enabled, you can print materials with a large temperature difference together."
+msgstr "このオプションを有効にすると、大きな温度差のある材料を一緒に印刷できます。"
+
+msgid "Allow high/low temperature filament mixing"
+msgstr ""
+
+msgid "If enabled, allows printing with both high-temperature and low-temperature filaments simultaneously."
+msgstr ""
+
+msgid ""
+"Mixing materials with significantly different printing temperatures may result in:\n"
+"· Extruder clogging\n"
+"· Nozzle damage\n"
+"· Layer adhesion issues\n"
+"\n"
+"Do you want to enable this feature?"
+msgstr ""
+
+msgid "High and Low Temperature Material Mixing Risk"
+msgstr ""
+
+# AI Translated
+msgid "Remember last print action"
+msgstr "最後の印刷アクションを記憶"
+
+msgid "If enabled, Snapmaker Orca will remember the last selected option in the print button's dropdown (e.g. Print, Export plate sliced file, Export G-code file) and use it as the default on next startup."
+msgstr ""
+
+msgid "Show a dialog asking whether to continue slicing when memory is low"
+msgstr ""
+
+# AI Translated
+msgid "Default view type"
+msgstr "デフォルトの表示タイプ"
+
+# AI Translated
+msgid ""
+"The color scheme the sliced preview opens with.\n"
+"Automatic: Filament for multi material prints, Line Type for single material ones.\n"
+"Last used: the view type you selected last.\n"
+"Any other value always opens that view type.\n"
+"You can still switch the view type in the preview afterwards."
+msgstr ""
+"スライスプレビューを開いたときのカラースキームです。\n"
+"自動: マルチマテリアル印刷では「フィラメント」、単一材料の印刷では「種類」。\n"
+"前回使用: 最後に選択した表示タイプ。\n"
+"その他の値を選ぶと、常にその表示タイプで開きます。\n"
+"開いた後でも、プレビューで表示タイプを切り替えられます。"
+
+msgid "Simplify preview while dragging"
+msgstr ""
+
+msgid ""
+"What the sliced preview draws while you drag the camera or a preview slider, or zoom with the mouse wheel, so that large prints stay responsive. The full toolpaths are restored as soon as you let go.\n"
+"Off: the full toolpaths.\n"
+"Solid model: the sliced objects and the prime tower as solid shapes in the colors of the current view, cut to the visible layer range, with its bottom and top layers and the supports drawn as toolpaths. Negative volumes are not cut out. A print made object by object, or one on a belt printer, keeps its full toolpaths.\n"
+"Shell only: every layer without its sparse infill, internal solid infill, internal bridges and gap fill, which lie under the walls and skins. Walls, top and bottom surfaces, bridges, supports and the prime tower are drawn whole, so the print looks the same from outside.\n"
+"The bottom and top layers of the visible range are always drawn whole; a layer with no infill of its own, as with infill combination, takes the layers down to the nearest one with infill along."
+msgstr ""
+
+msgid "Solid model"
+msgstr ""
+
+msgid "Shell only"
+msgstr ""
+
+# AI Translated
+msgid "Dim lower layers"
+msgstr "下の積層を暗くする"
+
+# AI Translated
+msgid "When scrubbing the layer slider in the sliced preview, render the layers below the current one darkened so that only the layer being viewed is shown at full brightness."
+msgstr "スライスプレビューで積層スライダーを操作する際、現在の層より下の積層を暗く描画し、表示中の積層のみを明るく表示します。"
+
+# AI Translated
+msgid "Dimmed layer brightness"
+msgstr "暗くした積層の明るさ"
+
+# AI Translated
+msgid ""
+"How brightly the dimmed layers are rendered when \"Dim lower layers\" is enabled.\n"
+"99% is barely darkened, 0% renders them black. Capped at 99% because 100% would be the same as disabling the option."
+msgstr ""
+"「下の積層を暗くする」を有効にしたときに、暗くした積層をどの程度の明るさで表示するかを指定します。\n"
+"99%ではほとんど暗くならず、0%では真っ黒になります。100%はオプションを無効にした場合と同じになるため、上限は99%です。"
 
 msgid "Preset"
 msgstr "プリセット"
@@ -11837,14 +12224,37 @@ msgstr "共有プロファイルの通知を表示"
 msgid "Show a notification with a link to browse shared profiles when the selected printer is changed."
 msgstr "選択したプリンターを変更したときに、共有プロファイルを閲覧するリンク付きの通知を表示します。"
 
-msgid "Features"
-msgstr "機能"
+# AI Translated
+msgid "Visible plugin pages"
+msgstr "表示するプラグインページ数"
 
-msgid "Multi device management"
-msgstr "マルチデバイス管理"
+# AI Translated
+msgid "pages"
+msgstr "ページ"
 
-msgid "With this option enabled, you can send a task to multiple devices at the same time and manage multiple devices."
-msgstr "このオプションを有効にすると、複数のデバイスに同時にタスクを送信し、複数のデバイスを管理できます。"
+# AI Translated
+msgid "Number of plugin pages shown as fixed tabs before the remaining pages collapse into a dropdown on the last tab."
+msgstr "固定タブとして表示するプラグインページの数です。残りのページは最後のタブのドロップダウンにまとめられます。"
+
+# AI Translated
+msgid "Draw mate connectors as a face"
+msgstr "合致コネクターを面として描画"
+
+# AI Translated
+msgid "In the Design tab, draw a mate connector as a small face instead of the conventional disc with a roll quadrant. A face shows its orientation at a glance, without learning the disc convention. Turn this off for the conventional CAD representation."
+msgstr "デザインタブで、合致コネクターを従来のロール象限付きの円盤ではなく、小さな面として描画します。面なら、円盤の表記ルールを覚えなくても向きがひと目でわかります。従来のCADの表現にするにはオフにしてください。"
+
+# AI Translated
+msgid "Auto-close sketch loops"
+msgstr "スケッチのループを自動で閉じる"
+
+# AI Translated
+msgid "Treat sketch endpoints within 0.001 mm as one joint and weld the loop shut. Off: only exactly coincident endpoints join, so a loop with a tiny gap is shown as open instead of being closed for you. Saved with each design; applies to designs started after the change."
+msgstr "0.001 mm以内にあるスケッチの端点を1つの接続点として扱い、ループを結合して閉じます。オフ: 完全に一致する端点のみが接続されるため、わずかな隙間のあるループは自動で閉じられず、開いたまま表示されます。この設定はデザインごとに保存され、変更後に開始したデザインに適用されます。"
+
+# AI Translated
+msgid "Speed dial"
+msgstr "スピードダイヤル"
 
 # AI Translated
 msgid "Open the Speed Dial from the keyboard"
@@ -11866,92 +12276,6 @@ msgstr "件"
 # AI Translated
 msgid "How many recently launched actions to show at the top of the Speed Dial. Set to 0 to hide recent actions."
 msgstr "スピードダイヤルの上部に表示する、最近実行したアクションの数です。0にすると最近のアクションを非表示にします。"
-
-# AI Translated
-msgid "CAD feature (experimental)"
-msgstr "CAD機能 (実験的)"
-
-# AI Translated
-msgid "With this option enabled, the Design tab is shown, where models can be built and edited parametrically. This feature is experimental and still under development."
-msgstr "このオプションを有効にすると、デザインタブが表示され、モデルをパラメトリックに作成・編集できます。この機能は実験的なもので、現在も開発中です。"
-
-msgid "Pop up to select filament grouping mode"
-msgstr "フィラメントグルーピングモード選択のポップアップ"
-
-# AI Translated
-msgid "Visible plugin pages"
-msgstr "表示するプラグインページ数"
-
-# AI Translated
-msgid "pages"
-msgstr "ページ"
-
-# AI Translated
-msgid "Number of plugin pages shown as fixed tabs before the remaining pages collapse into a dropdown on the last tab."
-msgstr "固定タブとして表示するプラグインページの数です。残りのページは最後のタブのドロップダウンにまとめられます。"
-
-msgid "Behavior"
-msgstr "動作"
-
-msgid "Auto flush after changing..."
-msgstr "変更後に自動フラッシュ..."
-
-msgid "Auto calculate flushing volumes when selected values changed"
-msgstr "選択した値が変更されたときにフラッシングボリュームを自動計算"
-
-msgid "Auto arrange plate after cloning"
-msgstr "クローン後にプレートを自動配置"
-
-# AI Translated
-msgid "Show options when adding a primitive"
-msgstr "プリミティブ追加時にオプションを表示"
-
-# AI Translated
-msgid "If enabled, a dialog asks for the dimensions of a primitive shape before it is added."
-msgstr "有効にすると、プリミティブ形状を追加する前に寸法を尋ねるダイアログが表示されます。"
-
-msgid "Auto slice after changes"
-msgstr "変更後に自動スライス"
-
-msgid "If enabled, Snapmaker Orca will re-slice automatically whenever slicing-related settings change."
-msgstr ""
-
-msgid "Delay in seconds before auto slicing starts, allowing multiple edits to be grouped. Use 0 to slice immediately."
-msgstr "自動スライス開始前の遅延（秒）。複数の編集をグループ化できます。即座にスライスするには0を使用してください。"
-
-msgid "Remove mixed temperature restriction"
-msgstr "混合温度制限を解除"
-
-msgid "With this option enabled, you can print materials with a large temperature difference together."
-msgstr "このオプションを有効にすると、大きな温度差のある材料を一緒に印刷できます。"
-
-msgid "Allow high/low temperature filament mixing"
-msgstr ""
-
-msgid "If enabled, allows printing with both high-temperature and low-temperature filaments simultaneously."
-msgstr ""
-
-msgid ""
-"Mixing materials with significantly different printing temperatures may result in:\n"
-"· Extruder clogging\n"
-"· Nozzle damage\n"
-"· Layer adhesion issues\n"
-"\n"
-"Do you want to enable this feature?"
-msgstr ""
-
-msgid "High and Low Temperature Material Mixing Risk"
-msgstr ""
-
-# AI Translated
-msgid "Remember last print action"
-msgstr "最後の印刷アクションを記憶"
-
-msgid "If enabled, Snapmaker Orca will remember the last selected option in the print button's dropdown (e.g. Print, Export plate sliced file, Export G-code file) and use it as the default on next startup."
-msgstr ""
-
-msgid "Show a dialog asking whether to continue slicing when memory is low"
-msgstr ""
 
 msgid "Camera"
 msgstr "カメラ"
@@ -11996,22 +12320,6 @@ msgid "If enabled, reverses the direction of zoom with mouse wheel."
 msgstr "有効にすると、マウス ホイールによるズームの方向が反転します。"
 
 # AI Translated
-msgid "Draw mate connectors as a face"
-msgstr "合致コネクターを面として描画"
-
-# AI Translated
-msgid "In the Design tab, draw a mate connector as a small face instead of the conventional disc with a roll quadrant. A face shows its orientation at a glance, without learning the disc convention. Turn this off for the conventional CAD representation."
-msgstr "デザインタブで、合致コネクターを従来のロール象限付きの円盤ではなく、小さな面として描画します。面なら、円盤の表記ルールを覚えなくても向きがひと目でわかります。従来のCADの表現にするにはオフにしてください。"
-
-# AI Translated
-msgid "Auto-close sketch loops"
-msgstr "スケッチのループを自動で閉じる"
-
-# AI Translated
-msgid "Treat sketch endpoints within 0.001 mm as one joint and weld the loop shut. Off: only exactly coincident endpoints join, so a loop with a tiny gap is shown as open instead of being closed for you. Saved with each design; applies to designs started after the change."
-msgstr "0.001 mm以内にあるスケッチの端点を1つの接続点として扱い、ループを結合して閉じます。オフ: 完全に一致する端点のみが接続されるため、わずかな隙間のあるループは自動で閉じられず、開いたまま表示されます。この設定はデザインごとに保存され、変更後に開始したデザインに適用されます。"
-
-# AI Translated
 msgid "Pan"
 msgstr "パン"
 
@@ -12051,27 +12359,6 @@ msgstr "キーボードショートカット"
 msgid "Choose the key for each action."
 msgstr "各アクションのキーを選択します。"
 
-msgid "Clear my choice on..."
-msgstr "選択をクリア..."
-
-msgid "Unsaved projects"
-msgstr "未保存のプロジェクト"
-
-msgid "Clear my choice on the unsaved projects."
-msgstr "未保存のプロジェクトの選択をクリアします。"
-
-msgid "Unsaved presets"
-msgstr "未保存のプリセット"
-
-msgid "Clear my choice on the unsaved presets."
-msgstr "未保存のプリセットの選択をクリアします。"
-
-msgid "Synchronizing printer preset"
-msgstr "プリンタープリセットを同期中"
-
-msgid "Clear my choice for synchronizing printer preset after loading the file."
-msgstr "ファイルロード後のプリンタープリセット同期の選択をクリアします。"
-
 # AI Translated
 msgid "Graphics"
 msgstr "グラフィック"
@@ -12101,6 +12388,14 @@ msgstr ""
 
 msgid "Render soft shadows of objects on the build plate in the Prepare view. Requires OpenGL 3.3 or later."
 msgstr ""
+
+# AI Translated
+msgid "Translucent filaments"
+msgstr "半透明フィラメント"
+
+# AI Translated
+msgid "Draw the toolpaths of filaments whose color is partly transparent as see-through, as the 3D view draws their objects. Turn it off to draw every filament opaque."
+msgstr "色が部分的に透明なフィラメントのツールパスを、3Dビューでオブジェクトを描画する場合と同様に、透けて見えるように描画します。オフにすると、すべてのフィラメントを不透明で描画します。"
 
 # AI Translated
 msgid "Phong shading"
@@ -12165,6 +12460,27 @@ msgid ""
 msgstr ""
 "リアルビューで、プレビューのツールパスを光沢のあるプラスチックのようにハイライト表示します。\n"
 "オフの場合、半透明のフィラメントはつや消しになり、不透明なものは通常ビューのハイライトのままです。"
+
+msgid "Persistent"
+msgstr ""
+
+msgid "When Outline is enabled in the 3D canvas menu, outlines visible objects even when they are not selected."
+msgstr ""
+
+msgid "The configured outline color is invalid."
+msgstr ""
+
+msgid "Persistent color"
+msgstr ""
+
+msgid "Choose the color of the persistent outlines of unselected objects."
+msgstr ""
+
+msgid "Selection color"
+msgstr ""
+
+msgid "Choose the color of the outlines of selected objects."
+msgstr ""
 
 msgid "Anti-aliasing"
 msgstr "Anti-aliasing"
@@ -12312,56 +12628,6 @@ msgstr "実行"
 msgid "Replaces the current project with the OrcaSliced Combo, then measures the frame rate and render timings while the camera turns around it in Prepare and Preview, and while the layer slider moves through the sliced layers."
 msgstr "現在のプロジェクトをOrcaSliced Comboに置き換え、準備タブとプレビューでカメラがその周囲を回転する間、および積層スライダーがスライスされた積層を移動する間のフレームレートと描画時間を測定します。"
 
-# AI Translated
-msgid "G-code Preview"
-msgstr "G-codeプレビュー"
-
-# AI Translated
-msgid "Default view type"
-msgstr "デフォルトの表示タイプ"
-
-# AI Translated
-msgid ""
-"The color scheme the sliced preview opens with.\n"
-"Automatic: Filament for multi material prints, Line Type for single material ones.\n"
-"Last used: the view type you selected last.\n"
-"Any other value always opens that view type.\n"
-"You can still switch the view type in the preview afterwards."
-msgstr ""
-"スライスプレビューを開いたときのカラースキームです。\n"
-"自動: マルチマテリアル印刷では「フィラメント」、単一材料の印刷では「種類」。\n"
-"前回使用: 最後に選択した表示タイプ。\n"
-"その他の値を選ぶと、常にその表示タイプで開きます。\n"
-"開いた後でも、プレビューで表示タイプを切り替えられます。"
-
-# AI Translated
-msgid "Dim lower layers"
-msgstr "下の積層を暗くする"
-
-# AI Translated
-msgid "When scrubbing the layer slider in the sliced preview, render the layers below the current one darkened so that only the layer being viewed is shown at full brightness."
-msgstr "スライスプレビューで積層スライダーを操作する際、現在の層より下の積層を暗く描画し、表示中の積層のみを明るく表示します。"
-
-# AI Translated
-msgid "Dimmed layer brightness"
-msgstr "暗くした積層の明るさ"
-
-# AI Translated
-msgid ""
-"How brightly the dimmed layers are rendered when \"Dim lower layers\" is enabled.\n"
-"99% is barely darkened, 0% renders them black. Capped at 99% because 100% would be the same as disabling the option."
-msgstr ""
-"「下の積層を暗くする」を有効にしたときに、暗くした積層をどの程度の明るさで表示するかを指定します。\n"
-"99%ではほとんど暗くならず、0%では真っ黒になります。100%はオプションを無効にした場合と同じになるため、上限は99%です。"
-
-# AI Translated
-msgid "Translucent filaments"
-msgstr "半透明フィラメント"
-
-# AI Translated
-msgid "Draw the toolpaths of filaments whose color is partly transparent as see-through, as the 3D view draws their objects. Turn it off to draw every filament opaque."
-msgstr "色が部分的に透明なフィラメントのツールパスを、3Dビューでオブジェクトを描画する場合と同様に、透けて見えるように描画します。オフにすると、すべてのフィラメントを不透明で描画します。"
-
 msgid "Connection"
 msgstr "接続"
 
@@ -12431,44 +12697,6 @@ msgid "Upload usage events and diagnostic logs to Snapmaker"
 msgstr ""
 
 msgid "Sends slicing results, printer connection steps and error messages to the Snapmaker cloud while signed in to a Snapmaker account. Sent in readable form: the account ID, the MQTT client ID, and the printer's network address and MQTT topics. Printer serial numbers and device IDs are sent as one-way hashes. Only active while the Customer Experience Improvement Program is joined."
-msgstr ""
-
-msgid "Associate files to Snapmaker Orca"
-msgstr "ファイルをSnapmaker Orcaに関連付ける"
-
-# AI Translated
-msgid "File associations for the Microsoft Store version are managed by Windows Settings."
-msgstr "Microsoft Store版のファイル関連付けはWindowsの設定で管理されます。"
-
-# AI Translated
-msgid "Open Windows Default Apps Settings"
-msgstr "Windowsの既定のアプリ設定を開く"
-
-msgid "Associate 3MF files to Snapmaker Orca"
-msgstr ""
-
-msgid "If enabled, this sets Snapmaker Orca as the default application to open 3MF files."
-msgstr ""
-
-msgid "Associate DRC files to Snapmaker Orca"
-msgstr ""
-
-msgid "If enabled, sets Snapmaker Orca as default application to open DRC files."
-msgstr ""
-
-msgid "Associate STL files to Snapmaker Orca"
-msgstr ""
-
-msgid "If enabled, this sets Snapmaker Orca as the default application to open STL files."
-msgstr ""
-
-msgid "Associate STEP files to Snapmaker Orca"
-msgstr ""
-
-msgid "If enabled, this sets Snapmaker Orca as the default application to open STEP files."
-msgstr ""
-
-msgid "Associate web links to Snapmaker Orca"
 msgstr ""
 
 msgid "Developer"
@@ -12761,12 +12989,6 @@ msgstr "造形シーケンス"
 msgid "Same as Global"
 msgstr "グローバルと同じ"
 
-msgid "Enable"
-msgstr "有効化"
-
-msgid "Disable"
-msgstr "無効"
-
 msgid "Spiral vase"
 msgstr "スパイラル"
 
@@ -12869,16 +13091,16 @@ msgstr "ユーザープリセット"
 msgid "Preset Inside Project"
 msgstr "プロジェクト プリセット"
 
-# AI Translated
-msgid "Copies all inherited values from the parent into this preset and removes the parent relationship. Presets compatible only with the parent may become unsupported."
-msgstr "親プリセットから継承したすべての値をこのプリセットにコピーし、親との継承関係を解除します。親プリセットとのみ互換性のあるプリセットは、サポートされなくなる場合があります。"
-
 msgid "Detach from parent"
 msgstr "親から分離"
 
 # AI Translated
 msgid "Save without parent"
 msgstr "親なしで保存"
+
+# AI Translated
+msgid "Copies all inherited values from the parent into this preset and removes the parent relationship. Presets compatible only with the parent may become unsupported."
+msgstr "親プリセットから継承したすべての値をこのプリセットにコピーし、親との継承関係を解除します。親プリセットとのみ互換性のあるプリセットは、サポートされなくなる場合があります。"
 
 # AI Translated
 msgid "Unique preset"
@@ -13102,10 +13324,6 @@ msgstr "お気に入りにピン留め (%s)"
 #, c-format, boost-format
 msgid "Unpin from favorites (%s)"
 msgstr "お気に入りのピン留めを解除 (%s)"
-
-# AI Translated
-msgid "Remove from favorites"
-msgstr "お気に入りから削除"
 
 # AI Translated
 msgid "Move left"
@@ -15144,7 +15362,13 @@ msgctxt "Nozzle flow type"
 msgid "XHF"
 msgstr "XHF"
 
+#. TRN An entry of the speed selector in a narrow sidebar (short for "Extruder 2")
+#, boost-format
+msgid "E%1%"
+msgstr ""
+
 # AI Translated
+#. TRN Printer settings extruder tab: the extruder's name, e.g. "Extruder 2", and its nozzle flow tag, e.g. "HF".
 #, c-format, boost-format
 msgid "%s: %s"
 msgstr "%s: %s"
@@ -15167,11 +15391,6 @@ msgstr ""
 msgid "Extruder %1%"
 msgstr ""
 
-#. TRN An entry of the speed selector in a narrow sidebar (short for "Extruder 2")
-#, boost-format
-msgid "E%1%"
-msgstr ""
-
 # AI Translated
 msgid "No modifications need to be copied."
 msgstr "コピーが必要な変更はありません。"
@@ -15189,6 +15408,11 @@ msgstr "%sのパラメータを変更"
 #, c-format, boost-format
 msgid "Do you want to modify the following parameters of the %s to that of the %s?"
 msgstr "%sの以下のパラメータを%sの値に変更しますか？"
+
+#. TRN %1% is the extruder (or nozzle variant) the values are copied from, %2% the list of those they are copied to, as the switch names them, e.g. "T2 HF, T3 HF".
+#, boost-format
+msgid "Do you want to copy the following parameters of %1% to %2%?"
+msgstr ""
 
 msgid "Click to reset current value and attach to the global value."
 msgstr "現在値をデフォルト値に戻します"
@@ -15341,6 +15565,15 @@ msgid ""
 msgstr ""
 "\n"
 "変更したプリセットの値を破棄することも、変更した値を新しいプロジェクトに引き継ぐこともできます"
+
+msgid "Click the compare button to see the full value."
+msgstr ""
+
+msgid "Process settings"
+msgstr ""
+
+msgid "Compare the full values"
+msgstr ""
 
 msgid "Extruder count"
 msgstr "エクストルーダー数"
@@ -16109,10 +16342,6 @@ msgstr "CA 証明書ファイルを開く"
 msgid "HTTPS CA file is optional. It is only needed if you use HTTPS with a self-signed certificate."
 msgstr "HTTPS CAファイルはオプションです。自己署名証明書を使用する場合のみ必要です。"
 
-# AI Translated
-msgid "This system uses HTTPS certificates from the system Certificate Store or Keychain. To use a custom CA file, import it there."
-msgstr "このシステムでは、システムの証明書ストアまたはキーチェーンのHTTPS証明書を使用します。カスタムCAファイルを使用するには、そこにインポートしてください。"
-
 msgid "Printer model"
 msgstr "プリンターモデル"
 
@@ -16131,6 +16360,10 @@ msgstr "接続"
 
 msgid "Manual Setup"
 msgstr "手動セットアップ"
+
+# AI Translated
+msgid "This system uses HTTPS certificates from the system Certificate Store or Keychain. To use a custom CA file, import it there."
+msgstr "このシステムでは、システムの証明書ストアまたはキーチェーンのHTTPS証明書を使用します。カスタムCAファイルを使用するには、そこにインポートしてください。"
 
 msgid "IP and Access Code Verified! You may close the window"
 msgstr "IPとアクセスコードが確認されました！ウィンドウを閉じてください"
@@ -16723,6 +16956,9 @@ msgstr "プライムタワーが除外エリアに近すぎます。印刷中に
 msgid "Prime tower is too close to the clumping detection area. There may be collisions when printing."
 msgstr "プライムタワーがクランピング検出エリアに近すぎます。印刷中に衝突が発生する可能性があります。"
 
+msgid "The extruder printable areas share no common area, so the prime tower cannot be printed.\n"
+msgstr ""
+
 # AI Translated
 # Needs human review: Unsettled glossary term (⚠) "Prime tower / Wipe tower": this entry uses "プライムタワー"; align it once the term is settled.
 msgid "Prime tower is partially outside the printable area, and it cannot be printed.\n"
@@ -16739,6 +16975,25 @@ msgstr "推奨ノズル温度範囲が無効です。下限は上限より低く
 # AI Translated
 msgid "If you still want to print, you can enable the option in Preferences / Control / Slicing / Remove mixed temperature restriction."
 msgstr "それでも印刷する場合は、環境設定 / 制御 / スライス / 温度混在の制限を解除 のオプションを有効にできます。"
+
+msgid "A prime tower with printing by object is not supported together with the dynamic filament map. Print by layer, or disable the dynamic filament map."
+msgstr ""
+
+msgid "A prime tower requires that all objects have the same layer height."
+msgstr "プライムタワーを使用するには、全てのオブジェクトが同じ積層ピッチを使う必要があります"
+
+msgid "A prime tower requires that all objects are printed over the same number of raft layers."
+msgstr "プライムタワーを使用するには、全てのオブジェクトが同じラフト層数を使う必要があります"
+
+# AI Translated
+msgid "The prime tower is only supported for multiple objects if they are printed with the same support_top_z_distance."
+msgstr "プライムタワーは、複数のオブジェクトが同じsupport_top_z_distanceで印刷される場合にのみ対応しています。"
+
+msgid "A prime tower requires that all objects are sliced with the same layer height."
+msgstr "プライムタワーを使用するには、全てのオブジェクトが同じ積層ピッチを使う必要があります"
+
+msgid "The prime tower is only supported if all objects have the same variable layer height."
+msgstr "プライムタワーを使用するには、全てのオブジェクトが同じ積層ピッチを持つ必要があります"
 
 msgid "No extrusions under current settings."
 msgstr "現在の設定では造形しません"
@@ -16827,6 +17082,10 @@ msgstr "ベルトパージタワーが有効ですが、プロジェクトにパ
 msgid "The project contains multiple managed belt purge towers. Reload the plate or toggle the belt purge tower off and on to regenerate it."
 msgstr "プロジェクトに管理対象のベルトパージタワーが複数含まれています。プレートを再読み込みするか、ベルトパージタワーをオフにしてから再度オンにして再生成してください。"
 
+#. TRN "Precise Z height" is a print setting, "prime tower" the tower that purges the nozzle between filaments.
+msgid "Precise Z height is not applied: with the prime tower, objects of different heights that use variable layer height have to share their layers."
+msgstr ""
+
 msgid "Enabling both precise Z height and the prime tower may cause slicing errors."
 msgstr "正確なZ高さとプライムタワーの両方を有効にするとスライスエラーが発生する可能性があります。"
 
@@ -16838,6 +17097,12 @@ msgstr "スパイラルモードでは、[オブジェクト順]で複数のオ�
 
 msgid "Spiral (vase) mode does not work when an object contains more than one material."
 msgstr "複数の素材の場合、スパイラルモードを使用できません"
+
+# AI Translated
+#. TRN %1% is the object name.
+#, boost-format
+msgid "Spiral vase mode needs no sparse infill, one wall loop and no top shell layers, but the object %1% uses other values, so it will not print as a continuous spiral."
+msgstr "スパイラルモードにはスパース インフィルなし、壁面層数1、上面層数0が必要ですが、オブジェクト %1% の設定値はこれと異なるため、連続したスパイラルとして造形されません。"
 
 #, boost-format
 msgid "While the object %1% itself fits the build volume, it exceeds the maximum build volume height because of material shrinkage compensation."
@@ -16885,25 +17150,6 @@ msgstr "[アダプティブ積層ピッチ]を使用する時に、プライム�
 
 msgid "A prime tower requires any “support gap” to be a multiple of layer height."
 msgstr "プライムタワーを使用するにはサポートとのギャップを積層ピッチの整数倍である必要があります"
-
-msgid "A prime tower with printing by object is not supported together with the dynamic filament map. Print by layer, or disable the dynamic filament map."
-msgstr ""
-
-msgid "A prime tower requires that all objects have the same layer height."
-msgstr "プライムタワーを使用するには、全てのオブジェクトが同じ積層ピッチを使う必要があります"
-
-msgid "A prime tower requires that all objects are printed over the same number of raft layers."
-msgstr "プライムタワーを使用するには、全てのオブジェクトが同じラフト層数を使う必要があります"
-
-# AI Translated
-msgid "The prime tower is only supported for multiple objects if they are printed with the same support_top_z_distance."
-msgstr "プライムタワーは、複数のオブジェクトが同じsupport_top_z_distanceで印刷される場合にのみ対応しています。"
-
-msgid "A prime tower requires that all objects are sliced with the same layer height."
-msgstr "プライムタワーを使用するには、全てのオブジェクトが同じ積層ピッチを使う必要があります"
-
-msgid "The prime tower is only supported if all objects have the same variable layer height."
-msgstr "プライムタワーを使用するには、全てのオブジェクトが同じ積層ピッチを持つ必要があります"
 
 msgid "One or more object were assigned an extruder that the printer does not have."
 msgstr "1つ以上のオブジェクトに、プリンターにないエクストルーダーが割り当てられました。"
@@ -22052,17 +22298,17 @@ msgstr "内側へ拭き上げ"
 
 # AI Translated
 msgid ""
-"Applies only to external walls, including hole boundaries. Moves the hot nozzle toward printed inner walls during wiping to reduce reheating of freshly printed plastic and seam marks.\n"
+"Applies only to external walls, including hole boundaries. Moves the hot nozzle toward the inner walls during wiping to reduce reheating of freshly printed plastic and seam marks.\n"
 "\n"
 "Especially useful at layer heights below 0.1 mm, where wipe marks are more visible.\n"
 "\n"
-"Uses the regular wipe if no adjacent inner wall is already printed (single-wall areas or Outer/Inner wall order), or if no supported inward path can be found, for example at tight corners or seam gaps."
+"Uses the regular wipe where the outer wall has no adjacent inner wall, such as in single-wall areas, or if no supported inward path can be found, for example at tight corners or seam gaps."
 msgstr ""
-"穴の輪郭を含む外壁にのみ適用されます。拭き上げ中に高温のノズルを造形済みの内壁へ向かって動かし、造形したばかりの樹脂の再加熱と継ぎ目の跡を抑えます。\n"
+"穴の輪郭を含む外壁にのみ適用されます。拭き上げ中に高温のノズルを内壁へ向かって動かし、造形したばかりの樹脂の再加熱と継ぎ目の跡を抑えます。\n"
 "\n"
 "拭き上げの跡が目立ちやすい積層ピッチ0.1 mm未満で特に有効です。\n"
 "\n"
-"隣接する内壁がまだ造形されていない場合（壁が1本のみの領域や、壁の順序が外側/内側の場合）、または細かい角や継ぎ目の隙間などで支えのある内向きの経路が見つからない場合は、通常の拭き上げを使用します。"
+"壁が1本のみの領域など、外壁に隣接する内壁がない場所や、細かい角や継ぎ目の隙間などで支えのある内向きの経路が見つからない場合は、通常の拭き上げを使用します。"
 
 # AI Translated
 msgid "Wipe inward distance"
@@ -22073,11 +22319,15 @@ msgstr "内側への拭き上げ距離"
 msgid ""
 "The distance the wipe path is shifted away from the external perimeter, specified in millimeters or as a percentage of the actual outer-wall extrusion width.\n"
 "\n"
-"For example, 50% shifts the path by half of the outer-wall width. The effective offset is limited by both the actual outer-wall width and the available spacing to the adjacent wall, so values above 100% or an equivalent absolute distance have no additional effect. Set to 0 to disable the offset."
+"For example, 50% shifts the path by half of the outer-wall width. The effective offset is limited by both the actual outer-wall width and the available spacing to the adjacent wall, so values above 100% or an equivalent absolute distance have no additional effect. Set to 0 to disable the offset.\n"
+"\n"
+"With Outer/Inner or Inner/Outer/Inner wall order, the offset is limited to 50% of the actual outer-wall width because the adjacent inner wall is printed after the outer wall. This also applies to equivalent distances specified in millimeters."
 msgstr ""
 "拭き上げ経路を外周から離す距離で、ミリメートルまたは実際の外壁の押出線幅に対する割合で指定します。\n"
 "\n"
-"例えば50%では、経路を外壁幅の半分だけずらします。実効オフセットは実際の外壁幅と隣接する壁までの利用可能な間隔の両方で制限されるため、100%を超える値や同等の絶対距離を指定しても追加の効果はありません。0に設定するとオフセットは無効になります。"
+"例えば50%では、経路を外壁幅の半分だけずらします。実効オフセットは実際の外壁幅と隣接する壁までの利用可能な間隔の両方で制限されるため、100%を超える値や同等の絶対距離を指定しても追加の効果はありません。0に設定するとオフセットは無効になります。\n"
+"\n"
+"壁の順序が外側/内側または内側/外側/内側の場合、隣接する内壁は外壁の後に造形されるため、オフセットは実際の外壁幅の50%までに制限されます。ミリメートルで指定した同等の距離にも適用されます。"
 
 # AI Translated
 msgid "Wipe before external loop"
@@ -22092,6 +22342,15 @@ msgstr ""
 "外壁→内壁または内壁→外壁→内壁の壁印刷順序で印刷する際、外周の開始点で生じ得る過剰押出を目立たなくするため、リトラクション回復は外周の開始点よりわずかに内側で行われます。これにより、過剰押出が外面から隠れます。\n"
 "\n"
 "外壁→内壁や内壁→外壁→内壁の印刷順序では、リトラクション回復の直後に外周が印刷される可能性が高いため、この設定が有効です。"
+
+msgid "Retract after outer wall"
+msgstr ""
+
+msgid ""
+"Always retract when the nozzle leaves an outer wall, even if the travel is shorter than the travel distance threshold.\n"
+"\n"
+"Without a retraction, a very short travel, for example to gap infill inside a thin wall, can drag the end of the outer wall inward and leave a visible dent at the seam."
+msgstr ""
 
 msgid "Wipe speed"
 msgstr "拭き上げ速度"
@@ -22639,6 +22898,12 @@ msgstr "偶奇"
 
 msgid "Close holes"
 msgstr "穴を閉じる"
+
+msgid "Carve overlaps by per-layer slice area"
+msgstr ""
+
+msgid "When enabled, overlaps between multi-extruder parts are carved with the new algorithm: on each layer, the part with the smaller slice area owns the overlap, keeping small details intact inside larger bodies. Developer option."
+msgstr ""
 
 msgid "Z offset"
 msgstr "Zオフセット"
@@ -25805,8 +26070,8 @@ msgid "Expecting a regular expression."
 msgstr "正規表現が必要です。"
 
 # AI Translated
-msgid "Invalid utf8 sequence"
-msgstr "無効なutf8シーケンス"
+msgid "Invalid UTF-8 sequence"
+msgstr "無効なUTF-8シーケンス"
 
 # AI Translated
 msgid "Non-ASCII7 characters are only allowed inside text blocks and string literals, not inside code blocks."
@@ -26641,7 +26906,7 @@ msgstr "Klipperバージョン => 0.9.0"
 
 # AI Translated
 msgid ""
-"RepRap firmware version => 3.4.0\n"
+"RepRapFirmware version => 3.4.0\n"
 "Check your firmware documentation for supported shaper types."
 msgstr ""
 "RepRapファームウェアバージョン => 3.4.0\n"
@@ -26662,7 +26927,7 @@ msgid "Frequency settings"
 msgstr "周波数設定"
 
 # AI Translated
-msgid "RepRap firmware uses the same frequency range for both axes."
+msgid "RepRapFirmware uses the same frequency range for both axes."
 msgstr "RepRapファームウェアは両軸に同じ周波数範囲を使用します。"
 
 msgid "Damp: "
@@ -26707,7 +26972,7 @@ msgid "Damp (Start / End): "
 msgstr "減衰 (開始/終了): "
 
 # AI Translated
-msgid "RepRap firmware uses the same frequency for both axes."
+msgid "RepRapFirmware uses the same frequency for both axes."
 msgstr "RepRapファームウェアは両軸に同じ周波数を使用します。"
 
 # AI Translated
@@ -26944,6 +27209,18 @@ msgid "Smooth Build Plate (Side B)"
 msgstr "スムースビルドプレート（B面）"
 
 # AI Translated
+msgid "Reading the printer's filament slots..."
+msgstr "プリンターのフィラメントスロットを読み取っています..."
+
+# AI Translated
+msgid "Could not read the printer. Close this dialog and try again."
+msgstr "プリンターの情報を読み取れませんでした。このダイアログを閉じて、もう一度お試しください。"
+
+# AI Translated
+msgid "Could not connect to the printer. Check that it is on, then reopen this dialog."
+msgstr "プリンターに接続できませんでした。プリンターの電源が入っていることを確認してから、このダイアログを開き直してください。"
+
+# AI Translated
 #, c-format, boost-format
 msgid "Printer: %s"
 msgstr "プリンター: %s"
@@ -26961,6 +27238,16 @@ msgstr "フィラメントのマッピング:"
 #, c-format, boost-format
 msgid "Ext - %s"
 msgstr "外部 - %s"
+
+# AI Translated
+#. TRN Creality send dialog. CFS is Creality's multi-filament unit.
+msgid "The printer reports no CFS connected, so the print will use the external spool."
+msgstr "プリンターがCFS未接続と報告しているため、外部スプールで造形します。"
+
+# AI Translated
+#. TRN Creality send dialog, when the printer lists no CFS slots or does not answer
+msgid "The printer did not report any filament slots, so the print will use the external spool."
+msgstr "プリンターからフィラメントスロットが報告されなかったため、外部スプールで造形します。"
 
 msgid "Unable to perform boolean operation on selected parts"
 msgstr "選択したパーツでブーリアン演算を実行できません"
@@ -28717,7 +29004,7 @@ msgstr "s"
 msgid "Volumetric speed"
 msgstr "体積速度"
 
-msgid "Step file import parameters"
+msgid "STEP file import parameters"
 msgstr "STEPファイルインポートパラメータ"
 
 msgid "Smaller linear and angular deflections result in higher-quality transformations but increase the processing time."
@@ -28738,6 +29025,34 @@ msgstr "有効な値を入力してください（0.01 < 角度偏差 < 1.0）"
 msgid "Split compound and compsolid into multiple objects"
 msgstr "コンパウンドとコンプソリッドを複数のオブジェクトに分割"
 
+# AI Translated
+msgid "Loads each body of a multi-body part separately. Needed to keep the bodies' original names."
+msgstr "複数のボディを持つパーツの各ボディを個別に読み込みます。ボディの元の名前を保持するために必要です。"
+
+# AI Translated
+msgid "Load as an assembly"
+msgstr "アセンブリとして読み込む"
+
+# AI Translated
+msgid "Load as a single object (can be split later)"
+msgstr "単一のオブジェクトとして読み込む（後で分割可能）"
+
+# AI Translated
+msgid "The original bodies and names are kept inside the object. Use Split to parts to show them as separate parts."
+msgstr "元のボディと名前はオブジェクト内に保持されます。個別のパーツとして表示するには「パーツに分割」を使用してください。"
+
+# AI Translated
+msgid "Use the body names stored in the file, when there are any. Needs Split compound for parts with several bodies."
+msgstr "ファイルにボディ名が保存されている場合は、その名前を使用します。複数のボディを持つパーツには「コンパウンドを分割」が必要です。"
+
+# AI Translated
+msgid "Sort parts by name"
+msgstr "パーツを名前で並べ替え"
+
+# AI Translated
+msgid "Sort the parts inside each imported assembly in the object list. This does not change the order used for slicing. Available when Keep original names is on."
+msgstr "オブジェクトリスト内で、インポートした各アセンブリのパーツを並べ替えます。スライスに使用される順序は変わりません。「元の名前を保持」が有効な場合に使用できます。"
+
 msgid "Number of triangular facets"
 msgstr "三角面の数"
 
@@ -28747,6 +29062,96 @@ msgstr "計算中、お待ちください..."
 # AI Translated
 msgid "If enabled, the values above are stored as the defaults used for future STEP imports (and shown in Preferences)."
 msgstr "有効にすると、上記の値が今後のSTEPインポートで使用されるデフォルトとして保存されます (環境設定にも表示されます)。"
+
+# AI Translated
+msgid "Don't ask again"
+msgstr "今後は確認しない"
+
+# AI Translated
+msgid "Save these choices and apply them without asking next time. You can show this dialog again in Preferences."
+msgstr "これらの選択を保存し、次回から確認せずに適用します。このダイアログは「設定」から再度表示できます。"
+
+# AI Translated
+msgid "3MF geometry import options"
+msgstr "3MFジオメトリのインポートオプション"
+
+# AI Translated
+msgid "AMF geometry import options"
+msgstr "AMFジオメトリのインポートオプション"
+
+# AI Translated
+msgid "Choose how to name and order the parts of this file."
+msgstr "このファイルのパーツの名前の付け方と並び順を選択してください。"
+
+# AI Translated
+msgid "Choose how to load the bodies in this file."
+msgstr "このファイル内のボディの読み込み方法を選択してください。"
+
+# AI Translated
+msgid "Load as separate objects"
+msgstr "個別のオブジェクトとして読み込む"
+
+# AI Translated
+msgid "Each object in the file is loaded on its own, as OrcaSlicer always loaded AMF files."
+msgstr "ファイル内の各オブジェクトを個別に読み込みます。OrcaSlicerが従来AMFファイルを読み込んできた方法です。"
+
+# AI Translated
+msgid "The bodies of each group in the file become parts of one object, in their relative positions."
+msgstr "ファイル内の各グループのボディが、相対位置を保ったまま1つのオブジェクトのパーツになります。"
+
+# AI Translated
+msgid "Use the body names stored in the file, when there are any. When disabled, the usual OrcaSlicer names are used; existing project names are kept."
+msgstr "ファイルにボディ名が保存されている場合は、その名前を使用します。無効にすると、OrcaSlicerの通常の名前が使用されます。プロジェクトの既存の名前は保持されます。"
+
+# AI Translated
+msgid "Use these choices as defaults next time. The dialog still opens."
+msgstr "次回からこれらの選択をデフォルトとして使用します。ダイアログは引き続き表示されます。"
+
+# AI Translated
+msgid "A name in the file is not valid Unicode. The geometry was not imported."
+msgstr "ファイル内の名前が有効なUnicodeではありません。ジオメトリはインポートされませんでした。"
+
+# AI Translated
+msgid "Invalid name"
+msgstr "無効な名前"
+
+# AI Translated
+msgid "Unsupported characters in names"
+msgstr "名前に含まれる非対応の文字"
+
+# AI Translated
+msgid "Some original names contain characters that OrcaSlicer cannot use. Choose how to change them before importing."
+msgstr "元の名前の一部に、OrcaSlicerで使用できない文字が含まれています。インポートする前に変更方法を選択してください。"
+
+# AI Translated
+msgid "Remove unsupported characters"
+msgstr "非対応の文字を削除"
+
+# AI Translated
+msgid "Replace with:"
+msgstr "次の文字列に置換:"
+
+# AI Translated
+msgid "Each unsupported character is replaced with this text. It may be longer than one character."
+msgstr "非対応の文字はそれぞれこのテキストに置換されます。2文字以上でもかまいません。"
+
+# AI Translated
+msgid "Use this rule as the default next time. The dialog still opens."
+msgstr "次回からこのルールをデフォルトとして使用します。ダイアログは引き続き表示されます。"
+
+# AI Translated
+msgid "Save this rule and apply it without asking next time. You can show this dialog again in Preferences."
+msgstr "このルールを保存し、次回から確認せずに適用します。このダイアログは「設定」から再度表示できます。"
+
+# AI Translated
+msgid "Enter a non-empty replacement containing only supported characters, or choose removal."
+msgstr "対応している文字のみを含む、空でない置換テキストを入力するか、削除を選択してください。"
+
+# AI Translated
+#. TRN The placeholders are the original name and its imported replacement.
+#, boost-format
+msgid "%1% → %2%"
+msgstr "%1% → %2%"
 
 # AI Translated
 msgid "PresetBundle"
@@ -30953,6 +31358,18 @@ msgid "Constraints"
 msgstr "拘束"
 
 # AI Translated
+msgid "No constraints yet"
+msgstr "まだ拘束がありません"
+
+# AI Translated
+msgid "Zoom to selection"
+msgstr "選択項目にズーム"
+
+# AI Translated
+msgid "Delete constraint"
+msgstr "拘束を削除"
+
+# AI Translated
 msgid "Feature tree"
 msgstr "フィーチャーツリー"
 
@@ -30985,10 +31402,6 @@ msgstr "下へ移動"
 # AI Translated
 msgid "Show / hide"
 msgstr "表示 / 非表示"
-
-# AI Translated
-msgid "Zoom to selection"
-msgstr "選択項目にズーム"
 
 # AI Translated
 msgid "Check interference — find overlapping bodies"
@@ -31165,6 +31578,11 @@ msgstr[0] "自由度 %d"
 #, c-format, boost-format
 msgid "Sketch %d"
 msgstr "スケッチ%d"
+
+#. TRN %1% is the name of the sketch being edited, as its Feature tree row shows it.
+#, boost-format
+msgid "Editing: %1%   ·   N = look normal to the plane   ·   Confirm or Cancel in the toolbar"
+msgstr ""
 
 # AI Translated
 #, c-format, boost-format
@@ -31855,9 +32273,8 @@ msgstr "角をドラッグしてスケール、中心をドラッグして移動
 msgid "  ·  Esc goes back to Select"
 msgstr "  ·  Escで選択ツールに戻る"
 
-# AI Translated
-msgid "  ·  click a constraint badge to remove it"
-msgstr "  ·  拘束バッジをクリックして削除"
+msgid "  ·  click a constraint badge to select it"
+msgstr ""
 
 # AI Translated
 #, c-format, boost-format
@@ -32319,13 +32736,10 @@ msgstr "拘束"
 msgid "Constraints (%d)"
 msgstr "拘束 (%d)"
 
-# AI Translated
-msgid "No constraints yet"
-msgstr "まだ拘束がありません"
-
-# AI Translated
-msgid "Delete constraint"
-msgstr "拘束を削除"
+#. TRN Design tab status line. %1% names the selected sketch constraint, e.g. "Horizontal E0·P0 — E0·P1".
+#, boost-format
+msgid "%1% selected — Delete removes it"
+msgstr ""
 
 # AI Translated
 msgid "Constraint deleted"
@@ -38059,6 +38473,66 @@ msgid "Plugin file: %s"
 msgstr "プラグインファイル: %s"
 
 # AI Translated
+msgid "A file system permission cannot be empty."
+msgstr "ファイルシステム権限は空にできません。"
+
+# AI Translated
+msgid "A file system permission cannot contain a null character."
+msgstr "ファイルシステム権限にヌル文字を含めることはできません。"
+
+# AI Translated
+msgid "A file system permission may use \"*\" only as the final \"/*\" of a folder tree."
+msgstr "ファイルシステム権限で\"*\"を使用できるのは、フォルダーツリー末尾の\"/*\"としてのみです。"
+
+# AI Translated
+msgid "A file system permission cannot contain a \"..\" path component."
+msgstr "ファイルシステム権限に\"..\"パス要素を含めることはできません。"
+
+# AI Translated
+msgid "A file system permission must be an absolute path on this computer."
+msgstr "ファイルシステム権限は、このコンピューター上の絶対パスでなければなりません。"
+
+# AI Translated
+msgid "A network permission cannot be empty."
+msgstr "ネットワーク権限は空にできません。"
+
+# AI Translated
+msgid "A network permission cannot contain control characters."
+msgstr "ネットワーク権限に制御文字を含めることはできません。"
+
+# AI Translated
+msgid "Network permissions do not support wildcards. Enter one full http:// or https:// URL."
+msgstr "ネットワーク権限はワイルドカードに対応していません。完全なhttp://またはhttps:// URLを1つ入力してください。"
+
+# AI Translated
+msgid "Enter a full http:// or https:// URL with a host name or IP address. Bare domain names are not accepted."
+msgstr "ホスト名またはIPアドレスを含む完全なhttp://またはhttps:// URLを入力してください。ドメイン名のみの入力は受け付けられません。"
+
+# AI Translated
+msgid "Only http:// and https:// URLs are supported for network permissions."
+msgstr "ネットワーク権限で対応しているのはhttp://およびhttps://のURLのみです。"
+
+# AI Translated
+msgid "Enter a full http:// or https:// URL with a host name or IP address."
+msgstr "ホスト名またはIPアドレスを含む完全なhttp://またはhttps:// URLを入力してください。"
+
+# AI Translated
+msgid "Network permissions cannot include a username or password. Enter a URL with only a scheme and host."
+msgstr "ネットワーク権限にユーザー名やパスワードを含めることはできません。スキームとホストのみのURLを入力してください。"
+
+# AI Translated
+msgid "Enter a valid bracketed IPv6 address."
+msgstr "角括弧で囲んだ有効なIPv6アドレスを入力してください。"
+
+# AI Translated
+msgid "Network permissions do not support wildcards."
+msgstr "ネットワーク権限はワイルドカードに対応していません。"
+
+# AI Translated
+msgid "Enter a host name or IP address, optionally with a port, or a full http:// or https:// URL."
+msgstr "ホスト名またはIPアドレス (ポートの指定は任意)、もしくは完全なhttp://またはhttps:// URLを入力してください。"
+
+# AI Translated
 msgid "Process plugins"
 msgstr "プロセスプラグイン"
 
@@ -38397,6 +38871,206 @@ msgid "Capabilities"
 msgstr "機能"
 
 # AI Translated
+msgid "Permissions"
+msgstr "権限"
+
+# AI Translated
+msgid "Permissions are unavailable."
+msgstr "権限を利用できません。"
+
+# AI Translated
+msgid "File system read"
+msgstr "ファイルシステムの読み取り"
+
+# AI Translated
+msgid "File system read and write"
+msgstr "ファイルシステムの読み取りと書き込み"
+
+# AI Translated
+msgid "HTTP network"
+msgstr "HTTPネットワーク"
+
+# AI Translated
+msgid "Network sockets"
+msgstr "ネットワークソケット"
+
+# AI Translated
+#. TRN Operating system processes a plugin may start, not print process presets.
+msgctxt "Permission category"
+msgid "Processes"
+msgstr "プロセス"
+
+# AI Translated
+msgid "Threading"
+msgstr "スレッド"
+
+# AI Translated
+msgctxt "Permission category"
+msgid "Events"
+msgstr "イベント"
+
+# AI Translated
+msgid "Enter an absolute path on this computer. Add /* at the end to include the folder and everything below it; no other wildcard is accepted. A read/write grant can create files through open(), but it does not cover create or delete events such as os.mkdir and os.remove. Without Full access, each such event outside allowed folders needs its own approval, which is never saved. When a plugin runs in the background, these events are denied without asking."
+msgstr "このコンピューター上の絶対パスを入力してください。末尾に/*を追加すると、そのフォルダーとその配下のすべてが含まれます。これ以外のワイルドカードは受け付けられません。読み取り/書き込み権限があればopen()でファイルを作成できますが、os.mkdirやos.removeなどの作成イベントや削除イベントは対象外です。「フルアクセス」がない場合、許可されたフォルダーの外で発生するこれらのイベントには1件ごとに個別の承認が必要で、この承認が保存されることはありません。プラグインがバックグラウンドで実行されている場合、これらのイベントは確認なしで拒否されます。"
+
+# AI Translated
+msgid "C:\\path\\to\\directory\\*"
+msgstr "C:\\path\\to\\directory\\*"
+
+# AI Translated
+msgid "/path/to/directory/*"
+msgstr "/path/to/directory/*"
+
+# AI Translated
+msgid "Enter a full http:// or https:// URL; only its scheme and host are saved, so the grant covers every port, path, and query on that host. A network socket grant also accepts a bare host name or IP address, with or without a port, and covers every port on that host. Other schemes are not accepted. Grants in either list are checked for HTTP and socket access."
+msgstr "完全なhttp://またはhttps:// URLを入力してください。保存されるのはスキームとホストのみのため、この権限はそのホストのすべてのポート、パス、クエリに適用されます。ネットワークソケット権限では、ホスト名またはIPアドレスのみの入力も受け付けられ (ポートの有無は問いません)、そのホストのすべてのポートに適用されます。その他のスキームは受け付けられません。どちらのリストの権限も、HTTPアクセスとソケットアクセスの確認に使用されます。"
+
+# AI Translated
+msgid "Enter the exact value recorded by the audit. It may be a Python representation of the command."
+msgstr "監査で記録された値を正確に入力してください。コマンドのPython表現である場合があります。"
+
+# AI Translated
+msgid "Exact audited value"
+msgstr "監査された正確な値"
+
+# AI Translated
+msgid "Allow this plugin to create threads."
+msgstr "このプラグインにスレッドの作成を許可します。"
+
+# AI Translated
+msgid "Enter a category and event separated by a colon, such as Socket:socket.__new__."
+msgstr "カテゴリとイベントをSocket:socket.__new__のようにコロンで区切って入力してください。"
+
+# AI Translated
+msgid "Socket:socket.__new__"
+msgstr "Socket:socket.__new__"
+
+# AI Translated
+msgid "Full access"
+msgstr "フルアクセス"
+
+# AI Translated
+msgid "File system"
+msgstr "ファイルシステム"
+
+# AI Translated
+msgid "Network access"
+msgstr "ネットワークアクセス"
+
+# AI Translated
+msgid "Execution"
+msgstr "実行"
+
+# AI Translated
+msgid "Audit events"
+msgstr "監査イベント"
+
+# AI Translated
+msgid "Files and folders"
+msgstr "ファイルとフォルダー"
+
+# AI Translated
+msgctxt "Permission access"
+msgid "Read"
+msgstr "読み取り"
+
+# AI Translated
+msgctxt "Permission access"
+msgid "Read and write"
+msgstr "読み取りと書き込み"
+
+# AI Translated
+msgid "Read permissions are unavailable."
+msgstr "読み取り権限を利用できません。"
+
+# AI Translated
+msgid "Read and write permissions are unavailable."
+msgstr "読み取りと書き込みの権限を利用できません。"
+
+# AI Translated
+msgid "File system: Read"
+msgstr "ファイルシステム: 読み取り"
+
+# AI Translated
+msgid "File system: Read and write"
+msgstr "ファイルシステム: 読み取りと書き込み"
+
+# AI Translated
+msgid "Full access bypasses permission checks. The plugin can read and write most files you can access; modifying startup or application files can let code run outside these checks. Direct Python access to OrcaSlicer's configuration, secret, certificate and install-state paths stays blocked, but subprocesses are not restricted."
+msgstr "「フルアクセス」は権限チェックを回避します。プラグインは、ユーザーがアクセスできるほとんどのファイルの読み取りと書き込みができます。スタートアップファイルやアプリケーションファイルを変更すると、これらのチェックの外でコードが実行される可能性があります。OrcaSlicerの設定、シークレット、証明書、インストール状態のパスへのPythonからの直接アクセスは引き続きブロックされますが、サブプロセスは制限されません。"
+
+# AI Translated
+msgid "Permission list editing is disabled while full access is on."
+msgstr "「フルアクセス」がオンの間は、権限リストの編集は無効です。"
+
+# AI Translated
+msgid "Full access status is unavailable."
+msgstr "「フルアクセス」の状態を利用できません。"
+
+# AI Translated
+msgid "No values added."
+msgstr "値は追加されていません。"
+
+# AI Translated
+msgctxt "Permission value"
+msgid "Apply"
+msgstr "適用"
+
+# AI Translated
+#, c-format, boost-format
+msgid "Apply value for %s"
+msgstr "%sの値を適用"
+
+# AI Translated
+msgid "Install this plugin to edit its permissions."
+msgstr "このプラグインの権限を編集するには、プラグインをインストールしてください。"
+
+# AI Translated
+#, c-format, boost-format
+msgid "New value for %s"
+msgstr "%sの新しい値"
+
+# AI Translated
+#, c-format, boost-format
+msgid "Edit value for %s"
+msgstr "%sの値を編集"
+
+# AI Translated
+msgctxt "Permission value"
+msgid "Add"
+msgstr "追加"
+
+# AI Translated
+#, c-format, boost-format
+msgid "Add value to %s"
+msgstr "%sに値を追加"
+
+#. TRN %s is the original permission value that was removed outside this dialog.
+#, c-format, boost-format
+msgid "The original value is no longer granted: %s. Add the edited value or discard it."
+msgstr ""
+
+#. TRN %s is the original permission value before the user's unsaved edit.
+#, c-format, boost-format
+msgid "Unsaved edit of: %s"
+msgstr ""
+
+#. TRN %s is the original permission value whose unsaved edit will be discarded.
+#, c-format, boost-format
+msgid "Discard edit of %s"
+msgstr ""
+
+# AI Translated
+msgctxt "Permission value"
+msgid "Remove"
+msgstr "削除"
+
+# AI Translated
+#, c-format, boost-format
+msgid "Remove %s"
+msgstr "%sを削除"
+
+# AI Translated
 #, c-format, boost-format
 msgid "Run \"%s\""
 msgstr "「%s」を実行"
@@ -38499,6 +39173,39 @@ msgstr "見つからないプラグイン"
 # AI Translated
 msgid "Refreshing plugins data"
 msgstr "プラグインデータを更新中"
+
+# AI Translated
+#, c-format, boost-format
+msgid ""
+"Enable full access for \"%s\"?\n"
+"\n"
+"Full access turns off permission auditing for this plugin: its file system, network, process, thread and event permissions are no longer checked. The plugin can read and write most files your user account can access, including startup scripts, SSH keys and a writable OrcaSlicer installation. Modifying startup or application files can let code run outside these checks. Direct Python access to OrcaSlicer's configuration, secret, certificate and install-state paths stays blocked, but subprocesses are not restricted. Full access is not a sandbox.\n"
+"\n"
+"Only enable this for a plugin you trust."
+msgstr ""
+"「%s」の「フルアクセス」を有効にしますか？\n"
+"\n"
+"「フルアクセス」はこのプラグインの権限監査をオフにします。ファイルシステム、ネットワーク、プロセス、スレッド、イベントの権限はチェックされなくなります。プラグインは、ユーザーアカウントがアクセスできるほとんどのファイルの読み取りと書き込みができます。これには、スタートアップスクリプト、SSHキー、書き込み可能なOrcaSlicerのインストール先も含まれます。スタートアップファイルやアプリケーションファイルを変更すると、これらのチェックの外でコードが実行される可能性があります。OrcaSlicerの設定、シークレット、証明書、インストール状態のパスへのPythonからの直接アクセスは引き続きブロックされますが、サブプロセスは制限されません。「フルアクセス」はサンドボックスではありません。\n"
+"\n"
+"信頼できるプラグインに対してのみ有効にしてください。"
+
+# AI Translated
+msgid "Invalid permission save request."
+msgstr "権限の保存リクエストが無効です。"
+
+# AI Translated
+#, boost-format
+msgid "Cannot save \"%1%\": %2%"
+msgstr "「%1%」を保存できません: %2%"
+
+# AI Translated
+msgid "Failed to save permissions."
+msgstr "権限を保存できませんでした。"
+
+# AI Translated
+#, c-format, boost-format
+msgid "Permissions saved for \"%s\"."
+msgstr "「%s」の権限を保存しました。"
 
 # AI Translated
 msgid "Failed to unload plugin."
@@ -39354,6 +40061,15 @@ msgid "unknown name"
 msgstr "不明な名前"
 
 # AI Translated
+# Needs human review: Rewrote a person's translation: Same wording as the human "Don't show this dialog again" with ダイアログ replaced by ヒント for "tip"; the checker flags it only because the swapped word is a large share of a short string
+msgid "Don't show this tip again"
+msgstr "このヒントを再度表示しない"
+
+# AI Translated
+msgid "Tip: You can review and change this plugin's saved permissions in the Plugins dialog, on the Permissions tab."
+msgstr "ヒント: このプラグインの保存済みの権限は、プラグインダイアログの「権限」タブで確認および変更できます。"
+
+# AI Translated
 #, c-format, boost-format
 msgid ""
 "Plugin \"%s\" is requesting permission for the Python audit event \"%s\".\n"
@@ -39392,25 +40108,37 @@ msgstr[0] ""
 #, c-format, boost-format
 msgid ""
 "Plugin \"%s\" is requesting to create the following file:\n"
-"%s"
+"%s\n"
+"\n"
+"This approval applies only to this operation and is not remembered."
 msgid_plural ""
 "Plugin \"%s\" is requesting to create the following files:\n"
-"%s"
+"%s\n"
+"\n"
+"This approval applies only to this operation and is not remembered."
 msgstr[0] ""
 "プラグイン「%s」が以下のファイルの作成を要求しています:\n"
-"%s"
+"%s\n"
+"\n"
+"この承認は今回の操作にのみ適用され、記憶されません。"
 
 # AI Translated
 #, c-format, boost-format
 msgid ""
 "Plugin \"%s\" is requesting to delete the following file:\n"
-"%s"
+"%s\n"
+"\n"
+"This approval applies only to this operation and is not remembered."
 msgid_plural ""
 "Plugin \"%s\" is requesting to delete the following files:\n"
-"%s"
+"%s\n"
+"\n"
+"This approval applies only to this operation and is not remembered."
 msgstr[0] ""
 "プラグイン「%s」が以下のファイルの削除を要求しています:\n"
-"%s"
+"%s\n"
+"\n"
+"この承認は今回の操作にのみ適用され、記憶されません。"
 
 # AI Translated
 #, c-format, boost-format
@@ -39476,6 +40204,57 @@ msgstr "プラグインの権限リクエスト"
 # AI Translated
 msgid "Plugin permissions"
 msgstr "プラグインの権限"
+
+# AI Translated
+#, c-format, boost-format
+msgid ""
+"Plugin \"%s\" tried to perform a file operation that requires permission.\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgstr ""
+"プラグイン「%s」が権限を必要とするファイル操作を実行しようとしました。\n"
+"\n"
+"この操作は拒否されました。許可された場所を使用するか、このプラグインを信頼できる場合は「フルアクセス」を有効にしてください。"
+
+# AI Translated
+#, c-format, boost-format
+msgid ""
+"Plugin \"%s\" tried to create the following file:\n"
+"%s\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgid_plural ""
+"Plugin \"%s\" tried to create the following files:\n"
+"%s\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgstr[0] ""
+"プラグイン「%s」が以下のファイルを作成しようとしました:\n"
+"%s\n"
+"\n"
+"この操作は拒否されました。許可された場所を使用するか、このプラグインを信頼できる場合は「フルアクセス」を有効にしてください。"
+
+# AI Translated
+#, c-format, boost-format
+msgid ""
+"Plugin \"%s\" tried to delete the following file:\n"
+"%s\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgid_plural ""
+"Plugin \"%s\" tried to delete the following files:\n"
+"%s\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgstr[0] ""
+"プラグイン「%s」が以下のファイルを削除しようとしました:\n"
+"%s\n"
+"\n"
+"この操作は拒否されました。許可された場所を使用するか、このプラグインを信頼できる場合は「フルアクセス」を有効にしてください。"
+
+# AI Translated
+msgid "Plugin operation denied"
+msgstr "プラグインの操作が拒否されました"
 
 # AI Translated
 msgid "The preset stores invalid plugin capability configuration JSON."
@@ -39887,6 +40666,11 @@ msgstr "プラグインをローカルのまま保持できません: ローカ�
 
 # AI Translated
 #, boost-format
+msgid "Failed to read plugin install state: %1%"
+msgstr "プラグインのインストール状態を読み取れませんでした: %1%"
+
+# AI Translated
+#, boost-format
 msgid "Failed to update plugin install state: %1%"
 msgstr "プラグインのインストール状態を更新できませんでした: %1%"
 
@@ -40174,18 +40958,18 @@ msgstr "%1%から抽出された設定値の数が異常に少ないです: %2%"
 
 # AI Translated
 msgid ""
-"Load step file failed.\n"
+"Load STEP file failed.\n"
 "Cannot open file for reading.\n"
 msgstr ""
 "STEPファイルの読み込みに失敗しました。\n"
 "ファイルを読み取り用に開けません。\n"
 
 # AI Translated
-msgid "import svg failed: could not open svg."
+msgid "import SVG failed: could not open SVG."
 msgstr "SVGのインポートに失敗しました: SVGを開けませんでした。"
 
 # AI Translated
-msgid "import svg failed: could not parse imported svg data."
+msgid "import SVG failed: could not parse imported SVG data."
 msgstr "SVGのインポートに失敗しました: インポートしたSVGデータを解析できませんでした。"
 
 # AI Translated
@@ -40624,6 +41408,140 @@ msgid ""
 "Did you know that when printing materials that are prone to warping such as ABS, appropriately increasing the heatbed temperature can reduce the probability of warping."
 msgstr ""
 
+#~ msgid "Reset cutting plane and remove connectors"
+#~ msgstr "カット面をリセットし、コネクターを削除"
+
+#~ msgid "Component name(s) inside step file not in UTF-8 format!"
+#~ msgstr "ファイルのエンコーディング方式はUTF-8形式ではありません"
+
+#~ msgid "Show options when importing STEP file"
+#~ msgstr "STEPファイルインポート時にオプションを表示"
+
+# AI Translated
+#~ msgid "STEP importing: linear deflection"
+#~ msgstr "STEPインポート: 線形偏差"
+
+# AI Translated
+#~ msgid "STEP importing: angle deflection"
+#~ msgstr "STEPインポート: 角度偏差"
+
+# AI Translated
+#~ msgid "STEP importing: Split into multiple objects"
+#~ msgstr "STEPインポート: 複数オブジェクトに分割"
+
+# AI Translated
+#~ msgid ""
+#~ "If enabled, compound and compsolid shapes in imported STEP files are split into multiple objects.\n"
+#~ "Used as the default in the import dialog, or directly when the import dialog is disabled.\n"
+#~ "Default: disabled."
+#~ msgstr ""
+#~ "有効にすると、インポートしたSTEPファイル内のコンパウンドおよびコンプソリッド形状が複数のオブジェクトに分割されます。\n"
+#~ "インポートダイアログの初期値として、またはインポートダイアログが無効な場合は直接使用されます。\n"
+#~ "デフォルト: 無効。"
+
+#~ msgid "Behavior"
+#~ msgstr "動作"
+
+# AI Translated
+#~ msgid "G-code Preview"
+#~ msgstr "G-codeプレビュー"
+
+# AI Translated
+#~ msgid "Remove from favorites"
+#~ msgstr "お気に入りから削除"
+
+# AI Translated
+#~ msgid ""
+#~ "Applies only to external walls, including hole boundaries. Moves the hot nozzle toward printed inner walls during wiping to reduce reheating of freshly printed plastic and seam marks.\n"
+#~ "\n"
+#~ "Especially useful at layer heights below 0.1 mm, where wipe marks are more visible.\n"
+#~ "\n"
+#~ "Uses the regular wipe if no adjacent inner wall is already printed (single-wall areas or Outer/Inner wall order), or if no supported inward path can be found, for example at tight corners or seam gaps."
+#~ msgstr ""
+#~ "穴の輪郭を含む外壁にのみ適用されます。拭き上げ中に高温のノズルを造形済みの内壁へ向かって動かし、造形したばかりの樹脂の再加熱と継ぎ目の跡を抑えます。\n"
+#~ "\n"
+#~ "拭き上げの跡が目立ちやすい積層ピッチ0.1 mm未満で特に有効です。\n"
+#~ "\n"
+#~ "隣接する内壁がまだ造形されていない場合（壁が1本のみの領域や、壁の順序が外側/内側の場合）、または細かい角や継ぎ目の隙間などで支えのある内向きの経路が見つからない場合は、通常の拭き上げを使用します。"
+
+# AI Translated
+#, no-c-format, no-boost-format
+#~ msgid ""
+#~ "The distance the wipe path is shifted away from the external perimeter, specified in millimeters or as a percentage of the actual outer-wall extrusion width.\n"
+#~ "\n"
+#~ "For example, 50% shifts the path by half of the outer-wall width. The effective offset is limited by both the actual outer-wall width and the available spacing to the adjacent wall, so values above 100% or an equivalent absolute distance have no additional effect. Set to 0 to disable the offset."
+#~ msgstr ""
+#~ "拭き上げ経路を外周から離す距離で、ミリメートルまたは実際の外壁の押出線幅に対する割合で指定します。\n"
+#~ "\n"
+#~ "例えば50%では、経路を外壁幅の半分だけずらします。実効オフセットは実際の外壁幅と隣接する壁までの利用可能な間隔の両方で制限されるため、100%を超える値や同等の絶対距離を指定しても追加の効果はありません。0に設定するとオフセットは無効になります。"
+
+# AI Translated
+#~ msgid "Invalid utf8 sequence"
+#~ msgstr "無効なutf8シーケンス"
+
+# AI Translated
+#~ msgid ""
+#~ "RepRap firmware version => 3.4.0\n"
+#~ "Check your firmware documentation for supported shaper types."
+#~ msgstr ""
+#~ "RepRapファームウェアバージョン => 3.4.0\n"
+#~ "対応するシェイパータイプについては、ファームウェアのドキュメントをご確認ください。"
+
+# AI Translated
+#~ msgid "RepRap firmware uses the same frequency range for both axes."
+#~ msgstr "RepRapファームウェアは両軸に同じ周波数範囲を使用します。"
+
+# AI Translated
+#~ msgid "RepRap firmware uses the same frequency for both axes."
+#~ msgstr "RepRapファームウェアは両軸に同じ周波数を使用します。"
+
+#~ msgid "Step file import parameters"
+#~ msgstr "STEPファイルインポートパラメータ"
+
+# AI Translated
+#~ msgid "  ·  click a constraint badge to remove it"
+#~ msgstr "  ·  拘束バッジをクリックして削除"
+
+# AI Translated
+#, c-format, boost-format
+#~ msgid ""
+#~ "Plugin \"%s\" is requesting to create the following file:\n"
+#~ "%s"
+#~ msgid_plural ""
+#~ "Plugin \"%s\" is requesting to create the following files:\n"
+#~ "%s"
+#~ msgstr[0] ""
+#~ "プラグイン「%s」が以下のファイルの作成を要求しています:\n"
+#~ "%s"
+
+# AI Translated
+#, c-format, boost-format
+#~ msgid ""
+#~ "Plugin \"%s\" is requesting to delete the following file:\n"
+#~ "%s"
+#~ msgid_plural ""
+#~ "Plugin \"%s\" is requesting to delete the following files:\n"
+#~ "%s"
+#~ msgstr[0] ""
+#~ "プラグイン「%s」が以下のファイルの削除を要求しています:\n"
+#~ "%s"
+
+# AI Translated
+#~ msgid ""
+#~ "Load step file failed.\n"
+#~ "Cannot open file for reading.\n"
+#~ msgstr ""
+#~ "STEPファイルの読み込みに失敗しました。\n"
+#~ "ファイルを読み取り用に開けません。\n"
+
+# AI Translated
+#~ msgid "import svg failed: could not open svg."
+#~ msgstr "SVGのインポートに失敗しました: SVGを開けませんでした。"
+
+# AI Translated
+#~ msgid "import svg failed: could not parse imported svg data."
+#~ msgstr "SVGのインポートに失敗しました: インポートしたSVGデータを解析できませんでした。"
+
 # AI Translated
 #~ msgid ""
 #~ "\n"
@@ -40942,9 +41860,6 @@ msgstr ""
 
 #~ msgid "By vendor"
 #~ msgstr "ベンダー別"
-
-#~ msgid "Behaviour"
-#~ msgstr "動作"
 
 # AI Translated
 #~ msgid "Renders cast shadows on the plate, other objects, and each object onto itself in realistic view."
@@ -41923,12 +42838,6 @@ msgstr ""
 #~ msgid "Hostname or IP"
 #~ msgstr "ホスト名またはIP"
 
-#~ msgid "Custom camera source"
-#~ msgstr "カスタムカメラソース"
-
-#~ msgid "Switch Camera View"
-#~ msgstr "カメラビューを切り替え"
-
 #~ msgid "Organic support tree tip diameter must not be smaller than support material extrusion width."
 #~ msgstr "有機サポート枝の先端の直径は、サポート材の押し出し幅よりも小さくする必要があります。"
 
@@ -42611,9 +43520,6 @@ msgstr ""
 
 #~ msgid "Check for Update"
 #~ msgstr "更新を確認"
-
-#~ msgid "Recent files"
-#~ msgstr "最近のファイル"
 
 #~ msgid "Import Zip Archive"
 #~ msgstr "ZIPアーカイブをインポート"

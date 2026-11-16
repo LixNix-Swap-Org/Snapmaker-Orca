@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Snapmaker Orca\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-09 13:41+0100\n"
+"POT-Creation-Date: 2026-11-16 21:34+0100\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -510,6 +510,7 @@ msgstr "Blockera support"
 msgid "Erase"
 msgstr "Radera"
 
+#. TRN Variable layer height tool: the plain wheel resizes the edit area only with the cursor on a layer height bar.
 msgid "Mouse wheel"
 msgstr "Mus hjul"
 
@@ -706,6 +707,47 @@ msgstr "Lämnar målning av ojämn yta"
 # AI Translated
 msgid "Paint-on fuzzy skin editing"
 msgstr "Redigering av målad ojämn yta"
+
+msgid "Painted modifier"
+msgstr ""
+
+msgid "Modifier"
+msgstr "Modifierare"
+
+msgid "New painted modifier"
+msgstr ""
+
+#. TRN - Input label. Be short as possible
+#. Size in emboss direction
+#. TRN - Input label. Be short as possible
+msgid "Depth"
+msgstr "Djup"
+
+msgid ""
+"How far the painted area reaches into the part, measured from the painted surface.\n"
+"0 reaches across the whole part, up to the nearest unpainted surface."
+msgstr ""
+
+msgid "The part this modifier was painted on has been removed."
+msgstr ""
+
+msgid "Paint the modifier area"
+msgstr ""
+
+msgid "Erase the modifier area"
+msgstr ""
+
+msgid "Change painted modifier depth"
+msgstr ""
+
+msgid "Entering painted modifier"
+msgstr ""
+
+msgid "Leaving painted modifier"
+msgstr ""
+
+msgid "Painted modifier editing"
+msgstr ""
 
 msgid "Move"
 msgstr "Flytta"
@@ -982,12 +1024,6 @@ msgid "Shape"
 msgstr "Form"
 
 #. TRN - Input label. Be short as possible
-#. Size in emboss direction
-#. TRN - Input label. Be short as possible
-msgid "Depth"
-msgstr "Djup"
-
-#. TRN - Input label. Be short as possible
 #. Angle between Y axis and text line direction.
 #. TRN - Input label. Be short as possible
 msgid "Rotation"
@@ -1152,9 +1188,9 @@ msgstr "Efter skärning"
 msgid "Cut to parts"
 msgstr "Beskär till delar"
 
-# AI Translated
-msgid "Reset cutting plane and remove connectors"
-msgstr "Återställ snittplanet och ta bort kopplingar"
+#. TRN: Part assignments are the upper/lower cut groups changed by right-clicking parts.
+msgid "Reset the cutting plane, remove connectors, and clear part assignments."
+msgstr ""
 
 # AI Translated
 msgid "Reset Cut"
@@ -1473,9 +1509,6 @@ msgstr "Beskär"
 # AI Translated
 msgid "Click to change part type into negative volume."
 msgstr "Klicka för att ändra deltypen till negativ volym."
-
-msgid "Modifier"
-msgstr "Modifierare"
 
 # AI Translated
 msgid "Click to change part type into modifier."
@@ -3109,6 +3142,9 @@ msgstr "Lägg till support förstärkning"
 msgid "Add Precise Seam"
 msgstr "Lägg till exakt söm"
 
+msgid "Add Painted Modifier"
+msgstr ""
+
 # AI Translated
 msgid "Add text"
 msgstr "Lägg till text"
@@ -3226,6 +3262,9 @@ msgstr "Förslag"
 # AI Translated
 msgid "Text"
 msgstr "Text"
+
+msgid "Add a modifier whose shape is painted on the part"
+msgstr ""
 
 msgid "Height Range Modifier"
 msgstr "Modifierare av höjd intervall"
@@ -3489,6 +3528,15 @@ msgstr "Auto placera objektet för att förbättra utskriftskvaliteten."
 # AI Translated
 msgid "Paste Process Settings"
 msgstr "Klistra in processinställningar"
+
+msgid "Edit Painting"
+msgstr ""
+
+msgid "Paint the area of the selected painted modifier"
+msgstr ""
+
+msgid "Delete the selected painted modifier"
+msgstr ""
 
 msgid "Edit"
 msgstr "Redigera"
@@ -3853,12 +3901,12 @@ msgstr "Ej tillåtet att radera den senaste fasta delen."
 msgid "Delete part"
 msgstr "Radera del"
 
+msgid "Split to parts"
+msgstr "Dela upp i delar"
+
 # AI Translated
 msgid "The target object contains only one part and can not be split."
 msgstr "Målobjektet består av endast en del och kan inte delas."
-
-msgid "Split to parts"
-msgstr "Dela upp i delar"
 
 msgid "Assembly"
 msgstr "Montering"
@@ -3919,6 +3967,13 @@ msgstr "Om den första valda delen är ett objekt, så bör även den andra vara
 
 msgid "If the first selected item is a part, the second should be a part in the same object."
 msgstr "Om den första valda delen är en del, så bör den andra delen tillhöra samma objekt."
+
+#, boost-format
+msgid "Painted modifier %1%"
+msgstr ""
+
+msgid "Add painted modifier"
+msgstr ""
 
 # AI Translated
 msgid "The type of the last solid object part cannot be changed."
@@ -7064,6 +7119,9 @@ msgstr "Ogiltigt mönster. Använd N, N#K eller en kommaseparerad lista med valf
 msgid "Invalid format. Expected vector format: \"%1%\""
 msgstr "Ogiltligt format. Förväntat vector format: \"%1%\""
 
+msgid "The excluded bed area is invalid. It must be a simple, non-self-intersecting polygon."
+msgstr ""
+
 # AI Translated
 msgid "System agents"
 msgstr "Systemagenter"
@@ -7517,6 +7575,16 @@ msgstr "Radie"
 msgid "Keep min"
 msgstr "Håll minimal"
 
+#. TRN Variable layer height tool, checkbox shown with several objects selected: give each object its own
+#. layer heights instead of one profile they all share.
+msgid "Each object separately"
+msgstr ""
+
+#. TRN Variable layer height tool: each selected object has a layer height bar at the right edge of the 3D view.
+#. Painting over an object in the 3D view, or over its bar, edits the layer heights of that object.
+msgid "Paint over an object or its bar to edit its layers."
+msgstr ""
+
 msgid "Add detail"
 msgstr "Lägg till detalj"
 
@@ -7531,6 +7599,13 @@ msgstr "Utjämning"
 
 msgid "Increase/decrease edit area"
 msgstr "Öka/minska redigeringsområdet"
+
+msgid "Increase/decrease edit area on the bar"
+msgstr ""
+
+#. TRN "Adaptive", "Smooth" and "Reset" are the buttons of the variable layer height tool.
+msgid "Variable layer height: only the three tallest selected objects have a bar. The others still take Adaptive, Smooth and Reset."
+msgstr ""
 
 msgid "Sequence"
 msgstr "Sekvens"
@@ -7872,6 +7947,9 @@ msgstr "Mittenklick på ikonen"
 msgid "Set viewing angle"
 msgstr "Ange visningsvinkel"
 
+msgid "Follow camera"
+msgstr ""
+
 msgid "Paint Toolbar"
 msgstr "Färgläggningsverktyg"
 
@@ -8023,8 +8101,27 @@ msgstr "Försök igen med Liveview"
 msgid "Resolution"
 msgstr "Upplösning"
 
+# AI Translated
+msgid "Custom camera source"
+msgstr "Anpassad kamerakälla"
+
+# AI Translated
+msgid "Camera stream URL"
+msgstr "URL för kameraström"
+
+# AI Translated
+msgid "URL of an MJPEG stream or of a web page that shows the camera, for example http://192.168.1.10:8080/?action=stream"
+msgstr "URL till en MJPEG-ström eller till en webbsida som visar kameran, till exempel http://192.168.1.10:8080/?action=stream"
+
+msgid "Enable"
+msgstr "Aktivera"
+
 msgid "Show \"Live Video\" guide page."
 msgstr "Visa sidan \"Live Video\"."
+
+# AI Translated
+msgid "Disable"
+msgstr "Avaktivera"
 
 msgid "Connect Printer (LAN)"
 msgstr "Anslut skrivare (LAN)"
@@ -9149,6 +9246,10 @@ msgstr "Lagring"
 msgid "Camera Setting"
 msgstr "Kamerainställning"
 
+# AI Translated
+msgid "Switch Camera View"
+msgstr "Byt kameravy"
+
 msgid "Control"
 msgstr "Kontroll"
 
@@ -9887,6 +9988,10 @@ msgstr "Ny nätverks plugin tillgänglig"
 msgid "Details"
 msgstr "Detaljer"
 
+# AI Translated
+msgid "Updates are available for your OrcaCloud plugins."
+msgstr "Det finns uppdateringar för dina OrcaCloud-insticksmoduler."
+
 msgid "New printer config available."
 msgstr "Ny printer konfiguration tillgänglig."
 
@@ -10046,6 +10151,24 @@ msgstr ""
 
 msgid "Error loading shaders"
 msgstr "Fel vid laddning av skuggor"
+
+#. TRN The OpenGL context could not be made current, so nothing can be drawn in the 3D view.
+msgid "OpenGL could not be activated for the 3D view, so it cannot be shown."
+msgstr ""
+
+#. TRN %1% is the name of a graphics card or display adapter as Windows reports it, such as "Microsoft Basic Display Adapter".
+#, boost-format
+msgid "The window is on a display driven by \"%1%\"."
+msgstr ""
+
+msgid "Make sure the display adapter driving this window's display is enabled and its driver is installed and up to date."
+msgstr ""
+
+msgid "If the computer has more than one graphics card, connecting the monitor to another one may help."
+msgstr ""
+
+msgid "If the problem remains, close any overlay or screen capture software and try again."
+msgstr ""
 
 msgctxt "Layers"
 msgid "Top"
@@ -11113,10 +11236,6 @@ msgstr "Filamenttyp och färginformation har synkroniserats, men platsinformatio
 msgid "Do you want to save changes to \"%1%\"?"
 msgstr "Spara ändringarna till \"%1%\"?"
 
-# AI Translated
-msgid "UV Editor"
-msgstr "UV-redigerare"
-
 #, c-format, boost-format
 msgid "Successfully unmounted. The device %s (%s) can now be safely removed from the computer."
 msgstr "Avinstallationen lyckades. Enheten %s(%s) kan nu tas bort från datorn på ett säkert sätt."
@@ -11152,6 +11271,17 @@ msgstr "Fäll ihop sidopanelen"
 #, c-format, boost-format
 msgid "Loading file: %s"
 msgstr "Laddar fil: %s"
+
+# AI Translated
+msgid "Some imported objects contain modifiers or parts with individual settings. They are shown as assemblies so that these settings remain visible."
+msgstr "Vissa importerade objekt innehåller modifierare eller delar med egna inställningar. De visas som monteringar så att inställningarna förblir synliga."
+
+# AI Translated
+msgid "Geometry import"
+msgstr "Geometriimport"
+
+msgid "The file does not contain any geometry data."
+msgstr "Filen innehåller ingen geometrisk data."
 
 msgid "Load 3MF"
 msgstr "Ladda 3MF"
@@ -11225,7 +11355,7 @@ msgstr "Vissa publicerade inställningar kunde inte tillämpas:"
 msgid "Some filament slots were changed:"
 msgstr "Vissa filamentplatser har ändrats:"
 
-msgid "Component name(s) inside step file not in UTF-8 format!"
+msgid "Component name(s) inside STEP file not in UTF-8 format!"
 msgstr "Komponent namnet i STEP filen är inte UTF-8 format!"
 
 msgid "Because of unsupported text encoding, garbage characters may appear!"
@@ -11296,8 +11426,8 @@ msgstr "Vill du synkronisera skrivarinformationen och byta förinställning auto
 msgid "This project contains a model made in the Design tab and no other geometry. Enable \"CAD feature (experimental)\" in Preferences and restart to see and edit it; it is kept when the project is saved."
 msgstr "Det här projektet innehåller en modell som skapats i fliken Design och ingen annan geometri. Aktivera \"CAD-funktion (experimentell)\" i Inställningar och starta om för att visa och redigera den; den behålls när projektet sparas."
 
-msgid "The file does not contain any geometry data."
-msgstr "Filen innehåller ingen geometrisk data."
+msgid "The invalid area has been removed, so please define it again using a valid polygon."
+msgstr ""
 
 msgid "Your object appears to be too large, do you want to scale it down to fit the print bed automatically?"
 msgstr "Objektet verkar vara för stort, vill du skala ner det så att det passar byggplattan automatiskt?"
@@ -11562,6 +11692,10 @@ msgid ""
 msgstr ""
 "Följande anmärkningar för parallellt IDEX/IQEX-läge upptäcktes:\n"
 "\n"
+
+# AI Translated
+msgid "UV Editor"
+msgstr "UV-redigerare"
 
 #, c-format, boost-format
 msgid ""
@@ -12484,13 +12618,58 @@ msgstr "Visa \"Dagens tips\" efter start"
 msgid "If enabled, useful hints are displayed at startup."
 msgstr "Om aktiverad visas användbara tips vid start."
 
-# AI Translated
-msgid "Downloads folder"
-msgstr "Nedladdningsmapp"
+msgid "Features"
+msgstr "Funktioner"
 
 # AI Translated
-msgid "Target folder for downloaded items"
-msgstr "Målmapp för nedladdade objekt"
+msgid "Multi device management"
+msgstr "Hantering av flera enheter"
+
+# AI Translated
+msgid "With this option enabled, you can send a task to multiple devices at the same time and manage multiple devices."
+msgstr "Med det här alternativet aktiverat kan du skicka en uppgift till flera enheter samtidigt och hantera flera enheter."
+
+# AI Translated
+msgid "CAD feature (experimental)"
+msgstr "CAD-funktion (experimentell)"
+
+# AI Translated
+msgid "With this option enabled, the Design tab is shown, where models can be built and edited parametrically. This feature is experimental and still under development."
+msgstr "När det här alternativet är aktiverat visas fliken Design, där modeller kan byggas och redigeras parametriskt. Funktionen är experimentell och fortfarande under utveckling."
+
+# AI Translated
+msgid "Pop up to select filament grouping mode"
+msgstr "Visa dialogruta för val av filamentgrupperingsläge"
+
+# AI Translated
+msgid "Clear my choice on..."
+msgstr "Rensa mitt val för..."
+
+# AI Translated
+msgid "Unsaved projects"
+msgstr "Osparade projekt"
+
+msgid "Clear my choice on the unsaved projects."
+msgstr "Rensa mitt val för de osparade projekten."
+
+# AI Translated
+msgid "Unsaved presets"
+msgstr "Osparade förinställningar"
+
+msgid "Clear my choice on the unsaved presets."
+msgstr "Rensa mitt val för de osparade förinställningarna."
+
+# AI Translated
+msgid "Synchronizing printer preset"
+msgstr "Synkronisering av skrivarförinställning"
+
+# AI Translated
+msgid "Clear my choice for synchronizing printer preset after loading the file."
+msgstr "Rensa mitt val för synkronisering av skrivarförinställning efter att filen lästs in."
+
+# AI Translated
+msgid "Files"
+msgstr "Filer"
 
 # AI Translated
 msgid "Load All"
@@ -12523,6 +12702,18 @@ msgid "Backup your project periodically to help with restoring from an occasiona
 msgstr "Säkerhetskopiera ditt projekt med jämna mellanrum för att underlätta återställning efter en tillfällig krasch."
 
 # AI Translated
+msgid "Store full source file paths in projects"
+msgstr "Spara fullständiga sökvägar till källfiler i projekt"
+
+# AI Translated
+msgid "If enabled, saved projects store the absolute path to imported source files (STEP/STL/...), so \"Reload from disk\" still works when the source file is kept in a different folder than the project. If disabled, only the filename is stored, which keeps projects portable and avoids embedding absolute paths."
+msgstr "Om detta är aktiverat sparar sparade projekt den absoluta sökvägen till importerade källfiler (STEP/STL/...), så att \"Läs in från disk igen\" fortfarande fungerar när källfilen ligger i en annan mapp än projektet. Om det är avstängt sparas endast filnamnet, vilket gör projekten portabla och undviker inbäddade absoluta sökvägar."
+
+# AI Translated
+msgid "Recent files"
+msgstr "Senaste filer"
+
+# AI Translated
 msgid "Maximum recent files"
 msgstr "Max antal senaste filer"
 
@@ -12535,20 +12726,64 @@ msgid "Add STL/STEP files to recent files list"
 msgstr "Lägg till STL-/STEP-filer i listan över senaste filer"
 
 # AI Translated
+msgid "Folder paths"
+msgstr "Mappsökvägar"
+
+# AI Translated
+msgid "Downloads folder"
+msgstr "Nedladdningsmapp"
+
+# AI Translated
+msgid "Target folder for downloaded items"
+msgstr "Målmapp för nedladdade objekt"
+
+# AI Translated
+msgid "File import"
+msgstr "Filimport"
+
+# AI Translated
+msgid "Ask how to handle unsupported characters in imported names"
+msgstr "Fråga hur tecken som inte stöds i importerade namn ska hanteras"
+
+# AI Translated
+msgid "Show the removal or replacement choices when original names contain unsupported characters."
+msgstr "Visa valen för att ta bort eller ersätta när originalnamn innehåller tecken som inte stöds."
+
+# AI Translated
+msgid "3MF import"
+msgstr "3MF-import"
+
+# AI Translated
+msgid "Show options when importing"
+msgstr "Visa alternativ vid import"
+
+# AI Translated
+msgid "Show original-name and sorting options when importing a 3MF without project settings into the current project."
+msgstr "Visa alternativ för originalnamn och sortering vid import av en 3MF utan projektinställningar till det aktuella projektet."
+
+# AI Translated
+msgid "Keep original names"
+msgstr "Behåll originalnamn"
+
+# AI Translated
+msgid "Use the body names stored in the imported file when it contains them."
+msgstr "Använd de kroppsnamn som finns lagrade i den importerade filen när den innehåller sådana."
+
+# AI Translated
 msgid "Don't warn when loading 3MF with modified G-code"
 msgstr "Varna inte vid inläsning av 3MF med ändrad G-code"
 
 # AI Translated
-msgid "Show options when importing STEP file"
-msgstr "Visa alternativ vid import av STEP-fil"
+msgid "STEP import"
+msgstr "STEP-import"
 
 # AI Translated
 msgid "If enabled, a parameter settings dialog will appear during STEP file import."
 msgstr "Om detta är aktiverat visas en dialogruta för parameterinställningar vid import av STEP-filer."
 
 # AI Translated
-msgid "STEP importing: linear deflection"
-msgstr "STEP-import: linjär avvikelse"
+msgid "Linear deflection"
+msgstr "Linjär avvikelse"
 
 # AI Translated
 msgid ""
@@ -12563,8 +12798,8 @@ msgstr ""
 "Standard: 0,003 mm."
 
 # AI Translated
-msgid "STEP importing: angle deflection"
-msgstr "STEP-import: vinkelavvikelse"
+msgid "Angle deflection"
+msgstr "Vinkelavvikelse"
 
 # AI Translated
 msgid ""
@@ -12579,18 +12814,30 @@ msgstr ""
 "Standard: 0,5."
 
 # AI Translated
-msgid "STEP importing: Split into multiple objects"
-msgstr "STEP-import: dela upp i flera objekt"
+msgid "Split into multiple objects"
+msgstr "Dela upp i flera objekt"
 
 # AI Translated
 msgid ""
 "If enabled, compound and compsolid shapes in imported STEP files are split into multiple objects.\n"
 "Used as the default in the import dialog, or directly when the import dialog is disabled.\n"
-"Default: disabled."
+"Default: enabled."
 msgstr ""
 "Om detta är aktiverat delas sammansatta former (compound och compsolid) i importerade STEP-filer upp i flera objekt.\n"
-"Används som standard i importdialogen, eller direkt när importdialogen är avstängd.\n"
-"Standard: avstängd."
+"Används som standard i importdialogrutan, eller direkt när importdialogrutan är avstängd.\n"
+"Standard: aktiverad."
+
+# AI Translated
+msgid "AMF import"
+msgstr "AMF-import"
+
+# AI Translated
+msgid "Show body grouping, original-name and sorting options when importing geometry into the current project."
+msgstr "Visa alternativ för kroppsgruppering, originalnamn och sortering vid import av geometri till det aktuella projektet."
+
+# AI Translated
+msgid "DRC export"
+msgstr "DRC-export"
 
 # AI Translated
 msgid "Quality level for Draco export"
@@ -12609,13 +12856,169 @@ msgstr ""
 "0 = förlustfri komprimering (geometrin bevaras med full precision). Giltiga förlustbehäftade värden är 8 till 30.\n"
 "Lägre värden ger mindre filer men förlorar mer geometrisk detalj; högre värden bevarar mer detalj till priset av större filer."
 
-# AI Translated
-msgid "Store full source file paths in projects"
-msgstr "Spara fullständiga sökvägar till källfiler i projekt"
+msgid "Associate files to Snapmaker Orca"
+msgstr "Associerade filer till Snapmaker Orca"
 
 # AI Translated
-msgid "If enabled, saved projects store the absolute path to imported source files (STEP/STL/...), so \"Reload from disk\" still works when the source file is kept in a different folder than the project. If disabled, only the filename is stored, which keeps projects portable and avoids embedding absolute paths."
-msgstr "Om detta är aktiverat sparar sparade projekt den absoluta sökvägen till importerade källfiler (STEP/STL/...), så att \"Läs in från disk igen\" fortfarande fungerar när källfilen ligger i en annan mapp än projektet. Om det är avstängt sparas endast filnamnet, vilket gör projekten portabla och undviker inbäddade absoluta sökvägar."
+msgid "File associations for the Microsoft Store version are managed by Windows Settings."
+msgstr "Filkopplingar för Microsoft Store-versionen hanteras i Windows-inställningarna."
+
+# AI Translated
+msgid "Open Windows Default Apps Settings"
+msgstr "Öppna Windows-inställningar för standardappar"
+
+msgid "Associate 3MF files to Snapmaker Orca"
+msgstr ""
+
+msgid "If enabled, this sets Snapmaker Orca as the default application to open 3MF files."
+msgstr ""
+
+msgid "Associate DRC files to Snapmaker Orca"
+msgstr ""
+
+msgid "If enabled, sets Snapmaker Orca as default application to open DRC files."
+msgstr ""
+
+msgid "Associate STL files to Snapmaker Orca"
+msgstr ""
+
+msgid "If enabled, this sets Snapmaker Orca as the default application to open STL files."
+msgstr ""
+
+msgid "Associate STEP files to Snapmaker Orca"
+msgstr ""
+
+msgid "If enabled, this sets Snapmaker Orca as the default application to open STEP files."
+msgstr ""
+
+msgid "Associate web links to Snapmaker Orca"
+msgstr ""
+
+# AI Translated
+msgid "Behaviour"
+msgstr "Beteende"
+
+# AI Translated
+msgid "Auto flush after changing..."
+msgstr "Rensa automatiskt efter ändring av..."
+
+# AI Translated
+msgid "Auto calculate flushing volumes when selected values changed"
+msgstr "Beräkna rensningsvolymer automatiskt när valda värden ändras"
+
+# AI Translated
+msgid "Auto arrange plate after cloning"
+msgstr "Placera automatiskt ut plattan efter kloning"
+
+# AI Translated
+msgid "Auto slice after changes"
+msgstr "Bered automatiskt efter ändringar"
+
+msgid "If enabled, Snapmaker Orca will re-slice automatically whenever slicing-related settings change."
+msgstr ""
+
+# AI Translated
+msgid "Delay in seconds before auto slicing starts, allowing multiple edits to be grouped. Use 0 to slice immediately."
+msgstr "Fördröjning i sekunder innan den automatiska beredningen startar, så att flera ändringar kan grupperas. Använd 0 för att bereda direkt."
+
+# AI Translated
+msgid "Show options when adding a primitive"
+msgstr "Visa alternativ när en primitiv läggs till"
+
+# AI Translated
+msgid "If enabled, a dialog asks for the dimensions of a primitive shape before it is added."
+msgstr "Om detta är aktiverat frågar en dialogruta efter måtten på en primitiv form innan den läggs till."
+
+# AI Translated
+msgid "Remove mixed temperature restriction"
+msgstr "Ta bort begränsningen för blandade temperaturer"
+
+# AI Translated
+msgid "With this option enabled, you can print materials with a large temperature difference together."
+msgstr "Med det här alternativet aktiverat kan du skriva ut material med stor temperaturskillnad tillsammans."
+
+msgid "Allow high/low temperature filament mixing"
+msgstr ""
+
+msgid "If enabled, allows printing with both high-temperature and low-temperature filaments simultaneously."
+msgstr ""
+
+msgid ""
+"Mixing materials with significantly different printing temperatures may result in:\n"
+"· Extruder clogging\n"
+"· Nozzle damage\n"
+"· Layer adhesion issues\n"
+"\n"
+"Do you want to enable this feature?"
+msgstr ""
+
+msgid "High and Low Temperature Material Mixing Risk"
+msgstr ""
+
+# AI Translated
+msgid "Remember last print action"
+msgstr "Kom ihåg senaste utskriftsåtgärd"
+
+msgid "If enabled, Snapmaker Orca will remember the last selected option in the print button's dropdown (e.g. Print, Export plate sliced file, Export G-code file) and use it as the default on next startup."
+msgstr ""
+
+msgid "Show a dialog asking whether to continue slicing when memory is low"
+msgstr ""
+
+# AI Translated
+msgid "Default view type"
+msgstr "Standardvisningstyp"
+
+# AI Translated
+msgid ""
+"The color scheme the sliced preview opens with.\n"
+"Automatic: Filament for multi material prints, Line Type for single material ones.\n"
+"Last used: the view type you selected last.\n"
+"Any other value always opens that view type.\n"
+"You can still switch the view type in the preview afterwards."
+msgstr ""
+"Färgschemat som den beredda förhandsvisningen öppnas med.\n"
+"Automatisk: Filament för utskrifter med flera material, Linje typ för utskrifter med ett material.\n"
+"Senast använd: den visningstyp du valde senast.\n"
+"Alla andra värden öppnar alltid den visningstypen.\n"
+"Du kan fortfarande byta visningstyp i förhandsvisningen efteråt."
+
+msgid "Simplify preview while dragging"
+msgstr ""
+
+msgid ""
+"What the sliced preview draws while you drag the camera or a preview slider, or zoom with the mouse wheel, so that large prints stay responsive. The full toolpaths are restored as soon as you let go.\n"
+"Off: the full toolpaths.\n"
+"Solid model: the sliced objects and the prime tower as solid shapes in the colors of the current view, cut to the visible layer range, with its bottom and top layers and the supports drawn as toolpaths. Negative volumes are not cut out. A print made object by object, or one on a belt printer, keeps its full toolpaths.\n"
+"Shell only: every layer without its sparse infill, internal solid infill, internal bridges and gap fill, which lie under the walls and skins. Walls, top and bottom surfaces, bridges, supports and the prime tower are drawn whole, so the print looks the same from outside.\n"
+"The bottom and top layers of the visible range are always drawn whole; a layer with no infill of its own, as with infill combination, takes the layers down to the nearest one with infill along."
+msgstr ""
+
+msgid "Solid model"
+msgstr ""
+
+msgid "Shell only"
+msgstr ""
+
+# AI Translated
+msgid "Dim lower layers"
+msgstr "Dämpa underliggande lager"
+
+# AI Translated
+msgid "When scrubbing the layer slider in the sliced preview, render the layers below the current one darkened so that only the layer being viewed is shown at full brightness."
+msgstr "När du drar i lagerreglaget i den beredda förhandsgranskningen renderas lagren under det aktuella mörkare, så att endast det lager du tittar på visas med full ljusstyrka."
+
+# AI Translated
+msgid "Dimmed layer brightness"
+msgstr "Ljusstyrka för dämpade lager"
+
+# AI Translated
+msgid ""
+"How brightly the dimmed layers are rendered when \"Dim lower layers\" is enabled.\n"
+"99% is barely darkened, 0% renders them black. Capped at 99% because 100% would be the same as disabling the option."
+msgstr ""
+"Hur ljust de dämpade lagren återges när \"Dämpa underliggande lager\" är aktiverat.\n"
+"99% är knappt mörkare, 0% gör dem helt svarta. Begränsat till 99% eftersom 100% skulle vara detsamma som att stänga av alternativet."
 
 msgid "Preset"
 msgstr "Förinställd"
@@ -12659,16 +13062,37 @@ msgstr "Visa avisering om delade profiler"
 msgid "Show a notification with a link to browse shared profiles when the selected printer is changed."
 msgstr "Visa en avisering med en länk för att bläddra bland delade profiler när vald skrivare ändras."
 
-msgid "Features"
-msgstr "Funktioner"
+# AI Translated
+msgid "Visible plugin pages"
+msgstr "Synliga insticksmodulsidor"
 
 # AI Translated
-msgid "Multi device management"
-msgstr "Hantering av flera enheter"
+msgid "pages"
+msgstr "sidor"
 
 # AI Translated
-msgid "With this option enabled, you can send a task to multiple devices at the same time and manage multiple devices."
-msgstr "Med det här alternativet aktiverat kan du skicka en uppgift till flera enheter samtidigt och hantera flera enheter."
+msgid "Number of plugin pages shown as fixed tabs before the remaining pages collapse into a dropdown on the last tab."
+msgstr "Antal insticksmodulsidor som visas som fasta flikar innan de återstående sidorna fälls ihop i en rullgardinsmeny på den sista fliken."
+
+# AI Translated
+msgid "Draw mate connectors as a face"
+msgstr "Rita parningskopplingar som en yta"
+
+# AI Translated
+msgid "In the Design tab, draw a mate connector as a small face instead of the conventional disc with a roll quadrant. A face shows its orientation at a glance, without learning the disc convention. Turn this off for the conventional CAD representation."
+msgstr "I fliken Design ritas en parningskoppling som en liten yta i stället för den konventionella skivan med en rullkvadrant. En yta visar sin orientering direkt, utan att du behöver lära dig skivkonventionen. Stäng av detta för den konventionella CAD-representationen."
+
+# AI Translated
+msgid "Auto-close sketch loops"
+msgstr "Stäng skisslingor automatiskt"
+
+# AI Translated
+msgid "Treat sketch endpoints within 0.001 mm as one joint and weld the loop shut. Off: only exactly coincident endpoints join, so a loop with a tiny gap is shown as open instead of being closed for you. Saved with each design; applies to designs started after the change."
+msgstr "Behandla skissändpunkter inom 0,001 mm som en enda punkt och svetsa ihop slingan. Av: endast exakt sammanfallande ändpunkter sammanfogas, så en slinga med ett litet glapp visas som öppen i stället för att stängas åt dig. Sparas med varje design; gäller designer som påbörjas efter ändringen."
+
+# AI Translated
+msgid "Speed dial"
+msgstr "Snabbval"
 
 # AI Translated
 msgid "Open the Speed Dial from the keyboard"
@@ -12690,101 +13114,6 @@ msgstr "åtgärder"
 # AI Translated
 msgid "How many recently launched actions to show at the top of the Speed Dial. Set to 0 to hide recent actions."
 msgstr "Hur många nyligen startade åtgärder som visas överst i Snabbval. Ange 0 för att dölja senaste åtgärder."
-
-# AI Translated
-msgid "CAD feature (experimental)"
-msgstr "CAD-funktion (experimentell)"
-
-# AI Translated
-msgid "With this option enabled, the Design tab is shown, where models can be built and edited parametrically. This feature is experimental and still under development."
-msgstr "När det här alternativet är aktiverat visas fliken Design, där modeller kan byggas och redigeras parametriskt. Funktionen är experimentell och fortfarande under utveckling."
-
-# AI Translated
-msgid "Pop up to select filament grouping mode"
-msgstr "Visa dialogruta för val av filamentgrupperingsläge"
-
-# AI Translated
-msgid "Visible plugin pages"
-msgstr "Synliga insticksmodulsidor"
-
-# AI Translated
-msgid "pages"
-msgstr "sidor"
-
-# AI Translated
-msgid "Number of plugin pages shown as fixed tabs before the remaining pages collapse into a dropdown on the last tab."
-msgstr "Antal insticksmodulsidor som visas som fasta flikar innan de återstående sidorna fälls ihop i en rullgardinsmeny på den sista fliken."
-
-# AI Translated
-msgid "Behavior"
-msgstr "Beteende"
-
-# AI Translated
-msgid "Auto flush after changing..."
-msgstr "Rensa automatiskt efter ändring av..."
-
-# AI Translated
-msgid "Auto calculate flushing volumes when selected values changed"
-msgstr "Beräkna rensningsvolymer automatiskt när valda värden ändras"
-
-# AI Translated
-msgid "Auto arrange plate after cloning"
-msgstr "Placera automatiskt ut plattan efter kloning"
-
-# AI Translated
-msgid "Show options when adding a primitive"
-msgstr "Visa alternativ när en primitiv läggs till"
-
-# AI Translated
-msgid "If enabled, a dialog asks for the dimensions of a primitive shape before it is added."
-msgstr "Om detta är aktiverat frågar en dialogruta efter måtten på en primitiv form innan den läggs till."
-
-# AI Translated
-msgid "Auto slice after changes"
-msgstr "Bered automatiskt efter ändringar"
-
-msgid "If enabled, Snapmaker Orca will re-slice automatically whenever slicing-related settings change."
-msgstr ""
-
-# AI Translated
-msgid "Delay in seconds before auto slicing starts, allowing multiple edits to be grouped. Use 0 to slice immediately."
-msgstr "Fördröjning i sekunder innan den automatiska beredningen startar, så att flera ändringar kan grupperas. Använd 0 för att bereda direkt."
-
-# AI Translated
-msgid "Remove mixed temperature restriction"
-msgstr "Ta bort begränsningen för blandade temperaturer"
-
-# AI Translated
-msgid "With this option enabled, you can print materials with a large temperature difference together."
-msgstr "Med det här alternativet aktiverat kan du skriva ut material med stor temperaturskillnad tillsammans."
-
-msgid "Allow high/low temperature filament mixing"
-msgstr ""
-
-msgid "If enabled, allows printing with both high-temperature and low-temperature filaments simultaneously."
-msgstr ""
-
-msgid ""
-"Mixing materials with significantly different printing temperatures may result in:\n"
-"· Extruder clogging\n"
-"· Nozzle damage\n"
-"· Layer adhesion issues\n"
-"\n"
-"Do you want to enable this feature?"
-msgstr ""
-
-msgid "High and Low Temperature Material Mixing Risk"
-msgstr ""
-
-# AI Translated
-msgid "Remember last print action"
-msgstr "Kom ihåg senaste utskriftsåtgärd"
-
-msgid "If enabled, Snapmaker Orca will remember the last selected option in the print button's dropdown (e.g. Print, Export plate sliced file, Export G-code file) and use it as the default on next startup."
-msgstr ""
-
-msgid "Show a dialog asking whether to continue slicing when memory is low"
-msgstr ""
 
 msgid "Camera"
 msgstr "Kamera"
@@ -12834,22 +13163,6 @@ msgid "If enabled, reverses the direction of zoom with mouse wheel."
 msgstr "Om aktiverad, vänder zoomriktningen med mushjulet."
 
 # AI Translated
-msgid "Draw mate connectors as a face"
-msgstr "Rita parningskopplingar som en yta"
-
-# AI Translated
-msgid "In the Design tab, draw a mate connector as a small face instead of the conventional disc with a roll quadrant. A face shows its orientation at a glance, without learning the disc convention. Turn this off for the conventional CAD representation."
-msgstr "I fliken Design ritas en parningskoppling som en liten yta i stället för den konventionella skivan med en rullkvadrant. En yta visar sin orientering direkt, utan att du behöver lära dig skivkonventionen. Stäng av detta för den konventionella CAD-representationen."
-
-# AI Translated
-msgid "Auto-close sketch loops"
-msgstr "Stäng skisslingor automatiskt"
-
-# AI Translated
-msgid "Treat sketch endpoints within 0.001 mm as one joint and weld the loop shut. Off: only exactly coincident endpoints join, so a loop with a tiny gap is shown as open instead of being closed for you. Saved with each design; applies to designs started after the change."
-msgstr "Behandla skissändpunkter inom 0,001 mm som en enda punkt och svetsa ihop slingan. Av: endast exakt sammanfallande ändpunkter sammanfogas, så en slinga med ett litet glapp visas som öppen i stället för att stängas åt dig. Sparas med varje design; gäller designer som påbörjas efter ändringen."
-
-# AI Translated
 msgid "Pan"
 msgstr "Panorera"
 
@@ -12890,32 +13203,6 @@ msgid "Choose the key for each action."
 msgstr "Välj tangent för varje åtgärd."
 
 # AI Translated
-msgid "Clear my choice on..."
-msgstr "Rensa mitt val för..."
-
-# AI Translated
-msgid "Unsaved projects"
-msgstr "Osparade projekt"
-
-msgid "Clear my choice on the unsaved projects."
-msgstr "Rensa mitt val för de osparade projekten."
-
-# AI Translated
-msgid "Unsaved presets"
-msgstr "Osparade förinställningar"
-
-msgid "Clear my choice on the unsaved presets."
-msgstr "Rensa mitt val för de osparade förinställningarna."
-
-# AI Translated
-msgid "Synchronizing printer preset"
-msgstr "Synkronisering av skrivarförinställning"
-
-# AI Translated
-msgid "Clear my choice for synchronizing printer preset after loading the file."
-msgstr "Rensa mitt val för synkronisering av skrivarförinställning efter att filen lästs in."
-
-# AI Translated
 msgid "Graphics"
 msgstr "Grafik"
 
@@ -12944,6 +13231,14 @@ msgstr ""
 
 msgid "Render soft shadows of objects on the build plate in the Prepare view. Requires OpenGL 3.3 or later."
 msgstr ""
+
+# AI Translated
+msgid "Translucent filaments"
+msgstr "Genomskinliga filament"
+
+# AI Translated
+msgid "Draw the toolpaths of filaments whose color is partly transparent as see-through, as the 3D view draws their objects. Turn it off to draw every filament opaque."
+msgstr "Rita verktygsbanorna för filament vars färg är delvis transparent som genomskinliga, på samma sätt som 3D-vyn ritar deras objekt. Stäng av för att rita alla filament ogenomskinliga."
 
 # AI Translated
 msgid "Phong shading"
@@ -13009,6 +13304,27 @@ msgid ""
 msgstr ""
 "Ger verktygsbanorna i Förhandsvisning en glans som liknar blank plast i den realistiska vyn.\n"
 "Om det är avstängt är ett genomskinligt filament matt och ett ogenomskinligt behåller glansen från den vanliga vyn."
+
+msgid "Persistent"
+msgstr ""
+
+msgid "When Outline is enabled in the 3D canvas menu, outlines visible objects even when they are not selected."
+msgstr ""
+
+msgid "The configured outline color is invalid."
+msgstr ""
+
+msgid "Persistent color"
+msgstr ""
+
+msgid "Choose the color of the persistent outlines of unselected objects."
+msgstr ""
+
+msgid "Selection color"
+msgstr ""
+
+msgid "Choose the color of the outlines of selected objects."
+msgstr ""
 
 msgid "Anti-aliasing"
 msgstr "Anti-aliasing"
@@ -13157,56 +13473,6 @@ msgstr "Kör"
 msgid "Replaces the current project with the OrcaSliced Combo, then measures the frame rate and render timings while the camera turns around it in Prepare and Preview, and while the layer slider moves through the sliced layers."
 msgstr "Ersätter det aktuella projektet med OrcaSliced Combo och mäter sedan bildfrekvensen och renderingstiderna medan kameran roterar runt det i Förbered och Förhandsvisning, och medan lagerreglaget rör sig genom de beredda lagren."
 
-# AI Translated
-msgid "G-code Preview"
-msgstr "G-code-förhandsgranskning"
-
-# AI Translated
-msgid "Default view type"
-msgstr "Standardvisningstyp"
-
-# AI Translated
-msgid ""
-"The color scheme the sliced preview opens with.\n"
-"Automatic: Filament for multi material prints, Line Type for single material ones.\n"
-"Last used: the view type you selected last.\n"
-"Any other value always opens that view type.\n"
-"You can still switch the view type in the preview afterwards."
-msgstr ""
-"Färgschemat som den beredda förhandsvisningen öppnas med.\n"
-"Automatisk: Filament för utskrifter med flera material, Linje typ för utskrifter med ett material.\n"
-"Senast använd: den visningstyp du valde senast.\n"
-"Alla andra värden öppnar alltid den visningstypen.\n"
-"Du kan fortfarande byta visningstyp i förhandsvisningen efteråt."
-
-# AI Translated
-msgid "Dim lower layers"
-msgstr "Dämpa underliggande lager"
-
-# AI Translated
-msgid "When scrubbing the layer slider in the sliced preview, render the layers below the current one darkened so that only the layer being viewed is shown at full brightness."
-msgstr "När du drar i lagerreglaget i den beredda förhandsgranskningen renderas lagren under det aktuella mörkare, så att endast det lager du tittar på visas med full ljusstyrka."
-
-# AI Translated
-msgid "Dimmed layer brightness"
-msgstr "Ljusstyrka för dämpade lager"
-
-# AI Translated
-msgid ""
-"How brightly the dimmed layers are rendered when \"Dim lower layers\" is enabled.\n"
-"99% is barely darkened, 0% renders them black. Capped at 99% because 100% would be the same as disabling the option."
-msgstr ""
-"Hur ljust de dämpade lagren återges när \"Dämpa underliggande lager\" är aktiverat.\n"
-"99% är knappt mörkare, 0% gör dem helt svarta. Begränsat till 99% eftersom 100% skulle vara detsamma som att stänga av alternativet."
-
-# AI Translated
-msgid "Translucent filaments"
-msgstr "Genomskinliga filament"
-
-# AI Translated
-msgid "Draw the toolpaths of filaments whose color is partly transparent as see-through, as the 3D view draws their objects. Turn it off to draw every filament opaque."
-msgstr "Rita verktygsbanorna för filament vars färg är delvis transparent som genomskinliga, på samma sätt som 3D-vyn ritar deras objekt. Stäng av för att rita alla filament ogenomskinliga."
-
 msgid "Connection"
 msgstr "Anslutning"
 
@@ -13284,44 +13550,6 @@ msgid "Upload usage events and diagnostic logs to Snapmaker"
 msgstr ""
 
 msgid "Sends slicing results, printer connection steps and error messages to the Snapmaker cloud while signed in to a Snapmaker account. Sent in readable form: the account ID, the MQTT client ID, and the printer's network address and MQTT topics. Printer serial numbers and device IDs are sent as one-way hashes. Only active while the Customer Experience Improvement Program is joined."
-msgstr ""
-
-msgid "Associate files to Snapmaker Orca"
-msgstr "Associerade filer till Snapmaker Orca"
-
-# AI Translated
-msgid "File associations for the Microsoft Store version are managed by Windows Settings."
-msgstr "Filkopplingar för Microsoft Store-versionen hanteras i Windows-inställningarna."
-
-# AI Translated
-msgid "Open Windows Default Apps Settings"
-msgstr "Öppna Windows-inställningar för standardappar"
-
-msgid "Associate 3MF files to Snapmaker Orca"
-msgstr ""
-
-msgid "If enabled, this sets Snapmaker Orca as the default application to open 3MF files."
-msgstr ""
-
-msgid "Associate DRC files to Snapmaker Orca"
-msgstr ""
-
-msgid "If enabled, sets Snapmaker Orca as default application to open DRC files."
-msgstr ""
-
-msgid "Associate STL files to Snapmaker Orca"
-msgstr ""
-
-msgid "If enabled, this sets Snapmaker Orca as the default application to open STL files."
-msgstr ""
-
-msgid "Associate STEP files to Snapmaker Orca"
-msgstr ""
-
-msgid "If enabled, this sets Snapmaker Orca as the default application to open STEP files."
-msgstr ""
-
-msgid "Associate web links to Snapmaker Orca"
 msgstr ""
 
 msgid "Developer"
@@ -13623,13 +13851,6 @@ msgstr "Utskrifts sekvens"
 msgid "Same as Global"
 msgstr "Samma som global"
 
-msgid "Enable"
-msgstr "Aktivera"
-
-# AI Translated
-msgid "Disable"
-msgstr "Avaktivera"
-
 msgid "Spiral vase"
 msgstr "Spiral vas"
 
@@ -13733,16 +13954,16 @@ msgid "Preset Inside Project"
 msgstr "Projekt förinställning"
 
 # AI Translated
-msgid "Copies all inherited values from the parent into this preset and removes the parent relationship. Presets compatible only with the parent may become unsupported."
-msgstr "Kopierar alla ärvda värden från den överordnade förinställningen till den här förinställningen och tar bort arvsrelationen. Förinställningar som endast är kompatibla med den överordnade förinställningen kan sluta stödjas."
-
-# AI Translated
 msgid "Detach from parent"
 msgstr "Koppla loss från överordnad"
 
 # AI Translated
 msgid "Save without parent"
 msgstr "Spara utan överordnad"
+
+# AI Translated
+msgid "Copies all inherited values from the parent into this preset and removes the parent relationship. Presets compatible only with the parent may become unsupported."
+msgstr "Kopierar alla ärvda värden från den överordnade förinställningen till den här förinställningen och tar bort arvsrelationen. Förinställningar som endast är kompatibla med den överordnade förinställningen kan sluta stödjas."
 
 # AI Translated
 msgid "Unique preset"
@@ -13966,10 +14187,6 @@ msgstr "Fäst bland favoriter (%s)"
 #, c-format, boost-format
 msgid "Unpin from favorites (%s)"
 msgstr "Lossa från favoriter (%s)"
-
-# AI Translated
-msgid "Remove from favorites"
-msgstr "Ta bort från favoriter"
 
 # AI Translated
 msgid "Move left"
@@ -16137,7 +16354,13 @@ msgctxt "Nozzle flow type"
 msgid "XHF"
 msgstr "XHF"
 
+#. TRN An entry of the speed selector in a narrow sidebar (short for "Extruder 2")
+#, boost-format
+msgid "E%1%"
+msgstr ""
+
 # AI Translated
+#. TRN Printer settings extruder tab: the extruder's name, e.g. "Extruder 2", and its nozzle flow tag, e.g. "HF".
 #, c-format, boost-format
 msgid "%s: %s"
 msgstr "%s: %s"
@@ -16160,11 +16383,6 @@ msgstr ""
 msgid "Extruder %1%"
 msgstr ""
 
-#. TRN An entry of the speed selector in a narrow sidebar (short for "Extruder 2")
-#, boost-format
-msgid "E%1%"
-msgstr ""
-
 # AI Translated
 msgid "No modifications need to be copied."
 msgstr "Inga ändringar behöver kopieras."
@@ -16182,6 +16400,11 @@ msgstr "Ändra parametrar för %s"
 #, c-format, boost-format
 msgid "Do you want to modify the following parameters of the %s to that of the %s?"
 msgstr "Vill du ändra följande parametrar för %s till dem som gäller för %s?"
+
+#. TRN %1% is the extruder (or nozzle variant) the values are copied from, %2% the list of those they are copied to, as the switch names them, e.g. "T2 HF, T3 HF".
+#, boost-format
+msgid "Do you want to copy the following parameters of %1% to %2%?"
+msgstr ""
 
 msgid "Click to reset current value and attach to the global value."
 msgstr "Klicka för att återställa aktuellt värde och koppla till det övergripande värdet."
@@ -16336,6 +16559,15 @@ msgid ""
 msgstr ""
 "\n"
 "Du kan förkasta de förinställningsvärden du har ändrat, eller välja att överföra de ändrade värdena till det nya projektet"
+
+msgid "Click the compare button to see the full value."
+msgstr ""
+
+msgid "Process settings"
+msgstr ""
+
+msgid "Compare the full values"
+msgstr ""
 
 msgid "Extruder count"
 msgstr "Antal extruders"
@@ -17154,10 +17386,6 @@ msgid "HTTPS CA file is optional. It is only needed if you use HTTPS with a self
 msgstr "HTTPS CA-filen är valfri. Den behövs bara om du använder HTTPS med ett självsignerat certifikat."
 
 # AI Translated
-msgid "This system uses HTTPS certificates from the system Certificate Store or Keychain. To use a custom CA file, import it there."
-msgstr "Det här systemet använder HTTPS-certifikat från systemets certifikatarkiv eller nyckelring. Importera en anpassad CA-fil dit för att använda den."
-
-# AI Translated
 msgid "Printer model"
 msgstr "Skrivarmodell"
 
@@ -17178,6 +17406,10 @@ msgstr "Anslut"
 # AI Translated
 msgid "Manual Setup"
 msgstr "Manuell konfiguration"
+
+# AI Translated
+msgid "This system uses HTTPS certificates from the system Certificate Store or Keychain. To use a custom CA file, import it there."
+msgstr "Det här systemet använder HTTPS-certifikat från systemets certifikatarkiv eller nyckelring. Importera en anpassad CA-fil dit för att använda den."
 
 msgid "IP and Access Code Verified! You may close the window"
 msgstr "IP- och åtkomstkoder verifierade! Du kan stänga fönstret"
@@ -17784,6 +18016,9 @@ msgstr "Prime tornet är för nära ett undantagsområde. Det kan förekomma kol
 msgid "Prime tower is too close to the clumping detection area. There may be collisions when printing."
 msgstr "Prime tornet ligger för nära området för klumpdetektering. Det kan uppstå kollisioner vid utskrift."
 
+msgid "The extruder printable areas share no common area, so the prime tower cannot be printed.\n"
+msgstr ""
+
 # AI Translated
 msgid "Prime tower is partially outside the printable area, and it cannot be printed.\n"
 msgstr "Prime tornet är delvis utanför det utskrivbara området och kan inte skrivas ut.\n"
@@ -17799,6 +18034,25 @@ msgstr "Ogiltigt rekommenderat nozzeltemperaturintervall. Den undre gränsen må
 # AI Translated
 msgid "If you still want to print, you can enable the option in Preferences / Control / Slicing / Remove mixed temperature restriction."
 msgstr "Om du ändå vill skriva ut kan du aktivera alternativet i Inställningar / Kontroll / Beredning / Ta bort begränsningen för blandade temperaturer."
+
+msgid "A prime tower with printing by object is not supported together with the dynamic filament map. Print by layer, or disable the dynamic filament map."
+msgstr ""
+
+msgid "A prime tower requires that all objects have the same layer height."
+msgstr "Ett Prime Torn kräver att alla objekt har samma lagerhöjd"
+
+msgid "A prime tower requires that all objects are printed over the same number of raft layers."
+msgstr "Ett Prime Torn kräver att alla objekt skrivs ut med samma antal Raft lager"
+
+# AI Translated
+msgid "The prime tower is only supported for multiple objects if they are printed with the same support_top_z_distance."
+msgstr "Prime tornet stöds endast för flera objekt om de skrivs ut med samma support_top_z_distance."
+
+msgid "A prime tower requires that all objects are sliced with the same layer height."
+msgstr "Ett Prime Torn kräver att alla object är beredda med samma lagerhöjd."
+
+msgid "The prime tower is only supported if all objects have the same variable layer height."
+msgstr "Prime Tower stöds endast om alla objekt har samma variabla lagerhöjd."
 
 msgid "No extrusions under current settings."
 msgstr "Nuvarande inställning har ingen extrudering."
@@ -17888,6 +18142,10 @@ msgstr "Bandrensningstornet är aktiverat men projektet har inget rensningstorno
 msgid "The project contains multiple managed belt purge towers. Reload the plate or toggle the belt purge tower off and on to regenerate it."
 msgstr "Projektet innehåller flera hanterade bandrensningstorn. Läs in plattan igen eller stäng av och slå på bandrensningstornet för att generera om det."
 
+#. TRN "Precise Z height" is a print setting, "prime tower" the tower that purges the nozzle between filaments.
+msgid "Precise Z height is not applied: with the prime tower, objects of different heights that use variable layer height have to share their layers."
+msgstr ""
+
 msgid "Enabling both precise Z height and the prime tower may cause slicing errors."
 msgstr "Att aktivera både exakt Z-höjd och rengöringstornet kan orsaka skärningsfel."
 
@@ -17900,6 +18158,12 @@ msgstr "Kontrollera \"Per objekt\" utskrifts sekvens för att skriva ut multipla
 
 msgid "Spiral (vase) mode does not work when an object contains more than one material."
 msgstr "Spiral Vase läge fungerar inte när objektet innehåller mer än ett material."
+
+# AI Translated
+#. TRN %1% is the object name.
+#, boost-format
+msgid "Spiral vase mode needs no sparse infill, one wall loop and no top shell layers, but the object %1% uses other values, so it will not print as a continuous spiral."
+msgstr "Spiralvasläget kräver en vägg, ingen sparsam ifyllnad och inga övre skallager, men objektet %1% använder andra värden och skrivs därför inte ut som en sammanhängande spiral."
 
 # AI Translated
 #, boost-format
@@ -17953,25 +18217,6 @@ msgstr "Ett Prime Torn stöds inte med adaptiv lagerhöjd är aktiverad. Det kr�
 # AI Translated
 msgid "A prime tower requires any “support gap” to be a multiple of layer height."
 msgstr "Ett Prime Torn kräver att \"supportmellanrum\" är en multipel av lagerhöjden."
-
-msgid "A prime tower with printing by object is not supported together with the dynamic filament map. Print by layer, or disable the dynamic filament map."
-msgstr ""
-
-msgid "A prime tower requires that all objects have the same layer height."
-msgstr "Ett Prime Torn kräver att alla objekt har samma lagerhöjd"
-
-msgid "A prime tower requires that all objects are printed over the same number of raft layers."
-msgstr "Ett Prime Torn kräver att alla objekt skrivs ut med samma antal Raft lager"
-
-# AI Translated
-msgid "The prime tower is only supported for multiple objects if they are printed with the same support_top_z_distance."
-msgstr "Prime tornet stöds endast för flera objekt om de skrivs ut med samma support_top_z_distance."
-
-msgid "A prime tower requires that all objects are sliced with the same layer height."
-msgstr "Ett Prime Torn kräver att alla object är beredda med samma lagerhöjd."
-
-msgid "The prime tower is only supported if all objects have the same variable layer height."
-msgstr "Prime Tower stöds endast om alla objekt har samma variabla lagerhöjd."
 
 # AI Translated
 msgid "One or more object were assigned an extruder that the printer does not have."
@@ -23374,17 +23619,17 @@ msgstr "Torka inåt"
 
 # AI Translated
 msgid ""
-"Applies only to external walls, including hole boundaries. Moves the hot nozzle toward printed inner walls during wiping to reduce reheating of freshly printed plastic and seam marks.\n"
+"Applies only to external walls, including hole boundaries. Moves the hot nozzle toward the inner walls during wiping to reduce reheating of freshly printed plastic and seam marks.\n"
 "\n"
 "Especially useful at layer heights below 0.1 mm, where wipe marks are more visible.\n"
 "\n"
-"Uses the regular wipe if no adjacent inner wall is already printed (single-wall areas or Outer/Inner wall order), or if no supported inward path can be found, for example at tight corners or seam gaps."
+"Uses the regular wipe where the outer wall has no adjacent inner wall, such as in single-wall areas, or if no supported inward path can be found, for example at tight corners or seam gaps."
 msgstr ""
-"Gäller endast yttre väggar, inklusive hålkonturer. Flyttar den heta nozzeln mot redan utskrivna inre väggar under avtorkningen, för att minska återuppvärmningen av nyss utskriven plast och sömmärken.\n"
+"Gäller endast yttre väggar, inklusive hålkonturer. Flyttar den heta nozzeln mot de inre väggarna under avtorkningen, för att minska återuppvärmningen av nyss utskriven plast och sömmärken.\n"
 "\n"
 "Särskilt användbart vid lagerhöjder under 0,1 mm, där avtorkningsmärken syns tydligare.\n"
 "\n"
-"Använder vanlig avtorkning om ingen angränsande inre vägg redan är utskriven (områden med en enda vägg eller väggordningen Yttre/Inre), eller om ingen understödd väg inåt kan hittas, till exempel i trånga hörn eller vid sömglapp."
+"Använder vanlig avtorkning där den yttre väggen saknar angränsande inre vägg, som i områden med en enda vägg, eller om ingen understödd väg inåt kan hittas, till exempel i trånga hörn eller vid sömglapp."
 
 # AI Translated
 msgid "Wipe inward distance"
@@ -23395,11 +23640,15 @@ msgstr "Avstånd för torka inåt"
 msgid ""
 "The distance the wipe path is shifted away from the external perimeter, specified in millimeters or as a percentage of the actual outer-wall extrusion width.\n"
 "\n"
-"For example, 50% shifts the path by half of the outer-wall width. The effective offset is limited by both the actual outer-wall width and the available spacing to the adjacent wall, so values above 100% or an equivalent absolute distance have no additional effect. Set to 0 to disable the offset."
+"For example, 50% shifts the path by half of the outer-wall width. The effective offset is limited by both the actual outer-wall width and the available spacing to the adjacent wall, so values above 100% or an equivalent absolute distance have no additional effect. Set to 0 to disable the offset.\n"
+"\n"
+"With Outer/Inner or Inner/Outer/Inner wall order, the offset is limited to 50% of the actual outer-wall width because the adjacent inner wall is printed after the outer wall. This also applies to equivalent distances specified in millimeters."
 msgstr ""
 "Avståndet som avtorkningsvägen förskjuts bort från den yttre perimetern, angivet i millimeter eller som procent av den yttre väggens faktiska extruderingsbredd.\n"
 "\n"
-"Till exempel förskjuter 50% vägen med halva den yttre väggens bredd. Den verkliga förskjutningen begränsas både av den yttre väggens faktiska bredd och av det tillgängliga utrymmet till den angränsande väggen, så värden över 100% eller ett motsvarande absolut avstånd har ingen ytterligare effekt. Ange 0 för att stänga av förskjutningen."
+"Till exempel förskjuter 50% vägen med halva den yttre väggens bredd. Den verkliga förskjutningen begränsas både av den yttre väggens faktiska bredd och av det tillgängliga utrymmet till den angränsande väggen, så värden över 100% eller ett motsvarande absolut avstånd har ingen ytterligare effekt. Ange 0 för att stänga av förskjutningen.\n"
+"\n"
+"Med väggordningen Yttre/Inre eller Inre/Yttre/Inre begränsas förskjutningen till 50% av den yttre väggens faktiska bredd, eftersom den angränsande inre väggen skrivs ut efter den yttre väggen. Detta gäller även motsvarande avstånd angivna i millimeter."
 
 # AI Translated
 msgid "Wipe before external loop"
@@ -23414,6 +23663,15 @@ msgstr ""
 "För att minimera synligheten av eventuell överextrudering i början av en ytterperimeter vid utskrift med väggordningen Yttre/Inre eller Inre/Yttre/Inre görs dereduktionen en liten bit på insidan om ytterperimeterns startpunkt. På så sätt döljs eventuell överextrudering från den yttre ytan.\n"
 "\n"
 "Detta är användbart vid utskrift med väggordningen Yttre/Inre eller Inre/Yttre/Inre, eftersom det i dessa lägen är mer sannolikt att en ytterperimeter skrivs ut direkt efter en dereduktionsrörelse."
+
+msgid "Retract after outer wall"
+msgstr ""
+
+msgid ""
+"Always retract when the nozzle leaves an outer wall, even if the travel is shorter than the travel distance threshold.\n"
+"\n"
+"Without a retraction, a very short travel, for example to gap infill inside a thin wall, can drag the end of the outer wall inward and leave a visible dent at the seam."
+msgstr ""
 
 msgid "Wipe speed"
 msgstr "Hastighet för avtorkning"
@@ -23960,6 +24218,12 @@ msgstr "Jämnt-udda"
 
 msgid "Close holes"
 msgstr "Stäng hål"
+
+msgid "Carve overlaps by per-layer slice area"
+msgstr ""
+
+msgid "When enabled, overlaps between multi-extruder parts are carved with the new algorithm: on each layer, the part with the smaller slice area owns the overlap, keeping small details intact inside larger bodies. Developer option."
+msgstr ""
 
 # AI Translated
 msgid "Z offset"
@@ -27226,8 +27490,8 @@ msgid "Expecting a regular expression."
 msgstr "Förväntade ett reguljärt uttryck."
 
 # AI Translated
-msgid "Invalid utf8 sequence"
-msgstr "Ogiltig utf8-sekvens"
+msgid "Invalid UTF-8 sequence"
+msgstr "Ogiltig UTF-8-sekvens"
 
 # AI Translated
 msgid "Non-ASCII7 characters are only allowed inside text blocks and string literals, not inside code blocks."
@@ -28087,10 +28351,10 @@ msgstr "Klipper-version => 0.9.0"
 
 # AI Translated
 msgid ""
-"RepRap firmware version => 3.4.0\n"
+"RepRapFirmware version => 3.4.0\n"
 "Check your firmware documentation for supported shaper types."
 msgstr ""
-"RepRap firmware-version => 3.4.0\n"
+"RepRapFirmware-version => 3.4.0\n"
 "Kontrollera dokumentationen för din fasta programvara för att se vilka shaper-typer som stöds."
 
 # AI Translated
@@ -28110,8 +28374,8 @@ msgid "Frequency settings"
 msgstr "Frekvensinställningar"
 
 # AI Translated
-msgid "RepRap firmware uses the same frequency range for both axes."
-msgstr "RepRap firmware använder samma frekvensintervall för båda axlarna."
+msgid "RepRapFirmware uses the same frequency range for both axes."
+msgstr "RepRapFirmware använder samma frekvensintervall för båda axlarna."
 
 # AI Translated
 msgid "Damp: "
@@ -28158,8 +28422,8 @@ msgid "Damp (Start / End): "
 msgstr "Dämpning (start / slut): "
 
 # AI Translated
-msgid "RepRap firmware uses the same frequency for both axes."
-msgstr "RepRap firmware använder samma frekvens för båda axlarna."
+msgid "RepRapFirmware uses the same frequency for both axes."
+msgstr "RepRapFirmware använder samma frekvens för båda axlarna."
 
 # AI Translated
 msgid "Note: Use previously calculated frequencies."
@@ -28408,6 +28672,18 @@ msgid "Smooth Build Plate (Side B)"
 msgstr "Slät byggplatta (sida B)"
 
 # AI Translated
+msgid "Reading the printer's filament slots..."
+msgstr "Läser skrivarens filamentfack..."
+
+# AI Translated
+msgid "Could not read the printer. Close this dialog and try again."
+msgstr "Det gick inte att läsa av skrivaren. Stäng den här dialogrutan och försök igen."
+
+# AI Translated
+msgid "Could not connect to the printer. Check that it is on, then reopen this dialog."
+msgstr "Det gick inte att ansluta till skrivaren. Kontrollera att den är på och öppna sedan den här dialogrutan igen."
+
+# AI Translated
 #, c-format, boost-format
 msgid "Printer: %s"
 msgstr "Skrivare: %s"
@@ -28425,6 +28701,16 @@ msgstr "Filamentmappning:"
 #, c-format, boost-format
 msgid "Ext - %s"
 msgstr "Ext - %s"
+
+# AI Translated
+#. TRN Creality send dialog. CFS is Creality's multi-filament unit.
+msgid "The printer reports no CFS connected, so the print will use the external spool."
+msgstr "Skrivaren rapporterar att ingen CFS är ansluten, så utskriften använder den externa spolen."
+
+# AI Translated
+#. TRN Creality send dialog, when the printer lists no CFS slots or does not answer
+msgid "The printer did not report any filament slots, so the print will use the external spool."
+msgstr "Skrivaren rapporterade inga filamentfack, så utskriften använder den externa spolen."
 
 msgid "Unable to perform boolean operation on selected parts"
 msgstr "Kan inte utföra boolean operationer på valda delar"
@@ -30322,7 +30608,7 @@ msgid "Volumetric speed"
 msgstr "Volymetrisk hastighet"
 
 # AI Translated
-msgid "Step file import parameters"
+msgid "STEP file import parameters"
 msgstr "Importparametrar för STEP-fil"
 
 # AI Translated
@@ -30350,6 +30636,34 @@ msgid "Split compound and compsolid into multiple objects"
 msgstr "Dela upp compound och compsolid i flera objekt"
 
 # AI Translated
+msgid "Loads each body of a multi-body part separately. Needed to keep the bodies' original names."
+msgstr "Läser in varje kropp i en del med flera kroppar separat. Krävs för att behålla kropparnas originalnamn."
+
+# AI Translated
+msgid "Load as an assembly"
+msgstr "Läs in som montering"
+
+# AI Translated
+msgid "Load as a single object (can be split later)"
+msgstr "Läs in som ett enda objekt (kan delas upp senare)"
+
+# AI Translated
+msgid "The original bodies and names are kept inside the object. Use Split to parts to show them as separate parts."
+msgstr "De ursprungliga kropparna och namnen behålls inuti objektet. Använd \"Dela upp i delar\" för att visa dem som separata delar."
+
+# AI Translated
+msgid "Use the body names stored in the file, when there are any. Needs Split compound for parts with several bodies."
+msgstr "Använd de kroppsnamn som finns lagrade i filen, om det finns några. Kräver \"Dela upp compound\" för delar med flera kroppar."
+
+# AI Translated
+msgid "Sort parts by name"
+msgstr "Sortera delar efter namn"
+
+# AI Translated
+msgid "Sort the parts inside each imported assembly in the object list. This does not change the order used for slicing. Available when Keep original names is on."
+msgstr "Sorterar delarna i varje importerad montering i objektlistan. Det ändrar inte ordningen som används vid beredning. Tillgängligt när \"Behåll originalnamn\" är på."
+
+# AI Translated
 msgid "Number of triangular facets"
 msgstr "Antal triangulära facetter"
 
@@ -30360,6 +30674,96 @@ msgstr "Beräknar, vänta..."
 # AI Translated
 msgid "If enabled, the values above are stored as the defaults used for future STEP imports (and shown in Preferences)."
 msgstr "Om detta är aktiverat sparas värdena ovan som standard för framtida STEP-importer (och visas i Inställningar)."
+
+# AI Translated
+msgid "Don't ask again"
+msgstr "Fråga inte igen"
+
+# AI Translated
+msgid "Save these choices and apply them without asking next time. You can show this dialog again in Preferences."
+msgstr "Spara de här valen och tillämpa dem utan att fråga nästa gång. Du kan visa den här dialogrutan igen i Inställningar."
+
+# AI Translated
+msgid "3MF geometry import options"
+msgstr "Importalternativ för 3MF-geometri"
+
+# AI Translated
+msgid "AMF geometry import options"
+msgstr "Importalternativ för AMF-geometri"
+
+# AI Translated
+msgid "Choose how to name and order the parts of this file."
+msgstr "Välj hur delarna i den här filen ska namnges och ordnas."
+
+# AI Translated
+msgid "Choose how to load the bodies in this file."
+msgstr "Välj hur kropparna i den här filen ska läsas in."
+
+# AI Translated
+msgid "Load as separate objects"
+msgstr "Läs in som separata objekt"
+
+# AI Translated
+msgid "Each object in the file is loaded on its own, as OrcaSlicer always loaded AMF files."
+msgstr "Varje objekt i filen läses in för sig, så som OrcaSlicer alltid har läst in AMF-filer."
+
+# AI Translated
+msgid "The bodies of each group in the file become parts of one object, in their relative positions."
+msgstr "Kropparna i varje grupp i filen blir delar av ett objekt, med bibehållna inbördes positioner."
+
+# AI Translated
+msgid "Use the body names stored in the file, when there are any. When disabled, the usual OrcaSlicer names are used; existing project names are kept."
+msgstr "Använd de kroppsnamn som finns lagrade i filen, om det finns några. När detta är avstängt används de vanliga OrcaSlicer-namnen; befintliga projektnamn behålls."
+
+# AI Translated
+msgid "Use these choices as defaults next time. The dialog still opens."
+msgstr "Använd de här valen som standard nästa gång. Dialogrutan öppnas ändå."
+
+# AI Translated
+msgid "A name in the file is not valid Unicode. The geometry was not imported."
+msgstr "Ett namn i filen är inte giltig Unicode. Geometrin importerades inte."
+
+# AI Translated
+msgid "Invalid name"
+msgstr "Ogiltigt namn"
+
+# AI Translated
+msgid "Unsupported characters in names"
+msgstr "Tecken som inte stöds i namn"
+
+# AI Translated
+msgid "Some original names contain characters that OrcaSlicer cannot use. Choose how to change them before importing."
+msgstr "Vissa originalnamn innehåller tecken som OrcaSlicer inte kan använda. Välj hur de ska ändras före importen."
+
+# AI Translated
+msgid "Remove unsupported characters"
+msgstr "Ta bort tecken som inte stöds"
+
+# AI Translated
+msgid "Replace with:"
+msgstr "Ersätt med:"
+
+# AI Translated
+msgid "Each unsupported character is replaced with this text. It may be longer than one character."
+msgstr "Varje tecken som inte stöds ersätts med den här texten. Den får vara längre än ett tecken."
+
+# AI Translated
+msgid "Use this rule as the default next time. The dialog still opens."
+msgstr "Använd den här regeln som standard nästa gång. Dialogrutan öppnas ändå."
+
+# AI Translated
+msgid "Save this rule and apply it without asking next time. You can show this dialog again in Preferences."
+msgstr "Spara den här regeln och tillämpa den utan att fråga nästa gång. Du kan visa den här dialogrutan igen i Inställningar."
+
+# AI Translated
+msgid "Enter a non-empty replacement containing only supported characters, or choose removal."
+msgstr "Ange en ersättning som inte är tom och bara innehåller tecken som stöds, eller välj borttagning."
+
+# AI Translated
+#. TRN The placeholders are the original name and its imported replacement.
+#, boost-format
+msgid "%1% → %2%"
+msgstr "%1% → %2%"
 
 # AI Translated
 msgid "PresetBundle"
@@ -32575,6 +32979,18 @@ msgid "Constraints"
 msgstr "Villkor"
 
 # AI Translated
+msgid "No constraints yet"
+msgstr "Inga villkor än"
+
+# AI Translated
+msgid "Zoom to selection"
+msgstr "Zooma till markering"
+
+# AI Translated
+msgid "Delete constraint"
+msgstr "Ta bort villkor"
+
+# AI Translated
 msgid "Feature tree"
 msgstr "Operationsträd"
 
@@ -32607,10 +33023,6 @@ msgstr "Flytta ner"
 # AI Translated
 msgid "Show / hide"
 msgstr "Visa / dölj"
-
-# AI Translated
-msgid "Zoom to selection"
-msgstr "Zooma till markering"
 
 # AI Translated
 msgid "Check interference — find overlapping bodies"
@@ -32791,6 +33203,11 @@ msgstr[1] "%d frihetsgrader"
 #, c-format, boost-format
 msgid "Sketch %d"
 msgstr "Skiss %d"
+
+#. TRN %1% is the name of the sketch being edited, as its Feature tree row shows it.
+#, boost-format
+msgid "Editing: %1%   ·   N = look normal to the plane   ·   Confirm or Cancel in the toolbar"
+msgstr ""
 
 # AI Translated
 #, c-format, boost-format
@@ -33492,9 +33909,8 @@ msgstr "Dra i ett hörn för att skala, i mitten för att flytta  ·  Enter elle
 msgid "  ·  Esc goes back to Select"
 msgstr "  ·  Esc går tillbaka till Välj"
 
-# AI Translated
-msgid "  ·  click a constraint badge to remove it"
-msgstr "  ·  klicka på en villkorsmarkör för att ta bort den"
+msgid "  ·  click a constraint badge to select it"
+msgstr ""
 
 # AI Translated
 #, c-format, boost-format
@@ -33959,13 +34375,10 @@ msgstr "Villkor"
 msgid "Constraints (%d)"
 msgstr "Villkor (%d)"
 
-# AI Translated
-msgid "No constraints yet"
-msgstr "Inga villkor än"
-
-# AI Translated
-msgid "Delete constraint"
-msgstr "Ta bort villkor"
+#. TRN Design tab status line. %1% names the selected sketch constraint, e.g. "Horizontal E0·P0 — E0·P1".
+#, boost-format
+msgid "%1% selected — Delete removes it"
+msgstr ""
 
 # AI Translated
 msgid "Constraint deleted"
@@ -39727,6 +40140,66 @@ msgid "Plugin file: %s"
 msgstr "Insticksmodulfil: %s"
 
 # AI Translated
+msgid "A file system permission cannot be empty."
+msgstr "En filsystemsbehörighet får inte vara tom."
+
+# AI Translated
+msgid "A file system permission cannot contain a null character."
+msgstr "En filsystemsbehörighet får inte innehålla ett nolltecken."
+
+# AI Translated
+msgid "A file system permission may use \"*\" only as the final \"/*\" of a folder tree."
+msgstr "En filsystemsbehörighet får bara använda \"*\" som avslutande \"/*\" i ett mappträd."
+
+# AI Translated
+msgid "A file system permission cannot contain a \"..\" path component."
+msgstr "En filsystemsbehörighet får inte innehålla sökvägskomponenten \"..\"."
+
+# AI Translated
+msgid "A file system permission must be an absolute path on this computer."
+msgstr "En filsystemsbehörighet måste vara en absolut sökväg på den här datorn."
+
+# AI Translated
+msgid "A network permission cannot be empty."
+msgstr "En nätverksbehörighet får inte vara tom."
+
+# AI Translated
+msgid "A network permission cannot contain control characters."
+msgstr "En nätverksbehörighet får inte innehålla kontrolltecken."
+
+# AI Translated
+msgid "Network permissions do not support wildcards. Enter one full http:// or https:// URL."
+msgstr "Nätverksbehörigheter stöder inte jokertecken. Ange en enda fullständig URL med http:// eller https://."
+
+# AI Translated
+msgid "Enter a full http:// or https:// URL with a host name or IP address. Bare domain names are not accepted."
+msgstr "Ange en fullständig URL med http:// eller https:// och ett värdnamn eller en IP-adress. Enbart domännamn accepteras inte."
+
+# AI Translated
+msgid "Only http:// and https:// URLs are supported for network permissions."
+msgstr "Endast URL:er med http:// och https:// stöds för nätverksbehörigheter."
+
+# AI Translated
+msgid "Enter a full http:// or https:// URL with a host name or IP address."
+msgstr "Ange en fullständig URL med http:// eller https:// och ett värdnamn eller en IP-adress."
+
+# AI Translated
+msgid "Network permissions cannot include a username or password. Enter a URL with only a scheme and host."
+msgstr "Nätverksbehörigheter får inte innehålla användarnamn eller lösenord. Ange en URL med bara ett schema och en värd."
+
+# AI Translated
+msgid "Enter a valid bracketed IPv6 address."
+msgstr "Ange en giltig IPv6-adress inom hakparenteser."
+
+# AI Translated
+msgid "Network permissions do not support wildcards."
+msgstr "Nätverksbehörigheter stöder inte jokertecken."
+
+# AI Translated
+msgid "Enter a host name or IP address, optionally with a port, or a full http:// or https:// URL."
+msgstr "Ange ett värdnamn eller en IP-adress, eventuellt med port, eller en fullständig URL med http:// eller https://."
+
+# AI Translated
 msgid "Process plugins"
 msgstr "Processinsticksmoduler"
 
@@ -40064,6 +40537,206 @@ msgid "Capabilities"
 msgstr "Förmågor"
 
 # AI Translated
+msgid "Permissions"
+msgstr "Behörigheter"
+
+# AI Translated
+msgid "Permissions are unavailable."
+msgstr "Behörigheter är inte tillgängliga."
+
+# AI Translated
+msgid "File system read"
+msgstr "Läsning av filsystem"
+
+# AI Translated
+msgid "File system read and write"
+msgstr "Läsning och skrivning av filsystem"
+
+# AI Translated
+msgid "HTTP network"
+msgstr "HTTP-nätverk"
+
+# AI Translated
+msgid "Network sockets"
+msgstr "Nätverkssocketar"
+
+# AI Translated
+#. TRN Operating system processes a plugin may start, not print process presets.
+msgctxt "Permission category"
+msgid "Processes"
+msgstr "Processer"
+
+# AI Translated
+msgid "Threading"
+msgstr "Trådar"
+
+# AI Translated
+msgctxt "Permission category"
+msgid "Events"
+msgstr "Händelser"
+
+# AI Translated
+msgid "Enter an absolute path on this computer. Add /* at the end to include the folder and everything below it; no other wildcard is accepted. A read/write grant can create files through open(), but it does not cover create or delete events such as os.mkdir and os.remove. Without Full access, each such event outside allowed folders needs its own approval, which is never saved. When a plugin runs in the background, these events are denied without asking."
+msgstr "Ange en absolut sökväg på den här datorn. Lägg till /* i slutet för att inkludera mappen och allt under den; inga andra jokertecken accepteras. Med en läs-/skrivbehörighet kan filer skapas via open(), men den omfattar inte skapande- eller raderingshändelser som os.mkdir och os.remove. Utan \"Full åtkomst\" kräver varje sådan händelse utanför tillåtna mappar ett eget godkännande, som aldrig sparas. När en insticksmodul körs i bakgrunden nekas dessa händelser utan att du tillfrågas."
+
+# AI Translated
+msgid "C:\\path\\to\\directory\\*"
+msgstr "C:\\path\\to\\directory\\*"
+
+# AI Translated
+msgid "/path/to/directory/*"
+msgstr "/path/to/directory/*"
+
+# AI Translated
+msgid "Enter a full http:// or https:// URL; only its scheme and host are saved, so the grant covers every port, path, and query on that host. A network socket grant also accepts a bare host name or IP address, with or without a port, and covers every port on that host. Other schemes are not accepted. Grants in either list are checked for HTTP and socket access."
+msgstr "Ange en fullständig URL med http:// eller https://; endast dess schema och värd sparas, så behörigheten omfattar alla portar, sökvägar och frågesträngar på den värden. En nätverkssocketbehörighet accepterar också enbart ett värdnamn eller en IP-adress, med eller utan port, och omfattar alla portar på den värden. Andra scheman accepteras inte. Behörigheter i båda listorna kontrolleras för HTTP- och socketåtkomst."
+
+# AI Translated
+msgid "Enter the exact value recorded by the audit. It may be a Python representation of the command."
+msgstr "Ange det exakta värdet som granskningen registrerade. Det kan vara en Python-representation av kommandot."
+
+# AI Translated
+msgid "Exact audited value"
+msgstr "Exakt värde från granskningen"
+
+# AI Translated
+msgid "Allow this plugin to create threads."
+msgstr "Tillåt den här insticksmodulen att skapa trådar."
+
+# AI Translated
+msgid "Enter a category and event separated by a colon, such as Socket:socket.__new__."
+msgstr "Ange en kategori och en händelse åtskilda av ett kolon, till exempel Socket:socket.__new__."
+
+# AI Translated
+msgid "Socket:socket.__new__"
+msgstr "Socket:socket.__new__"
+
+# AI Translated
+msgid "Full access"
+msgstr "Full åtkomst"
+
+# AI Translated
+msgid "File system"
+msgstr "Filsystem"
+
+# AI Translated
+msgid "Network access"
+msgstr "Nätverksåtkomst"
+
+# AI Translated
+msgid "Execution"
+msgstr "Körning"
+
+# AI Translated
+msgid "Audit events"
+msgstr "Granskningshändelser"
+
+# AI Translated
+msgid "Files and folders"
+msgstr "Filer och mappar"
+
+# AI Translated
+msgctxt "Permission access"
+msgid "Read"
+msgstr "Läsa"
+
+# AI Translated
+msgctxt "Permission access"
+msgid "Read and write"
+msgstr "Läsa och skriva"
+
+# AI Translated
+msgid "Read permissions are unavailable."
+msgstr "Läsbehörigheter är inte tillgängliga."
+
+# AI Translated
+msgid "Read and write permissions are unavailable."
+msgstr "Läs- och skrivbehörigheter är inte tillgängliga."
+
+# AI Translated
+msgid "File system: Read"
+msgstr "Filsystem: Läsa"
+
+# AI Translated
+msgid "File system: Read and write"
+msgstr "Filsystem: Läsa och skriva"
+
+# AI Translated
+msgid "Full access bypasses permission checks. The plugin can read and write most files you can access; modifying startup or application files can let code run outside these checks. Direct Python access to OrcaSlicer's configuration, secret, certificate and install-state paths stays blocked, but subprocesses are not restricted."
+msgstr "\"Full åtkomst\" kringgår behörighetskontroller. Insticksmodulen kan läsa och skriva de flesta filer som du har åtkomst till; om start- eller programfiler ändras kan kod köras utanför dessa kontroller. Direkt Python-åtkomst till OrcaSlicers sökvägar för konfiguration, hemligheter, certifikat och installationsstatus förblir blockerad, men underprocesser begränsas inte."
+
+# AI Translated
+msgid "Permission list editing is disabled while full access is on."
+msgstr "Redigering av behörighetslistan är inaktiverad medan \"Full åtkomst\" är aktiverad."
+
+# AI Translated
+msgid "Full access status is unavailable."
+msgstr "Status för \"Full åtkomst\" är inte tillgänglig."
+
+# AI Translated
+msgid "No values added."
+msgstr "Inga värden har lagts till."
+
+# AI Translated
+msgctxt "Permission value"
+msgid "Apply"
+msgstr "Applicera"
+
+# AI Translated
+#, c-format, boost-format
+msgid "Apply value for %s"
+msgstr "Applicera värde för %s"
+
+# AI Translated
+msgid "Install this plugin to edit its permissions."
+msgstr "Installera den här insticksmodulen för att redigera dess behörigheter."
+
+# AI Translated
+#, c-format, boost-format
+msgid "New value for %s"
+msgstr "Nytt värde för %s"
+
+# AI Translated
+#, c-format, boost-format
+msgid "Edit value for %s"
+msgstr "Redigera värde för %s"
+
+# AI Translated
+msgctxt "Permission value"
+msgid "Add"
+msgstr "Lägg till"
+
+# AI Translated
+#, c-format, boost-format
+msgid "Add value to %s"
+msgstr "Lägg till värde i %s"
+
+#. TRN %s is the original permission value that was removed outside this dialog.
+#, c-format, boost-format
+msgid "The original value is no longer granted: %s. Add the edited value or discard it."
+msgstr ""
+
+#. TRN %s is the original permission value before the user's unsaved edit.
+#, c-format, boost-format
+msgid "Unsaved edit of: %s"
+msgstr ""
+
+#. TRN %s is the original permission value whose unsaved edit will be discarded.
+#, c-format, boost-format
+msgid "Discard edit of %s"
+msgstr ""
+
+# AI Translated
+msgctxt "Permission value"
+msgid "Remove"
+msgstr "Ta bort"
+
+# AI Translated
+#, c-format, boost-format
+msgid "Remove %s"
+msgstr "Ta bort %s"
+
+# AI Translated
 #, c-format, boost-format
 msgid "Run \"%s\""
 msgstr "Kör \"%s\""
@@ -40166,6 +40839,39 @@ msgstr "Saknade insticksmoduler"
 # AI Translated
 msgid "Refreshing plugins data"
 msgstr "Uppdaterar data för insticksmoduler"
+
+# AI Translated
+#, c-format, boost-format
+msgid ""
+"Enable full access for \"%s\"?\n"
+"\n"
+"Full access turns off permission auditing for this plugin: its file system, network, process, thread and event permissions are no longer checked. The plugin can read and write most files your user account can access, including startup scripts, SSH keys and a writable OrcaSlicer installation. Modifying startup or application files can let code run outside these checks. Direct Python access to OrcaSlicer's configuration, secret, certificate and install-state paths stays blocked, but subprocesses are not restricted. Full access is not a sandbox.\n"
+"\n"
+"Only enable this for a plugin you trust."
+msgstr ""
+"Aktivera \"Full åtkomst\" för \"%s\"?\n"
+"\n"
+"\"Full åtkomst\" stänger av behörighetsgranskningen för den här insticksmodulen: dess behörigheter för filsystem, nätverk, processer, trådar och händelser kontrolleras inte längre. Insticksmodulen kan läsa och skriva de flesta filer som ditt användarkonto har åtkomst till, inklusive startskript, SSH-nycklar och en skrivbar OrcaSlicer-installation. Om start- eller programfiler ändras kan kod köras utanför dessa kontroller. Direkt Python-åtkomst till OrcaSlicers sökvägar för konfiguration, hemligheter, certifikat och installationsstatus förblir blockerad, men underprocesser begränsas inte. \"Full åtkomst\" är ingen sandlåda.\n"
+"\n"
+"Aktivera detta bara för en insticksmodul som du litar på."
+
+# AI Translated
+msgid "Invalid permission save request."
+msgstr "Ogiltig begäran om att spara behörigheter."
+
+# AI Translated
+#, boost-format
+msgid "Cannot save \"%1%\": %2%"
+msgstr "Det går inte att spara \"%1%\": %2%"
+
+# AI Translated
+msgid "Failed to save permissions."
+msgstr "Det gick inte att spara behörigheterna."
+
+# AI Translated
+#, c-format, boost-format
+msgid "Permissions saved for \"%s\"."
+msgstr "Behörigheterna sparades för \"%s\"."
 
 # AI Translated
 msgid "Failed to unload plugin."
@@ -41027,6 +41733,14 @@ msgid "unknown name"
 msgstr "okänt namn"
 
 # AI Translated
+msgid "Don't show this tip again"
+msgstr "Visa inte det här tipset igen"
+
+# AI Translated
+msgid "Tip: You can review and change this plugin's saved permissions in the Plugins dialog, on the Permissions tab."
+msgstr "Tips: Du kan se över och ändra den här insticksmodulens sparade behörigheter i dialogrutan Insticksmoduler, på fliken Behörigheter."
+
+# AI Translated
 #, c-format, boost-format
 msgid ""
 "Plugin \"%s\" is requesting permission for the Python audit event \"%s\".\n"
@@ -41071,31 +41785,47 @@ msgstr[1] ""
 #, c-format, boost-format
 msgid ""
 "Plugin \"%s\" is requesting to create the following file:\n"
-"%s"
+"%s\n"
+"\n"
+"This approval applies only to this operation and is not remembered."
 msgid_plural ""
 "Plugin \"%s\" is requesting to create the following files:\n"
-"%s"
+"%s\n"
+"\n"
+"This approval applies only to this operation and is not remembered."
 msgstr[0] ""
 "Insticksmodulen \"%s\" begär att få skapa följande fil:\n"
-"%s"
+"%s\n"
+"\n"
+"Det här godkännandet gäller bara den här åtgärden och kommer inte att kommas ihåg."
 msgstr[1] ""
 "Insticksmodulen \"%s\" begär att få skapa följande filer:\n"
-"%s"
+"%s\n"
+"\n"
+"Det här godkännandet gäller bara den här åtgärden och kommer inte att kommas ihåg."
 
 # AI Translated
 #, c-format, boost-format
 msgid ""
 "Plugin \"%s\" is requesting to delete the following file:\n"
-"%s"
+"%s\n"
+"\n"
+"This approval applies only to this operation and is not remembered."
 msgid_plural ""
 "Plugin \"%s\" is requesting to delete the following files:\n"
-"%s"
+"%s\n"
+"\n"
+"This approval applies only to this operation and is not remembered."
 msgstr[0] ""
 "Insticksmodulen \"%s\" begär att få radera följande fil:\n"
-"%s"
+"%s\n"
+"\n"
+"Det här godkännandet gäller bara den här åtgärden och kommer inte att kommas ihåg."
 msgstr[1] ""
 "Insticksmodulen \"%s\" begär att få radera följande filer:\n"
-"%s"
+"%s\n"
+"\n"
+"Det här godkännandet gäller bara den här åtgärden och kommer inte att kommas ihåg."
 
 # AI Translated
 #, c-format, boost-format
@@ -41164,6 +41894,67 @@ msgstr "Behörighetsbegäran från insticksmodul"
 # AI Translated
 msgid "Plugin permissions"
 msgstr "Behörigheter för insticksmodul"
+
+# AI Translated
+#, c-format, boost-format
+msgid ""
+"Plugin \"%s\" tried to perform a file operation that requires permission.\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgstr ""
+"Insticksmodulen \"%s\" försökte utföra en filåtgärd som kräver behörighet.\n"
+"\n"
+"Åtgärden nekades. Använd en tillåten plats eller aktivera \"Full åtkomst\" för den här insticksmodulen om du litar på den."
+
+# AI Translated
+#, c-format, boost-format
+msgid ""
+"Plugin \"%s\" tried to create the following file:\n"
+"%s\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgid_plural ""
+"Plugin \"%s\" tried to create the following files:\n"
+"%s\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgstr[0] ""
+"Insticksmodulen \"%s\" försökte skapa följande fil:\n"
+"%s\n"
+"\n"
+"Åtgärden nekades. Använd en tillåten plats eller aktivera \"Full åtkomst\" för den här insticksmodulen om du litar på den."
+msgstr[1] ""
+"Insticksmodulen \"%s\" försökte skapa följande filer:\n"
+"%s\n"
+"\n"
+"Åtgärden nekades. Använd en tillåten plats eller aktivera \"Full åtkomst\" för den här insticksmodulen om du litar på den."
+
+# AI Translated
+#, c-format, boost-format
+msgid ""
+"Plugin \"%s\" tried to delete the following file:\n"
+"%s\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgid_plural ""
+"Plugin \"%s\" tried to delete the following files:\n"
+"%s\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgstr[0] ""
+"Insticksmodulen \"%s\" försökte radera följande fil:\n"
+"%s\n"
+"\n"
+"Åtgärden nekades. Använd en tillåten plats eller aktivera \"Full åtkomst\" för den här insticksmodulen om du litar på den."
+msgstr[1] ""
+"Insticksmodulen \"%s\" försökte radera följande filer:\n"
+"%s\n"
+"\n"
+"Åtgärden nekades. Använd en tillåten plats eller aktivera \"Full åtkomst\" för den här insticksmodulen om du litar på den."
+
+# AI Translated
+msgid "Plugin operation denied"
+msgstr "Insticksmodulens åtgärd nekades"
 
 # AI Translated
 msgid "The preset stores invalid plugin capability configuration JSON."
@@ -41577,6 +42368,11 @@ msgstr "Det går inte att behålla insticksmodulen lokalt: den lokala insticksmo
 
 # AI Translated
 #, boost-format
+msgid "Failed to read plugin install state: %1%"
+msgstr "Det gick inte att läsa insticksmodulens installationsstatus: %1%"
+
+# AI Translated
+#, boost-format
 msgid "Failed to update plugin install state: %1%"
 msgstr "Det gick inte att uppdatera insticksmodulens installationsstatus: %1%"
 
@@ -41864,19 +42660,19 @@ msgstr "Misstänkt få konfigurationsvärden extraherades från %1%: %2%"
 
 # AI Translated
 msgid ""
-"Load step file failed.\n"
+"Load STEP file failed.\n"
 "Cannot open file for reading.\n"
 msgstr ""
 "Det gick inte att läsa in step-filen.\n"
 "Filen kan inte öppnas för läsning.\n"
 
 # AI Translated
-msgid "import svg failed: could not open svg."
-msgstr "import av svg misslyckades: kunde inte öppna svg."
+msgid "import SVG failed: could not open SVG."
+msgstr "import av SVG misslyckades: kunde inte öppna SVG."
 
 # AI Translated
-msgid "import svg failed: could not parse imported svg data."
-msgstr "import av svg misslyckades: kunde inte tolka den importerade svg-datan."
+msgid "import SVG failed: could not parse imported SVG data."
+msgstr "import av SVG misslyckades: kunde inte tolka den importerade SVG-datan."
 
 # AI Translated
 msgid "Custom G-code reports negative z_retracted."
@@ -42309,6 +43105,150 @@ msgid ""
 msgstr ""
 
 # AI Translated
+#~ msgid "Reset cutting plane and remove connectors"
+#~ msgstr "Återställ snittplanet och ta bort kopplingar"
+
+#~ msgid "Component name(s) inside step file not in UTF-8 format!"
+#~ msgstr "Komponent namnet i STEP filen är inte UTF-8 format!"
+
+# AI Translated
+#~ msgid "Show options when importing STEP file"
+#~ msgstr "Visa alternativ vid import av STEP-fil"
+
+# AI Translated
+#~ msgid "STEP importing: linear deflection"
+#~ msgstr "STEP-import: linjär avvikelse"
+
+# AI Translated
+#~ msgid "STEP importing: angle deflection"
+#~ msgstr "STEP-import: vinkelavvikelse"
+
+# AI Translated
+#~ msgid "STEP importing: Split into multiple objects"
+#~ msgstr "STEP-import: dela upp i flera objekt"
+
+# AI Translated
+#~ msgid ""
+#~ "If enabled, compound and compsolid shapes in imported STEP files are split into multiple objects.\n"
+#~ "Used as the default in the import dialog, or directly when the import dialog is disabled.\n"
+#~ "Default: disabled."
+#~ msgstr ""
+#~ "Om detta är aktiverat delas sammansatta former (compound och compsolid) i importerade STEP-filer upp i flera objekt.\n"
+#~ "Används som standard i importdialogen, eller direkt när importdialogen är avstängd.\n"
+#~ "Standard: avstängd."
+
+# AI Translated
+#~ msgid "Behavior"
+#~ msgstr "Beteende"
+
+# AI Translated
+#~ msgid "G-code Preview"
+#~ msgstr "G-code-förhandsgranskning"
+
+# AI Translated
+#~ msgid "Remove from favorites"
+#~ msgstr "Ta bort från favoriter"
+
+# AI Translated
+#~ msgid ""
+#~ "Applies only to external walls, including hole boundaries. Moves the hot nozzle toward printed inner walls during wiping to reduce reheating of freshly printed plastic and seam marks.\n"
+#~ "\n"
+#~ "Especially useful at layer heights below 0.1 mm, where wipe marks are more visible.\n"
+#~ "\n"
+#~ "Uses the regular wipe if no adjacent inner wall is already printed (single-wall areas or Outer/Inner wall order), or if no supported inward path can be found, for example at tight corners or seam gaps."
+#~ msgstr ""
+#~ "Gäller endast yttre väggar, inklusive hålkonturer. Flyttar den heta nozzeln mot redan utskrivna inre väggar under avtorkningen, för att minska återuppvärmningen av nyss utskriven plast och sömmärken.\n"
+#~ "\n"
+#~ "Särskilt användbart vid lagerhöjder under 0,1 mm, där avtorkningsmärken syns tydligare.\n"
+#~ "\n"
+#~ "Använder vanlig avtorkning om ingen angränsande inre vägg redan är utskriven (områden med en enda vägg eller väggordningen Yttre/Inre), eller om ingen understödd väg inåt kan hittas, till exempel i trånga hörn eller vid sömglapp."
+
+# AI Translated
+#, no-c-format, no-boost-format
+#~ msgid ""
+#~ "The distance the wipe path is shifted away from the external perimeter, specified in millimeters or as a percentage of the actual outer-wall extrusion width.\n"
+#~ "\n"
+#~ "For example, 50% shifts the path by half of the outer-wall width. The effective offset is limited by both the actual outer-wall width and the available spacing to the adjacent wall, so values above 100% or an equivalent absolute distance have no additional effect. Set to 0 to disable the offset."
+#~ msgstr ""
+#~ "Avståndet som avtorkningsvägen förskjuts bort från den yttre perimetern, angivet i millimeter eller som procent av den yttre väggens faktiska extruderingsbredd.\n"
+#~ "\n"
+#~ "Till exempel förskjuter 50% vägen med halva den yttre väggens bredd. Den verkliga förskjutningen begränsas både av den yttre väggens faktiska bredd och av det tillgängliga utrymmet till den angränsande väggen, så värden över 100% eller ett motsvarande absolut avstånd har ingen ytterligare effekt. Ange 0 för att stänga av förskjutningen."
+
+# AI Translated
+#~ msgid "Invalid utf8 sequence"
+#~ msgstr "Ogiltig utf8-sekvens"
+
+# AI Translated
+#~ msgid ""
+#~ "RepRap firmware version => 3.4.0\n"
+#~ "Check your firmware documentation for supported shaper types."
+#~ msgstr ""
+#~ "RepRap firmware-version => 3.4.0\n"
+#~ "Kontrollera dokumentationen för din fasta programvara för att se vilka shaper-typer som stöds."
+
+# AI Translated
+#~ msgid "RepRap firmware uses the same frequency range for both axes."
+#~ msgstr "RepRap firmware använder samma frekvensintervall för båda axlarna."
+
+# AI Translated
+#~ msgid "RepRap firmware uses the same frequency for both axes."
+#~ msgstr "RepRap firmware använder samma frekvens för båda axlarna."
+
+# AI Translated
+#~ msgid "Step file import parameters"
+#~ msgstr "Importparametrar för STEP-fil"
+
+# AI Translated
+#~ msgid "  ·  click a constraint badge to remove it"
+#~ msgstr "  ·  klicka på en villkorsmarkör för att ta bort den"
+
+# AI Translated
+#, c-format, boost-format
+#~ msgid ""
+#~ "Plugin \"%s\" is requesting to create the following file:\n"
+#~ "%s"
+#~ msgid_plural ""
+#~ "Plugin \"%s\" is requesting to create the following files:\n"
+#~ "%s"
+#~ msgstr[0] ""
+#~ "Insticksmodulen \"%s\" begär att få skapa följande fil:\n"
+#~ "%s"
+#~ msgstr[1] ""
+#~ "Insticksmodulen \"%s\" begär att få skapa följande filer:\n"
+#~ "%s"
+
+# AI Translated
+#, c-format, boost-format
+#~ msgid ""
+#~ "Plugin \"%s\" is requesting to delete the following file:\n"
+#~ "%s"
+#~ msgid_plural ""
+#~ "Plugin \"%s\" is requesting to delete the following files:\n"
+#~ "%s"
+#~ msgstr[0] ""
+#~ "Insticksmodulen \"%s\" begär att få radera följande fil:\n"
+#~ "%s"
+#~ msgstr[1] ""
+#~ "Insticksmodulen \"%s\" begär att få radera följande filer:\n"
+#~ "%s"
+
+# AI Translated
+#~ msgid ""
+#~ "Load step file failed.\n"
+#~ "Cannot open file for reading.\n"
+#~ msgstr ""
+#~ "Det gick inte att läsa in step-filen.\n"
+#~ "Filen kan inte öppnas för läsning.\n"
+
+# AI Translated
+#~ msgid "import svg failed: could not open svg."
+#~ msgstr "import av svg misslyckades: kunde inte öppna svg."
+
+# AI Translated
+#~ msgid "import svg failed: could not parse imported svg data."
+#~ msgstr "import av svg misslyckades: kunde inte tolka den importerade svg-datan."
+
+# AI Translated
 #~ msgid ""
 #~ "\n"
 #~ "You may need to reconfigure the missing locales, likely by running the \"locale-gen\" and \"dpkg-reconfigure locales\" commands.\n"
@@ -42660,10 +43600,6 @@ msgstr ""
 # AI Translated
 #~ msgid "By vendor"
 #~ msgstr "Efter tillverkare"
-
-# AI Translated
-#~ msgid "Behaviour"
-#~ msgstr "Beteende"
 
 # AI Translated
 #~ msgid "Renders cast shadows on the plate, other objects, and each object onto itself in realistic view."
@@ -43722,14 +44658,6 @@ msgstr ""
 #~ msgstr "Värdnamn eller IP"
 
 # AI Translated
-#~ msgid "Custom camera source"
-#~ msgstr "Anpassad kamerakälla"
-
-# AI Translated
-#~ msgid "Switch Camera View"
-#~ msgstr "Byt kameravy"
-
-# AI Translated
 #~ msgid "Organic support tree tip diameter must not be smaller than support material extrusion width."
 #~ msgstr "Spetsdiametern på organiska supportträd får inte vara mindre än supportmaterialets extruderingsbredd."
 
@@ -44512,10 +45440,6 @@ msgstr ""
 
 #~ msgid "Check for Update"
 #~ msgstr "Sök efter Uppdatering"
-
-# AI Translated
-#~ msgid "Recent files"
-#~ msgstr "Senaste filer"
 
 # AI Translated
 #~ msgid "Import Zip Archive"

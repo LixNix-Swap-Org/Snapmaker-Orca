@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Slic3rPE\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-09 13:41+0100\n"
+"POT-Creation-Date: 2026-11-16 21:34+0100\n"
 "PO-Revision-Date: 2026-04-03 17:31+0800\n"
 "Last-Translator: Handle <mail@bysb.net>\n"
 "Language-Team: \n"
@@ -449,6 +449,7 @@ msgstr "屏蔽支撑"
 msgid "Erase"
 msgstr "擦除"
 
+#. TRN Variable layer height tool: the plain wheel resizes the edit area only with the cursor on a layer height bar.
 msgid "Mouse wheel"
 msgstr "鼠标滚轮"
 
@@ -627,6 +628,47 @@ msgstr "离开手绘绒毛表面"
 
 msgid "Paint-on fuzzy skin editing"
 msgstr "手绘绒毛表面编辑"
+
+msgid "Painted modifier"
+msgstr ""
+
+msgid "Modifier"
+msgstr "修改器"
+
+msgid "New painted modifier"
+msgstr ""
+
+#. TRN - Input label. Be short as possible
+#. Size in emboss direction
+#. TRN - Input label. Be short as possible
+msgid "Depth"
+msgstr "深度"
+
+msgid ""
+"How far the painted area reaches into the part, measured from the painted surface.\n"
+"0 reaches across the whole part, up to the nearest unpainted surface."
+msgstr ""
+
+msgid "The part this modifier was painted on has been removed."
+msgstr ""
+
+msgid "Paint the modifier area"
+msgstr ""
+
+msgid "Erase the modifier area"
+msgstr ""
+
+msgid "Change painted modifier depth"
+msgstr ""
+
+msgid "Entering painted modifier"
+msgstr ""
+
+msgid "Leaving painted modifier"
+msgstr ""
+
+msgid "Painted modifier editing"
+msgstr ""
 
 msgid "Move"
 msgstr "移动"
@@ -881,12 +923,6 @@ msgid "Shape"
 msgstr "形状"
 
 #. TRN - Input label. Be short as possible
-#. Size in emboss direction
-#. TRN - Input label. Be short as possible
-msgid "Depth"
-msgstr "深度"
-
-#. TRN - Input label. Be short as possible
 #. Angle between Y axis and text line direction.
 #. TRN - Input label. Be short as possible
 msgid "Rotation"
@@ -1037,8 +1073,9 @@ msgstr "切割后"
 msgid "Cut to parts"
 msgstr "切割为零件"
 
-msgid "Reset cutting plane and remove connectors"
-msgstr "重置切割平面并移除连接器"
+#. TRN: Part assignments are the upper/lower cut groups changed by right-clicking parts.
+msgid "Reset the cutting plane, remove connectors, and clear part assignments."
+msgstr ""
 
 # AI Translated
 msgid "Reset Cut"
@@ -1312,9 +1349,6 @@ msgstr "切割"
 
 msgid "Click to change part type into negative volume."
 msgstr "单击可将零件类型更改为负体积。"
-
-msgid "Modifier"
-msgstr "修改器"
 
 msgid "Click to change part type into modifier."
 msgstr "单击可将零件类型更改为修改器。"
@@ -2729,6 +2763,9 @@ msgstr "添加支撑生成器"
 msgid "Add Precise Seam"
 msgstr "添加精确接缝"
 
+msgid "Add Painted Modifier"
+msgstr ""
+
 msgid "Add text"
 msgstr "添加文本"
 
@@ -2834,6 +2871,9 @@ msgstr "建议"
 
 msgid "Text"
 msgstr "文字浮雕"
+
+msgid "Add a modifier whose shape is painted on the part"
+msgstr ""
 
 msgid "Height Range Modifier"
 msgstr "高度范围修改器"
@@ -3083,6 +3123,15 @@ msgstr "自动调整对象朝向以提高打印质量。"
 
 msgid "Paste Process Settings"
 msgstr "粘贴工艺参数"
+
+msgid "Edit Painting"
+msgstr ""
+
+msgid "Paint the area of the selected painted modifier"
+msgstr ""
+
+msgid "Delete the selected painted modifier"
+msgstr ""
 
 msgid "Edit"
 msgstr "编辑"
@@ -3410,11 +3459,11 @@ msgstr "不允许删除对象的最后一个实体零件。"
 msgid "Delete part"
 msgstr "删除零件"
 
-msgid "The target object contains only one part and can not be split."
-msgstr "目标对象只包含一个零件，无法分割"
-
 msgid "Split to parts"
 msgstr "拆分为零件"
+
+msgid "The target object contains only one part and can not be split."
+msgstr "目标对象只包含一个零件，无法分割"
 
 msgid "Assembly"
 msgstr "组合体"
@@ -3473,6 +3522,13 @@ msgstr "如果第一个选择的是对象，那么第二个选择的也必须是
 
 msgid "If the first selected item is a part, the second should be a part in the same object."
 msgstr "如果第一个选择的是零件，那么第二个选择的也必须是同一个对象中的零件。"
+
+#, boost-format
+msgid "Painted modifier %1%"
+msgstr ""
+
+msgid "Add painted modifier"
+msgstr ""
 
 msgid "The type of the last solid object part cannot be changed."
 msgstr "不允许修改对象中最后一个实体零件的类型。"
@@ -6385,6 +6441,9 @@ msgstr "无效的模式。请使用 N、N#K 或逗号分隔的列表（每个条
 msgid "Invalid format. Expected vector format: \"%1%\""
 msgstr "无效格式，应该是\"%1%\"这种数组格式"
 
+msgid "The excluded bed area is invalid. It must be a simple, non-self-intersecting polygon."
+msgstr ""
+
 # AI Translated
 msgid "System agents"
 msgstr "系统代理"
@@ -6807,6 +6866,16 @@ msgstr "半径"
 msgid "Keep min"
 msgstr "保留最小"
 
+#. TRN Variable layer height tool, checkbox shown with several objects selected: give each object its own
+#. layer heights instead of one profile they all share.
+msgid "Each object separately"
+msgstr ""
+
+#. TRN Variable layer height tool: each selected object has a layer height bar at the right edge of the 3D view.
+#. Painting over an object in the 3D view, or over its bar, edits the layer heights of that object.
+msgid "Paint over an object or its bar to edit its layers."
+msgstr ""
+
 msgid "Add detail"
 msgstr "减小层高"
 
@@ -6821,6 +6890,13 @@ msgstr "平滑"
 
 msgid "Increase/decrease edit area"
 msgstr "增加/减小编辑区域"
+
+msgid "Increase/decrease edit area on the bar"
+msgstr ""
+
+#. TRN "Adaptive", "Smooth" and "Reset" are the buttons of the variable layer height tool.
+msgid "Variable layer height: only the three tallest selected objects have a bar. The others still take Adaptive, Smooth and Reset."
+msgstr ""
 
 msgid "Sequence"
 msgstr "顺序"
@@ -7144,6 +7220,9 @@ msgstr "中键单击图标"
 msgid "Set viewing angle"
 msgstr "设置视角"
 
+msgid "Follow camera"
+msgstr ""
+
 msgid "Paint Toolbar"
 msgstr "上色工具条"
 
@@ -7282,8 +7361,25 @@ msgstr "实时预览重试"
 msgid "Resolution"
 msgstr "分辨率"
 
+msgid "Custom camera source"
+msgstr "自定义摄像机源"
+
+# AI Translated
+msgid "Camera stream URL"
+msgstr "摄像头视频流 URL"
+
+# AI Translated
+msgid "URL of an MJPEG stream or of a web page that shows the camera, for example http://192.168.1.10:8080/?action=stream"
+msgstr "MJPEG 视频流或显示摄像头画面的网页的 URL，例如 http://192.168.1.10:8080/?action=stream"
+
+msgid "Enable"
+msgstr "开启"
+
 msgid "Show \"Live Video\" guide page."
 msgstr "显示\"直播视频流\"指南"
+
+msgid "Disable"
+msgstr "禁用"
 
 msgid "Connect Printer (LAN)"
 msgstr "连接打印机（局域网）"
@@ -8331,6 +8427,9 @@ msgstr "存储"
 msgid "Camera Setting"
 msgstr "相机设置"
 
+msgid "Switch Camera View"
+msgstr "切换相机视图"
+
 msgid "Control"
 msgstr "控制"
 
@@ -9032,6 +9131,10 @@ msgstr "新的网络插件可用。"
 msgid "Details"
 msgstr "详情"
 
+# AI Translated
+msgid "Updates are available for your OrcaCloud plugins."
+msgstr "您的 OrcaCloud 插件有可用更新。"
+
 msgid "New printer config available."
 msgstr "有新的打印机配置可用。"
 
@@ -9180,6 +9283,24 @@ msgstr "无法加载Shader: %s"
 
 msgid "Error loading shaders"
 msgstr "加载shader程序时发生错误"
+
+#. TRN The OpenGL context could not be made current, so nothing can be drawn in the 3D view.
+msgid "OpenGL could not be activated for the 3D view, so it cannot be shown."
+msgstr ""
+
+#. TRN %1% is the name of a graphics card or display adapter as Windows reports it, such as "Microsoft Basic Display Adapter".
+#, boost-format
+msgid "The window is on a display driven by \"%1%\"."
+msgstr ""
+
+msgid "Make sure the display adapter driving this window's display is enabled and its driver is installed and up to date."
+msgstr ""
+
+msgid "If the computer has more than one graphics card, connecting the monitor to another one may help."
+msgstr ""
+
+msgid "If the problem remains, close any overlay or screen capture software and try again."
+msgstr ""
 
 msgctxt "Layers"
 msgid "Top"
@@ -10185,10 +10306,6 @@ msgstr "耗材丝类型和颜色信息已同步，但不包括插槽信息。"
 msgid "Do you want to save changes to \"%1%\"?"
 msgstr "是否保存修改到“%1%”？"
 
-# AI Translated
-msgid "UV Editor"
-msgstr "UV 编辑器"
-
 #, c-format, boost-format
 msgid "Successfully unmounted. The device %s (%s) can now be safely removed from the computer."
 msgstr "卸载成功。设备%s(%s)现在可能安全地从电脑移除。"
@@ -10221,6 +10338,17 @@ msgstr "折叠边栏"
 #, c-format, boost-format
 msgid "Loading file: %s"
 msgstr "加载文件：%s"
+
+# AI Translated
+msgid "Some imported objects contain modifiers or parts with individual settings. They are shown as assemblies so that these settings remain visible."
+msgstr "部分导入的对象包含带有单独设置的修改器或零件。为使这些设置保持可见，这些对象将以装配体形式显示。"
+
+# AI Translated
+msgid "Geometry import"
+msgstr "几何体导入"
+
+msgid "The file does not contain any geometry data."
+msgstr "此文件不包含任何几何数据。"
 
 msgid "Load 3MF"
 msgstr "加载 3MF"
@@ -10289,7 +10417,7 @@ msgstr "部分已发布的设置无法应用："
 msgid "Some filament slots were changed:"
 msgstr "部分耗材丝槽位已更改："
 
-msgid "Component name(s) inside step file not in UTF-8 format!"
+msgid "Component name(s) inside STEP file not in UTF-8 format!"
 msgstr "STEP 文件中的部件名称不是 UTF-8 格式！"
 
 # AI Translated
@@ -10359,8 +10487,8 @@ msgstr "您想要同步打印机信息并自动切换预设吗？"
 msgid "This project contains a model made in the Design tab and no other geometry. Enable \"CAD feature (experimental)\" in Preferences and restart to see and edit it; it is kept when the project is saved."
 msgstr "此项目包含一个在“设计”标签页中创建的模型，且不含其他几何体。请在偏好设置中启用“CAD 功能（实验性）”并重新启动，以查看和编辑该模型；保存项目时会保留该模型。"
 
-msgid "The file does not contain any geometry data."
-msgstr "此文件不包含任何几何数据。"
+msgid "The invalid area has been removed, so please define it again using a valid polygon."
+msgstr ""
 
 msgid "Your object appears to be too large, do you want to scale it down to fit the print bed automatically?"
 msgstr "对象看起来太大，希望将对象自动缩小以适应热床吗？"
@@ -10610,6 +10738,10 @@ msgid ""
 msgstr ""
 "检测到以下 IDEX/IQEX 并行模式问题：\n"
 "\n"
+
+# AI Translated
+msgid "UV Editor"
+msgstr "UV 编辑器"
 
 #, c-format, boost-format
 msgid ""
@@ -11470,11 +11602,50 @@ msgstr "启动后显示“每日小贴士”通知"
 msgid "If enabled, useful hints are displayed at startup."
 msgstr "如果启用，将在启动时显示有用的提示。"
 
-msgid "Downloads folder"
-msgstr "下载文件夹"
+msgid "Features"
+msgstr "特性"
 
-msgid "Target folder for downloaded items"
-msgstr "下载项目的目标文件夹"
+msgid "Multi device management"
+msgstr "多设备管理"
+
+msgid "With this option enabled, you can send a task to multiple devices at the same time and manage multiple devices."
+msgstr "启用此选项后，您可以同时向多个设备发送任务并管理多个设备。"
+
+# AI Translated
+msgid "CAD feature (experimental)"
+msgstr "CAD 功能（实验性）"
+
+# AI Translated
+msgid "With this option enabled, the Design tab is shown, where models can be built and edited parametrically. This feature is experimental and still under development."
+msgstr "启用此选项后，将显示“设计”标签页，可在其中以参数化方式构建和编辑模型。此功能为实验性功能，仍在开发中。"
+
+msgid "Pop up to select filament grouping mode"
+msgstr "弹出选择耗材丝分组模式"
+
+msgid "Clear my choice on..."
+msgstr "清除我的选择..."
+
+msgid "Unsaved projects"
+msgstr "未保存的项目"
+
+msgid "Clear my choice on the unsaved projects."
+msgstr "清除我对未保存的项目的选择。"
+
+msgid "Unsaved presets"
+msgstr "未保存的预设"
+
+msgid "Clear my choice on the unsaved presets."
+msgstr "清除我对未保存的预置的选择。"
+
+msgid "Synchronizing printer preset"
+msgstr "同步打印机预设"
+
+msgid "Clear my choice for synchronizing printer preset after loading the file."
+msgstr "加载文件后清除我对同步打印机预设的选择。"
+
+# AI Translated
+msgid "Files"
+msgstr "文件"
 
 msgid "Load All"
 msgstr "加载全部"
@@ -11501,6 +11672,17 @@ msgstr "自动备份"
 msgid "Backup your project periodically to help with restoring from an occasional crash."
 msgstr "定期备份你的项目，以便从偶尔的崩溃中恢复过来。"
 
+# AI Translated
+msgid "Store full source file paths in projects"
+msgstr "在项目中存储完整的源文件路径"
+
+# AI Translated
+msgid "If enabled, saved projects store the absolute path to imported source files (STEP/STL/...), so \"Reload from disk\" still works when the source file is kept in a different folder than the project. If disabled, only the filename is stored, which keeps projects portable and avoids embedding absolute paths."
+msgstr "如果启用，保存的项目会存储导入源文件(STEP/STL/...)的绝对路径，这样即使源文件与项目位于不同文件夹中，“从磁盘重新加载”仍然有效。如果禁用，则仅存储文件名，从而保持项目的可移植性并避免嵌入绝对路径。"
+
+msgid "Recent files"
+msgstr "最近的文件"
+
 msgid "Maximum recent files"
 msgstr "最大最近使用文件数"
 
@@ -11510,18 +11692,61 @@ msgstr "最近使用文件的最大数量"
 msgid "Add STL/STEP files to recent files list"
 msgstr "添加模型文件 STL/STEP 到最近文件列表"
 
+# AI Translated
+msgid "Folder paths"
+msgstr "文件夹路径"
+
+msgid "Downloads folder"
+msgstr "下载文件夹"
+
+msgid "Target folder for downloaded items"
+msgstr "下载项目的目标文件夹"
+
+# AI Translated
+msgid "File import"
+msgstr "文件导入"
+
+# AI Translated
+msgid "Ask how to handle unsupported characters in imported names"
+msgstr "导入的名称含有不支持的字符时询问处理方式"
+
+# AI Translated
+msgid "Show the removal or replacement choices when original names contain unsupported characters."
+msgstr "原始名称含有不支持的字符时，显示删除或替换选项。"
+
+# AI Translated
+msgid "3MF import"
+msgstr "3MF 导入"
+
+# AI Translated
+msgid "Show options when importing"
+msgstr "导入时显示选项"
+
+# AI Translated
+msgid "Show original-name and sorting options when importing a 3MF without project settings into the current project."
+msgstr "将不含项目设置的 3MF 导入当前项目时，显示原始名称和排序选项。"
+
+# AI Translated
+msgid "Keep original names"
+msgstr "保留原始名称"
+
+# AI Translated
+msgid "Use the body names stored in the imported file when it contains them."
+msgstr "导入的文件中存有实体名称时，使用这些名称。"
+
 msgid "Don't warn when loading 3MF with modified G-code"
 msgstr "加载具有修改的 G-Code 的 3MF 时不会出现警告"
 
-msgid "Show options when importing STEP file"
-msgstr "显示STEP网格参数设置对话框"
+# AI Translated
+msgid "STEP import"
+msgstr "STEP 导入"
 
 msgid "If enabled, a parameter settings dialog will appear during STEP file import."
 msgstr "如果启用，在导入STEP文件时将出现参数设置对话框"
 
 # AI Translated
-msgid "STEP importing: linear deflection"
-msgstr "STEP 导入：线性偏差"
+msgid "Linear deflection"
+msgstr "线性偏差"
 
 # AI Translated
 msgid ""
@@ -11536,8 +11761,8 @@ msgstr ""
 "默认值：0.003 mm。"
 
 # AI Translated
-msgid "STEP importing: angle deflection"
-msgstr "STEP 导入：角度偏差"
+msgid "Angle deflection"
+msgstr "角度偏差"
 
 # AI Translated
 msgid ""
@@ -11552,18 +11777,30 @@ msgstr ""
 "默认值：0.5。"
 
 # AI Translated
-msgid "STEP importing: Split into multiple objects"
-msgstr "STEP 导入：拆分为多个物体"
+msgid "Split into multiple objects"
+msgstr "拆分为多个对象"
 
 # AI Translated
 msgid ""
 "If enabled, compound and compsolid shapes in imported STEP files are split into multiple objects.\n"
 "Used as the default in the import dialog, or directly when the import dialog is disabled.\n"
-"Default: disabled."
+"Default: enabled."
 msgstr ""
-"如果启用，导入的 STEP 文件中的复合(compound)和复合实体(compsolid)形状将被拆分为多个物体。\n"
-"用作导入对话框中的默认值，或在禁用导入对话框时直接使用。\n"
-"默认值：禁用。"
+"如果启用，导入的 STEP 文件中的复合体（compound）和复合实体（compsolid）形状将拆分为多个对象。\n"
+"用作导入对话框中的默认值，禁用导入对话框时则直接使用。\n"
+"默认值：启用。"
+
+# AI Translated
+msgid "AMF import"
+msgstr "AMF 导入"
+
+# AI Translated
+msgid "Show body grouping, original-name and sorting options when importing geometry into the current project."
+msgstr "将几何体导入当前项目时，显示实体分组、原始名称和排序选项。"
+
+# AI Translated
+msgid "DRC export"
+msgstr "DRC 导出"
 
 msgid "Quality level for Draco export"
 msgstr "Draco 导出的模型质量"
@@ -11580,104 +11817,43 @@ msgstr ""
 "0 = 无损压缩（以全精度保留几何形状）。有效有损值范围为 8 到 30。\n"
 "较低的值会生成较小的文件，但会丢失更多的几何细节；较高的值可保留更多细节，但代价是文件较大。"
 
-# AI Translated
-msgid "Store full source file paths in projects"
-msgstr "在项目中存储完整的源文件路径"
+msgid "Associate files to Snapmaker Orca"
+msgstr "Snapmaker Orca文件关联"
 
-# AI Translated
-msgid "If enabled, saved projects store the absolute path to imported source files (STEP/STL/...), so \"Reload from disk\" still works when the source file is kept in a different folder than the project. If disabled, only the filename is stored, which keeps projects portable and avoids embedding absolute paths."
-msgstr "如果启用，保存的项目会存储导入源文件(STEP/STL/...)的绝对路径，这样即使源文件与项目位于不同文件夹中，“从磁盘重新加载”仍然有效。如果禁用，则仅存储文件名，从而保持项目的可移植性并避免嵌入绝对路径。"
+msgid "File associations for the Microsoft Store version are managed by Windows Settings."
+msgstr "Microsoft Store 版本的文件关联由 Windows 设置管理。"
 
-msgid "Preset"
-msgstr "预设"
+msgid "Open Windows Default Apps Settings"
+msgstr "打开 Windows 默认应用设置"
 
-msgid "Remember printer configuration"
-msgstr "记住打印机选项"
-
-msgid "If enabled, Snapmaker Orca will remember and switch filament/process configuration for each printer automatically."
+msgid "Associate 3MF files to Snapmaker Orca"
 msgstr ""
 
-msgid "Filament presets follow the nozzle size"
+msgid "If enabled, this sets Snapmaker Orca as the default application to open 3MF files."
 msgstr ""
 
-msgid "If enabled, each filament gets the preset made for the size of the nozzle that prints it. User presets are kept unless exactly one counterpart for the other size exists. Line widths given in percent follow each nozzle."
+msgid "Associate DRC files to Snapmaker Orca"
 msgstr ""
 
-msgid "Process speeds and line widths follow the nozzle size"
+msgid "If enabled, sets Snapmaker Orca as default application to open DRC files."
 msgstr ""
 
-msgid "If enabled, an extruder whose nozzle size differs from the printer preset prints with the speeds, accelerations, jerk and line widths of the process preset of the same quality as the selected preset made for its size, at the nearest layer height. Walls, infill and every other setting stay those of the selected process preset, and values you changed in it are kept on every extruder. Values set for one extruder on the Speed or Quality page, and a process preset chosen for an extruder there, apply to that extruder whether this is on or off."
+msgid "Associate STL files to Snapmaker Orca"
 msgstr ""
 
-msgid "Optimize filaments area height for..."
-msgstr "为以下数量优化耗材区域高度..."
+msgid "If enabled, this sets Snapmaker Orca as the default application to open STL files."
+msgstr ""
 
-msgid "filaments"
-msgstr "耗材丝"
+msgid "Associate STEP files to Snapmaker Orca"
+msgstr ""
 
-msgid "Optimizes filament area maximum height by chosen filament count."
-msgstr "根据选定的耗材丝数量优化耗材区域最大高度"
+msgid "If enabled, this sets Snapmaker Orca as the default application to open STEP files."
+msgstr ""
 
-msgid "Show shared profiles notification"
-msgstr "显示共享配置文件通知"
+msgid "Associate web links to Snapmaker Orca"
+msgstr "将网页链接关联到Snapmaker Orca"
 
-msgid "Show a notification with a link to browse shared profiles when the selected printer is changed."
-msgstr "当所选打印机更改时，显示带有浏览共享配置文件链接的通知。"
-
-msgid "Features"
-msgstr "特性"
-
-msgid "Multi device management"
-msgstr "多设备管理"
-
-msgid "With this option enabled, you can send a task to multiple devices at the same time and manage multiple devices."
-msgstr "启用此选项后，您可以同时向多个设备发送任务并管理多个设备。"
-
-# AI Translated
-msgid "Open the Speed Dial from the keyboard"
-msgstr "通过键盘打开快捷面板"
-
-# AI Translated
-msgid "When enabled, the Speed Dial keyboard shortcut (Space by default) opens the action search from any page."
-msgstr "启用后，快捷面板的快捷键（默认为空格键）可在任意页面打开操作搜索。"
-
-# AI Translated
-msgid "Recent actions"
-msgstr "最近的操作"
-
-# AI Translated
-#. TRN Unit shown after the number of recent actions, as in "5 actions".
-msgid "actions"
-msgstr "个操作"
-
-# AI Translated
-msgid "How many recently launched actions to show at the top of the Speed Dial. Set to 0 to hide recent actions."
-msgstr "在快捷面板顶部显示的最近启动操作的数量。设置为 0 可隐藏最近的操作。"
-
-# AI Translated
-msgid "CAD feature (experimental)"
-msgstr "CAD 功能（实验性）"
-
-# AI Translated
-msgid "With this option enabled, the Design tab is shown, where models can be built and edited parametrically. This feature is experimental and still under development."
-msgstr "启用此选项后，将显示“设计”标签页，可在其中以参数化方式构建和编辑模型。此功能为实验性功能，仍在开发中。"
-
-msgid "Pop up to select filament grouping mode"
-msgstr "弹出选择耗材丝分组模式"
-
-# AI Translated
-msgid "Visible plugin pages"
-msgstr "可见插件页数"
-
-# AI Translated
-msgid "pages"
-msgstr "页"
-
-# AI Translated
-msgid "Number of plugin pages shown as fixed tabs before the remaining pages collapse into a dropdown on the last tab."
-msgstr "作为固定标签显示的插件页数量，其余页面将折叠到最后一个标签的下拉菜单中。"
-
-msgid "Behavior"
+msgid "Behaviour"
 msgstr "行为"
 
 msgid "Auto flush after changing..."
@@ -11689,14 +11865,6 @@ msgstr "当选定值更改时自动计算冲洗量"
 msgid "Auto arrange plate after cloning"
 msgstr "克隆后自动排列打印板"
 
-# AI Translated
-msgid "Show options when adding a primitive"
-msgstr "添加标准模型时显示选项"
-
-# AI Translated
-msgid "If enabled, a dialog asks for the dimensions of a primitive shape before it is added."
-msgstr "如果启用，添加标准模型之前会弹出对话框询问其尺寸。"
-
 msgid "Auto slice after changes"
 msgstr "更改后自动切片"
 
@@ -11705,6 +11873,14 @@ msgstr ""
 
 msgid "Delay in seconds before auto slicing starts, allowing multiple edits to be grouped. Use 0 to slice immediately."
 msgstr "自动切片开始前延迟几秒，允许对多个编辑进行分组。使用 0 立即切片。"
+
+# AI Translated
+msgid "Show options when adding a primitive"
+msgstr "添加标准模型时显示选项"
+
+# AI Translated
+msgid "If enabled, a dialog asks for the dimensions of a primitive shape before it is added."
+msgstr "如果启用，添加标准模型之前会弹出对话框询问其尺寸。"
 
 msgid "Remove mixed temperature restriction"
 msgstr "解除混合温度限制"
@@ -11745,6 +11921,150 @@ msgstr ""
 
 msgid "Show a dialog asking whether to continue slicing when memory is low"
 msgstr "内存不足时，弹窗提示用户是否执行切片"
+
+# AI Translated
+msgid "Default view type"
+msgstr "默认视图类型"
+
+# AI Translated
+msgid ""
+"The color scheme the sliced preview opens with.\n"
+"Automatic: Filament for multi material prints, Line Type for single material ones.\n"
+"Last used: the view type you selected last.\n"
+"Any other value always opens that view type.\n"
+"You can still switch the view type in the preview afterwards."
+msgstr ""
+"切片预览打开时使用的配色方案。\n"
+"自动：多材料打印使用“耗材丝”，单材料打印使用“走线类型”。\n"
+"上次使用：您上次选择的视图类型。\n"
+"其他任何值：始终以该视图类型打开。\n"
+"之后您仍可在预览中切换视图类型。"
+
+msgid "Simplify preview while dragging"
+msgstr ""
+
+msgid ""
+"What the sliced preview draws while you drag the camera or a preview slider, or zoom with the mouse wheel, so that large prints stay responsive. The full toolpaths are restored as soon as you let go.\n"
+"Off: the full toolpaths.\n"
+"Solid model: the sliced objects and the prime tower as solid shapes in the colors of the current view, cut to the visible layer range, with its bottom and top layers and the supports drawn as toolpaths. Negative volumes are not cut out. A print made object by object, or one on a belt printer, keeps its full toolpaths.\n"
+"Shell only: every layer without its sparse infill, internal solid infill, internal bridges and gap fill, which lie under the walls and skins. Walls, top and bottom surfaces, bridges, supports and the prime tower are drawn whole, so the print looks the same from outside.\n"
+"The bottom and top layers of the visible range are always drawn whole; a layer with no infill of its own, as with infill combination, takes the layers down to the nearest one with infill along."
+msgstr ""
+
+msgid "Solid model"
+msgstr ""
+
+msgid "Shell only"
+msgstr ""
+
+# AI Translated
+msgid "Dim lower layers"
+msgstr "调暗下方图层"
+
+# AI Translated
+msgid "When scrubbing the layer slider in the sliced preview, render the layers below the current one darkened so that only the layer being viewed is shown at full brightness."
+msgstr "在切片预览中拖动图层滑块时，将当前图层下方的图层渲染为变暗状态，以便只有正在查看的图层以完整亮度显示。"
+
+# AI Translated
+msgid "Dimmed layer brightness"
+msgstr "调暗图层的亮度"
+
+# AI Translated
+msgid ""
+"How brightly the dimmed layers are rendered when \"Dim lower layers\" is enabled.\n"
+"99% is barely darkened, 0% renders them black. Capped at 99% because 100% would be the same as disabling the option."
+msgstr ""
+"启用“调暗下方图层”时，被调暗的图层以多高的亮度显示。\n"
+"99% 表示几乎不变暗，0% 表示显示为纯黑。上限为 99%，因为 100% 与关闭该选项的效果相同。"
+
+msgid "Preset"
+msgstr "预设"
+
+msgid "Remember printer configuration"
+msgstr "记住打印机选项"
+
+msgid "If enabled, Snapmaker Orca will remember and switch filament/process configuration for each printer automatically."
+msgstr ""
+
+msgid "Filament presets follow the nozzle size"
+msgstr ""
+
+msgid "If enabled, each filament gets the preset made for the size of the nozzle that prints it. User presets are kept unless exactly one counterpart for the other size exists. Line widths given in percent follow each nozzle."
+msgstr ""
+
+msgid "Process speeds and line widths follow the nozzle size"
+msgstr ""
+
+msgid "If enabled, an extruder whose nozzle size differs from the printer preset prints with the speeds, accelerations, jerk and line widths of the process preset of the same quality as the selected preset made for its size, at the nearest layer height. Walls, infill and every other setting stay those of the selected process preset, and values you changed in it are kept on every extruder. Values set for one extruder on the Speed or Quality page, and a process preset chosen for an extruder there, apply to that extruder whether this is on or off."
+msgstr ""
+
+msgid "Optimize filaments area height for..."
+msgstr "为以下数量优化耗材区域高度..."
+
+msgid "filaments"
+msgstr "耗材丝"
+
+msgid "Optimizes filament area maximum height by chosen filament count."
+msgstr "根据选定的耗材丝数量优化耗材区域最大高度"
+
+msgid "Show shared profiles notification"
+msgstr "显示共享配置文件通知"
+
+msgid "Show a notification with a link to browse shared profiles when the selected printer is changed."
+msgstr "当所选打印机更改时，显示带有浏览共享配置文件链接的通知。"
+
+# AI Translated
+msgid "Visible plugin pages"
+msgstr "可见插件页数"
+
+# AI Translated
+msgid "pages"
+msgstr "页"
+
+# AI Translated
+msgid "Number of plugin pages shown as fixed tabs before the remaining pages collapse into a dropdown on the last tab."
+msgstr "作为固定标签显示的插件页数量，其余页面将折叠到最后一个标签的下拉菜单中。"
+
+# AI Translated
+msgid "Draw mate connectors as a face"
+msgstr "将配合连接器绘制为面"
+
+# AI Translated
+msgid "In the Design tab, draw a mate connector as a small face instead of the conventional disc with a roll quadrant. A face shows its orientation at a glance, without learning the disc convention. Turn this off for the conventional CAD representation."
+msgstr "在“设计”标签页中，将配合连接器绘制为一个小面，而不是带有滚转象限的传统圆盘。面的朝向一目了然，无需先熟悉圆盘的表示约定。关闭此选项可使用传统的 CAD 表示方式。"
+
+# AI Translated
+msgid "Auto-close sketch loops"
+msgstr "自动闭合草图环"
+
+# AI Translated
+msgid "Treat sketch endpoints within 0.001 mm as one joint and weld the loop shut. Off: only exactly coincident endpoints join, so a loop with a tiny gap is shown as open instead of being closed for you. Saved with each design; applies to designs started after the change."
+msgstr "将相距 0.001 mm 以内的草图端点视为同一连接点，并将环焊接闭合。关闭时：只有完全重合的端点才会连接，因此存在微小间隙的环会显示为开放，而不会被自动闭合。此设置随每个设计一起保存；仅适用于更改后新建的设计。"
+
+# AI Translated
+msgid "Speed dial"
+msgstr "快捷面板"
+
+# AI Translated
+msgid "Open the Speed Dial from the keyboard"
+msgstr "通过键盘打开快捷面板"
+
+# AI Translated
+msgid "When enabled, the Speed Dial keyboard shortcut (Space by default) opens the action search from any page."
+msgstr "启用后，快捷面板的快捷键（默认为空格键）可在任意页面打开操作搜索。"
+
+# AI Translated
+msgid "Recent actions"
+msgstr "最近的操作"
+
+# AI Translated
+#. TRN Unit shown after the number of recent actions, as in "5 actions".
+msgid "actions"
+msgstr "个操作"
+
+# AI Translated
+msgid "How many recently launched actions to show at the top of the Speed Dial. Set to 0 to hide recent actions."
+msgstr "在快捷面板顶部显示的最近启动操作的数量。设置为 0 可隐藏最近的操作。"
 
 msgid "Camera"
 msgstr "摄像机"
@@ -11788,22 +12108,6 @@ msgstr "反转鼠标缩放"
 msgid "If enabled, reverses the direction of zoom with mouse wheel."
 msgstr "如果启用，使用鼠标滚轮缩放的方向会反转。"
 
-# AI Translated
-msgid "Draw mate connectors as a face"
-msgstr "将配合连接器绘制为面"
-
-# AI Translated
-msgid "In the Design tab, draw a mate connector as a small face instead of the conventional disc with a roll quadrant. A face shows its orientation at a glance, without learning the disc convention. Turn this off for the conventional CAD representation."
-msgstr "在“设计”标签页中，将配合连接器绘制为一个小面，而不是带有滚转象限的传统圆盘。面的朝向一目了然，无需先熟悉圆盘的表示约定。关闭此选项可使用传统的 CAD 表示方式。"
-
-# AI Translated
-msgid "Auto-close sketch loops"
-msgstr "自动闭合草图环"
-
-# AI Translated
-msgid "Treat sketch endpoints within 0.001 mm as one joint and weld the loop shut. Off: only exactly coincident endpoints join, so a loop with a tiny gap is shown as open instead of being closed for you. Saved with each design; applies to designs started after the change."
-msgstr "将相距 0.001 mm 以内的草图端点视为同一连接点，并将环焊接闭合。关闭时：只有完全重合的端点才会连接，因此存在微小间隙的环会显示为开放，而不会被自动闭合。此设置随每个设计一起保存；仅适用于更改后新建的设计。"
-
 msgid "Pan"
 msgstr "平移"
 
@@ -11837,27 +12141,6 @@ msgstr "快捷键"
 msgid "Choose the key for each action."
 msgstr "为每个操作选择按键。"
 
-msgid "Clear my choice on..."
-msgstr "清除我的选择..."
-
-msgid "Unsaved projects"
-msgstr "未保存的项目"
-
-msgid "Clear my choice on the unsaved projects."
-msgstr "清除我对未保存的项目的选择。"
-
-msgid "Unsaved presets"
-msgstr "未保存的预设"
-
-msgid "Clear my choice on the unsaved presets."
-msgstr "清除我对未保存的预置的选择。"
-
-msgid "Synchronizing printer preset"
-msgstr "同步打印机预设"
-
-msgid "Clear my choice for synchronizing printer preset after loading the file."
-msgstr "加载文件后清除我对同步打印机预设的选择。"
-
 msgid "Graphics"
 msgstr "图形"
 
@@ -11885,6 +12168,14 @@ msgstr "显示模型阴影"
 
 msgid "Render soft shadows of objects on the build plate in the Prepare view. Requires OpenGL 3.3 or later."
 msgstr ""
+
+# AI Translated
+msgid "Translucent filaments"
+msgstr "半透明耗材丝"
+
+# AI Translated
+msgid "Draw the toolpaths of filaments whose color is partly transparent as see-through, as the 3D view draws their objects. Turn it off to draw every filament opaque."
+msgstr "将颜色部分透明的耗材丝的工具路径绘制为半透明，与 3D 视图绘制其对象的方式一致。关闭后，所有耗材丝均按不透明绘制。"
 
 msgid "Phong shading"
 msgstr "Phong 着色"
@@ -11944,6 +12235,27 @@ msgid ""
 msgstr ""
 "在写实渲染中，将预览中的工具路径显示为高光泽塑料。\n"
 "关闭时，半透明耗材丝为哑光，不透明耗材丝则保留普通视图的高光。"
+
+msgid "Persistent"
+msgstr ""
+
+msgid "When Outline is enabled in the 3D canvas menu, outlines visible objects even when they are not selected."
+msgstr ""
+
+msgid "The configured outline color is invalid."
+msgstr ""
+
+msgid "Persistent color"
+msgstr ""
+
+msgid "Choose the color of the persistent outlines of unselected objects."
+msgstr ""
+
+msgid "Selection color"
+msgstr ""
+
+msgid "Choose the color of the outlines of selected objects."
+msgstr ""
 
 msgid "Anti-aliasing"
 msgstr "抗锯齿"
@@ -12083,56 +12395,6 @@ msgstr "运行"
 msgid "Replaces the current project with the OrcaSliced Combo, then measures the frame rate and render timings while the camera turns around it in Prepare and Preview, and while the layer slider moves through the sliced layers."
 msgstr "用 OrcaSliced Combo 替换当前项目，然后在“准备”和“预览”中相机围绕其转动时，以及层滑块在已切片的各层间移动时，测量帧率和渲染耗时。"
 
-# AI Translated
-msgid "G-code Preview"
-msgstr "G-code 预览"
-
-# AI Translated
-msgid "Default view type"
-msgstr "默认视图类型"
-
-# AI Translated
-msgid ""
-"The color scheme the sliced preview opens with.\n"
-"Automatic: Filament for multi material prints, Line Type for single material ones.\n"
-"Last used: the view type you selected last.\n"
-"Any other value always opens that view type.\n"
-"You can still switch the view type in the preview afterwards."
-msgstr ""
-"切片预览打开时使用的配色方案。\n"
-"自动：多材料打印使用“耗材丝”，单材料打印使用“走线类型”。\n"
-"上次使用：您上次选择的视图类型。\n"
-"其他任何值：始终以该视图类型打开。\n"
-"之后您仍可在预览中切换视图类型。"
-
-# AI Translated
-msgid "Dim lower layers"
-msgstr "调暗下方图层"
-
-# AI Translated
-msgid "When scrubbing the layer slider in the sliced preview, render the layers below the current one darkened so that only the layer being viewed is shown at full brightness."
-msgstr "在切片预览中拖动图层滑块时，将当前图层下方的图层渲染为变暗状态，以便只有正在查看的图层以完整亮度显示。"
-
-# AI Translated
-msgid "Dimmed layer brightness"
-msgstr "调暗图层的亮度"
-
-# AI Translated
-msgid ""
-"How brightly the dimmed layers are rendered when \"Dim lower layers\" is enabled.\n"
-"99% is barely darkened, 0% renders them black. Capped at 99% because 100% would be the same as disabling the option."
-msgstr ""
-"启用“调暗下方图层”时，被调暗的图层以多高的亮度显示。\n"
-"99% 表示几乎不变暗，0% 表示显示为纯黑。上限为 99%，因为 100% 与关闭该选项的效果相同。"
-
-# AI Translated
-msgid "Translucent filaments"
-msgstr "半透明耗材丝"
-
-# AI Translated
-msgid "Draw the toolpaths of filaments whose color is partly transparent as see-through, as the 3D view draws their objects. Turn it off to draw every filament opaque."
-msgstr "将颜色部分透明的耗材丝的工具路径绘制为半透明，与 3D 视图绘制其对象的方式一致。关闭后，所有耗材丝均按不透明绘制。"
-
 msgid "Connection"
 msgstr "连接"
 
@@ -12201,42 +12463,6 @@ msgstr ""
 
 msgid "Sends slicing results, printer connection steps and error messages to the Snapmaker cloud while signed in to a Snapmaker account. Sent in readable form: the account ID, the MQTT client ID, and the printer's network address and MQTT topics. Printer serial numbers and device IDs are sent as one-way hashes. Only active while the Customer Experience Improvement Program is joined."
 msgstr ""
-
-msgid "Associate files to Snapmaker Orca"
-msgstr "Snapmaker Orca文件关联"
-
-msgid "File associations for the Microsoft Store version are managed by Windows Settings."
-msgstr "Microsoft Store 版本的文件关联由 Windows 设置管理。"
-
-msgid "Open Windows Default Apps Settings"
-msgstr "打开 Windows 默认应用设置"
-
-msgid "Associate 3MF files to Snapmaker Orca"
-msgstr ""
-
-msgid "If enabled, this sets Snapmaker Orca as the default application to open 3MF files."
-msgstr ""
-
-msgid "Associate DRC files to Snapmaker Orca"
-msgstr ""
-
-msgid "If enabled, sets Snapmaker Orca as default application to open DRC files."
-msgstr ""
-
-msgid "Associate STL files to Snapmaker Orca"
-msgstr ""
-
-msgid "If enabled, this sets Snapmaker Orca as the default application to open STL files."
-msgstr ""
-
-msgid "Associate STEP files to Snapmaker Orca"
-msgstr ""
-
-msgid "If enabled, this sets Snapmaker Orca as the default application to open STEP files."
-msgstr ""
-
-msgid "Associate web links to Snapmaker Orca"
-msgstr "将网页链接关联到Snapmaker Orca"
 
 msgid "Developer"
 msgstr "开发者"
@@ -12521,12 +12747,6 @@ msgstr "打印顺序"
 msgid "Same as Global"
 msgstr "跟随全局"
 
-msgid "Enable"
-msgstr "开启"
-
-msgid "Disable"
-msgstr "禁用"
-
 msgid "Spiral vase"
 msgstr "旋转花瓶"
 
@@ -12629,16 +12849,16 @@ msgstr "用户预设"
 msgid "Preset Inside Project"
 msgstr "项目预设"
 
-# AI Translated
-msgid "Copies all inherited values from the parent into this preset and removes the parent relationship. Presets compatible only with the parent may become unsupported."
-msgstr "将父预设继承的所有数值复制到当前预设，并解除继承关系。仅与父预设兼容的预设可能会变为不受支持。"
-
 msgid "Detach from parent"
 msgstr "与父级分离"
 
 # AI Translated
 msgid "Save without parent"
 msgstr "不保留父级另存"
+
+# AI Translated
+msgid "Copies all inherited values from the parent into this preset and removes the parent relationship. Presets compatible only with the parent may become unsupported."
+msgstr "将父预设继承的所有数值复制到当前预设，并解除继承关系。仅与父预设兼容的预设可能会变为不受支持。"
 
 # AI Translated
 msgid "Unique preset"
@@ -12862,10 +13082,6 @@ msgstr "固定到收藏 (%s)"
 #, c-format, boost-format
 msgid "Unpin from favorites (%s)"
 msgstr "从收藏中取消固定 (%s)"
-
-# AI Translated
-msgid "Remove from favorites"
-msgstr "从收藏中移除"
 
 # AI Translated
 msgid "Move left"
@@ -14853,7 +15069,13 @@ msgctxt "Nozzle flow type"
 msgid "XHF"
 msgstr "超高流"
 
+#. TRN An entry of the speed selector in a narrow sidebar (short for "Extruder 2")
+#, boost-format
+msgid "E%1%"
+msgstr ""
+
 # AI Translated
+#. TRN Printer settings extruder tab: the extruder's name, e.g. "Extruder 2", and its nozzle flow tag, e.g. "HF".
 #, c-format, boost-format
 msgid "%s: %s"
 msgstr "%s: %s"
@@ -14876,11 +15098,6 @@ msgstr ""
 msgid "Extruder %1%"
 msgstr ""
 
-#. TRN An entry of the speed selector in a narrow sidebar (short for "Extruder 2")
-#, boost-format
-msgid "E%1%"
-msgstr ""
-
 # AI Translated
 msgid "No modifications need to be copied."
 msgstr "没有需要复制的修改。"
@@ -14898,6 +15115,11 @@ msgstr "修改 %s 的参数"
 #, c-format, boost-format
 msgid "Do you want to modify the following parameters of the %s to that of the %s?"
 msgstr "是否将 %s 的以下参数修改为 %s 的参数？"
+
+#. TRN %1% is the extruder (or nozzle variant) the values are copied from, %2% the list of those they are copied to, as the switch names them, e.g. "T2 HF, T3 HF".
+#, boost-format
+msgid "Do you want to copy the following parameters of %1% to %2%?"
+msgstr ""
 
 msgid "Click to reset current value and attach to the global value."
 msgstr "点击该图标，恢复到全局的配置数值，并与全局配置同步变化。"
@@ -15046,6 +15268,15 @@ msgid ""
 msgstr ""
 "\n"
 "您可以放弃已修改的预设值，或者将修改后的值转移到新项目"
+
+msgid "Click the compare button to see the full value."
+msgstr ""
+
+msgid "Process settings"
+msgstr ""
+
+msgid "Compare the full values"
+msgstr ""
 
 msgid "Extruder count"
 msgstr "挤出机数量"
@@ -15795,10 +16026,6 @@ msgstr "打开CA证书文件"
 msgid "HTTPS CA file is optional. It is only needed if you use HTTPS with a self-signed certificate."
 msgstr "HTTPS CA文件是可选的。只有在使用自签名证书进行HTTPS连接时才需要。"
 
-# AI Translated
-msgid "This system uses HTTPS certificates from the system Certificate Store or Keychain. To use a custom CA file, import it there."
-msgstr "此系统使用系统证书存储或钥匙串中的 HTTPS 证书。如需使用自定义 CA 文件，请将它导入系统证书存储或钥匙串。"
-
 msgid "Printer model"
 msgstr "打印机模型"
 
@@ -15817,6 +16044,10 @@ msgstr "连接"
 
 msgid "Manual Setup"
 msgstr "手动设置"
+
+# AI Translated
+msgid "This system uses HTTPS certificates from the system Certificate Store or Keychain. To use a custom CA file, import it there."
+msgstr "此系统使用系统证书存储或钥匙串中的 HTTPS 证书。如需使用自定义 CA 文件，请将它导入系统证书存储或钥匙串。"
 
 msgid "IP and Access Code Verified! You may close the window"
 msgstr "IP 和访问代码已验证！您可以关闭窗口"
@@ -16399,6 +16630,9 @@ msgstr "擦拭塔离不可打印区域太近，打印时可能会发生碰撞。
 msgid "Prime tower is too close to the clumping detection area. There may be collisions when printing."
 msgstr "擦拭塔距离结块检测区域太近，打印时可能会发生碰撞。"
 
+msgid "The extruder printable areas share no common area, so the prime tower cannot be printed.\n"
+msgstr ""
+
 # AI Translated
 msgid "Prime tower is partially outside the printable area, and it cannot be printed.\n"
 msgstr "擦拭塔有部分超出可打印区域，无法打印。\n"
@@ -16411,6 +16645,24 @@ msgstr "推荐喷嘴温度范围无效。下限必须低于上限。"
 
 msgid "If you still want to print, you can enable the option in Preferences / Control / Slicing / Remove mixed temperature restriction."
 msgstr "如果您仍要打印，可以在 偏好设置 / 控制 / 切片 / 移除混合温度限制 中启用该选项。"
+
+msgid "A prime tower with printing by object is not supported together with the dynamic filament map. Print by layer, or disable the dynamic filament map."
+msgstr ""
+
+msgid "A prime tower requires that all objects have the same layer height."
+msgstr "擦拭塔要求各个对象拥有同样的层高。"
+
+msgid "A prime tower requires that all objects are printed over the same number of raft layers."
+msgstr "擦拭塔要求各个对象使用同样的筏层数量。"
+
+msgid "The prime tower is only supported for multiple objects if they are printed with the same support_top_z_distance."
+msgstr "仅当多个对象使用相同的 support_top_z_distance 打印时，才支持主塔。"
+
+msgid "A prime tower requires that all objects are sliced with the same layer height."
+msgstr "擦拭塔要求各个对象拥有同样的层高。"
+
+msgid "The prime tower is only supported if all objects have the same variable layer height."
+msgstr "各个对象的层高存在差异，无法启用擦料塔"
 
 msgid "No extrusions under current settings."
 msgstr "根据当前设置，不会生成任何打印。"
@@ -16499,6 +16751,10 @@ msgstr "已启用传送带冲刷塔，但项目中没有冲刷塔对象，换料
 msgid "The project contains multiple managed belt purge towers. Reload the plate or toggle the belt purge tower off and on to regenerate it."
 msgstr "项目中包含多个自动管理的传送带冲刷塔。请重新加载此盘，或将传送带冲刷塔关闭后再开启，以重新生成。"
 
+#. TRN "Precise Z height" is a print setting, "prime tower" the tower that purges the nozzle between filaments.
+msgid "Precise Z height is not applied: with the prime tower, objects of different heights that use variable layer height have to share their layers."
+msgstr ""
+
 msgid "Enabling both precise Z height and the prime tower may cause slicing errors."
 msgstr "同时启用精确Z高度和擦拭塔可能会导致切片错误。"
 
@@ -16510,6 +16766,12 @@ msgstr "请选择逐件打印以支持在旋转花瓶模式下打印多个对象
 
 msgid "Spiral (vase) mode does not work when an object contains more than one material."
 msgstr "不支持在包含多个材料的打印中使用旋转花瓶模式。"
+
+# AI Translated
+#. TRN %1% is the object name.
+#, boost-format
+msgid "Spiral vase mode needs no sparse infill, one wall loop and no top shell layers, but the object %1% uses other values, so it will not print as a continuous spiral."
+msgstr "旋转花瓶模式要求稀疏填充密度为 0、墙层数为 1、顶部外壳层数为 0，但对象 %1% 使用了其他值，因此不会以连续螺旋方式打印。"
 
 #, boost-format
 msgid "While the object %1% itself fits the build volume, it exceeds the maximum build volume height because of material shrinkage compensation."
@@ -16556,24 +16818,6 @@ msgstr "不支持在可变层高开启时使用擦拭塔。它要求所有对象
 
 msgid "A prime tower requires any “support gap” to be a multiple of layer height."
 msgstr "擦拭塔要求”支撑间隙“为层高的整数倍。"
-
-msgid "A prime tower with printing by object is not supported together with the dynamic filament map. Print by layer, or disable the dynamic filament map."
-msgstr ""
-
-msgid "A prime tower requires that all objects have the same layer height."
-msgstr "擦拭塔要求各个对象拥有同样的层高。"
-
-msgid "A prime tower requires that all objects are printed over the same number of raft layers."
-msgstr "擦拭塔要求各个对象使用同样的筏层数量。"
-
-msgid "The prime tower is only supported for multiple objects if they are printed with the same support_top_z_distance."
-msgstr "仅当多个对象使用相同的 support_top_z_distance 打印时，才支持主塔。"
-
-msgid "A prime tower requires that all objects are sliced with the same layer height."
-msgstr "擦拭塔要求各个对象拥有同样的层高。"
-
-msgid "The prime tower is only supported if all objects have the same variable layer height."
-msgstr "各个对象的层高存在差异，无法启用擦料塔"
 
 msgid "One or more object were assigned an extruder that the printer does not have."
 msgstr "为一个或多个对象分配了打印机没有的挤出机。"
@@ -21403,17 +21647,17 @@ msgstr "向内擦拭"
 
 # AI Translated
 msgid ""
-"Applies only to external walls, including hole boundaries. Moves the hot nozzle toward printed inner walls during wiping to reduce reheating of freshly printed plastic and seam marks.\n"
+"Applies only to external walls, including hole boundaries. Moves the hot nozzle toward the inner walls during wiping to reduce reheating of freshly printed plastic and seam marks.\n"
 "\n"
 "Especially useful at layer heights below 0.1 mm, where wipe marks are more visible.\n"
 "\n"
-"Uses the regular wipe if no adjacent inner wall is already printed (single-wall areas or Outer/Inner wall order), or if no supported inward path can be found, for example at tight corners or seam gaps."
+"Uses the regular wipe where the outer wall has no adjacent inner wall, such as in single-wall areas, or if no supported inward path can be found, for example at tight corners or seam gaps."
 msgstr ""
-"仅适用于外墙，包括孔洞边界。擦拭时将高温喷嘴移向已打印的内墙，以减少刚打印塑料的二次受热和接缝痕迹。\n"
+"仅适用于外墙，包括孔洞边界。擦拭时将高温喷嘴移向内墙，以减少刚打印塑料的二次受热和接缝痕迹。\n"
 "\n"
 "在层高低于 0.1 mm 时尤其有用，此时擦拭痕迹更明显。\n"
 "\n"
-"若相邻内墙尚未打印（单墙区域或外墙/内墙顺序），或找不到有支撑的向内路径（例如在锐角或接缝间隙处），则使用常规擦拭。"
+"若外墙没有相邻的内墙（例如单墙区域），或找不到有支撑的向内路径（例如在锐角或接缝间隙处），则使用常规擦拭。"
 
 # AI Translated
 msgid "Wipe inward distance"
@@ -21424,11 +21668,15 @@ msgstr "向内擦拭距离"
 msgid ""
 "The distance the wipe path is shifted away from the external perimeter, specified in millimeters or as a percentage of the actual outer-wall extrusion width.\n"
 "\n"
-"For example, 50% shifts the path by half of the outer-wall width. The effective offset is limited by both the actual outer-wall width and the available spacing to the adjacent wall, so values above 100% or an equivalent absolute distance have no additional effect. Set to 0 to disable the offset."
+"For example, 50% shifts the path by half of the outer-wall width. The effective offset is limited by both the actual outer-wall width and the available spacing to the adjacent wall, so values above 100% or an equivalent absolute distance have no additional effect. Set to 0 to disable the offset.\n"
+"\n"
+"With Outer/Inner or Inner/Outer/Inner wall order, the offset is limited to 50% of the actual outer-wall width because the adjacent inner wall is printed after the outer wall. This also applies to equivalent distances specified in millimeters."
 msgstr ""
 "擦拭路径偏离外墙轮廓的距离，以毫米或实际外墙挤出宽度的百分比指定。\n"
 "\n"
-"例如，50% 会将路径偏移外墙宽度的一半。实际偏移量同时受实际外墙宽度和到相邻墙的可用间距限制，因此超过 100% 的值或等效的绝对距离不会产生额外效果。设为 0 可禁用偏移。"
+"例如，50% 会将路径偏移外墙宽度的一半。实际偏移量同时受实际外墙宽度和到相邻墙的可用间距限制，因此超过 100% 的值或等效的绝对距离不会产生额外效果。设为 0 可禁用偏移。\n"
+"\n"
+"墙顺序为外墙/内墙或内墙/外墙/内墙时，相邻内墙在外墙之后打印，因此偏移量限制为实际外墙宽度的 50%。以毫米指定的等效距离同样适用此限制。"
 
 msgid "Wipe before external loop"
 msgstr "额外的外墙打印前擦拭"
@@ -21441,6 +21689,15 @@ msgstr ""
 "为了最大限度地减少在使用外/内或内/外/内墙打印顺序时，外墙起始处的潜在过挤出，在外墙起始处外略微向内执行回填。这样，任何潜在的过挤都会隐藏在外表面之下。\n"
 "\n"
 "当使用外/内或内/外/内墙打印顺序时，这是有用的，因为在这些模式中，外墙可能会在回填移动之后立即打印。"
+
+msgid "Retract after outer wall"
+msgstr ""
+
+msgid ""
+"Always retract when the nozzle leaves an outer wall, even if the travel is shorter than the travel distance threshold.\n"
+"\n"
+"Without a retraction, a very short travel, for example to gap infill inside a thin wall, can drag the end of the outer wall inward and leave a visible dent at the seam."
+msgstr ""
 
 msgid "Wipe speed"
 msgstr "擦拭速度"
@@ -21950,6 +22207,12 @@ msgstr "奇偶"
 
 msgid "Close holes"
 msgstr "闭孔"
+
+msgid "Carve overlaps by per-layer slice area"
+msgstr "按逐层切片面积裁切重叠"
+
+msgid "When enabled, overlaps between multi-extruder parts are carved with the new algorithm: on each layer, the part with the smaller slice area owns the overlap, keeping small details intact inside larger bodies. Developer option."
+msgstr "开启后，多色部件间的重叠区域使用新算法裁切：每层由切片面积较小的部件占有重叠区，嵌入大部件的小细节得以保留。开发者选项。"
 
 msgid "Z offset"
 msgstr "Z偏移"
@@ -24996,8 +25259,8 @@ msgid "Expecting a regular expression."
 msgstr "应为正则表达式。"
 
 # AI Translated
-msgid "Invalid utf8 sequence"
-msgstr "无效的 utf8 序列"
+msgid "Invalid UTF-8 sequence"
+msgstr "无效的 UTF-8 序列"
 
 # AI Translated
 msgid "Non-ASCII7 characters are only allowed inside text blocks and string literals, not inside code blocks."
@@ -25812,7 +26075,7 @@ msgid "Klipper version => 0.9.0"
 msgstr "Klipper 版本 => 0.9.0"
 
 msgid ""
-"RepRap firmware version => 3.4.0\n"
+"RepRapFirmware version => 3.4.0\n"
 "Check your firmware documentation for supported shaper types."
 msgstr ""
 "RepRap 固件版本 => 3.4.0\n"
@@ -25832,7 +26095,7 @@ msgstr "Y 开始 / 结束： "
 msgid "Frequency settings"
 msgstr "频率设置"
 
-msgid "RepRap firmware uses the same frequency range for both axes."
+msgid "RepRapFirmware uses the same frequency range for both axes."
 msgstr "RepRap 固件将对两个轴使用相同的频率范围。"
 
 msgid "Damp: "
@@ -25872,7 +26135,7 @@ msgstr "频率 X / Y： "
 msgid "Damp (Start / End): "
 msgstr "阻尼（开始 / 结束）： "
 
-msgid "RepRap firmware uses the same frequency for both axes."
+msgid "RepRapFirmware uses the same frequency for both axes."
 msgstr "RepRap 固件将对两个轴使用相同的频率。"
 
 msgid "Note: Use previously calculated frequencies."
@@ -26081,6 +26344,18 @@ msgstr "纹理构建板（A面）"
 msgid "Smooth Build Plate (Side B)"
 msgstr "光滑构建板（B面）"
 
+# AI Translated
+msgid "Reading the printer's filament slots..."
+msgstr "正在读取打印机的耗材丝槽位..."
+
+# AI Translated
+msgid "Could not read the printer. Close this dialog and try again."
+msgstr "无法读取打印机。请关闭此对话框后重试。"
+
+# AI Translated
+msgid "Could not connect to the printer. Check that it is on, then reopen this dialog."
+msgstr "无法连接到打印机。请检查打印机是否已开机，然后重新打开此对话框。"
+
 #, c-format, boost-format
 msgid "Printer: %s"
 msgstr "打印机：%s"
@@ -26096,6 +26371,16 @@ msgstr "耗材映射："
 #, c-format, boost-format
 msgid "Ext - %s"
 msgstr "外置 - %s"
+
+# AI Translated
+#. TRN Creality send dialog. CFS is Creality's multi-filament unit.
+msgid "The printer reports no CFS connected, so the print will use the external spool."
+msgstr "打印机报告未连接 CFS，因此将使用外置料盘打印。"
+
+# AI Translated
+#. TRN Creality send dialog, when the printer lists no CFS slots or does not answer
+msgid "The printer did not report any filament slots, so the print will use the external spool."
+msgstr "打印机未报告任何耗材丝槽位，因此将使用外置料盘打印。"
 
 msgid "Unable to perform boolean operation on selected parts"
 msgstr "无法对所选部件执行布尔运算"
@@ -27776,7 +28061,7 @@ msgstr "s"
 msgid "Volumetric speed"
 msgstr "体积流量"
 
-msgid "Step file import parameters"
+msgid "STEP file import parameters"
 msgstr "STEP 文件导入参数"
 
 msgid "Smaller linear and angular deflections result in higher-quality transformations but increase the processing time."
@@ -27797,6 +28082,34 @@ msgstr "请输入有效值（0.01 < 角度偏差 < 1.0）"
 msgid "Split compound and compsolid into multiple objects"
 msgstr "将复合体和复合实体拆分为多个对象"
 
+# AI Translated
+msgid "Loads each body of a multi-body part separately. Needed to keep the bodies' original names."
+msgstr "分别加载多实体零件中的每个实体。要保留实体的原始名称，需要启用此项。"
+
+# AI Translated
+msgid "Load as an assembly"
+msgstr "作为装配体加载"
+
+# AI Translated
+msgid "Load as a single object (can be split later)"
+msgstr "作为单个对象加载（之后可拆分）"
+
+# AI Translated
+msgid "The original bodies and names are kept inside the object. Use Split to parts to show them as separate parts."
+msgstr "原始实体及其名称保留在对象内部。使用“拆分为零件”可将它们显示为单独的零件。"
+
+# AI Translated
+msgid "Use the body names stored in the file, when there are any. Needs Split compound for parts with several bodies."
+msgstr "使用文件中存储的实体名称（如有）。对于包含多个实体的零件，需要启用“将复合体和复合实体拆分为多个对象”。"
+
+# AI Translated
+msgid "Sort parts by name"
+msgstr "按名称排序零件"
+
+# AI Translated
+msgid "Sort the parts inside each imported assembly in the object list. This does not change the order used for slicing. Available when Keep original names is on."
+msgstr "在对象列表中对每个导入的装配体内的零件进行排序。这不会改变切片时使用的顺序。启用“保留原始名称”时可用。"
+
 msgid "Number of triangular facets"
 msgstr "三角面片数量"
 
@@ -27806,6 +28119,96 @@ msgstr "正在计算，请稍候..."
 # AI Translated
 msgid "If enabled, the values above are stored as the defaults used for future STEP imports (and shown in Preferences)."
 msgstr "如果启用，上述值将被存储为将来 STEP 导入所用的默认值（并显示在首选项中）。"
+
+# AI Translated
+msgid "Don't ask again"
+msgstr "不再询问"
+
+# AI Translated
+msgid "Save these choices and apply them without asking next time. You can show this dialog again in Preferences."
+msgstr "保存这些选择，下次直接应用而不再询问。您可以在偏好设置中重新显示此对话框。"
+
+# AI Translated
+msgid "3MF geometry import options"
+msgstr "3MF 几何体导入选项"
+
+# AI Translated
+msgid "AMF geometry import options"
+msgstr "AMF 几何体导入选项"
+
+# AI Translated
+msgid "Choose how to name and order the parts of this file."
+msgstr "选择此文件中零件的命名和排序方式。"
+
+# AI Translated
+msgid "Choose how to load the bodies in this file."
+msgstr "选择此文件中实体的加载方式。"
+
+# AI Translated
+msgid "Load as separate objects"
+msgstr "作为独立对象加载"
+
+# AI Translated
+msgid "Each object in the file is loaded on its own, as OrcaSlicer always loaded AMF files."
+msgstr "文件中的每个对象单独加载，与 OrcaSlicer 以往加载 AMF 文件的方式相同。"
+
+# AI Translated
+msgid "The bodies of each group in the file become parts of one object, in their relative positions."
+msgstr "文件中每个分组的实体按其相对位置成为同一对象的零件。"
+
+# AI Translated
+msgid "Use the body names stored in the file, when there are any. When disabled, the usual OrcaSlicer names are used; existing project names are kept."
+msgstr "使用文件中存储的实体名称（如有）。禁用时使用 OrcaSlicer 的常规名称；项目中已有的名称保持不变。"
+
+# AI Translated
+msgid "Use these choices as defaults next time. The dialog still opens."
+msgstr "下次将这些选择用作默认值。对话框仍会打开。"
+
+# AI Translated
+msgid "A name in the file is not valid Unicode. The geometry was not imported."
+msgstr "文件中有名称不是有效的 Unicode。未导入几何体。"
+
+# AI Translated
+msgid "Invalid name"
+msgstr "无效的名称"
+
+# AI Translated
+msgid "Unsupported characters in names"
+msgstr "名称中含有不支持的字符"
+
+# AI Translated
+msgid "Some original names contain characters that OrcaSlicer cannot use. Choose how to change them before importing."
+msgstr "部分原始名称包含 OrcaSlicer 无法使用的字符。请在导入前选择修改方式。"
+
+# AI Translated
+msgid "Remove unsupported characters"
+msgstr "删除不支持的字符"
+
+# AI Translated
+msgid "Replace with:"
+msgstr "替换为："
+
+# AI Translated
+msgid "Each unsupported character is replaced with this text. It may be longer than one character."
+msgstr "每个不支持的字符都将替换为此文本。文本可以多于一个字符。"
+
+# AI Translated
+msgid "Use this rule as the default next time. The dialog still opens."
+msgstr "下次将此规则用作默认值。对话框仍会打开。"
+
+# AI Translated
+msgid "Save this rule and apply it without asking next time. You can show this dialog again in Preferences."
+msgstr "保存此规则，下次直接应用而不再询问。您可以在偏好设置中重新显示此对话框。"
+
+# AI Translated
+msgid "Enter a non-empty replacement containing only supported characters, or choose removal."
+msgstr "请输入仅包含支持字符的非空替换文本，或选择删除。"
+
+# AI Translated
+#. TRN The placeholders are the original name and its imported replacement.
+#, boost-format
+msgid "%1% → %2%"
+msgstr "%1% → %2%"
 
 msgid "PresetBundle"
 msgstr "预设包"
@@ -29986,6 +30389,18 @@ msgid "Constraints"
 msgstr "约束"
 
 # AI Translated
+msgid "No constraints yet"
+msgstr "尚无约束"
+
+# AI Translated
+msgid "Zoom to selection"
+msgstr "缩放到所选内容"
+
+# AI Translated
+msgid "Delete constraint"
+msgstr "删除约束"
+
+# AI Translated
 msgid "Feature tree"
 msgstr "特征树"
 
@@ -30018,10 +30433,6 @@ msgstr "下移"
 # AI Translated
 msgid "Show / hide"
 msgstr "显示 / 隐藏"
-
-# AI Translated
-msgid "Zoom to selection"
-msgstr "缩放到所选内容"
 
 # AI Translated
 msgid "Check interference — find overlapping bodies"
@@ -30198,6 +30609,11 @@ msgstr[0] "%d 个自由度"
 #, c-format, boost-format
 msgid "Sketch %d"
 msgstr "草图 %d"
+
+#. TRN %1% is the name of the sketch being edited, as its Feature tree row shows it.
+#, boost-format
+msgid "Editing: %1%   ·   N = look normal to the plane   ·   Confirm or Cancel in the toolbar"
+msgstr ""
 
 # AI Translated
 #, c-format, boost-format
@@ -30888,9 +31304,8 @@ msgstr "拖动角点缩放，拖动中心移动  ·  完成后按 Enter 或 ✓�
 msgid "  ·  Esc goes back to Select"
 msgstr "  ·  按 Esc 返回选择工具"
 
-# AI Translated
-msgid "  ·  click a constraint badge to remove it"
-msgstr "  ·  单击约束标记可将其移除"
+msgid "  ·  click a constraint badge to select it"
+msgstr ""
 
 # AI Translated
 #, c-format, boost-format
@@ -31352,13 +31767,10 @@ msgstr "约束"
 msgid "Constraints (%d)"
 msgstr "约束 (%d)"
 
-# AI Translated
-msgid "No constraints yet"
-msgstr "尚无约束"
-
-# AI Translated
-msgid "Delete constraint"
-msgstr "删除约束"
+#. TRN Design tab status line. %1% names the selected sketch constraint, e.g. "Horizontal E0·P0 — E0·P1".
+#, boost-format
+msgid "%1% selected — Delete removes it"
+msgstr ""
 
 # AI Translated
 msgid "Constraint deleted"
@@ -37090,6 +37502,66 @@ msgid "Plugin file: %s"
 msgstr "插件文件：%s"
 
 # AI Translated
+msgid "A file system permission cannot be empty."
+msgstr "文件系统权限不能为空。"
+
+# AI Translated
+msgid "A file system permission cannot contain a null character."
+msgstr "文件系统权限不能包含空字符。"
+
+# AI Translated
+msgid "A file system permission may use \"*\" only as the final \"/*\" of a folder tree."
+msgstr "文件系统权限只能在文件夹树末尾以 \"/*\" 的形式使用 \"*\"。"
+
+# AI Translated
+msgid "A file system permission cannot contain a \"..\" path component."
+msgstr "文件系统权限不能包含 \"..\" 路径段。"
+
+# AI Translated
+msgid "A file system permission must be an absolute path on this computer."
+msgstr "文件系统权限必须是此计算机上的绝对路径。"
+
+# AI Translated
+msgid "A network permission cannot be empty."
+msgstr "网络权限不能为空。"
+
+# AI Translated
+msgid "A network permission cannot contain control characters."
+msgstr "网络权限不能包含控制字符。"
+
+# AI Translated
+msgid "Network permissions do not support wildcards. Enter one full http:// or https:// URL."
+msgstr "网络权限不支持通配符。请输入一个完整的 http:// 或 https:// URL。"
+
+# AI Translated
+msgid "Enter a full http:// or https:// URL with a host name or IP address. Bare domain names are not accepted."
+msgstr "请输入包含主机名或 IP 地址的完整 http:// 或 https:// URL。不接受单独的域名。"
+
+# AI Translated
+msgid "Only http:// and https:// URLs are supported for network permissions."
+msgstr "网络权限仅支持 http:// 和 https:// URL。"
+
+# AI Translated
+msgid "Enter a full http:// or https:// URL with a host name or IP address."
+msgstr "请输入包含主机名或 IP 地址的完整 http:// 或 https:// URL。"
+
+# AI Translated
+msgid "Network permissions cannot include a username or password. Enter a URL with only a scheme and host."
+msgstr "网络权限不能包含用户名或密码。请输入仅含协议和主机的 URL。"
+
+# AI Translated
+msgid "Enter a valid bracketed IPv6 address."
+msgstr "请输入用方括号括起的有效 IPv6 地址。"
+
+# AI Translated
+msgid "Network permissions do not support wildcards."
+msgstr "网络权限不支持通配符。"
+
+# AI Translated
+msgid "Enter a host name or IP address, optionally with a port, or a full http:// or https:// URL."
+msgstr "请输入主机名或 IP 地址（可附带端口），或完整的 http:// 或 https:// URL。"
+
+# AI Translated
 msgid "Process plugins"
 msgstr "工艺插件"
 
@@ -37426,6 +37898,206 @@ msgid "Capabilities"
 msgstr "功能"
 
 # AI Translated
+msgid "Permissions"
+msgstr "权限"
+
+# AI Translated
+msgid "Permissions are unavailable."
+msgstr "权限不可用。"
+
+# AI Translated
+msgid "File system read"
+msgstr "文件系统读取"
+
+# AI Translated
+msgid "File system read and write"
+msgstr "文件系统读写"
+
+# AI Translated
+msgid "HTTP network"
+msgstr "HTTP 网络"
+
+# AI Translated
+msgid "Network sockets"
+msgstr "网络套接字"
+
+# AI Translated
+#. TRN Operating system processes a plugin may start, not print process presets.
+msgctxt "Permission category"
+msgid "Processes"
+msgstr "进程"
+
+# AI Translated
+msgid "Threading"
+msgstr "线程"
+
+# AI Translated
+msgctxt "Permission category"
+msgid "Events"
+msgstr "事件"
+
+# AI Translated
+msgid "Enter an absolute path on this computer. Add /* at the end to include the folder and everything below it; no other wildcard is accepted. A read/write grant can create files through open(), but it does not cover create or delete events such as os.mkdir and os.remove. Without Full access, each such event outside allowed folders needs its own approval, which is never saved. When a plugin runs in the background, these events are denied without asking."
+msgstr "请输入此计算机上的绝对路径。在末尾添加 /* 可包含该文件夹及其下的所有内容；不接受其他通配符。读写授权可以通过 open() 创建文件，但不涵盖 os.mkdir 和 os.remove 等创建或删除事件。未启用完全访问时，允许的文件夹之外的每个此类事件都需要单独批准，且批准不会保存。插件在后台运行时，这些事件会被直接拒绝，不会询问。"
+
+# AI Translated
+msgid "C:\\path\\to\\directory\\*"
+msgstr "C:\\path\\to\\directory\\*"
+
+# AI Translated
+msgid "/path/to/directory/*"
+msgstr "/path/to/directory/*"
+
+# AI Translated
+msgid "Enter a full http:// or https:// URL; only its scheme and host are saved, so the grant covers every port, path, and query on that host. A network socket grant also accepts a bare host name or IP address, with or without a port, and covers every port on that host. Other schemes are not accepted. Grants in either list are checked for HTTP and socket access."
+msgstr "请输入完整的 http:// 或 https:// URL；仅保存其协议和主机，因此授权涵盖该主机上的所有端口、路径和查询参数。网络套接字授权还接受单独的主机名或 IP 地址（可带或不带端口），并涵盖该主机上的所有端口。不接受其他协议。两个列表中的授权都会用于 HTTP 和套接字访问的检查。"
+
+# AI Translated
+msgid "Enter the exact value recorded by the audit. It may be a Python representation of the command."
+msgstr "请输入审计记录的确切值。它可能是该命令的 Python 表示形式。"
+
+# AI Translated
+msgid "Exact audited value"
+msgstr "审计记录的确切值"
+
+# AI Translated
+msgid "Allow this plugin to create threads."
+msgstr "允许此插件创建线程。"
+
+# AI Translated
+msgid "Enter a category and event separated by a colon, such as Socket:socket.__new__."
+msgstr "请输入以冒号分隔的类别和事件，例如 Socket:socket.__new__。"
+
+# AI Translated
+msgid "Socket:socket.__new__"
+msgstr "Socket:socket.__new__"
+
+# AI Translated
+msgid "Full access"
+msgstr "完全访问"
+
+# AI Translated
+msgid "File system"
+msgstr "文件系统"
+
+# AI Translated
+msgid "Network access"
+msgstr "网络访问"
+
+# AI Translated
+msgid "Execution"
+msgstr "执行"
+
+# AI Translated
+msgid "Audit events"
+msgstr "审计事件"
+
+# AI Translated
+msgid "Files and folders"
+msgstr "文件和文件夹"
+
+# AI Translated
+msgctxt "Permission access"
+msgid "Read"
+msgstr "读取"
+
+# AI Translated
+msgctxt "Permission access"
+msgid "Read and write"
+msgstr "读写"
+
+# AI Translated
+msgid "Read permissions are unavailable."
+msgstr "读取权限不可用。"
+
+# AI Translated
+msgid "Read and write permissions are unavailable."
+msgstr "读写权限不可用。"
+
+# AI Translated
+msgid "File system: Read"
+msgstr "文件系统：读取"
+
+# AI Translated
+msgid "File system: Read and write"
+msgstr "文件系统：读写"
+
+# AI Translated
+msgid "Full access bypasses permission checks. The plugin can read and write most files you can access; modifying startup or application files can let code run outside these checks. Direct Python access to OrcaSlicer's configuration, secret, certificate and install-state paths stays blocked, but subprocesses are not restricted."
+msgstr "完全访问会绕过权限检查。插件可以读写您能访问的大多数文件；修改启动文件或应用程序文件可能使代码在这些检查之外运行。Python 对 OrcaSlicer 配置、密钥、证书和安装状态路径的直接访问仍会被阻止，但子进程不受限制。"
+
+# AI Translated
+msgid "Permission list editing is disabled while full access is on."
+msgstr "启用完全访问时，无法编辑权限列表。"
+
+# AI Translated
+msgid "Full access status is unavailable."
+msgstr "完全访问状态不可用。"
+
+# AI Translated
+msgid "No values added."
+msgstr "未添加任何值。"
+
+# AI Translated
+msgctxt "Permission value"
+msgid "Apply"
+msgstr "应用"
+
+# AI Translated
+#, c-format, boost-format
+msgid "Apply value for %s"
+msgstr "应用 %s 的值"
+
+# AI Translated
+msgid "Install this plugin to edit its permissions."
+msgstr "安装此插件后即可编辑其权限。"
+
+# AI Translated
+#, c-format, boost-format
+msgid "New value for %s"
+msgstr "%s 的新值"
+
+# AI Translated
+#, c-format, boost-format
+msgid "Edit value for %s"
+msgstr "编辑 %s 的值"
+
+# AI Translated
+msgctxt "Permission value"
+msgid "Add"
+msgstr "添加"
+
+# AI Translated
+#, c-format, boost-format
+msgid "Add value to %s"
+msgstr "向 %s 添加值"
+
+#. TRN %s is the original permission value that was removed outside this dialog.
+#, c-format, boost-format
+msgid "The original value is no longer granted: %s. Add the edited value or discard it."
+msgstr ""
+
+#. TRN %s is the original permission value before the user's unsaved edit.
+#, c-format, boost-format
+msgid "Unsaved edit of: %s"
+msgstr ""
+
+#. TRN %s is the original permission value whose unsaved edit will be discarded.
+#, c-format, boost-format
+msgid "Discard edit of %s"
+msgstr ""
+
+# AI Translated
+msgctxt "Permission value"
+msgid "Remove"
+msgstr "移除"
+
+# AI Translated
+#, c-format, boost-format
+msgid "Remove %s"
+msgstr "移除 %s"
+
+# AI Translated
 #, c-format, boost-format
 msgid "Run \"%s\""
 msgstr "运行“%s”"
@@ -37528,6 +38200,39 @@ msgstr "缺失的插件"
 # AI Translated
 msgid "Refreshing plugins data"
 msgstr "正在刷新插件数据"
+
+# AI Translated
+#, c-format, boost-format
+msgid ""
+"Enable full access for \"%s\"?\n"
+"\n"
+"Full access turns off permission auditing for this plugin: its file system, network, process, thread and event permissions are no longer checked. The plugin can read and write most files your user account can access, including startup scripts, SSH keys and a writable OrcaSlicer installation. Modifying startup or application files can let code run outside these checks. Direct Python access to OrcaSlicer's configuration, secret, certificate and install-state paths stays blocked, but subprocesses are not restricted. Full access is not a sandbox.\n"
+"\n"
+"Only enable this for a plugin you trust."
+msgstr ""
+"为“%s”启用完全访问？\n"
+"\n"
+"完全访问会关闭此插件的权限审计：不再检查其文件系统、网络、进程、线程和事件权限。插件可以读写您的用户账户能访问的大多数文件，包括启动脚本、SSH 密钥以及可写入的 OrcaSlicer 安装目录。修改启动文件或应用程序文件可能使代码在这些检查之外运行。Python 对 OrcaSlicer 配置、密钥、证书和安装状态路径的直接访问仍会被阻止，但子进程不受限制。完全访问并不是沙盒。\n"
+"\n"
+"请仅为您信任的插件启用此功能。"
+
+# AI Translated
+msgid "Invalid permission save request."
+msgstr "无效的权限保存请求。"
+
+# AI Translated
+#, boost-format
+msgid "Cannot save \"%1%\": %2%"
+msgstr "无法保存“%1%”：%2%"
+
+# AI Translated
+msgid "Failed to save permissions."
+msgstr "保存权限失败。"
+
+# AI Translated
+#, c-format, boost-format
+msgid "Permissions saved for \"%s\"."
+msgstr "已保存“%s”的权限。"
 
 # AI Translated
 msgid "Failed to unload plugin."
@@ -38366,6 +39071,14 @@ msgid "unknown name"
 msgstr "未知名称"
 
 # AI Translated
+msgid "Don't show this tip again"
+msgstr "不再显示此提示"
+
+# AI Translated
+msgid "Tip: You can review and change this plugin's saved permissions in the Plugins dialog, on the Permissions tab."
+msgstr "提示：您可以在插件对话框的“权限”选项卡中查看和更改此插件已保存的权限。"
+
+# AI Translated
 #, c-format, boost-format
 msgid ""
 "Plugin \"%s\" is requesting permission for the Python audit event \"%s\".\n"
@@ -38404,25 +39117,37 @@ msgstr[0] ""
 #, c-format, boost-format
 msgid ""
 "Plugin \"%s\" is requesting to create the following file:\n"
-"%s"
+"%s\n"
+"\n"
+"This approval applies only to this operation and is not remembered."
 msgid_plural ""
 "Plugin \"%s\" is requesting to create the following files:\n"
-"%s"
+"%s\n"
+"\n"
+"This approval applies only to this operation and is not remembered."
 msgstr[0] ""
 "插件“%s”正在请求创建以下文件：\n"
-"%s"
+"%s\n"
+"\n"
+"此批准仅适用于本次操作，不会被记住。"
 
 # AI Translated
 #, c-format, boost-format
 msgid ""
 "Plugin \"%s\" is requesting to delete the following file:\n"
-"%s"
+"%s\n"
+"\n"
+"This approval applies only to this operation and is not remembered."
 msgid_plural ""
 "Plugin \"%s\" is requesting to delete the following files:\n"
-"%s"
+"%s\n"
+"\n"
+"This approval applies only to this operation and is not remembered."
 msgstr[0] ""
 "插件“%s”正在请求删除以下文件：\n"
-"%s"
+"%s\n"
+"\n"
+"此批准仅适用于本次操作，不会被记住。"
 
 # AI Translated
 #, c-format, boost-format
@@ -38488,6 +39213,57 @@ msgstr "插件权限请求"
 # AI Translated
 msgid "Plugin permissions"
 msgstr "插件权限"
+
+# AI Translated
+#, c-format, boost-format
+msgid ""
+"Plugin \"%s\" tried to perform a file operation that requires permission.\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgstr ""
+"插件“%s”尝试执行需要权限的文件操作。\n"
+"\n"
+"该操作已被拒绝。请使用允许的位置；如果您信任此插件，也可以为其启用完全访问。"
+
+# AI Translated
+#, c-format, boost-format
+msgid ""
+"Plugin \"%s\" tried to create the following file:\n"
+"%s\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgid_plural ""
+"Plugin \"%s\" tried to create the following files:\n"
+"%s\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgstr[0] ""
+"插件“%s”尝试创建以下文件：\n"
+"%s\n"
+"\n"
+"该操作已被拒绝。请使用允许的位置；如果您信任此插件，也可以为其启用完全访问。"
+
+# AI Translated
+#, c-format, boost-format
+msgid ""
+"Plugin \"%s\" tried to delete the following file:\n"
+"%s\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgid_plural ""
+"Plugin \"%s\" tried to delete the following files:\n"
+"%s\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgstr[0] ""
+"插件“%s”尝试删除以下文件：\n"
+"%s\n"
+"\n"
+"该操作已被拒绝。请使用允许的位置；如果您信任此插件，也可以为其启用完全访问。"
+
+# AI Translated
+msgid "Plugin operation denied"
+msgstr "插件操作已拒绝"
 
 # AI Translated
 msgid "The preset stores invalid plugin capability configuration JSON."
@@ -38900,6 +39676,11 @@ msgstr "无法保留为本地插件：本地插件标识已存在：%1%"
 
 # AI Translated
 #, boost-format
+msgid "Failed to read plugin install state: %1%"
+msgstr "读取插件安装状态失败：%1%"
+
+# AI Translated
+#, boost-format
 msgid "Failed to update plugin install state: %1%"
 msgstr "更新插件安装状态失败：%1%"
 
@@ -39187,18 +39968,18 @@ msgstr "从 %1% 提取的配置值数量异常偏少：%2%"
 
 # AI Translated
 msgid ""
-"Load step file failed.\n"
+"Load STEP file failed.\n"
 "Cannot open file for reading.\n"
 msgstr ""
 "加载 STEP 文件失败。\n"
 "无法以读取方式打开文件。\n"
 
 # AI Translated
-msgid "import svg failed: could not open svg."
+msgid "import SVG failed: could not open SVG."
 msgstr "导入 SVG 失败：无法打开 SVG。"
 
 # AI Translated
-msgid "import svg failed: could not parse imported svg data."
+msgid "import SVG failed: could not parse imported SVG data."
 msgstr "导入 SVG 失败：无法解析导入的 SVG 数据。"
 
 # AI Translated
@@ -39637,6 +40418,137 @@ msgid ""
 "Did you know that when printing materials that are prone to warping such as ABS, appropriately increasing the heatbed temperature can reduce the probability of warping."
 msgstr ""
 
+#~ msgid "Reset cutting plane and remove connectors"
+#~ msgstr "重置切割平面并移除连接器"
+
+#~ msgid "Component name(s) inside step file not in UTF-8 format!"
+#~ msgstr "STEP 文件中的部件名称不是 UTF-8 格式！"
+
+#~ msgid "Show options when importing STEP file"
+#~ msgstr "显示STEP网格参数设置对话框"
+
+# AI Translated
+#~ msgid "STEP importing: linear deflection"
+#~ msgstr "STEP 导入：线性偏差"
+
+# AI Translated
+#~ msgid "STEP importing: angle deflection"
+#~ msgstr "STEP 导入：角度偏差"
+
+# AI Translated
+#~ msgid "STEP importing: Split into multiple objects"
+#~ msgstr "STEP 导入：拆分为多个物体"
+
+# AI Translated
+#~ msgid ""
+#~ "If enabled, compound and compsolid shapes in imported STEP files are split into multiple objects.\n"
+#~ "Used as the default in the import dialog, or directly when the import dialog is disabled.\n"
+#~ "Default: disabled."
+#~ msgstr ""
+#~ "如果启用，导入的 STEP 文件中的复合(compound)和复合实体(compsolid)形状将被拆分为多个物体。\n"
+#~ "用作导入对话框中的默认值，或在禁用导入对话框时直接使用。\n"
+#~ "默认值：禁用。"
+
+#~ msgid "Behavior"
+#~ msgstr "行为"
+
+# AI Translated
+#~ msgid "G-code Preview"
+#~ msgstr "G-code 预览"
+
+# AI Translated
+#~ msgid "Remove from favorites"
+#~ msgstr "从收藏中移除"
+
+# AI Translated
+#~ msgid ""
+#~ "Applies only to external walls, including hole boundaries. Moves the hot nozzle toward printed inner walls during wiping to reduce reheating of freshly printed plastic and seam marks.\n"
+#~ "\n"
+#~ "Especially useful at layer heights below 0.1 mm, where wipe marks are more visible.\n"
+#~ "\n"
+#~ "Uses the regular wipe if no adjacent inner wall is already printed (single-wall areas or Outer/Inner wall order), or if no supported inward path can be found, for example at tight corners or seam gaps."
+#~ msgstr ""
+#~ "仅适用于外墙，包括孔洞边界。擦拭时将高温喷嘴移向已打印的内墙，以减少刚打印塑料的二次受热和接缝痕迹。\n"
+#~ "\n"
+#~ "在层高低于 0.1 mm 时尤其有用，此时擦拭痕迹更明显。\n"
+#~ "\n"
+#~ "若相邻内墙尚未打印（单墙区域或外墙/内墙顺序），或找不到有支撑的向内路径（例如在锐角或接缝间隙处），则使用常规擦拭。"
+
+# AI Translated
+#, no-c-format, no-boost-format
+#~ msgid ""
+#~ "The distance the wipe path is shifted away from the external perimeter, specified in millimeters or as a percentage of the actual outer-wall extrusion width.\n"
+#~ "\n"
+#~ "For example, 50% shifts the path by half of the outer-wall width. The effective offset is limited by both the actual outer-wall width and the available spacing to the adjacent wall, so values above 100% or an equivalent absolute distance have no additional effect. Set to 0 to disable the offset."
+#~ msgstr ""
+#~ "擦拭路径偏离外墙轮廓的距离，以毫米或实际外墙挤出宽度的百分比指定。\n"
+#~ "\n"
+#~ "例如，50% 会将路径偏移外墙宽度的一半。实际偏移量同时受实际外墙宽度和到相邻墙的可用间距限制，因此超过 100% 的值或等效的绝对距离不会产生额外效果。设为 0 可禁用偏移。"
+
+# AI Translated
+#~ msgid "Invalid utf8 sequence"
+#~ msgstr "无效的 utf8 序列"
+
+#~ msgid ""
+#~ "RepRap firmware version => 3.4.0\n"
+#~ "Check your firmware documentation for supported shaper types."
+#~ msgstr ""
+#~ "RepRap 固件版本 => 3.4.0\n"
+#~ "请查阅您的固件文档了解支持的整形器类型。"
+
+#~ msgid "RepRap firmware uses the same frequency range for both axes."
+#~ msgstr "RepRap 固件将对两个轴使用相同的频率范围。"
+
+#~ msgid "RepRap firmware uses the same frequency for both axes."
+#~ msgstr "RepRap 固件将对两个轴使用相同的频率。"
+
+#~ msgid "Step file import parameters"
+#~ msgstr "STEP 文件导入参数"
+
+# AI Translated
+#~ msgid "  ·  click a constraint badge to remove it"
+#~ msgstr "  ·  单击约束标记可将其移除"
+
+# AI Translated
+#, c-format, boost-format
+#~ msgid ""
+#~ "Plugin \"%s\" is requesting to create the following file:\n"
+#~ "%s"
+#~ msgid_plural ""
+#~ "Plugin \"%s\" is requesting to create the following files:\n"
+#~ "%s"
+#~ msgstr[0] ""
+#~ "插件“%s”正在请求创建以下文件：\n"
+#~ "%s"
+
+# AI Translated
+#, c-format, boost-format
+#~ msgid ""
+#~ "Plugin \"%s\" is requesting to delete the following file:\n"
+#~ "%s"
+#~ msgid_plural ""
+#~ "Plugin \"%s\" is requesting to delete the following files:\n"
+#~ "%s"
+#~ msgstr[0] ""
+#~ "插件“%s”正在请求删除以下文件：\n"
+#~ "%s"
+
+# AI Translated
+#~ msgid ""
+#~ "Load step file failed.\n"
+#~ "Cannot open file for reading.\n"
+#~ msgstr ""
+#~ "加载 STEP 文件失败。\n"
+#~ "无法以读取方式打开文件。\n"
+
+# AI Translated
+#~ msgid "import svg failed: could not open svg."
+#~ msgstr "导入 SVG 失败：无法打开 SVG。"
+
+# AI Translated
+#~ msgid "import svg failed: could not parse imported svg data."
+#~ msgstr "导入 SVG 失败：无法解析导入的 SVG 数据。"
+
 # AI Translated
 #~ msgid ""
 #~ "\n"
@@ -39974,9 +40886,6 @@ msgstr ""
 
 #~ msgid "By vendor"
 #~ msgstr "按供应商"
-
-#~ msgid "Behaviour"
-#~ msgstr "行为"
 
 # AI Translated
 #~ msgid "Renders cast shadows on the plate, other objects, and each object onto itself in realistic view."
@@ -40912,12 +41821,6 @@ msgstr ""
 
 #~ msgid "Hostname or IP"
 #~ msgstr "主机名或IP地址"
-
-#~ msgid "Custom camera source"
-#~ msgstr "自定义摄像机源"
-
-#~ msgid "Switch Camera View"
-#~ msgstr "切换相机视图"
 
 #~ msgid "Organic support tree tip diameter must not be smaller than support material extrusion width."
 #~ msgstr "Organic支撑树尖端直径不得小于支撑材料挤出宽度。"
@@ -41858,9 +42761,6 @@ msgstr ""
 
 #~ msgid "Check for Update"
 #~ msgstr "检查新版本"
-
-#~ msgid "Recent files"
-#~ msgstr "最近的文件"
 
 #~ msgid "Import Zip Archive"
 #~ msgstr "导入 ZIP 压缩文件"

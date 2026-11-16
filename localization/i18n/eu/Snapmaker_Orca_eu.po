@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-09 13:41+0100\n"
+"POT-Creation-Date: 2026-11-16 21:34+0100\n"
 "PO-Revision-Date: 2026-07-20 13:33+0200\n"
 "Last-Translator: Manu Goiogana <mgoiogana@gmail.com>\n"
 "Language-Team: \n"
@@ -479,6 +479,7 @@ msgstr "Euskarriak blokeatu"
 msgid "Erase"
 msgstr "Ezabatu"
 
+#. TRN Variable layer height tool: the plain wheel resizes the edit area only with the cursor on a layer height bar.
 msgid "Mouse wheel"
 msgstr "Saguaren gurpila"
 
@@ -658,6 +659,47 @@ msgstr "Gainazal zimurra margotzeko modutik irteten"
 
 msgid "Paint-on fuzzy skin editing"
 msgstr "Gainazal zimurraren margotzea editatzen"
+
+msgid "Painted modifier"
+msgstr ""
+
+msgid "Modifier"
+msgstr "Aldatzailea"
+
+msgid "New painted modifier"
+msgstr ""
+
+#. TRN - Input label. Be short as possible
+#. Size in emboss direction
+#. TRN - Input label. Be short as possible
+msgid "Depth"
+msgstr "Sakonera"
+
+msgid ""
+"How far the painted area reaches into the part, measured from the painted surface.\n"
+"0 reaches across the whole part, up to the nearest unpainted surface."
+msgstr ""
+
+msgid "The part this modifier was painted on has been removed."
+msgstr ""
+
+msgid "Paint the modifier area"
+msgstr ""
+
+msgid "Erase the modifier area"
+msgstr ""
+
+msgid "Change painted modifier depth"
+msgstr ""
+
+msgid "Entering painted modifier"
+msgstr ""
+
+msgid "Leaving painted modifier"
+msgstr ""
+
+msgid "Painted modifier editing"
+msgstr ""
 
 msgid "Move"
 msgstr "Mugitu"
@@ -916,12 +958,6 @@ msgid "Shape"
 msgstr "Forma"
 
 #. TRN - Input label. Be short as possible
-#. Size in emboss direction
-#. TRN - Input label. Be short as possible
-msgid "Depth"
-msgstr "Sakonera"
-
-#. TRN - Input label. Be short as possible
 #. Angle between Y axis and text line direction.
 #. TRN - Input label. Be short as possible
 msgid "Rotation"
@@ -1072,8 +1108,9 @@ msgstr "Ebaketaren ondoren"
 msgid "Cut to parts"
 msgstr "Piezetan ebaki"
 
-msgid "Reset cutting plane and remove connectors"
-msgstr "Berrezarri ebaketa-planoa eta konektoreak ezabatu"
+#. TRN: Part assignments are the upper/lower cut groups changed by right-clicking parts.
+msgid "Reset the cutting plane, remove connectors, and clear part assignments."
+msgstr ""
 
 msgid "Reset Cut"
 msgstr "Ebaketa berrezarri"
@@ -1350,9 +1387,6 @@ msgstr "Ebaki"
 
 msgid "Click to change part type into negative volume."
 msgstr "Egin klik pieza-mota bolumen negatibora aldatzeko."
-
-msgid "Modifier"
-msgstr "Aldatzailea"
 
 msgid "Click to change part type into modifier."
 msgstr "Egin klik pieza-mota aldatzaile bihurtzeko."
@@ -2759,6 +2793,9 @@ msgstr "Gehitu euskarrien behartzailea"
 msgid "Add Precise Seam"
 msgstr "Gehitu jostura zehatza"
 
+msgid "Add Painted Modifier"
+msgstr ""
+
 msgid "Add text"
 msgstr "Gehitu testua"
 
@@ -2861,6 +2898,9 @@ msgstr "Iradokizuna"
 
 msgid "Text"
 msgstr "Testua"
+
+msgid "Add a modifier whose shape is painted on the part"
+msgstr ""
 
 msgid "Height Range Modifier"
 msgstr "Altuera-tartearen aldatzailea"
@@ -3110,6 +3150,15 @@ msgstr "Automatikoki orientatu inprimatze-kalitatea hobetzeko"
 
 msgid "Paste Process Settings"
 msgstr "Prozesuaren ezarpenak itsatsi"
+
+msgid "Edit Painting"
+msgstr ""
+
+msgid "Paint the area of the selected painted modifier"
+msgstr ""
+
+msgid "Delete the selected painted modifier"
+msgstr ""
 
 msgid "Edit"
 msgstr "Editatu"
@@ -3437,11 +3486,11 @@ msgstr "Ezin da azken pieza solidoa ezabatu."
 msgid "Delete part"
 msgstr "Ezabatu pieza"
 
-msgid "The target object contains only one part and can not be split."
-msgstr "Helburuko objektuak pieza bakarra du eta ezin da zatitu."
-
 msgid "Split to parts"
 msgstr "Piezetan zatitu"
+
+msgid "The target object contains only one part and can not be split."
+msgstr "Helburuko objektuak pieza bakarra du eta ezin da zatitu."
 
 msgid "Assembly"
 msgstr "Multzoa"
@@ -3500,6 +3549,13 @@ msgstr "Hautatutako lehen elementua objektu bat bada, bigarrena ere objektua iza
 
 msgid "If the first selected item is a part, the second should be a part in the same object."
 msgstr "Hautatutako lehen elementua pieza bat bada, bigarrena objektu bereko pieza bat izan beharko litzateke."
+
+#, boost-format
+msgid "Painted modifier %1%"
+msgstr ""
+
+msgid "Add painted modifier"
+msgstr ""
 
 msgid "The type of the last solid object part cannot be changed."
 msgstr "Objektu solidoaren azken pieza zein motatakoa den ezin da aldatu."
@@ -6425,6 +6481,9 @@ msgstr "Patroi baliogabea. Erabili N, N#K edo komaz bereizitako zerrenda bat, sa
 msgid "Invalid format. Expected vector format: \"%1%\""
 msgstr "Formatuak ez du balio. Espero den formatu bektoriala: \"%1%\""
 
+msgid "The excluded bed area is invalid. It must be a simple, non-self-intersecting polygon."
+msgstr ""
+
 msgid "System agents"
 msgstr "Sistema-agenteak"
 
@@ -6847,6 +6906,16 @@ msgstr "Erradioa"
 msgid "Keep min"
 msgstr "Mantendu minimoa"
 
+#. TRN Variable layer height tool, checkbox shown with several objects selected: give each object its own
+#. layer heights instead of one profile they all share.
+msgid "Each object separately"
+msgstr ""
+
+#. TRN Variable layer height tool: each selected object has a layer height bar at the right edge of the 3D view.
+#. Painting over an object in the 3D view, or over its bar, edits the layer heights of that object.
+msgid "Paint over an object or its bar to edit its layers."
+msgstr ""
+
 msgid "Add detail"
 msgstr "Gehitu xehetasuna"
 
@@ -6861,6 +6930,13 @@ msgstr "Leuntzen"
 
 msgid "Increase/decrease edit area"
 msgstr "Edizio-eremua handitu/txikitu"
+
+msgid "Increase/decrease edit area on the bar"
+msgstr ""
+
+#. TRN "Adaptive", "Smooth" and "Reset" are the buttons of the variable layer height tool.
+msgid "Variable layer height: only the three tallest selected objects have a bar. The others still take Adaptive, Smooth and Reset."
+msgstr ""
 
 msgid "Sequence"
 msgstr "Sekuentzia"
@@ -7183,6 +7259,9 @@ msgstr "Erdiko klik ikonoan"
 msgid "Set viewing angle"
 msgstr "Ezarri ikuspegi-angelua"
 
+msgid "Follow camera"
+msgstr ""
+
 msgid "Paint Toolbar"
 msgstr "Margotzeko tresna-barra"
 
@@ -7324,8 +7403,25 @@ msgstr "Saiatu berriro zuzeneko bideoarekin"
 msgid "Resolution"
 msgstr "Bereizmena"
 
+msgid "Custom camera source"
+msgstr "Kameraren iturburu pertsonalizatua"
+
+# AI Translated
+msgid "Camera stream URL"
+msgstr "Kameraren korrontearen URLa"
+
+# AI Translated
+msgid "URL of an MJPEG stream or of a web page that shows the camera, for example http://192.168.1.10:8080/?action=stream"
+msgstr "MJPEG korronte baten edo kamera erakusten duen web-orri baten URLa, adibidez http://192.168.1.10:8080/?action=stream"
+
+msgid "Enable"
+msgstr "Gaitu"
+
 msgid "Show \"Live Video\" guide page."
 msgstr "Erakutsi \"Zuzeneko bideoa\"-ren gida."
+
+msgid "Disable"
+msgstr "Desgaitu"
 
 msgid "Connect Printer (LAN)"
 msgstr "Konektatu inprimagailua (LAN)"
@@ -8369,6 +8465,9 @@ msgstr "Biltegiratze-gailua"
 msgid "Camera Setting"
 msgstr "Kameraren ezarpenak"
 
+msgid "Switch Camera View"
+msgstr "Aldatu kameraren ikuspegia"
+
 msgid "Control"
 msgstr "Kontrola"
 
@@ -9068,6 +9167,10 @@ msgstr "Sareko plug-in berria erabilgarri dago."
 msgid "Details"
 msgstr "Xehetasunak"
 
+# AI Translated
+msgid "Updates are available for your OrcaCloud plugins."
+msgstr "Eguneraketak daude erabilgarri zure OrcaCloud pluginetarako."
+
 msgid "New printer config available."
 msgstr "Inprimagailuaren konfigurazio berria erabilgarri dago."
 
@@ -9222,6 +9325,24 @@ msgstr ""
 
 msgid "Error loading shaders"
 msgstr "Errorea itzaldurak kargatzean"
+
+#. TRN The OpenGL context could not be made current, so nothing can be drawn in the 3D view.
+msgid "OpenGL could not be activated for the 3D view, so it cannot be shown."
+msgstr ""
+
+#. TRN %1% is the name of a graphics card or display adapter as Windows reports it, such as "Microsoft Basic Display Adapter".
+#, boost-format
+msgid "The window is on a display driven by \"%1%\"."
+msgstr ""
+
+msgid "Make sure the display adapter driving this window's display is enabled and its driver is installed and up to date."
+msgstr ""
+
+msgid "If the computer has more than one graphics card, connecting the monitor to another one may help."
+msgstr ""
+
+msgid "If the problem remains, close any overlay or screen capture software and try again."
+msgstr ""
 
 msgctxt "Layers"
 msgid "Top"
@@ -10235,10 +10356,6 @@ msgstr "Filamentu motari eta koloreari buruzko informazioa sinkronizatu da, bain
 msgid "Do you want to save changes to \"%1%\"?"
 msgstr "\"%1%\"(e)n egindako aldaketak gorde nahi dituzu?"
 
-# AI Translated
-msgid "UV Editor"
-msgstr "UV editorea"
-
 #, c-format, boost-format
 msgid "Successfully unmounted. The device %s (%s) can now be safely removed from the computer."
 msgstr "Behar bezala desmuntatu da. %s (%s) gailua segurtasunez ken daiteke ordenagailutik."
@@ -10271,6 +10388,17 @@ msgstr "Tolestu alboko barra"
 #, c-format, boost-format
 msgid "Loading file: %s"
 msgstr "%s fitxategia kargatzen"
+
+# AI Translated
+msgid "Some imported objects contain modifiers or parts with individual settings. They are shown as assemblies so that these settings remain visible."
+msgstr "Inportatutako objektu batzuek aldatzaileak edo ezarpen indibidualak dituzten piezak dituzte. Multzo gisa erakusten dira, ezarpen horiek ikusgai egon daitezen."
+
+# AI Translated
+msgid "Geometry import"
+msgstr "Geometria inportatzea"
+
+msgid "The file does not contain any geometry data."
+msgstr "Fitxategiak ez du geometria-daturik."
 
 msgid "Load 3MF"
 msgstr "Kargatu 3MF"
@@ -10340,7 +10468,7 @@ msgstr "Argitaratutako ezarpen batzuk ezin izan dira aplikatu:"
 msgid "Some filament slots were changed:"
 msgstr "Filamentu-erreten batzuk aldatu dira:"
 
-msgid "Component name(s) inside step file not in UTF-8 format!"
+msgid "Component name(s) inside STEP file not in UTF-8 format!"
 msgstr "STEP fitxategiko osagai-izena(k) ez dago/daude UTF-8 formatuan!"
 
 msgid "Because of unsupported text encoding, garbage characters may appear!"
@@ -10408,8 +10536,8 @@ msgstr "Inprimagailuaren informazioa sinkronizatu eta aurrezarpena automatikoki 
 msgid "This project contains a model made in the Design tab and no other geometry. Enable \"CAD feature (experimental)\" in Preferences and restart to see and edit it; it is kept when the project is saved."
 msgstr "Proiektu honek Diseinua fitxan sortutako modelo bat dauka, eta ez du beste geometriarik. Gaitu \"CAD eginbidea (esperimentala)\" Hobespenetan eta berrabiarazi hura ikusi eta editatzeko; proiektua gordetzean mantendu egiten da."
 
-msgid "The file does not contain any geometry data."
-msgstr "Fitxategiak ez du geometria-daturik."
+msgid "The invalid area has been removed, so please define it again using a valid polygon."
+msgstr ""
 
 msgid "Your object appears to be too large, do you want to scale it down to fit the print bed automatically?"
 msgstr "Zure objektua handiegia dela dirudi; automatikoki txikitu nahi duzu inprimatze-ohean kabitzeko?"
@@ -10658,6 +10786,10 @@ msgid ""
 msgstr ""
 "IDEX/IQEX modu paraleloaren arazo hauek hauteman dira:\n"
 "\n"
+
+# AI Translated
+msgid "UV Editor"
+msgstr "UV editorea"
 
 #, c-format, boost-format
 msgid ""
@@ -11514,11 +11646,50 @@ msgstr "Erakutsi \"Eguneko aholkua\" jakinarazpena abiarazi ondoren"
 msgid "If enabled, useful hints are displayed at startup."
 msgstr "Gaituta badago, aholku erabilgarriak bistaratzen dira abiaraztean."
 
-msgid "Downloads folder"
-msgstr "Deskargen karpeta"
+msgid "Features"
+msgstr "Ezaugarriak"
 
-msgid "Target folder for downloaded items"
-msgstr "Deskargatutako elementuen helburuko karpeta"
+msgid "Multi device management"
+msgstr "Gailu anitzen kudeaketa"
+
+msgid "With this option enabled, you can send a task to multiple devices at the same time and manage multiple devices."
+msgstr "Aukera hau gaituta, zeregin bat hainbat gailutara bidali eta hainbat gailu kudea ditzakezu aldi berean."
+
+# AI Translated
+msgid "CAD feature (experimental)"
+msgstr "CAD eginbidea (esperimentala)"
+
+# AI Translated
+msgid "With this option enabled, the Design tab is shown, where models can be built and edited parametrically. This feature is experimental and still under development."
+msgstr "Aukera hau gaituta dagoenean, Diseinua fitxa erakusten da; bertan modeloak modu parametrikoan sortu eta edita daitezke. Eginbide hau esperimentala da eta oraindik garatzen ari da."
+
+msgid "Pop up to select filament grouping mode"
+msgstr "Erakutsi filamentuak taldekatzeko modua hautatzeko leihoa"
+
+msgid "Clear my choice on..."
+msgstr "Garbitu nire aukera hemen..."
+
+msgid "Unsaved projects"
+msgstr "Gorde gabeko proiektuak"
+
+msgid "Clear my choice on the unsaved projects."
+msgstr "Garbitu gorde gabeko proiektuetarako nire aukera."
+
+msgid "Unsaved presets"
+msgstr "Gorde gabeko aurrezarpenak"
+
+msgid "Clear my choice on the unsaved presets."
+msgstr "Garbitu gorde gabeko aurrezarpenetarako nire aukera."
+
+msgid "Synchronizing printer preset"
+msgstr "Inprimagailuaren aurrezarpena sinkronizatzen"
+
+msgid "Clear my choice for synchronizing printer preset after loading the file."
+msgstr "Garbitu fitxategia kargatu ondoren inprimagailuaren aurrezarpena sinkronizatzeko nire hautapena."
+
+# AI Translated
+msgid "Files"
+msgstr "Fitxategiak"
 
 msgid "Load All"
 msgstr "Kargatu dena"
@@ -11544,6 +11715,15 @@ msgstr "Babeskopia automatikoa"
 msgid "Backup your project periodically to help with restoring from an occasional crash."
 msgstr "Egin proiektuaren babeskopia aldizka, noizbehinkako hutsegite baten ondoren leheneratzen laguntzeko."
 
+msgid "Store full source file paths in projects"
+msgstr "Gorde jatorrizko fitxategien bide osoak proiektuetan"
+
+msgid "If enabled, saved projects store the absolute path to imported source files (STEP/STL/...), so \"Reload from disk\" still works when the source file is kept in a different folder than the project. If disabled, only the filename is stored, which keeps projects portable and avoids embedding absolute paths."
+msgstr "Gaituta badago, gordetako proiektuek inportatutako jatorrizko fitxategien (STEP/STL/...) bide absolutua gordetzen dute; horrela, \"Birkargatu diskotik\" aukerak funtzionatzen jarraitzen du jatorrizko fitxategia proiektuaren karpeta ez den beste batean dagoenean. Desgaituta badago, fitxategi-izena soilik gordetzen da; horrek proiektuak eramangarri mantentzen ditu eta bide absolutuak txertatzea saihesten du."
+
+msgid "Recent files"
+msgstr "Azken fitxategiak"
+
 msgid "Maximum recent files"
 msgstr "Azken fitxategien gehieneko kopurua"
 
@@ -11553,17 +11733,61 @@ msgstr "Azken fitxategien gehieneko kopurua"
 msgid "Add STL/STEP files to recent files list"
 msgstr "Gehitu STL/STEP fitxategiak azken fitxategien zerrendara"
 
+# AI Translated
+msgid "Folder paths"
+msgstr "Karpeten bideak"
+
+msgid "Downloads folder"
+msgstr "Deskargen karpeta"
+
+msgid "Target folder for downloaded items"
+msgstr "Deskargatutako elementuen helburuko karpeta"
+
+# AI Translated
+msgid "File import"
+msgstr "Fitxategiak inportatzea"
+
+# AI Translated
+msgid "Ask how to handle unsupported characters in imported names"
+msgstr "Galdetu nola kudeatu inportatutako izenetako onartzen ez diren karaktereak"
+
+# AI Translated
+msgid "Show the removal or replacement choices when original names contain unsupported characters."
+msgstr "Erakutsi kentzeko edo ordezteko aukerak jatorrizko izenek onartzen ez diren karaktereak dituztenean."
+
+# AI Translated
+msgid "3MF import"
+msgstr "3MF inportatzea"
+
+# AI Translated
+msgid "Show options when importing"
+msgstr "Erakutsi aukerak inportatzean"
+
+# AI Translated
+msgid "Show original-name and sorting options when importing a 3MF without project settings into the current project."
+msgstr "Erakutsi jatorrizko izenen eta ordenatzearen aukerak proiektu-ezarpenik gabeko 3MF bat uneko proiektuan inportatzean."
+
+# AI Translated
+msgid "Keep original names"
+msgstr "Mantendu jatorrizko izenak"
+
+# AI Translated
+msgid "Use the body names stored in the imported file when it contains them."
+msgstr "Erabili inportatutako fitxategian gordetako gorputz-izenak, baldin badauzka."
+
 msgid "Don't warn when loading 3MF with modified G-code"
 msgstr "Ez abisatu aldatutako G-codea duen 3MF bat kargatzean"
 
-msgid "Show options when importing STEP file"
-msgstr "Erakutsi aukerak STEP fitxategia inportatzean"
+# AI Translated
+msgid "STEP import"
+msgstr "STEP inportatzea"
 
 msgid "If enabled, a parameter settings dialog will appear during STEP file import."
 msgstr "Gaituta badago, parametro-ezarpenen elkarrizketa-koadro bat agertuko da STEP fitxategia inportatzean."
 
-msgid "STEP importing: linear deflection"
-msgstr "STEP inportazioa: desbideratze lineala"
+# AI Translated
+msgid "Linear deflection"
+msgstr "Desbideratze lineala"
 
 msgid ""
 "Linear deflection used when meshing imported STEP files.\n"
@@ -11576,8 +11800,9 @@ msgstr ""
 "Inportazio-elkarrizketa-koadroko balio lehenetsi gisa erabiltzen da, edo zuzenean elkarrizketa-koadroa desgaituta dagoenean.\n"
 "Lehenetsia: 0,003 mm."
 
-msgid "STEP importing: angle deflection"
-msgstr "STEP inportazioa: angelu-desbideratzea"
+# AI Translated
+msgid "Angle deflection"
+msgstr "Angelu-desbideratzea"
 
 msgid ""
 "Angle deflection used when meshing imported STEP files.\n"
@@ -11590,17 +11815,31 @@ msgstr ""
 "Inportazio-elkarrizketa-koadroko balio lehenetsi gisa erabiltzen da, edo zuzenean elkarrizketa-koadroa desgaituta dagoenean.\n"
 "Lehenetsia: 0,5."
 
-msgid "STEP importing: Split into multiple objects"
-msgstr "STEP inportatzea: banatu hainbat objektutan"
+# AI Translated
+msgid "Split into multiple objects"
+msgstr "Banatu hainbat objektutan"
 
+# AI Translated
 msgid ""
 "If enabled, compound and compsolid shapes in imported STEP files are split into multiple objects.\n"
 "Used as the default in the import dialog, or directly when the import dialog is disabled.\n"
-"Default: disabled."
+"Default: enabled."
 msgstr ""
 "Gaituta badago, inportatutako STEP fitxategietako forma konposatuak eta compsolid formak hainbat objektutan banatzen dira.\n"
 "Inportazio-elkarrizketa-koadroko balio lehenetsi gisa erabiltzen da, edo zuzenean elkarrizketa-koadroa desgaituta dagoenean.\n"
-"Lehenetsia: desgaituta."
+"Lehenetsia: gaituta."
+
+# AI Translated
+msgid "AMF import"
+msgstr "AMF inportatzea"
+
+# AI Translated
+msgid "Show body grouping, original-name and sorting options when importing geometry into the current project."
+msgstr "Erakutsi gorputzak taldekatzeko, jatorrizko izenen eta ordenatzearen aukerak geometria uneko proiektuan inportatzean."
+
+# AI Translated
+msgid "DRC export"
+msgstr "DRC esportatzea"
 
 msgid "Quality level for Draco export"
 msgstr "Draco esportaziorako kalitate-maila"
@@ -11617,11 +11856,159 @@ msgstr ""
 "0 = galerarik gabeko konpresioa (geometria doitasun osoz mantentzen da). Galeradun balio baliodunak 8tik 30era bitartekoak dira.\n"
 "Balio txikiagoek fitxategi txikiagoak sortzen dituzte, baina xehetasun geometriko gehiago galtzen dute; balio handiagoek xehetasun gehiago mantentzen dute, fitxategi handiagoen truke."
 
-msgid "Store full source file paths in projects"
-msgstr "Gorde jatorrizko fitxategien bide osoak proiektuetan"
+msgid "Associate files to Snapmaker Orca"
+msgstr ""
 
-msgid "If enabled, saved projects store the absolute path to imported source files (STEP/STL/...), so \"Reload from disk\" still works when the source file is kept in a different folder than the project. If disabled, only the filename is stored, which keeps projects portable and avoids embedding absolute paths."
-msgstr "Gaituta badago, gordetako proiektuek inportatutako jatorrizko fitxategien (STEP/STL/...) bide absolutua gordetzen dute; horrela, \"Birkargatu diskotik\" aukerak funtzionatzen jarraitzen du jatorrizko fitxategia proiektuaren karpeta ez den beste batean dagoenean. Desgaituta badago, fitxategi-izena soilik gordetzen da; horrek proiektuak eramangarri mantentzen ditu eta bide absolutuak txertatzea saihesten du."
+msgid "File associations for the Microsoft Store version are managed by Windows Settings."
+msgstr "Microsoft Store bertsioko fitxategi-elkarteak Windows ezarpenen bidez kudeatzen dira."
+
+msgid "Open Windows Default Apps Settings"
+msgstr "Ireki Windows-en aplikazio lehenetsien ezarpenak"
+
+msgid "Associate 3MF files to Snapmaker Orca"
+msgstr ""
+
+msgid "If enabled, this sets Snapmaker Orca as the default application to open 3MF files."
+msgstr ""
+
+msgid "Associate DRC files to Snapmaker Orca"
+msgstr ""
+
+msgid "If enabled, sets Snapmaker Orca as default application to open DRC files."
+msgstr ""
+
+msgid "Associate STL files to Snapmaker Orca"
+msgstr ""
+
+msgid "If enabled, this sets Snapmaker Orca as the default application to open STL files."
+msgstr ""
+
+msgid "Associate STEP files to Snapmaker Orca"
+msgstr ""
+
+msgid "If enabled, this sets Snapmaker Orca as the default application to open STEP files."
+msgstr ""
+
+msgid "Associate web links to Snapmaker Orca"
+msgstr ""
+
+msgid "Behaviour"
+msgstr "Jokabidea"
+
+msgid "Auto flush after changing..."
+msgstr "Purgatu automatikoki aldatu ondoren..."
+
+msgid "Auto calculate flushing volumes when selected values changed"
+msgstr "Kalkulatu automatikoki purgatze-bolumenak hautatutako balioak aldatzean"
+
+msgid "Auto arrange plate after cloning"
+msgstr "Antolatu plaka automatikoki klonatu ondoren"
+
+msgid "Auto slice after changes"
+msgstr "Xerratu automatikoki aldaketen ondoren"
+
+msgid "If enabled, Snapmaker Orca will re-slice automatically whenever slicing-related settings change."
+msgstr ""
+
+msgid "Delay in seconds before auto slicing starts, allowing multiple edits to be grouped. Use 0 to slice immediately."
+msgstr "Xerratze automatikoa hasi aurreko atzerapena segundotan, hainbat aldaketa multzokatzeko. Erabili 0 berehala xerratzeko."
+
+# AI Translated
+msgid "Show options when adding a primitive"
+msgstr "Erakutsi aukerak oinarrizko geometria bat gehitzean"
+
+# AI Translated
+msgid "If enabled, a dialog asks for the dimensions of a primitive shape before it is added."
+msgstr "Gaituta badago, elkarrizketa-koadro batek oinarrizko geometria baten neurriak eskatzen ditu hura gehitu aurretik."
+
+msgid "Remove mixed temperature restriction"
+msgstr "Kendu tenperatura nahasien murrizketa"
+
+msgid "With this option enabled, you can print materials with a large temperature difference together."
+msgstr "Aukera hau gaituta, tenperatura-alde handia duten materialak batera inprima ditzakezu."
+
+msgid "Allow high/low temperature filament mixing"
+msgstr ""
+
+msgid "If enabled, allows printing with both high-temperature and low-temperature filaments simultaneously."
+msgstr ""
+
+msgid ""
+"Mixing materials with significantly different printing temperatures may result in:\n"
+"· Extruder clogging\n"
+"· Nozzle damage\n"
+"· Layer adhesion issues\n"
+"\n"
+"Do you want to enable this feature?"
+msgstr ""
+
+msgid "High and Low Temperature Material Mixing Risk"
+msgstr ""
+
+# AI Translated
+msgid "Remember last print action"
+msgstr "Gogoratu azken inprimatze-ekintza"
+
+msgid "If enabled, Snapmaker Orca will remember the last selected option in the print button's dropdown (e.g. Print, Export plate sliced file, Export G-code file) and use it as the default on next startup."
+msgstr ""
+
+msgid "Show a dialog asking whether to continue slicing when memory is low"
+msgstr ""
+
+# AI Translated
+msgid "Default view type"
+msgstr "Ikuspegi mota lehenetsia"
+
+# AI Translated
+msgid ""
+"The color scheme the sliced preview opens with.\n"
+"Automatic: Filament for multi material prints, Line Type for single material ones.\n"
+"Last used: the view type you selected last.\n"
+"Any other value always opens that view type.\n"
+"You can still switch the view type in the preview afterwards."
+msgstr ""
+"Xerratutako aurrebista irekitzean erabiltzen den kolore-eskema.\n"
+"Automatikoa: Filamentua material anitzeko inprimaketetan, Lerro-mota material bakarrekoetan.\n"
+"Azken erabilitakoa: azkena hautatu zenuen ikuspegi mota.\n"
+"Beste edozein balio: ikuspegi mota hori irekitzen da beti.\n"
+"Geroago ere alda dezakezu ikuspegi mota aurrebistan."
+
+msgid "Simplify preview while dragging"
+msgstr ""
+
+msgid ""
+"What the sliced preview draws while you drag the camera or a preview slider, or zoom with the mouse wheel, so that large prints stay responsive. The full toolpaths are restored as soon as you let go.\n"
+"Off: the full toolpaths.\n"
+"Solid model: the sliced objects and the prime tower as solid shapes in the colors of the current view, cut to the visible layer range, with its bottom and top layers and the supports drawn as toolpaths. Negative volumes are not cut out. A print made object by object, or one on a belt printer, keeps its full toolpaths.\n"
+"Shell only: every layer without its sparse infill, internal solid infill, internal bridges and gap fill, which lie under the walls and skins. Walls, top and bottom surfaces, bridges, supports and the prime tower are drawn whole, so the print looks the same from outside.\n"
+"The bottom and top layers of the visible range are always drawn whole; a layer with no infill of its own, as with infill combination, takes the layers down to the nearest one with infill along."
+msgstr ""
+
+msgid "Solid model"
+msgstr ""
+
+msgid "Shell only"
+msgstr ""
+
+# AI Translated
+msgid "Dim lower layers"
+msgstr "Ilundu beheko geruzak"
+
+# AI Translated
+msgid "When scrubbing the layer slider in the sliced preview, render the layers below the current one darkened so that only the layer being viewed is shown at full brightness."
+msgstr "Xerratutako aurrebistan geruza-graduatzailea mugitzean, unekoaren azpiko geruzak ilunduta erakusten ditu, ikusten ari den geruza soilik distira osoz ager dadin."
+
+# AI Translated
+msgid "Dimmed layer brightness"
+msgstr "Ilundutako geruzen distira"
+
+# AI Translated
+msgid ""
+"How brightly the dimmed layers are rendered when \"Dim lower layers\" is enabled.\n"
+"99% is barely darkened, 0% renders them black. Capped at 99% because 100% would be the same as disabling the option."
+msgstr ""
+"\"Ilundu beheko geruzak\" gaituta dagoenean ilundutako geruzak zein distiratsu marrazten diren.\n"
+"%99 balioak ozta-ozta iluntzen ditu, %0 balioak beltz bihurtzen ditu. Gehienez %99 onartzen da, %100 balioak aukera desgaitzearen gauza bera egingo bailuke."
 
 msgid "Preset"
 msgstr "Aurrezarpena"
@@ -11659,14 +12046,37 @@ msgstr "Erakutsi partekatutako profilen jakinarazpena"
 msgid "Show a notification with a link to browse shared profiles when the selected printer is changed."
 msgstr "Hautatutako inprimagailua aldatzen denean, erakutsi partekatutako profilak arakatzeko esteka duen jakinarazpen bat."
 
-msgid "Features"
-msgstr "Ezaugarriak"
+# AI Translated
+msgid "Visible plugin pages"
+msgstr "Ikusgai dauden plugin-orriak"
 
-msgid "Multi device management"
-msgstr "Gailu anitzen kudeaketa"
+# AI Translated
+msgid "pages"
+msgstr "orri"
 
-msgid "With this option enabled, you can send a task to multiple devices at the same time and manage multiple devices."
-msgstr "Aukera hau gaituta, zeregin bat hainbat gailutara bidali eta hainbat gailu kudea ditzakezu aldi berean."
+# AI Translated
+msgid "Number of plugin pages shown as fixed tabs before the remaining pages collapse into a dropdown on the last tab."
+msgstr "Fitxa finko gisa erakusten diren plugin-orrien kopurua; gainerako orriak azken fitxako goitibeherako zerrendan bilduko dira."
+
+# AI Translated
+msgid "Draw mate connectors as a face"
+msgstr "Marraztu akoplamendu-konektoreak aurpegi gisa"
+
+# AI Translated
+msgid "In the Design tab, draw a mate connector as a small face instead of the conventional disc with a roll quadrant. A face shows its orientation at a glance, without learning the disc convention. Turn this off for the conventional CAD representation."
+msgstr "Diseinua fitxan, akoplamendu-konektorea aurpegi txiki gisa marrazten du, biraketa-koadrantea duen disko konbentzionalaren ordez. Aurpegi batek begirada batean erakusten du bere orientazioa, diskoaren konbentzioa ikasi beharrik gabe. Desaktibatu hau CAD irudikapen konbentzionala erabiltzeko."
+
+# AI Translated
+msgid "Auto-close sketch loops"
+msgstr "Itxi automatikoki krokisen begiztak"
+
+# AI Translated
+msgid "Treat sketch endpoints within 0.001 mm as one joint and weld the loop shut. Off: only exactly coincident endpoints join, so a loop with a tiny gap is shown as open instead of being closed for you. Saved with each design; applies to designs started after the change."
+msgstr "Elkarrengandik 0,001 mm-ra dauden krokis-muturrak lotune bakartzat hartzen ditu eta begizta soldatuz ixten du. Desaktibatuta: zehazki bat datozen muturrak soilik lotzen dira; beraz, tarte txiki bat duen begizta irekita erakusten da, automatikoki itxi beharrean. Diseinu bakoitzarekin gordetzen da; aldaketaren ondoren hasitako diseinuei aplikatzen zaie."
+
+# AI Translated
+msgid "Speed dial"
+msgstr "Abiarazle azkarra"
 
 # AI Translated
 msgid "Open the Speed Dial from the keyboard"
@@ -11688,92 +12098,6 @@ msgstr "ekintza"
 # AI Translated
 msgid "How many recently launched actions to show at the top of the Speed Dial. Set to 0 to hide recent actions."
 msgstr "Abiarazle azkarraren goiko aldean erakutsiko diren azken ekintzen kopurua. Ezarri 0 azken ekintzak ezkutatzeko."
-
-# AI Translated
-msgid "CAD feature (experimental)"
-msgstr "CAD eginbidea (esperimentala)"
-
-# AI Translated
-msgid "With this option enabled, the Design tab is shown, where models can be built and edited parametrically. This feature is experimental and still under development."
-msgstr "Aukera hau gaituta dagoenean, Diseinua fitxa erakusten da; bertan modeloak modu parametrikoan sortu eta edita daitezke. Eginbide hau esperimentala da eta oraindik garatzen ari da."
-
-msgid "Pop up to select filament grouping mode"
-msgstr "Erakutsi filamentuak taldekatzeko modua hautatzeko leihoa"
-
-# AI Translated
-msgid "Visible plugin pages"
-msgstr "Ikusgai dauden plugin-orriak"
-
-# AI Translated
-msgid "pages"
-msgstr "orri"
-
-# AI Translated
-msgid "Number of plugin pages shown as fixed tabs before the remaining pages collapse into a dropdown on the last tab."
-msgstr "Fitxa finko gisa erakusten diren plugin-orrien kopurua; gainerako orriak azken fitxako goitibeherako zerrendan bilduko dira."
-
-msgid "Behavior"
-msgstr "Jokabidea"
-
-msgid "Auto flush after changing..."
-msgstr "Purgatu automatikoki aldatu ondoren..."
-
-msgid "Auto calculate flushing volumes when selected values changed"
-msgstr "Kalkulatu automatikoki purgatze-bolumenak hautatutako balioak aldatzean"
-
-msgid "Auto arrange plate after cloning"
-msgstr "Antolatu plaka automatikoki klonatu ondoren"
-
-# AI Translated
-msgid "Show options when adding a primitive"
-msgstr "Erakutsi aukerak oinarrizko geometria bat gehitzean"
-
-# AI Translated
-msgid "If enabled, a dialog asks for the dimensions of a primitive shape before it is added."
-msgstr "Gaituta badago, elkarrizketa-koadro batek oinarrizko geometria baten neurriak eskatzen ditu hura gehitu aurretik."
-
-msgid "Auto slice after changes"
-msgstr "Xerratu automatikoki aldaketen ondoren"
-
-msgid "If enabled, Snapmaker Orca will re-slice automatically whenever slicing-related settings change."
-msgstr ""
-
-msgid "Delay in seconds before auto slicing starts, allowing multiple edits to be grouped. Use 0 to slice immediately."
-msgstr "Xerratze automatikoa hasi aurreko atzerapena segundotan, hainbat aldaketa multzokatzeko. Erabili 0 berehala xerratzeko."
-
-msgid "Remove mixed temperature restriction"
-msgstr "Kendu tenperatura nahasien murrizketa"
-
-msgid "With this option enabled, you can print materials with a large temperature difference together."
-msgstr "Aukera hau gaituta, tenperatura-alde handia duten materialak batera inprima ditzakezu."
-
-msgid "Allow high/low temperature filament mixing"
-msgstr ""
-
-msgid "If enabled, allows printing with both high-temperature and low-temperature filaments simultaneously."
-msgstr ""
-
-msgid ""
-"Mixing materials with significantly different printing temperatures may result in:\n"
-"· Extruder clogging\n"
-"· Nozzle damage\n"
-"· Layer adhesion issues\n"
-"\n"
-"Do you want to enable this feature?"
-msgstr ""
-
-msgid "High and Low Temperature Material Mixing Risk"
-msgstr ""
-
-# AI Translated
-msgid "Remember last print action"
-msgstr "Gogoratu azken inprimatze-ekintza"
-
-msgid "If enabled, Snapmaker Orca will remember the last selected option in the print button's dropdown (e.g. Print, Export plate sliced file, Export G-code file) and use it as the default on next startup."
-msgstr ""
-
-msgid "Show a dialog asking whether to continue slicing when memory is low"
-msgstr ""
 
 msgid "Camera"
 msgstr "Kamera"
@@ -11817,22 +12141,6 @@ msgstr "Alderantzikatu saguaren zooma"
 msgid "If enabled, reverses the direction of zoom with mouse wheel."
 msgstr "Gaituta badago, saguaren gurpilarekin zoomaren norabidea alderantzikatzen du."
 
-# AI Translated
-msgid "Draw mate connectors as a face"
-msgstr "Marraztu akoplamendu-konektoreak aurpegi gisa"
-
-# AI Translated
-msgid "In the Design tab, draw a mate connector as a small face instead of the conventional disc with a roll quadrant. A face shows its orientation at a glance, without learning the disc convention. Turn this off for the conventional CAD representation."
-msgstr "Diseinua fitxan, akoplamendu-konektorea aurpegi txiki gisa marrazten du, biraketa-koadrantea duen disko konbentzionalaren ordez. Aurpegi batek begirada batean erakusten du bere orientazioa, diskoaren konbentzioa ikasi beharrik gabe. Desaktibatu hau CAD irudikapen konbentzionala erabiltzeko."
-
-# AI Translated
-msgid "Auto-close sketch loops"
-msgstr "Itxi automatikoki krokisen begiztak"
-
-# AI Translated
-msgid "Treat sketch endpoints within 0.001 mm as one joint and weld the loop shut. Off: only exactly coincident endpoints join, so a loop with a tiny gap is shown as open instead of being closed for you. Saved with each design; applies to designs started after the change."
-msgstr "Elkarrengandik 0,001 mm-ra dauden krokis-muturrak lotune bakartzat hartzen ditu eta begizta soldatuz ixten du. Desaktibatuta: zehazki bat datozen muturrak soilik lotzen dira; beraz, tarte txiki bat duen begizta irekita erakusten da, automatikoki itxi beharrean. Diseinu bakoitzarekin gordetzen da; aldaketaren ondoren hasitako diseinuei aplikatzen zaie."
-
 msgid "Pan"
 msgstr "Desplazatu"
 
@@ -11866,27 +12174,6 @@ msgstr "Teklatuko lasterbideak"
 msgid "Choose the key for each action."
 msgstr "Aukeratu ekintza bakoitzaren tekla."
 
-msgid "Clear my choice on..."
-msgstr "Garbitu nire aukera hemen..."
-
-msgid "Unsaved projects"
-msgstr "Gorde gabeko proiektuak"
-
-msgid "Clear my choice on the unsaved projects."
-msgstr "Garbitu gorde gabeko proiektuetarako nire aukera."
-
-msgid "Unsaved presets"
-msgstr "Gorde gabeko aurrezarpenak"
-
-msgid "Clear my choice on the unsaved presets."
-msgstr "Garbitu gorde gabeko aurrezarpenetarako nire aukera."
-
-msgid "Synchronizing printer preset"
-msgstr "Inprimagailuaren aurrezarpena sinkronizatzen"
-
-msgid "Clear my choice for synchronizing printer preset after loading the file."
-msgstr "Garbitu fitxategia kargatu ondoren inprimagailuaren aurrezarpena sinkronizatzeko nire hautapena."
-
 msgid "Graphics"
 msgstr "Grafikoak"
 
@@ -11913,6 +12200,15 @@ msgstr ""
 
 msgid "Render soft shadows of objects on the build plate in the Prepare view. Requires OpenGL 3.3 or later."
 msgstr ""
+
+# AI Translated
+# Needs human review: Preview option; 'translucent' rendered 'zeharrargi' (the catalog's older entries use 'garden' for transparent). Check the term.
+msgid "Translucent filaments"
+msgstr "Filamentu zeharrargiak"
+
+# AI Translated
+msgid "Draw the toolpaths of filaments whose color is partly transparent as see-through, as the 3D view draws their objects. Turn it off to draw every filament opaque."
+msgstr "Marraztu kolore partzialki gardena duten filamentuen inprimatze-ibilbideak zeharrargi gisa, 3D ikuspegiak haien objektuak marrazten dituen bezala. Desaktibatu filamentu guztiak opako marrazteko."
 
 msgid "Phong shading"
 msgstr "Phong itzaldura"
@@ -11974,6 +12270,27 @@ msgid ""
 msgstr ""
 "Aurrebistako inprimatze-ibilbideei plastiko distiratsuaren distira ematen die ikuspegi errealistan.\n"
 "Desaktibatuta, filamentu zeharrargi bat matea izaten da, eta opako batek ikuspegi arruntaren distira mantentzen du."
+
+msgid "Persistent"
+msgstr ""
+
+msgid "When Outline is enabled in the 3D canvas menu, outlines visible objects even when they are not selected."
+msgstr ""
+
+msgid "The configured outline color is invalid."
+msgstr ""
+
+msgid "Persistent color"
+msgstr ""
+
+msgid "Choose the color of the persistent outlines of unselected objects."
+msgstr ""
+
+msgid "Selection color"
+msgstr ""
+
+msgid "Choose the color of the outlines of selected objects."
+msgstr ""
 
 msgid "Anti-aliasing"
 msgstr "Antialiasing-a"
@@ -12113,57 +12430,6 @@ msgstr "Exekutatu"
 msgid "Replaces the current project with the OrcaSliced Combo, then measures the frame rate and render timings while the camera turns around it in Prepare and Preview, and while the layer slider moves through the sliced layers."
 msgstr "Uneko proiektua OrcaSliced Combo modeloarekin ordezten du, eta ondoren fotograma-tasa eta errendatze-denborak neurtzen ditu kamerak haren inguruan biratzen duen bitartean Prestatu eta Aurrebista fitxetan, baita geruza-graduatzailea xerratutako geruzetan zehar mugitzen den bitartean ere."
 
-# AI Translated
-msgid "G-code Preview"
-msgstr "G-code aurrebista"
-
-# AI Translated
-msgid "Default view type"
-msgstr "Ikuspegi mota lehenetsia"
-
-# AI Translated
-msgid ""
-"The color scheme the sliced preview opens with.\n"
-"Automatic: Filament for multi material prints, Line Type for single material ones.\n"
-"Last used: the view type you selected last.\n"
-"Any other value always opens that view type.\n"
-"You can still switch the view type in the preview afterwards."
-msgstr ""
-"Xerratutako aurrebista irekitzean erabiltzen den kolore-eskema.\n"
-"Automatikoa: Filamentua material anitzeko inprimaketetan, Lerro-mota material bakarrekoetan.\n"
-"Azken erabilitakoa: azkena hautatu zenuen ikuspegi mota.\n"
-"Beste edozein balio: ikuspegi mota hori irekitzen da beti.\n"
-"Geroago ere alda dezakezu ikuspegi mota aurrebistan."
-
-# AI Translated
-msgid "Dim lower layers"
-msgstr "Ilundu beheko geruzak"
-
-# AI Translated
-msgid "When scrubbing the layer slider in the sliced preview, render the layers below the current one darkened so that only the layer being viewed is shown at full brightness."
-msgstr "Xerratutako aurrebistan geruza-graduatzailea mugitzean, unekoaren azpiko geruzak ilunduta erakusten ditu, ikusten ari den geruza soilik distira osoz ager dadin."
-
-# AI Translated
-msgid "Dimmed layer brightness"
-msgstr "Ilundutako geruzen distira"
-
-# AI Translated
-msgid ""
-"How brightly the dimmed layers are rendered when \"Dim lower layers\" is enabled.\n"
-"99% is barely darkened, 0% renders them black. Capped at 99% because 100% would be the same as disabling the option."
-msgstr ""
-"\"Ilundu beheko geruzak\" gaituta dagoenean ilundutako geruzak zein distiratsu marrazten diren.\n"
-"%99 balioak ozta-ozta iluntzen ditu, %0 balioak beltz bihurtzen ditu. Gehienez %99 onartzen da, %100 balioak aukera desgaitzearen gauza bera egingo bailuke."
-
-# AI Translated
-# Needs human review: Preview option; 'translucent' rendered 'zeharrargi' (the catalog's older entries use 'garden' for transparent). Check the term.
-msgid "Translucent filaments"
-msgstr "Filamentu zeharrargiak"
-
-# AI Translated
-msgid "Draw the toolpaths of filaments whose color is partly transparent as see-through, as the 3D view draws their objects. Turn it off to draw every filament opaque."
-msgstr "Marraztu kolore partzialki gardena duten filamentuen inprimatze-ibilbideak zeharrargi gisa, 3D ikuspegiak haien objektuak marrazten dituen bezala. Desaktibatu filamentu guztiak opako marrazteko."
-
 msgid "Connection"
 msgstr "Konexioa"
 
@@ -12231,42 +12497,6 @@ msgid "Upload usage events and diagnostic logs to Snapmaker"
 msgstr ""
 
 msgid "Sends slicing results, printer connection steps and error messages to the Snapmaker cloud while signed in to a Snapmaker account. Sent in readable form: the account ID, the MQTT client ID, and the printer's network address and MQTT topics. Printer serial numbers and device IDs are sent as one-way hashes. Only active while the Customer Experience Improvement Program is joined."
-msgstr ""
-
-msgid "Associate files to Snapmaker Orca"
-msgstr ""
-
-msgid "File associations for the Microsoft Store version are managed by Windows Settings."
-msgstr "Microsoft Store bertsioko fitxategi-elkarteak Windows ezarpenen bidez kudeatzen dira."
-
-msgid "Open Windows Default Apps Settings"
-msgstr "Ireki Windows-en aplikazio lehenetsien ezarpenak"
-
-msgid "Associate 3MF files to Snapmaker Orca"
-msgstr ""
-
-msgid "If enabled, this sets Snapmaker Orca as the default application to open 3MF files."
-msgstr ""
-
-msgid "Associate DRC files to Snapmaker Orca"
-msgstr ""
-
-msgid "If enabled, sets Snapmaker Orca as default application to open DRC files."
-msgstr ""
-
-msgid "Associate STL files to Snapmaker Orca"
-msgstr ""
-
-msgid "If enabled, this sets Snapmaker Orca as the default application to open STL files."
-msgstr ""
-
-msgid "Associate STEP files to Snapmaker Orca"
-msgstr ""
-
-msgid "If enabled, this sets Snapmaker Orca as the default application to open STEP files."
-msgstr ""
-
-msgid "Associate web links to Snapmaker Orca"
 msgstr ""
 
 msgid "Developer"
@@ -12549,12 +12779,6 @@ msgstr "Inprimatze-sekuentzia"
 msgid "Same as Global"
 msgstr "Globalaren berdina"
 
-msgid "Enable"
-msgstr "Gaitu"
-
-msgid "Disable"
-msgstr "Desgaitu"
-
 msgid "Spiral vase"
 msgstr "Espiral formako loreontzia"
 
@@ -12657,16 +12881,16 @@ msgstr "Erabiltzailearen aurrezarpena"
 msgid "Preset Inside Project"
 msgstr "Proiektu barruko aurrezarpena"
 
-# AI Translated
-msgid "Copies all inherited values from the parent into this preset and removes the parent relationship. Presets compatible only with the parent may become unsupported."
-msgstr "Aurrezarpen honetara gurasoaren balio heredatu guztiak kopiatzen ditu eta gurasoarekiko lotura kentzen du. Gurasoarekin soilik bateragarriak diren aurrezarpenak bateraezin gera daitezke."
-
 msgid "Detach from parent"
 msgstr "Bereizi gurasotik"
 
 # AI Translated
 msgid "Save without parent"
 msgstr "Gorde gurasorik gabe"
+
+# AI Translated
+msgid "Copies all inherited values from the parent into this preset and removes the parent relationship. Presets compatible only with the parent may become unsupported."
+msgstr "Aurrezarpen honetara gurasoaren balio heredatu guztiak kopiatzen ditu eta gurasoarekiko lotura kentzen du. Gurasoarekin soilik bateragarriak diren aurrezarpenak bateraezin gera daitezke."
 
 # AI Translated
 msgid "Unique preset"
@@ -12890,10 +13114,6 @@ msgstr "Ainguratu gogokoetan (%s)"
 #, c-format, boost-format
 msgid "Unpin from favorites (%s)"
 msgstr "Kendu gogokoetatik (%s)"
-
-# AI Translated
-msgid "Remove from favorites"
-msgstr "Kendu gogokoetatik"
 
 # AI Translated
 msgid "Move left"
@@ -14889,6 +15109,12 @@ msgctxt "Nozzle flow type"
 msgid "XHF"
 msgstr "XHF"
 
+#. TRN An entry of the speed selector in a narrow sidebar (short for "Extruder 2")
+#, boost-format
+msgid "E%1%"
+msgstr ""
+
+#. TRN Printer settings extruder tab: the extruder's name, e.g. "Extruder 2", and its nozzle flow tag, e.g. "HF".
 #, c-format, boost-format
 msgid "%s: %s"
 msgstr "%s: %s"
@@ -14911,11 +15137,6 @@ msgstr ""
 msgid "Extruder %1%"
 msgstr ""
 
-#. TRN An entry of the speed selector in a narrow sidebar (short for "Extruder 2")
-#, boost-format
-msgid "E%1%"
-msgstr ""
-
 msgid "No modifications need to be copied."
 msgstr "Ez dago kopiatu beharreko aldaketarik."
 
@@ -14929,6 +15150,11 @@ msgstr "Aldatu %s-(r)en parametroak"
 #, c-format, boost-format
 msgid "Do you want to modify the following parameters of the %s to that of the %s?"
 msgstr "%s-(r)en ondorengo parametroak %s-(r)enekin ordezkatu nahi dituzu?"
+
+#. TRN %1% is the extruder (or nozzle variant) the values are copied from, %2% the list of those they are copied to, as the switch names them, e.g. "T2 HF, T3 HF".
+#, boost-format
+msgid "Do you want to copy the following parameters of %1% to %2%?"
+msgstr ""
 
 msgid "Click to reset current value and attach to the global value."
 msgstr "Egin klik uneko balioa berrezartzeko eta balio globalari lotzeko."
@@ -15069,6 +15295,15 @@ msgid ""
 msgstr ""
 "\n"
 "Aldatutako aurrezarpen-balioak bazter ditzakezu, edo aldatu dituzun balioak proiektu berrira transferitzea aukeratu"
+
+msgid "Click the compare button to see the full value."
+msgstr ""
+
+msgid "Process settings"
+msgstr ""
+
+msgid "Compare the full values"
+msgstr ""
 
 msgid "Extruder count"
 msgstr "Estrusore kopurua"
@@ -15826,10 +16061,6 @@ msgstr "Ireki CA ziurtagiri-fitxategia"
 msgid "HTTPS CA file is optional. It is only needed if you use HTTPS with a self-signed certificate."
 msgstr "HTTPS CA fitxategia aukerakoa da. HTTPS ziurtagiri autosinatuekin erabiltzen baduzu bakarrik behar da."
 
-# AI Translated
-msgid "This system uses HTTPS certificates from the system Certificate Store or Keychain. To use a custom CA file, import it there."
-msgstr "Sistema honek sistemaren Ziurtagiri-biltegiko edo Giltzatako HTTPS ziurtagiriak erabiltzen ditu. CA fitxategi pertsonalizatu bat erabiltzeko, inportatu bertara."
-
 msgid "Printer model"
 msgstr "Inprimagailuaren modeloa"
 
@@ -15847,6 +16078,10 @@ msgstr "Konektatu"
 
 msgid "Manual Setup"
 msgstr "Eskuzko konfigurazioa"
+
+# AI Translated
+msgid "This system uses HTTPS certificates from the system Certificate Store or Keychain. To use a custom CA file, import it there."
+msgstr "Sistema honek sistemaren Ziurtagiri-biltegiko edo Giltzatako HTTPS ziurtagiriak erabiltzen ditu. CA fitxategi pertsonalizatu bat erabiltzeko, inportatu bertara."
 
 msgid "IP and Access Code Verified! You may close the window"
 msgstr "IPa eta sarbide-kodea egiaztatu dira! Leihoa itxi dezakezu"
@@ -16427,6 +16662,9 @@ msgstr "Purgatze-dorrea bazterketa-eremu batetik gertuegi dago. Inprimatzean tal
 msgid "Prime tower is too close to the clumping detection area. There may be collisions when printing."
 msgstr "Purgatze-dorrea material-metaketa detektatzeko eremutik gertuegi dago. Inprimatzean talkak gerta daitezke."
 
+msgid "The extruder printable areas share no common area, so the prime tower cannot be printed.\n"
+msgstr ""
+
 # AI Translated
 msgid "Prime tower is partially outside the printable area, and it cannot be printed.\n"
 msgstr "Purgatze-dorrea partzialki inprimagarria den eremutik kanpo dago, eta ezin da inprimatu.\n"
@@ -16439,6 +16677,24 @@ msgstr "Gomendatutako pitaren tenperatura-tartea baliogabea da. Beheko mugak goi
 
 msgid "If you still want to print, you can enable the option in Preferences / Control / Slicing / Remove mixed temperature restriction."
 msgstr "Hala ere inprimatu nahi baduzu, aukera hau gaitu dezakezu: Hobespenak / Kontrola / Xerratzea / Kendu tenperatura mistoen murrizketa."
+
+msgid "A prime tower with printing by object is not supported together with the dynamic filament map. Print by layer, or disable the dynamic filament map."
+msgstr ""
+
+msgid "A prime tower requires that all objects have the same layer height."
+msgstr "Purgatze-dorreak objektu guztiek geruza-altuera bera izatea eskatzen du."
+
+msgid "A prime tower requires that all objects are printed over the same number of raft layers."
+msgstr "Purgatze-dorreak objektu guztiak baltsa-geruza kopuru beraren gainean inprimatzea eskatzen du."
+
+msgid "The prime tower is only supported for multiple objects if they are printed with the same support_top_z_distance."
+msgstr "Purgatze-dorrea hainbat objektutarako soilik onartzen da support_top_z_distance bera erabiliz inprimatzen badira."
+
+msgid "A prime tower requires that all objects are sliced with the same layer height."
+msgstr "Purgatze-dorreak objektu guztiak geruza-altuera berarekin xerratzea eskatzen du."
+
+msgid "The prime tower is only supported if all objects have the same variable layer height."
+msgstr "Purgatze-dorrea objektu guztiek geruza-altuera aldakor bera badute soilik onartzen da."
 
 msgid "No extrusions under current settings."
 msgstr "Uneko ezarpenekin ez dago estrusiorik."
@@ -16527,6 +16783,10 @@ msgstr "Zintaren purgatze-dorrea gaituta dago, baina proiektuak ez du purgatze-d
 msgid "The project contains multiple managed belt purge towers. Reload the plate or toggle the belt purge tower off and on to regenerate it."
 msgstr "Proiektuak kudeatutako zintaren purgatze-dorre bat baino gehiago ditu. Kargatu berriro plaka edo desaktibatu eta aktibatu zintaren purgatze-dorrea hura berriro sortzeko."
 
+#. TRN "Precise Z height" is a print setting, "prime tower" the tower that purges the nozzle between filaments.
+msgid "Precise Z height is not applied: with the prime tower, objects of different heights that use variable layer height have to share their layers."
+msgstr ""
+
 msgid "Enabling both precise Z height and the prime tower may cause slicing errors."
 msgstr "Z altuera zehatza eta purgatze-dorrea batera gaitzeak xerratze-erroreak sor ditzake."
 
@@ -16538,6 +16798,12 @@ msgstr "Hautatu \"Objektuka\" inprimatze-sekuentzia hainbat objektu espiral form
 
 msgid "Spiral (vase) mode does not work when an object contains more than one material."
 msgstr "Espiral formako (loreontzi) moduak ez du funtzionatzen objektu batek material bat baino gehiago dituenean."
+
+# AI Translated
+#. TRN %1% is the object name.
+#, boost-format
+msgid "Spiral vase mode needs no sparse infill, one wall loop and no top shell layers, but the object %1% uses other values, so it will not print as a continuous spiral."
+msgstr "Espiral formako loreontzi moduak hormako begizta bakarra behar du, dentsitate baxuko betegarririk eta goiko oskolaren geruzarik gabe, baina %1% objektuak beste balio batzuk erabiltzen ditu; beraz, ez da espiral jarrai gisa inprimatuko."
 
 #, boost-format
 msgid "While the object %1% itself fits the build volume, it exceeds the maximum build volume height because of material shrinkage compensation."
@@ -16584,24 +16850,6 @@ msgstr "Purgatze-dorrea ez da onartzen geruza-altuera egokigarria aktibatuta dag
 
 msgid "A prime tower requires any “support gap” to be a multiple of layer height."
 msgstr "Purgatze-dorreak \"euskarri-tarte\" oro geruza-altueraren multiploa izatea eskatzen du."
-
-msgid "A prime tower with printing by object is not supported together with the dynamic filament map. Print by layer, or disable the dynamic filament map."
-msgstr ""
-
-msgid "A prime tower requires that all objects have the same layer height."
-msgstr "Purgatze-dorreak objektu guztiek geruza-altuera bera izatea eskatzen du."
-
-msgid "A prime tower requires that all objects are printed over the same number of raft layers."
-msgstr "Purgatze-dorreak objektu guztiak baltsa-geruza kopuru beraren gainean inprimatzea eskatzen du."
-
-msgid "The prime tower is only supported for multiple objects if they are printed with the same support_top_z_distance."
-msgstr "Purgatze-dorrea hainbat objektutarako soilik onartzen da support_top_z_distance bera erabiliz inprimatzen badira."
-
-msgid "A prime tower requires that all objects are sliced with the same layer height."
-msgstr "Purgatze-dorreak objektu guztiak geruza-altuera berarekin xerratzea eskatzen du."
-
-msgid "The prime tower is only supported if all objects have the same variable layer height."
-msgstr "Purgatze-dorrea objektu guztiek geruza-altuera aldakor bera badute soilik onartzen da."
 
 msgid "One or more object were assigned an extruder that the printer does not have."
 msgstr "Objektu bati edo gehiagori inprimagailuak ez duen estrusore bat esleitu zaio."
@@ -21431,17 +21679,17 @@ msgstr "Purgatu barrurantz"
 
 # AI Translated
 msgid ""
-"Applies only to external walls, including hole boundaries. Moves the hot nozzle toward printed inner walls during wiping to reduce reheating of freshly printed plastic and seam marks.\n"
+"Applies only to external walls, including hole boundaries. Moves the hot nozzle toward the inner walls during wiping to reduce reheating of freshly printed plastic and seam marks.\n"
 "\n"
 "Especially useful at layer heights below 0.1 mm, where wipe marks are more visible.\n"
 "\n"
-"Uses the regular wipe if no adjacent inner wall is already printed (single-wall areas or Outer/Inner wall order), or if no supported inward path can be found, for example at tight corners or seam gaps."
+"Uses the regular wipe where the outer wall has no adjacent inner wall, such as in single-wall areas, or if no supported inward path can be found, for example at tight corners or seam gaps."
 msgstr ""
-"Kanpoko hormei soilik aplikatzen zaie, zuloen mugak barne. Purgatzean pita beroa jada inprimatutako barruko hormetarantz mugitzen du, inprimatu berri den plastikoa berriro berotzea eta jostura-markak murrizteko.\n"
+"Kanpoko hormei soilik aplikatzen zaie, zuloen mugak barne. Garbitzean pita beroa barruko hormetarantz mugitzen du, inprimatu berri den plastikoa berriro berotzea eta jostura-markak murrizteko.\n"
 "\n"
-"Bereziki erabilgarria da 0,1 mm-tik beherako geruza-altueretan, non purgatze-markak nabarmenago ikusten diren.\n"
+"Bereziki erabilgarria da 0,1 mm-tik beherako geruza-altueretan, non garbiketa-markak nabarmenago ikusten diren.\n"
 "\n"
-"Purgatze arrunta erabiltzen du ondoko barruko hormarik jada inprimatuta ez badago (horma bakarreko eremuak edo Kanpokoa/Barrukoa hormen ordena) edo euskarria duen barrurako biderik aurkitzen ez bada, adibidez izkina estuetan edo josturako hutsuneetan."
+"Garbiketa arrunta erabiltzen du kanpoko hormak ondoan barruko hormarik ez duen lekuetan, hala nola horma bakarreko eremuetan, edo euskarria duen barrurako biderik aurkitzen ez bada, adibidez izkina estuetan edo josturako hutsuneetan."
 
 # AI Translated
 msgid "Wipe inward distance"
@@ -21452,11 +21700,15 @@ msgstr "Barrurako purgatze-distantzia"
 msgid ""
 "The distance the wipe path is shifted away from the external perimeter, specified in millimeters or as a percentage of the actual outer-wall extrusion width.\n"
 "\n"
-"For example, 50% shifts the path by half of the outer-wall width. The effective offset is limited by both the actual outer-wall width and the available spacing to the adjacent wall, so values above 100% or an equivalent absolute distance have no additional effect. Set to 0 to disable the offset."
-msgstr ""
-"Purgatze-bidea kanpoko perimetrotik zenbat desplazatzen den, milimetrotan edo kanpoko hormaren benetako estrusio-zabaleraren ehuneko gisa adierazita.\n"
+"For example, 50% shifts the path by half of the outer-wall width. The effective offset is limited by both the actual outer-wall width and the available spacing to the adjacent wall, so values above 100% or an equivalent absolute distance have no additional effect. Set to 0 to disable the offset.\n"
 "\n"
-"Adibidez, 50% bideak kanpoko hormaren zabaleraren erdia desplazatzen du. Desplazamendu eraginkorra mugatuta dago bai kanpoko hormaren benetako zabaleragatik bai ondoko hormarainoko tarte erabilgarriagatik; beraz, 100% baino handiagoko balioek edo baliokidea den distantzia absolutu batek ez dute eragin gehigarririk. Ezarri 0 desplazamendua desgaitzeko."
+"With Outer/Inner or Inner/Outer/Inner wall order, the offset is limited to 50% of the actual outer-wall width because the adjacent inner wall is printed after the outer wall. This also applies to equivalent distances specified in millimeters."
+msgstr ""
+"Garbiketa-ibilbidea kanpoko perimetrotik zenbat desplazatzen den, milimetrotan edo kanpoko hormaren benetako estrusio-zabaleraren ehuneko gisa adierazita.\n"
+"\n"
+"Adibidez, 50% ibilbideak kanpoko hormaren zabaleraren erdia desplazatzen du. Desplazamendu eraginkorra mugatuta dago bai kanpoko hormaren benetako zabaleragatik bai ondoko hormarainoko tarte erabilgarriagatik; beraz, 100% baino handiagoko balioek edo baliokidea den distantzia absolutu batek ez dute eragin gehigarririk. Ezarri 0 desplazamendua desgaitzeko.\n"
+"\n"
+"Kanpokoa/Barrukoa edo Barrukoa/Kanpokoa/Barrukoa hormen ordenarekin, desplazamendua gehienez kanpoko hormaren benetako zabaleraren 50% izan daiteke, ondoko barruko horma kanpoko hormaren ondoren inprimatzen delako. Hori milimetrotan adierazitako distantzia baliokideei ere aplikatzen zaie."
 
 msgid "Wipe before external loop"
 msgstr "Garbitu kanpoko begizta baino lehen"
@@ -21469,6 +21721,15 @@ msgstr ""
 "Kanpoko perimetro baten hasieran egon daitekeen gainestrusioaren ikusgarritasuna minimizatzeko, Kanpoko/Barruko edo Barruko/Kanpoko/Barruko horma inprimatze ordenarekin inprimatzean, atzera-egitearen lehengoratzea kanpoko perimetroaren hasieratik apur bat barrurago egiten da. Horrela, balizko gainestrusioa kanpoko gainazaletik ezkutatuta geratzen da.\n"
 "\n"
 "Hau erabilgarria da Kanpoko/Barruko edo Barruko/Kanpoko/Barruko horma inprimatze ordenarekin inprimatzean; izan ere, modu horietan litekeena da kanpoko perimetro bat atzera-egitea lehengoratzeko mugimendu baten ondoren berehala inprimatzea."
+
+msgid "Retract after outer wall"
+msgstr ""
+
+msgid ""
+"Always retract when the nozzle leaves an outer wall, even if the travel is shorter than the travel distance threshold.\n"
+"\n"
+"Without a retraction, a very short travel, for example to gap infill inside a thin wall, can drag the end of the outer wall inward and leave a visible dent at the seam."
+msgstr ""
 
 msgid "Wipe speed"
 msgstr "Purgatze-abiadura"
@@ -21971,6 +22232,12 @@ msgstr "Bikoiti-bakoiti"
 
 msgid "Close holes"
 msgstr "Itxi zuloak"
+
+msgid "Carve overlaps by per-layer slice area"
+msgstr ""
+
+msgid "When enabled, overlaps between multi-extruder parts are carved with the new algorithm: on each layer, the part with the smaller slice area owns the overlap, keeping small details intact inside larger bodies. Developer option."
+msgstr ""
 
 msgid "Z offset"
 msgstr "Z desplazamendua"
@@ -25001,8 +25268,8 @@ msgid "Expecting a regular expression."
 msgstr "Adierazpen erregular bat espero zen."
 
 # AI Translated
-msgid "Invalid utf8 sequence"
-msgstr "utf8 sekuentzia baliogabea"
+msgid "Invalid UTF-8 sequence"
+msgstr "UTF-8 sekuentzia baliogabea"
 
 # AI Translated
 msgid "Non-ASCII7 characters are only allowed inside text blocks and string literals, not inside code blocks."
@@ -25821,10 +26088,10 @@ msgid "Klipper version => 0.9.0"
 msgstr "Klipper bertsioa => 0.9.0"
 
 msgid ""
-"RepRap firmware version => 3.4.0\n"
+"RepRapFirmware version => 3.4.0\n"
 "Check your firmware documentation for supported shaper types."
 msgstr ""
-"RepRap firmwarearen bertsioa => 3.4.0\n"
+"RepRapFirmware bertsioa => 3.4.0\n"
 "Begiratu zure firmwarearen dokumentazioa onartutako moldatzaile motak ezagutzeko."
 
 msgid "Frequency (Start / End): "
@@ -25841,8 +26108,8 @@ msgstr "Y hasiera / amaiera: "
 msgid "Frequency settings"
 msgstr "Maiztasun-ezarpenak"
 
-msgid "RepRap firmware uses the same frequency range for both axes."
-msgstr "RepRap firmwareak maiztasun-tarte bera erabiltzen du bi ardatzetarako."
+msgid "RepRapFirmware uses the same frequency range for both axes."
+msgstr "RepRapFirmware maiztasun-tarte bera erabiltzen du bi ardatzetarako."
 
 msgid "Damp: "
 msgstr "Moteltzea: "
@@ -25881,8 +26148,8 @@ msgstr "Maiztasuna X / Y: "
 msgid "Damp (Start / End): "
 msgstr "Moteltzea (hasiera / amaiera): "
 
-msgid "RepRap firmware uses the same frequency for both axes."
-msgstr "RepRap firmwareak maiztasun bera erabiltzen du bi ardatzetarako."
+msgid "RepRapFirmware uses the same frequency for both axes."
+msgstr "RepRapFirmware maiztasun bera erabiltzen du bi ardatzetarako."
 
 msgid "Note: Use previously calculated frequencies."
 msgstr "Oharra: erabili aurrez kalkulatutako maiztasunak."
@@ -26092,6 +26359,18 @@ msgstr "Testuradun inprimatze-plaka (A aldea)"
 msgid "Smooth Build Plate (Side B)"
 msgstr "Inprimatze-plaka leuna (B aldea)"
 
+# AI Translated
+msgid "Reading the printer's filament slots..."
+msgstr "Inprimagailuaren filamentu-artekak irakurtzen..."
+
+# AI Translated
+msgid "Could not read the printer. Close this dialog and try again."
+msgstr "Ezin izan da inprimagailua irakurri. Itxi elkarrizketa-koadro hau eta saiatu berriro."
+
+# AI Translated
+msgid "Could not connect to the printer. Check that it is on, then reopen this dialog."
+msgstr "Ezin izan da inprimagailura konektatu. Egiaztatu piztuta dagoela eta ireki berriro elkarrizketa-koadro hau."
+
 #, c-format, boost-format
 msgid "Printer: %s"
 msgstr "Inprimagailua: %s"
@@ -26107,6 +26386,16 @@ msgstr "Filamentu-esleipena:"
 #, c-format, boost-format
 msgid "Ext - %s"
 msgstr "Ext - %s"
+
+# AI Translated
+#. TRN Creality send dialog. CFS is Creality's multi-filament unit.
+msgid "The printer reports no CFS connected, so the print will use the external spool."
+msgstr "Inprimagailuak dioenez, ez dago CFSrik konektatuta; beraz, inprimaketak kanpoko bobina erabiliko du."
+
+# AI Translated
+#. TRN Creality send dialog, when the printer lists no CFS slots or does not answer
+msgid "The printer did not report any filament slots, so the print will use the external spool."
+msgstr "Inprimagailuak ez du filamentu-artekarik jakinarazi; beraz, inprimaketak kanpoko bobina erabiliko du."
 
 msgid "Unable to perform boolean operation on selected parts"
 msgstr "Ezin da eragiketa boolearra egin hautatutako piezetan"
@@ -27745,7 +28034,7 @@ msgstr "s"
 msgid "Volumetric speed"
 msgstr "Abiadura bolumetrikoa"
 
-msgid "Step file import parameters"
+msgid "STEP file import parameters"
 msgstr "STEP fitxategia inportatzeko parametroak"
 
 msgid "Smaller linear and angular deflections result in higher-quality transformations but increase the processing time."
@@ -27766,6 +28055,34 @@ msgstr "Sartu balio balioduna (0.01 < angelu-desbideratzea < 1.0)"
 msgid "Split compound and compsolid into multiple objects"
 msgstr "Banatu compound eta compsolid hainbat objektutan"
 
+# AI Translated
+msgid "Loads each body of a multi-body part separately. Needed to keep the bodies' original names."
+msgstr "Hainbat gorputz dituen pieza baten gorputz bakoitza bereizita kargatzen du. Beharrezkoa da gorputzen jatorrizko izenak mantentzeko."
+
+# AI Translated
+msgid "Load as an assembly"
+msgstr "Kargatu multzo gisa"
+
+# AI Translated
+msgid "Load as a single object (can be split later)"
+msgstr "Kargatu objektu bakar gisa (geroago bana daiteke)"
+
+# AI Translated
+msgid "The original bodies and names are kept inside the object. Use Split to parts to show them as separate parts."
+msgstr "Jatorrizko gorputzak eta izenak objektuaren barruan mantentzen dira. Erabili \"Piezetan zatitu\" pieza bereizi gisa erakusteko."
+
+# AI Translated
+msgid "Use the body names stored in the file, when there are any. Needs Split compound for parts with several bodies."
+msgstr "Erabili fitxategian gordetako gorputz-izenak, baldin badaude. Hainbat gorputz dituzten piezetarako \"Banatu compound\" behar da."
+
+# AI Translated
+msgid "Sort parts by name"
+msgstr "Ordenatu piezak izenaren arabera"
+
+# AI Translated
+msgid "Sort the parts inside each imported assembly in the object list. This does not change the order used for slicing. Available when Keep original names is on."
+msgstr "Ordenatu inportatutako multzo bakoitzeko piezak objektuen zerrendan. Honek ez du xerratzeko erabiltzen den ordena aldatzen. Erabilgarri \"Mantendu jatorrizko izenak\" gaituta dagoenean."
+
 msgid "Number of triangular facets"
 msgstr "Aurpegi triangeluarren kopurua"
 
@@ -27774,6 +28091,96 @@ msgstr "Kalkulatzen, itxaron..."
 
 msgid "If enabled, the values above are stored as the defaults used for future STEP imports (and shown in Preferences)."
 msgstr "Gaituz gero, goiko balioak etorkizuneko STEP inportazioetan erabiliko diren lehenetsi gisa gordeko dira (eta Hobespenetan erakutsiko dira)."
+
+# AI Translated
+msgid "Don't ask again"
+msgstr "Ez galdetu berriro"
+
+# AI Translated
+msgid "Save these choices and apply them without asking next time. You can show this dialog again in Preferences."
+msgstr "Gorde aukera hauek eta aplikatu galdetu gabe hurrengoan. Elkarrizketa-koadro hau berriro erakuts dezakezu Hobespenetan."
+
+# AI Translated
+msgid "3MF geometry import options"
+msgstr "3MF geometria inportatzeko aukerak"
+
+# AI Translated
+msgid "AMF geometry import options"
+msgstr "AMF geometria inportatzeko aukerak"
+
+# AI Translated
+msgid "Choose how to name and order the parts of this file."
+msgstr "Aukeratu nola izendatu eta ordenatu fitxategi honetako piezak."
+
+# AI Translated
+msgid "Choose how to load the bodies in this file."
+msgstr "Aukeratu nola kargatu fitxategi honetako gorputzak."
+
+# AI Translated
+msgid "Load as separate objects"
+msgstr "Kargatu objektu bereizi gisa"
+
+# AI Translated
+msgid "Each object in the file is loaded on its own, as OrcaSlicer always loaded AMF files."
+msgstr "Fitxategiko objektu bakoitza bere aldetik kargatzen da, OrcaSlicer-ek AMF fitxategiak beti kargatu izan dituen bezala."
+
+# AI Translated
+msgid "The bodies of each group in the file become parts of one object, in their relative positions."
+msgstr "Fitxategiko talde bakoitzeko gorputzak objektu bakar baten pieza bihurtzen dira, beren posizio erlatiboetan."
+
+# AI Translated
+msgid "Use the body names stored in the file, when there are any. When disabled, the usual OrcaSlicer names are used; existing project names are kept."
+msgstr "Erabili fitxategian gordetako gorputz-izenak, baldin badaude. Desgaituta dagoenean, OrcaSlicer-en ohiko izenak erabiltzen dira; dauden proiektu-izenak mantendu egiten dira."
+
+# AI Translated
+msgid "Use these choices as defaults next time. The dialog still opens."
+msgstr "Erabili aukera hauek lehenetsi gisa hurrengoan. Hala ere, elkarrizketa-koadroa irekiko da."
+
+# AI Translated
+msgid "A name in the file is not valid Unicode. The geometry was not imported."
+msgstr "Fitxategiko izen bat ez da baliozko Unicode. Geometria ez da inportatu."
+
+# AI Translated
+msgid "Invalid name"
+msgstr "Izen baliogabea"
+
+# AI Translated
+msgid "Unsupported characters in names"
+msgstr "Onartzen ez diren karaktereak izenetan"
+
+# AI Translated
+msgid "Some original names contain characters that OrcaSlicer cannot use. Choose how to change them before importing."
+msgstr "Jatorrizko izen batzuek OrcaSlicer-ek erabili ezin dituen karaktereak dituzte. Aukeratu nola aldatu inportatu aurretik."
+
+# AI Translated
+msgid "Remove unsupported characters"
+msgstr "Kendu onartzen ez diren karaktereak"
+
+# AI Translated
+msgid "Replace with:"
+msgstr "Ordeztu honekin:"
+
+# AI Translated
+msgid "Each unsupported character is replaced with this text. It may be longer than one character."
+msgstr "Onartzen ez den karaktere bakoitza testu honekin ordezten da. Karaktere bat baino luzeagoa izan daiteke."
+
+# AI Translated
+msgid "Use this rule as the default next time. The dialog still opens."
+msgstr "Erabili arau hau lehenetsi gisa hurrengoan. Hala ere, elkarrizketa-koadroa irekiko da."
+
+# AI Translated
+msgid "Save this rule and apply it without asking next time. You can show this dialog again in Preferences."
+msgstr "Gorde arau hau eta aplikatu galdetu gabe hurrengoan. Elkarrizketa-koadro hau berriro erakuts dezakezu Hobespenetan."
+
+# AI Translated
+msgid "Enter a non-empty replacement containing only supported characters, or choose removal."
+msgstr "Sartu hutsik ez dagoen ordezko testu bat, onartutako karaktereekin soilik, edo aukeratu kentzea."
+
+# AI Translated
+#. TRN The placeholders are the original name and its imported replacement.
+#, boost-format
+msgid "%1% → %2%"
+msgstr "%1% → %2%"
 
 msgid "PresetBundle"
 msgstr "Aurrezarpen-paketea"
@@ -29914,6 +30321,18 @@ msgid "Constraints"
 msgstr "Murrizketak"
 
 # AI Translated
+msgid "No constraints yet"
+msgstr "Oraindik ez dago murrizketarik"
+
+# AI Translated
+msgid "Zoom to selection"
+msgstr "Zooma hautapenera"
+
+# AI Translated
+msgid "Delete constraint"
+msgstr "Ezabatu murrizketa"
+
+# AI Translated
 msgid "Feature tree"
 msgstr "Eragiketa-zuhaitza"
 
@@ -29946,10 +30365,6 @@ msgstr "Mugitu behera"
 # AI Translated
 msgid "Show / hide"
 msgstr "Erakutsi / ezkutatu"
-
-# AI Translated
-msgid "Zoom to selection"
-msgstr "Zooma hautapenera"
 
 # AI Translated
 msgid "Check interference — find overlapping bodies"
@@ -30130,6 +30545,11 @@ msgstr[1] "%d askatasun-gradu"
 #, c-format, boost-format
 msgid "Sketch %d"
 msgstr "Krokisa %d"
+
+#. TRN %1% is the name of the sketch being edited, as its Feature tree row shows it.
+#, boost-format
+msgid "Editing: %1%   ·   N = look normal to the plane   ·   Confirm or Cancel in the toolbar"
+msgstr ""
 
 # AI Translated
 #, c-format, boost-format
@@ -30831,9 +31251,8 @@ msgstr "Arrastatu izkina bat eskalatzeko, zentroa mugitzeko  ·  Enter edo ✓ a
 msgid "  ·  Esc goes back to Select"
 msgstr "  ·  Esc teklak Hautatu tresnara itzultzen du"
 
-# AI Translated
-msgid "  ·  click a constraint badge to remove it"
-msgstr "  ·  egin klik murrizketa-ikur batean hura kentzeko"
+msgid "  ·  click a constraint badge to select it"
+msgstr ""
 
 # AI Translated
 #, c-format, boost-format
@@ -31298,13 +31717,10 @@ msgstr "Murrizketa"
 msgid "Constraints (%d)"
 msgstr "Murrizketak (%d)"
 
-# AI Translated
-msgid "No constraints yet"
-msgstr "Oraindik ez dago murrizketarik"
-
-# AI Translated
-msgid "Delete constraint"
-msgstr "Ezabatu murrizketa"
+#. TRN Design tab status line. %1% names the selected sketch constraint, e.g. "Horizontal E0·P0 — E0·P1".
+#, boost-format
+msgid "%1% selected — Delete removes it"
+msgstr ""
 
 # AI Translated
 msgid "Constraint deleted"
@@ -37072,6 +37488,66 @@ msgid "Plugin file: %s"
 msgstr "Plugin-fitxategia: %s"
 
 # AI Translated
+msgid "A file system permission cannot be empty."
+msgstr "Fitxategi-sistemaren baimen bat ezin da hutsik egon."
+
+# AI Translated
+msgid "A file system permission cannot contain a null character."
+msgstr "Fitxategi-sistemaren baimen batek ezin du karaktere nulurik izan."
+
+# AI Translated
+msgid "A file system permission may use \"*\" only as the final \"/*\" of a folder tree."
+msgstr "Fitxategi-sistemaren baimen batek \"*\" karpeta-zuhaitz baten amaierako \"/*\" gisa soilik erabil dezake."
+
+# AI Translated
+msgid "A file system permission cannot contain a \"..\" path component."
+msgstr "Fitxategi-sistemaren baimen batek ezin du \"..\" bide-osagairik izan."
+
+# AI Translated
+msgid "A file system permission must be an absolute path on this computer."
+msgstr "Fitxategi-sistemaren baimen batek ordenagailu honetako bide absolutu bat izan behar du."
+
+# AI Translated
+msgid "A network permission cannot be empty."
+msgstr "Sare-baimen bat ezin da hutsik egon."
+
+# AI Translated
+msgid "A network permission cannot contain control characters."
+msgstr "Sare-baimen batek ezin du kontrol-karaktererik izan."
+
+# AI Translated
+msgid "Network permissions do not support wildcards. Enter one full http:// or https:// URL."
+msgstr "Sare-baimenek ez dute komodinik onartzen. Sartu http:// edo https:// URL oso bakar bat."
+
+# AI Translated
+msgid "Enter a full http:// or https:// URL with a host name or IP address. Bare domain names are not accepted."
+msgstr "Sartu http:// edo https:// URL oso bat, ostalari-izen edo IP helbide batekin. Domeinu-izen soilak ez dira onartzen."
+
+# AI Translated
+msgid "Only http:// and https:// URLs are supported for network permissions."
+msgstr "Sare-baimenetarako http:// eta https:// URLak soilik onartzen dira."
+
+# AI Translated
+msgid "Enter a full http:// or https:// URL with a host name or IP address."
+msgstr "Sartu http:// edo https:// URL oso bat, ostalari-izen edo IP helbide batekin."
+
+# AI Translated
+msgid "Network permissions cannot include a username or password. Enter a URL with only a scheme and host."
+msgstr "Sare-baimenek ezin dute erabiltzaile-izenik edo pasahitzik izan. Sartu eskema eta ostalaria soilik dituen URL bat."
+
+# AI Translated
+msgid "Enter a valid bracketed IPv6 address."
+msgstr "Sartu kortxete artean idatzitako IPv6 helbide baliozko bat."
+
+# AI Translated
+msgid "Network permissions do not support wildcards."
+msgstr "Sare-baimenek ez dute komodinik onartzen."
+
+# AI Translated
+msgid "Enter a host name or IP address, optionally with a port, or a full http:// or https:// URL."
+msgstr "Sartu ostalari-izen bat edo IP helbide bat, nahi izanez gero ataka batekin, edo http:// edo https:// URL oso bat."
+
+# AI Translated
 msgid "Process plugins"
 msgstr "Prozesu-pluginak"
 
@@ -37408,6 +37884,206 @@ msgid "Capabilities"
 msgstr "Gaitasunak"
 
 # AI Translated
+msgid "Permissions"
+msgstr "Baimenak"
+
+# AI Translated
+msgid "Permissions are unavailable."
+msgstr "Baimenak ez daude erabilgarri."
+
+# AI Translated
+msgid "File system read"
+msgstr "Fitxategi-sistemaren irakurketa"
+
+# AI Translated
+msgid "File system read and write"
+msgstr "Fitxategi-sistemaren irakurketa eta idazketa"
+
+# AI Translated
+msgid "HTTP network"
+msgstr "HTTP sarea"
+
+# AI Translated
+msgid "Network sockets"
+msgstr "Sare-socketak"
+
+# AI Translated
+#. TRN Operating system processes a plugin may start, not print process presets.
+msgctxt "Permission category"
+msgid "Processes"
+msgstr "Prozesuak"
+
+# AI Translated
+msgid "Threading"
+msgstr "Exekuzio-hariak"
+
+# AI Translated
+msgctxt "Permission category"
+msgid "Events"
+msgstr "Gertaerak"
+
+# AI Translated
+msgid "Enter an absolute path on this computer. Add /* at the end to include the folder and everything below it; no other wildcard is accepted. A read/write grant can create files through open(), but it does not cover create or delete events such as os.mkdir and os.remove. Without Full access, each such event outside allowed folders needs its own approval, which is never saved. When a plugin runs in the background, these events are denied without asking."
+msgstr "Sartu ordenagailu honetako bide absolutu bat. Gehitu /* amaieran karpeta eta haren azpiko guztia sartzeko; ez da beste komodinik onartzen. Irakurtzeko/idazteko baimen batek fitxategiak sor ditzake open() bidez, baina ez ditu hartzen barne sortze- edo ezabatze-gertaerak, hala nola os.mkdir eta os.remove. \"Sarbide osoa\" gabe, baimendutako karpetetatik kanpoko gertaera horietako bakoitzak bere onarpena behar du, eta onarpen hori ez da inoiz gordetzen. Plugin bat atzeko planoan exekutatzen denean, gertaera horiek galdetu gabe ukatzen dira."
+
+# AI Translated
+msgid "C:\\path\\to\\directory\\*"
+msgstr "C:\\path\\to\\directory\\*"
+
+# AI Translated
+msgid "/path/to/directory/*"
+msgstr "/path/to/directory/*"
+
+# AI Translated
+msgid "Enter a full http:// or https:// URL; only its scheme and host are saved, so the grant covers every port, path, and query on that host. A network socket grant also accepts a bare host name or IP address, with or without a port, and covers every port on that host. Other schemes are not accepted. Grants in either list are checked for HTTP and socket access."
+msgstr "Sartu http:// edo https:// URL oso bat; eskema eta ostalaria soilik gordetzen dira, beraz baimenak ostalari horretako ataka, bide-izen eta kontsulta guztiak hartzen ditu barne. Sare-socket baten baimenak ostalari-izen edo IP helbide soil bat ere onartzen du, atakarekin edo gabe, eta ostalari horretako ataka guztiak hartzen ditu barne. Beste eskemarik ez da onartzen. Bi zerrendetako edozeinetako baimenak HTTP eta socket sarbiderako egiaztatzen dira."
+
+# AI Translated
+msgid "Enter the exact value recorded by the audit. It may be a Python representation of the command."
+msgstr "Sartu ikuskaritzak erregistratutako balio zehatza. Komandoaren Python irudikapen bat izan daiteke."
+
+# AI Translated
+msgid "Exact audited value"
+msgstr "Ikuskatutako balio zehatza"
+
+# AI Translated
+msgid "Allow this plugin to create threads."
+msgstr "Baimendu plugin honi exekuzio-hariak sortzea."
+
+# AI Translated
+msgid "Enter a category and event separated by a colon, such as Socket:socket.__new__."
+msgstr "Sartu kategoria bat eta gertaera bat bi puntuz bereizita, adibidez Socket:socket.__new__."
+
+# AI Translated
+msgid "Socket:socket.__new__"
+msgstr "Socket:socket.__new__"
+
+# AI Translated
+msgid "Full access"
+msgstr "Sarbide osoa"
+
+# AI Translated
+msgid "File system"
+msgstr "Fitxategi-sistema"
+
+# AI Translated
+msgid "Network access"
+msgstr "Sarerako sarbidea"
+
+# AI Translated
+msgid "Execution"
+msgstr "Exekuzioa"
+
+# AI Translated
+msgid "Audit events"
+msgstr "Ikuskaritza-gertaerak"
+
+# AI Translated
+msgid "Files and folders"
+msgstr "Fitxategiak eta karpetak"
+
+# AI Translated
+msgctxt "Permission access"
+msgid "Read"
+msgstr "Irakurketa"
+
+# AI Translated
+msgctxt "Permission access"
+msgid "Read and write"
+msgstr "Irakurketa eta idazketa"
+
+# AI Translated
+msgid "Read permissions are unavailable."
+msgstr "Irakurketa-baimenak ez daude erabilgarri."
+
+# AI Translated
+msgid "Read and write permissions are unavailable."
+msgstr "Irakurketa- eta idazketa-baimenak ez daude erabilgarri."
+
+# AI Translated
+msgid "File system: Read"
+msgstr "Fitxategi-sistema: Irakurketa"
+
+# AI Translated
+msgid "File system: Read and write"
+msgstr "Fitxategi-sistema: Irakurketa eta idazketa"
+
+# AI Translated
+msgid "Full access bypasses permission checks. The plugin can read and write most files you can access; modifying startup or application files can let code run outside these checks. Direct Python access to OrcaSlicer's configuration, secret, certificate and install-state paths stays blocked, but subprocesses are not restricted."
+msgstr "\"Sarbide osoa\" aukerak baimen-egiaztapenak saihesten ditu. Pluginak zuk atzi ditzakezun fitxategi gehienak irakurri eta idatz ditzake; abioko edo aplikazioko fitxategiak aldatzeak kodea egiaztapen horietatik kanpo exekutatzeko aukera eman dezake. OrcaSlicer-en konfigurazio-, sekretu-, ziurtagiri- eta instalazio-egoerako bideetarako Python bidezko sarbide zuzenak blokeatuta jarraitzen du, baina azpiprozesuak ez daude mugatuta."
+
+# AI Translated
+msgid "Permission list editing is disabled while full access is on."
+msgstr "Baimen-zerrenda editatzea desgaituta dago \"Sarbide osoa\" gaituta dagoen bitartean."
+
+# AI Translated
+msgid "Full access status is unavailable."
+msgstr "\"Sarbide osoa\" aukeraren egoera ez dago erabilgarri."
+
+# AI Translated
+msgid "No values added."
+msgstr "Ez da baliorik gehitu."
+
+# AI Translated
+msgctxt "Permission value"
+msgid "Apply"
+msgstr "Aplikatu"
+
+# AI Translated
+#, c-format, boost-format
+msgid "Apply value for %s"
+msgstr "Aplikatu balioa honetarako: %s"
+
+# AI Translated
+msgid "Install this plugin to edit its permissions."
+msgstr "Instalatu plugin hau haren baimenak editatzeko."
+
+# AI Translated
+#, c-format, boost-format
+msgid "New value for %s"
+msgstr "Balio berria honetarako: %s"
+
+# AI Translated
+#, c-format, boost-format
+msgid "Edit value for %s"
+msgstr "Editatu balioa honetarako: %s"
+
+# AI Translated
+msgctxt "Permission value"
+msgid "Add"
+msgstr "Gehitu"
+
+# AI Translated
+#, c-format, boost-format
+msgid "Add value to %s"
+msgstr "Gehitu balioa hemen: %s"
+
+#. TRN %s is the original permission value that was removed outside this dialog.
+#, c-format, boost-format
+msgid "The original value is no longer granted: %s. Add the edited value or discard it."
+msgstr ""
+
+#. TRN %s is the original permission value before the user's unsaved edit.
+#, c-format, boost-format
+msgid "Unsaved edit of: %s"
+msgstr ""
+
+#. TRN %s is the original permission value whose unsaved edit will be discarded.
+#, c-format, boost-format
+msgid "Discard edit of %s"
+msgstr ""
+
+# AI Translated
+msgctxt "Permission value"
+msgid "Remove"
+msgstr "Kendu"
+
+# AI Translated
+#, c-format, boost-format
+msgid "Remove %s"
+msgstr "Kendu %s"
+
+# AI Translated
 #, c-format, boost-format
 msgid "Run \"%s\""
 msgstr "Exekutatu \"%s\""
@@ -37510,6 +38186,39 @@ msgstr "Falta diren pluginak"
 # AI Translated
 msgid "Refreshing plugins data"
 msgstr "Pluginen datuak freskatzen"
+
+# AI Translated
+#, c-format, boost-format
+msgid ""
+"Enable full access for \"%s\"?\n"
+"\n"
+"Full access turns off permission auditing for this plugin: its file system, network, process, thread and event permissions are no longer checked. The plugin can read and write most files your user account can access, including startup scripts, SSH keys and a writable OrcaSlicer installation. Modifying startup or application files can let code run outside these checks. Direct Python access to OrcaSlicer's configuration, secret, certificate and install-state paths stays blocked, but subprocesses are not restricted. Full access is not a sandbox.\n"
+"\n"
+"Only enable this for a plugin you trust."
+msgstr ""
+"\"Sarbide osoa\" gaitu nahi duzu \"%s\" pluginerako?\n"
+"\n"
+"\"Sarbide osoa\" aukerak plugin honen baimen-ikuskaritza desgaitzen du: haren fitxategi-sistemako, sareko, prozesuetako, exekuzio-hariretako eta gertaeretako baimenak ez dira gehiago egiaztatzen. Pluginak zure erabiltzaile-kontuak atzi ditzakeen fitxategi gehienak irakurri eta idatz ditzake, abioko scriptak, SSH gakoak eta OrcaSlicer-en instalazio idazgarri bat barne. Abioko edo aplikazioko fitxategiak aldatzeak kodea egiaztapen horietatik kanpo exekutatzeko aukera eman dezake. OrcaSlicer-en konfigurazio-, sekretu-, ziurtagiri- eta instalazio-egoerako bideetarako Python bidezko sarbide zuzenak blokeatuta jarraitzen du, baina azpiprozesuak ez daude mugatuta. \"Sarbide osoa\" ez da ingurune isolatu bat.\n"
+"\n"
+"Gaitu hau soilik konfiantza duzun plugin baterako."
+
+# AI Translated
+msgid "Invalid permission save request."
+msgstr "Baimenak gordetzeko eskaera ez da baliozkoa."
+
+# AI Translated
+#, boost-format
+msgid "Cannot save \"%1%\": %2%"
+msgstr "Ezin da \"%1%\" gorde: %2%"
+
+# AI Translated
+msgid "Failed to save permissions."
+msgstr "Ezin izan dira baimenak gorde."
+
+# AI Translated
+#, c-format, boost-format
+msgid "Permissions saved for \"%s\"."
+msgstr "\"%s\" pluginaren baimenak gorde dira."
 
 # AI Translated
 msgid "Failed to unload plugin."
@@ -38371,6 +39080,15 @@ msgid "unknown name"
 msgstr "izen ezezaguna"
 
 # AI Translated
+# Needs human review: Patched from the human "Don't show this dialog again" string with "aholku" (tip) replacing "elkarrizketa-koadro"; the tool only flags the length gap. Check that "aholku" reads right on this button.
+msgid "Don't show this tip again"
+msgstr "Ez erakutsi aholku hau berriro"
+
+# AI Translated
+msgid "Tip: You can review and change this plugin's saved permissions in the Plugins dialog, on the Permissions tab."
+msgstr "Aholkua: plugin honen gordetako baimenak berrikusi eta alda ditzakezu pluginen elkarrizketa-koadroan, Baimenak fitxan."
+
+# AI Translated
 #, c-format, boost-format
 msgid ""
 "Plugin \"%s\" is requesting permission for the Python audit event \"%s\".\n"
@@ -38415,31 +39133,47 @@ msgstr[1] ""
 #, c-format, boost-format
 msgid ""
 "Plugin \"%s\" is requesting to create the following file:\n"
-"%s"
+"%s\n"
+"\n"
+"This approval applies only to this operation and is not remembered."
 msgid_plural ""
 "Plugin \"%s\" is requesting to create the following files:\n"
-"%s"
+"%s\n"
+"\n"
+"This approval applies only to this operation and is not remembered."
 msgstr[0] ""
 "\"%s\" pluginak fitxategi hau sortzeko baimena eskatzen du:\n"
-"%s"
+"%s\n"
+"\n"
+"Onarpen hau eragiketa honi soilik aplikatzen zaio eta ez da gogoratzen."
 msgstr[1] ""
 "\"%s\" pluginak fitxategi hauek sortzeko baimena eskatzen du:\n"
-"%s"
+"%s\n"
+"\n"
+"Onarpen hau eragiketa honi soilik aplikatzen zaio eta ez da gogoratzen."
 
 # AI Translated
 #, c-format, boost-format
 msgid ""
 "Plugin \"%s\" is requesting to delete the following file:\n"
-"%s"
+"%s\n"
+"\n"
+"This approval applies only to this operation and is not remembered."
 msgid_plural ""
 "Plugin \"%s\" is requesting to delete the following files:\n"
-"%s"
+"%s\n"
+"\n"
+"This approval applies only to this operation and is not remembered."
 msgstr[0] ""
 "\"%s\" pluginak fitxategi hau ezabatzeko baimena eskatzen du:\n"
-"%s"
+"%s\n"
+"\n"
+"Onarpen hau eragiketa honi soilik aplikatzen zaio eta ez da gogoratzen."
 msgstr[1] ""
 "\"%s\" pluginak fitxategi hauek ezabatzeko baimena eskatzen du:\n"
-"%s"
+"%s\n"
+"\n"
+"Onarpen hau eragiketa honi soilik aplikatzen zaio eta ez da gogoratzen."
 
 # AI Translated
 #, c-format, boost-format
@@ -38508,6 +39242,67 @@ msgstr "Pluginaren baimen-eskaera"
 # AI Translated
 msgid "Plugin permissions"
 msgstr "Pluginaren baimenak"
+
+# AI Translated
+#, c-format, boost-format
+msgid ""
+"Plugin \"%s\" tried to perform a file operation that requires permission.\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgstr ""
+"\"%s\" plugina baimena behar duen fitxategi-eragiketa bat egiten saiatu da.\n"
+"\n"
+"Eragiketa ukatu da. Erabili baimendutako kokaleku bat edo gaitu \"Sarbide osoa\" plugin honetarako, hartaz fidatzen bazara."
+
+# AI Translated
+#, c-format, boost-format
+msgid ""
+"Plugin \"%s\" tried to create the following file:\n"
+"%s\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgid_plural ""
+"Plugin \"%s\" tried to create the following files:\n"
+"%s\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgstr[0] ""
+"\"%s\" plugina fitxategi hau sortzen saiatu da:\n"
+"%s\n"
+"\n"
+"Eragiketa ukatu da. Erabili baimendutako kokaleku bat edo gaitu \"Sarbide osoa\" plugin honetarako, hartaz fidatzen bazara."
+msgstr[1] ""
+"\"%s\" plugina fitxategi hauek sortzen saiatu da:\n"
+"%s\n"
+"\n"
+"Eragiketa ukatu da. Erabili baimendutako kokaleku bat edo gaitu \"Sarbide osoa\" plugin honetarako, hartaz fidatzen bazara."
+
+# AI Translated
+#, c-format, boost-format
+msgid ""
+"Plugin \"%s\" tried to delete the following file:\n"
+"%s\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgid_plural ""
+"Plugin \"%s\" tried to delete the following files:\n"
+"%s\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgstr[0] ""
+"\"%s\" plugina fitxategi hau ezabatzen saiatu da:\n"
+"%s\n"
+"\n"
+"Eragiketa ukatu da. Erabili baimendutako kokaleku bat edo gaitu \"Sarbide osoa\" plugin honetarako, hartaz fidatzen bazara."
+msgstr[1] ""
+"\"%s\" plugina fitxategi hauek ezabatzen saiatu da:\n"
+"%s\n"
+"\n"
+"Eragiketa ukatu da. Erabili baimendutako kokaleku bat edo gaitu \"Sarbide osoa\" plugin honetarako, hartaz fidatzen bazara."
+
+# AI Translated
+msgid "Plugin operation denied"
+msgstr "Pluginaren eragiketa ukatu da"
 
 # AI Translated
 msgid "The preset stores invalid plugin capability configuration JSON."
@@ -38919,6 +39714,11 @@ msgstr "Ezin da plugina tokian mantendu: tokiko pluginaren gakoa dagoeneko exist
 
 # AI Translated
 #, boost-format
+msgid "Failed to read plugin install state: %1%"
+msgstr "Ezin izan da pluginaren instalazio-egoera irakurri: %1%"
+
+# AI Translated
+#, boost-format
 msgid "Failed to update plugin install state: %1%"
 msgstr "Ezin izan da pluginaren instalazio-egoera eguneratu: %1%"
 
@@ -39206,18 +40006,18 @@ msgstr "%1% fitxategitik atera den konfigurazio-balio kopurua susmagarriki txiki
 
 # AI Translated
 msgid ""
-"Load step file failed.\n"
+"Load STEP file failed.\n"
 "Cannot open file for reading.\n"
 msgstr ""
 "STEP fitxategia kargatzeak huts egin du.\n"
 "Ezin da fitxategia ireki irakurtzeko.\n"
 
 # AI Translated
-msgid "import svg failed: could not open svg."
+msgid "import SVG failed: could not open SVG."
 msgstr "SVG inportatzeak huts egin du: ezin izan da SVGa ireki."
 
 # AI Translated
-msgid "import svg failed: could not parse imported svg data."
+msgid "import SVG failed: could not parse imported SVG data."
 msgstr "SVG inportatzeak huts egin du: ezin izan dira inportatutako SVG datuak analizatu."
 
 # AI Translated
@@ -39643,6 +40443,139 @@ msgid ""
 "Did you know that when printing materials that are prone to warping such as ABS, appropriately increasing the heatbed temperature can reduce the probability of warping."
 msgstr ""
 
+#~ msgid "Reset cutting plane and remove connectors"
+#~ msgstr "Berrezarri ebaketa-planoa eta konektoreak ezabatu"
+
+#~ msgid "Component name(s) inside step file not in UTF-8 format!"
+#~ msgstr "STEP fitxategiko osagai-izena(k) ez dago/daude UTF-8 formatuan!"
+
+#~ msgid "Show options when importing STEP file"
+#~ msgstr "Erakutsi aukerak STEP fitxategia inportatzean"
+
+#~ msgid "STEP importing: linear deflection"
+#~ msgstr "STEP inportazioa: desbideratze lineala"
+
+#~ msgid "STEP importing: angle deflection"
+#~ msgstr "STEP inportazioa: angelu-desbideratzea"
+
+#~ msgid "STEP importing: Split into multiple objects"
+#~ msgstr "STEP inportatzea: banatu hainbat objektutan"
+
+#~ msgid ""
+#~ "If enabled, compound and compsolid shapes in imported STEP files are split into multiple objects.\n"
+#~ "Used as the default in the import dialog, or directly when the import dialog is disabled.\n"
+#~ "Default: disabled."
+#~ msgstr ""
+#~ "Gaituta badago, inportatutako STEP fitxategietako forma konposatuak eta compsolid formak hainbat objektutan banatzen dira.\n"
+#~ "Inportazio-elkarrizketa-koadroko balio lehenetsi gisa erabiltzen da, edo zuzenean elkarrizketa-koadroa desgaituta dagoenean.\n"
+#~ "Lehenetsia: desgaituta."
+
+#~ msgid "Behavior"
+#~ msgstr "Jokabidea"
+
+# AI Translated
+#~ msgid "G-code Preview"
+#~ msgstr "G-code aurrebista"
+
+# AI Translated
+#~ msgid "Remove from favorites"
+#~ msgstr "Kendu gogokoetatik"
+
+# AI Translated
+#~ msgid ""
+#~ "Applies only to external walls, including hole boundaries. Moves the hot nozzle toward printed inner walls during wiping to reduce reheating of freshly printed plastic and seam marks.\n"
+#~ "\n"
+#~ "Especially useful at layer heights below 0.1 mm, where wipe marks are more visible.\n"
+#~ "\n"
+#~ "Uses the regular wipe if no adjacent inner wall is already printed (single-wall areas or Outer/Inner wall order), or if no supported inward path can be found, for example at tight corners or seam gaps."
+#~ msgstr ""
+#~ "Kanpoko hormei soilik aplikatzen zaie, zuloen mugak barne. Purgatzean pita beroa jada inprimatutako barruko hormetarantz mugitzen du, inprimatu berri den plastikoa berriro berotzea eta jostura-markak murrizteko.\n"
+#~ "\n"
+#~ "Bereziki erabilgarria da 0,1 mm-tik beherako geruza-altueretan, non purgatze-markak nabarmenago ikusten diren.\n"
+#~ "\n"
+#~ "Purgatze arrunta erabiltzen du ondoko barruko hormarik jada inprimatuta ez badago (horma bakarreko eremuak edo Kanpokoa/Barrukoa hormen ordena) edo euskarria duen barrurako biderik aurkitzen ez bada, adibidez izkina estuetan edo josturako hutsuneetan."
+
+# AI Translated
+#, no-c-format, no-boost-format
+#~ msgid ""
+#~ "The distance the wipe path is shifted away from the external perimeter, specified in millimeters or as a percentage of the actual outer-wall extrusion width.\n"
+#~ "\n"
+#~ "For example, 50% shifts the path by half of the outer-wall width. The effective offset is limited by both the actual outer-wall width and the available spacing to the adjacent wall, so values above 100% or an equivalent absolute distance have no additional effect. Set to 0 to disable the offset."
+#~ msgstr ""
+#~ "Purgatze-bidea kanpoko perimetrotik zenbat desplazatzen den, milimetrotan edo kanpoko hormaren benetako estrusio-zabaleraren ehuneko gisa adierazita.\n"
+#~ "\n"
+#~ "Adibidez, 50% bideak kanpoko hormaren zabaleraren erdia desplazatzen du. Desplazamendu eraginkorra mugatuta dago bai kanpoko hormaren benetako zabaleragatik bai ondoko hormarainoko tarte erabilgarriagatik; beraz, 100% baino handiagoko balioek edo baliokidea den distantzia absolutu batek ez dute eragin gehigarririk. Ezarri 0 desplazamendua desgaitzeko."
+
+# AI Translated
+#~ msgid "Invalid utf8 sequence"
+#~ msgstr "utf8 sekuentzia baliogabea"
+
+#~ msgid ""
+#~ "RepRap firmware version => 3.4.0\n"
+#~ "Check your firmware documentation for supported shaper types."
+#~ msgstr ""
+#~ "RepRap firmwarearen bertsioa => 3.4.0\n"
+#~ "Begiratu zure firmwarearen dokumentazioa onartutako moldatzaile motak ezagutzeko."
+
+#~ msgid "RepRap firmware uses the same frequency range for both axes."
+#~ msgstr "RepRap firmwareak maiztasun-tarte bera erabiltzen du bi ardatzetarako."
+
+#~ msgid "RepRap firmware uses the same frequency for both axes."
+#~ msgstr "RepRap firmwareak maiztasun bera erabiltzen du bi ardatzetarako."
+
+#~ msgid "Step file import parameters"
+#~ msgstr "STEP fitxategia inportatzeko parametroak"
+
+# AI Translated
+#~ msgid "  ·  click a constraint badge to remove it"
+#~ msgstr "  ·  egin klik murrizketa-ikur batean hura kentzeko"
+
+# AI Translated
+#, c-format, boost-format
+#~ msgid ""
+#~ "Plugin \"%s\" is requesting to create the following file:\n"
+#~ "%s"
+#~ msgid_plural ""
+#~ "Plugin \"%s\" is requesting to create the following files:\n"
+#~ "%s"
+#~ msgstr[0] ""
+#~ "\"%s\" pluginak fitxategi hau sortzeko baimena eskatzen du:\n"
+#~ "%s"
+#~ msgstr[1] ""
+#~ "\"%s\" pluginak fitxategi hauek sortzeko baimena eskatzen du:\n"
+#~ "%s"
+
+# AI Translated
+#, c-format, boost-format
+#~ msgid ""
+#~ "Plugin \"%s\" is requesting to delete the following file:\n"
+#~ "%s"
+#~ msgid_plural ""
+#~ "Plugin \"%s\" is requesting to delete the following files:\n"
+#~ "%s"
+#~ msgstr[0] ""
+#~ "\"%s\" pluginak fitxategi hau ezabatzeko baimena eskatzen du:\n"
+#~ "%s"
+#~ msgstr[1] ""
+#~ "\"%s\" pluginak fitxategi hauek ezabatzeko baimena eskatzen du:\n"
+#~ "%s"
+
+# AI Translated
+#~ msgid ""
+#~ "Load step file failed.\n"
+#~ "Cannot open file for reading.\n"
+#~ msgstr ""
+#~ "STEP fitxategia kargatzeak huts egin du.\n"
+#~ "Ezin da fitxategia ireki irakurtzeko.\n"
+
+# AI Translated
+#~ msgid "import svg failed: could not open svg."
+#~ msgstr "SVG inportatzeak huts egin du: ezin izan da SVGa ireki."
+
+# AI Translated
+#~ msgid "import svg failed: could not parse imported svg data."
+#~ msgstr "SVG inportatzeak huts egin du: ezin izan dira inportatutako SVG datuak analizatu."
+
 #~ msgid ""
 #~ "\n"
 #~ "You may need to reconfigure the missing locales, likely by running the \"locale-gen\" and \"dpkg-reconfigure locales\" commands.\n"
@@ -39952,9 +40885,6 @@ msgstr ""
 
 #~ msgid "By vendor"
 #~ msgstr "Hornitzailearen arabera"
-
-#~ msgid "Behaviour"
-#~ msgstr "Jokabidea"
 
 #~ msgid "Renders cast shadows on the plate, other objects, and each object onto itself in realistic view."
 #~ msgstr "Jaurtitako itzalak errendatzen ditu plakan, beste objektuetan eta objektu bakoitzean bere buruarengan ikuspegi errealistan."
@@ -40878,12 +41808,6 @@ msgstr ""
 #~ msgid "Hostname or IP"
 #~ msgstr "Host-aren izena edo IPa"
 
-#~ msgid "Custom camera source"
-#~ msgstr "Kameraren iturburu pertsonalizatua"
-
-#~ msgid "Switch Camera View"
-#~ msgstr "Aldatu kameraren ikuspegia"
-
 #~ msgid ""
 #~ "Print By Object: \n"
 #~ "Suggest to use auto-arrange to avoid collisions when printing."
@@ -41115,9 +42039,6 @@ msgstr ""
 
 #~ msgid "from"
 #~ msgstr "hemendik"
-
-#~ msgid "Recent files"
-#~ msgstr "Azken fitxategiak"
 
 #~ msgid "Import Zip Archive"
 #~ msgstr "Inportatu ZIP fitxategia"

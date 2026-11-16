@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Snapmaker Orca\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-09 13:41+0100\n"
+"POT-Creation-Date: 2026-11-16 21:34+0100\n"
 "PO-Revision-Date: 2025-09-14 23:43+0300\n"
 "Last-Translator: GlauTech\n"
 "Language-Team: \n"
@@ -517,6 +517,7 @@ msgstr "Blok destekleri"
 msgid "Erase"
 msgstr "Sil"
 
+#. TRN Variable layer height tool: the plain wheel resizes the edit area only with the cursor on a layer height bar.
 msgid "Mouse wheel"
 msgstr "Fare tekerleği"
 
@@ -705,6 +706,47 @@ msgstr "Pütürlü yüzey boyamasından çıkılıyor"
 # AI Translated
 msgid "Paint-on fuzzy skin editing"
 msgstr "Pütürlü yüzey boyaması düzenleme"
+
+msgid "Painted modifier"
+msgstr ""
+
+msgid "Modifier"
+msgstr "Değiştir"
+
+msgid "New painted modifier"
+msgstr ""
+
+#. TRN - Input label. Be short as possible
+#. Size in emboss direction
+#. TRN - Input label. Be short as possible
+msgid "Depth"
+msgstr "Derinlik"
+
+msgid ""
+"How far the painted area reaches into the part, measured from the painted surface.\n"
+"0 reaches across the whole part, up to the nearest unpainted surface."
+msgstr ""
+
+msgid "The part this modifier was painted on has been removed."
+msgstr ""
+
+msgid "Paint the modifier area"
+msgstr ""
+
+msgid "Erase the modifier area"
+msgstr ""
+
+msgid "Change painted modifier depth"
+msgstr ""
+
+msgid "Entering painted modifier"
+msgstr ""
+
+msgid "Leaving painted modifier"
+msgstr ""
+
+msgid "Painted modifier editing"
+msgstr ""
 
 msgid "Move"
 msgstr "Taşı"
@@ -965,12 +1007,6 @@ msgid "Shape"
 msgstr "Şekil"
 
 #. TRN - Input label. Be short as possible
-#. Size in emboss direction
-#. TRN - Input label. Be short as possible
-msgid "Depth"
-msgstr "Derinlik"
-
-#. TRN - Input label. Be short as possible
 #. Angle between Y axis and text line direction.
 #. TRN - Input label. Be short as possible
 msgid "Rotation"
@@ -1123,8 +1159,9 @@ msgstr "Kesildikten sonra"
 msgid "Cut to parts"
 msgstr "Parçalara ayır"
 
-msgid "Reset cutting plane and remove connectors"
-msgstr "Kesme düzlemini sıfırlayın ve bağlayıcıları çıkarın"
+#. TRN: Part assignments are the upper/lower cut groups changed by right-clicking parts.
+msgid "Reset the cutting plane, remove connectors, and clear part assignments."
+msgstr ""
 
 # AI Translated
 msgid "Reset Cut"
@@ -1407,9 +1444,6 @@ msgstr "Kes"
 
 msgid "Click to change part type into negative volume."
 msgstr "Parça tipini negatif hacme değiştirmek için tıklayın."
-
-msgid "Modifier"
-msgstr "Değiştir"
 
 msgid "Click to change part type into modifier."
 msgstr "Parça tipini değiştiriciye değiştirmek için tıklayın."
@@ -2864,6 +2898,9 @@ msgstr "Destek uygulayıcısı ekle"
 msgid "Add Precise Seam"
 msgstr "Hassas Dikiş Ekle"
 
+msgid "Add Painted Modifier"
+msgstr ""
+
 msgid "Add text"
 msgstr "Yazı ekle"
 
@@ -2968,6 +3005,9 @@ msgstr "Telkin"
 
 msgid "Text"
 msgstr "Metin"
+
+msgid "Add a modifier whose shape is painted on the part"
+msgstr ""
 
 msgid "Height Range Modifier"
 msgstr "Yükseklik aralığı değiştirici"
@@ -3220,6 +3260,15 @@ msgstr "Baskı kalitesini artırmak için nesneyi otomatik yönlendir"
 
 msgid "Paste Process Settings"
 msgstr "İşlem Ayarlarını Yapıştır"
+
+msgid "Edit Painting"
+msgstr ""
+
+msgid "Paint the area of the selected painted modifier"
+msgstr ""
+
+msgid "Delete the selected painted modifier"
+msgstr ""
 
 msgid "Edit"
 msgstr "Düzenle"
@@ -3565,11 +3614,11 @@ msgstr "Son katı kısmın silinmesine izin verilmez."
 msgid "Delete part"
 msgstr "Parçayı sil"
 
-msgid "The target object contains only one part and can not be split."
-msgstr "Hedef nesne yalnızca bir parçadan oluşur ve bölünemez."
-
 msgid "Split to parts"
 msgstr "Parçalara bölme"
+
+msgid "The target object contains only one part and can not be split."
+msgstr "Hedef nesne yalnızca bir parçadan oluşur ve bölünemez."
 
 msgid "Assembly"
 msgstr "Birleştir"
@@ -3630,6 +3679,13 @@ msgstr "İlk seçilen öğe bir nesne ise ikincisi de nesne olmalıdır."
 
 msgid "If the first selected item is a part, the second should be a part in the same object."
 msgstr "İlk seçilen öğe bir parça ise ikincisi aynı nesnenin parçası olmalıdır."
+
+#, boost-format
+msgid "Painted modifier %1%"
+msgstr ""
+
+msgid "Add painted modifier"
+msgstr ""
 
 # AI Translated
 msgid "The type of the last solid object part cannot be changed."
@@ -6460,6 +6516,9 @@ msgstr "Geçersiz kalıp. N, N#K veya giriş başına isteğe bağlı #K ile vir
 msgid "Invalid format. Expected vector format: \"%1%\""
 msgstr "Geçersiz format. Beklenen vektör formatı: \"%1%\""
 
+msgid "The excluded bed area is invalid. It must be a simple, non-self-intersecting polygon."
+msgstr ""
+
 # AI Translated
 msgid "System agents"
 msgstr "Sistem aracıları"
@@ -6890,6 +6949,16 @@ msgstr "Yarıçap"
 msgid "Keep min"
 msgstr "Min. tut"
 
+#. TRN Variable layer height tool, checkbox shown with several objects selected: give each object its own
+#. layer heights instead of one profile they all share.
+msgid "Each object separately"
+msgstr ""
+
+#. TRN Variable layer height tool: each selected object has a layer height bar at the right edge of the 3D view.
+#. Painting over an object in the 3D view, or over its bar, edits the layer heights of that object.
+msgid "Paint over an object or its bar to edit its layers."
+msgstr ""
+
 msgid "Add detail"
 msgstr "Ayrıntı ekle"
 
@@ -6904,6 +6973,13 @@ msgstr "Pürüzsüzleştirme"
 
 msgid "Increase/decrease edit area"
 msgstr "Düzenleme alanını artır/azalt"
+
+msgid "Increase/decrease edit area on the bar"
+msgstr ""
+
+#. TRN "Adaptive", "Smooth" and "Reset" are the buttons of the variable layer height tool.
+msgid "Variable layer height: only the three tallest selected objects have a bar. The others still take Adaptive, Smooth and Reset."
+msgstr ""
 
 msgid "Sequence"
 msgstr "Sekans"
@@ -7230,6 +7306,9 @@ msgstr "Simgeye orta tıklama"
 msgid "Set viewing angle"
 msgstr "Görüş açısını ayarla"
 
+msgid "Follow camera"
+msgstr ""
+
 msgid "Paint Toolbar"
 msgstr "Boyama Araç Çubuğu"
 
@@ -7371,8 +7450,25 @@ msgstr "Canlı Görüntüleme Yeniden Deneme"
 msgid "Resolution"
 msgstr "Çözünürlük"
 
+msgid "Custom camera source"
+msgstr "Özel kamera kaynağı"
+
+# AI Translated
+msgid "Camera stream URL"
+msgstr "Kamera akışı URL'si"
+
+# AI Translated
+msgid "URL of an MJPEG stream or of a web page that shows the camera, for example http://192.168.1.10:8080/?action=stream"
+msgstr "MJPEG akışının veya kamerayı gösteren bir web sayfasının URL'si, örneğin http://192.168.1.10:8080/?action=stream"
+
+msgid "Enable"
+msgstr "Aktif et"
+
 msgid "Show \"Live Video\" guide page."
 msgstr "\"Canlı Video\" kılavuz sayfasını gösterin."
+
+msgid "Disable"
+msgstr "Devre dışı bırak"
 
 msgid "Connect Printer (LAN)"
 msgstr "Connect Printer (LAN)"
@@ -8431,6 +8527,9 @@ msgstr "Depolama"
 msgid "Camera Setting"
 msgstr "Kamera Ayarı"
 
+msgid "Switch Camera View"
+msgstr "Kamera Görünümünü Değiştir"
+
 msgid "Control"
 msgstr "Kontrol"
 
@@ -9139,6 +9238,10 @@ msgstr "Yeni ağ eklentisi mevcut."
 msgid "Details"
 msgstr "Detaylar"
 
+# AI Translated
+msgid "Updates are available for your OrcaCloud plugins."
+msgstr "OrcaCloud eklentileriniz için güncellemeler mevcut."
+
 msgid "New printer config available."
 msgstr "Yeni yazıcı yapılandırması mevcut."
 
@@ -9297,6 +9400,24 @@ msgstr ""
 
 msgid "Error loading shaders"
 msgstr "Gölgelendiriciler yüklenirken hata oluştu"
+
+#. TRN The OpenGL context could not be made current, so nothing can be drawn in the 3D view.
+msgid "OpenGL could not be activated for the 3D view, so it cannot be shown."
+msgstr ""
+
+#. TRN %1% is the name of a graphics card or display adapter as Windows reports it, such as "Microsoft Basic Display Adapter".
+#, boost-format
+msgid "The window is on a display driven by \"%1%\"."
+msgstr ""
+
+msgid "Make sure the display adapter driving this window's display is enabled and its driver is installed and up to date."
+msgstr ""
+
+msgid "If the computer has more than one graphics card, connecting the monitor to another one may help."
+msgstr ""
+
+msgid "If the problem remains, close any overlay or screen capture software and try again."
+msgstr ""
 
 msgctxt "Layers"
 msgid "Top"
@@ -10316,10 +10437,6 @@ msgstr "Filament türü ve renk bilgisi senkronize edilmiştir ancak slot bilgis
 msgid "Do you want to save changes to \"%1%\"?"
 msgstr "\"%1%\" dosyasındaki değişiklikleri kaydetmek istiyor musunuz?"
 
-# AI Translated
-msgid "UV Editor"
-msgstr "UV Düzenleyici"
-
 #, c-format, boost-format
 msgid "Successfully unmounted. The device %s (%s) can now be safely removed from the computer."
 msgstr "Başarıyla kaldırıldı. %s(%s) aygıtı artık bilgisayardan güvenli bir şekilde kaldırılabilir."
@@ -10352,6 +10469,17 @@ msgstr "Kenar çubuğunu daralt"
 #, c-format, boost-format
 msgid "Loading file: %s"
 msgstr "Dosya yükleniyor: %s"
+
+# AI Translated
+msgid "Some imported objects contain modifiers or parts with individual settings. They are shown as assemblies so that these settings remain visible."
+msgstr "İçe aktarılan bazı nesneler, ayrı ayarlara sahip değiştiriciler veya parçalar içeriyor. Bu ayarların görünür kalması için montaj olarak gösterilirler."
+
+# AI Translated
+msgid "Geometry import"
+msgstr "Geometri içe aktarma"
+
+msgid "The file does not contain any geometry data."
+msgstr "Dosya herhangi bir geometri verisi içermiyor."
 
 msgid "Load 3MF"
 msgstr "3MF yükle"
@@ -10422,7 +10550,7 @@ msgstr "Bazı yayınlanan ayarlar uygulanamadı:"
 msgid "Some filament slots were changed:"
 msgstr "Bazı filament yuvaları değiştirildi:"
 
-msgid "Component name(s) inside step file not in UTF-8 format!"
+msgid "Component name(s) inside STEP file not in UTF-8 format!"
 msgstr "Step dosyasındaki bileşenlerin adı UTF-8 formatında değil!"
 
 # AI Translated
@@ -10492,8 +10620,8 @@ msgstr "Yazıcı bilgilerini senkronize etmek ve ön ayarı otomatik olarak değ
 msgid "This project contains a model made in the Design tab and no other geometry. Enable \"CAD feature (experimental)\" in Preferences and restart to see and edit it; it is kept when the project is saved."
 msgstr "Bu proje, Tasarım sekmesinde oluşturulmuş bir model içeriyor ve başka geometri içermiyor. Görüntülemek ve düzenlemek için Tercihler'de \"CAD özelliği (deneysel)\" seçeneğini etkinleştirin ve yeniden başlatın; model, proje kaydedildiğinde korunur."
 
-msgid "The file does not contain any geometry data."
-msgstr "Dosya herhangi bir geometri verisi içermiyor."
+msgid "The invalid area has been removed, so please define it again using a valid polygon."
+msgstr ""
 
 msgid "Your object appears to be too large, do you want to scale it down to fit the print bed automatically?"
 msgstr "Nesneniz çok büyük görünüyor. Plakaya sığacak şekilde otomatik olarak küçültmek istiyor musunuz?"
@@ -10750,6 +10878,10 @@ msgid ""
 msgstr ""
 "Aşağıdaki IDEX/IQEX paralel mod sorunları tespit edildi:\n"
 "\n"
+
+# AI Translated
+msgid "UV Editor"
+msgstr "UV Düzenleyici"
 
 #, c-format, boost-format
 msgid ""
@@ -11616,11 +11748,50 @@ msgstr "Başlangıçtan sonra \"Günün ipucu\" bildirimini göster"
 msgid "If enabled, useful hints are displayed at startup."
 msgstr "Etkinleştirilirse başlangıçta faydalı ipuçları görüntülenir."
 
-msgid "Downloads folder"
-msgstr "İndirilenler klasörü"
+msgid "Features"
+msgstr "Özellikler"
 
-msgid "Target folder for downloaded items"
-msgstr "İndirilen öğeler için hedef klasör"
+msgid "Multi device management"
+msgstr "Çoklu cihaz yönetimi"
+
+msgid "With this option enabled, you can send a task to multiple devices at the same time and manage multiple devices."
+msgstr "Bu seçenek etkinleştirildiğinde, aynı anda birden fazla cihaza bir görev gönderebilir ve birden fazla cihazı yönetebilirsiniz."
+
+# AI Translated
+msgid "CAD feature (experimental)"
+msgstr "CAD özelliği (deneysel)"
+
+# AI Translated
+msgid "With this option enabled, the Design tab is shown, where models can be built and edited parametrically. This feature is experimental and still under development."
+msgstr "Bu seçenek etkinleştirildiğinde, modellerin parametrik olarak oluşturulup düzenlenebildiği Tasarım sekmesi gösterilir. Bu özellik deneyseldir ve hâlâ geliştirilmektedir."
+
+msgid "Pop up to select filament grouping mode"
+msgstr "Filament gruplama modunu seçmek için açılır pencere"
+
+msgid "Clear my choice on..."
+msgstr "Seçimimi Temizle"
+
+msgid "Unsaved projects"
+msgstr "Kaydedilmemiş projeler"
+
+msgid "Clear my choice on the unsaved projects."
+msgstr "Kaydedilmemiş projelerdeki seçimimi temizle."
+
+msgid "Unsaved presets"
+msgstr "Kaydedilmemiş ön ayarlar"
+
+msgid "Clear my choice on the unsaved presets."
+msgstr "Kaydedilmemiş ön ayarlardaki seçimimi temizle."
+
+msgid "Synchronizing printer preset"
+msgstr "Yazıcı ön ayarı senkronize ediliyor"
+
+msgid "Clear my choice for synchronizing printer preset after loading the file."
+msgstr "Dosyayı yükledikten sonra yazıcı ön ayarını senkronize etmek için seçimimi temizleyin."
+
+# AI Translated
+msgid "Files"
+msgstr "Dosyalar"
 
 msgid "Load All"
 msgstr "Tümünü Yükle"
@@ -11646,6 +11817,17 @@ msgstr "Otomatik yedekleme"
 msgid "Backup your project periodically to help with restoring from an occasional crash."
 msgstr "Ara sıra meydana gelen çökmelerden sonra geri yüklemek için projenizi düzenli aralıklarla yedekleyin."
 
+# AI Translated
+msgid "Store full source file paths in projects"
+msgstr "Projelerde tam kaynak dosya yollarını sakla"
+
+# AI Translated
+msgid "If enabled, saved projects store the absolute path to imported source files (STEP/STL/...), so \"Reload from disk\" still works when the source file is kept in a different folder than the project. If disabled, only the filename is stored, which keeps projects portable and avoids embedding absolute paths."
+msgstr "Etkinleştirildiğinde kaydedilen projeler, içe aktarılan kaynak dosyaların (STEP/STL/...) mutlak yolunu saklar; böylece kaynak dosya projeden farklı bir klasörde tutulsa bile \"Diskten yeniden yükle\" çalışmayı sürdürür. Devre dışı bırakıldığında yalnızca dosya adı saklanır; bu da projeleri taşınabilir tutar ve mutlak yolların gömülmesini önler."
+
+msgid "Recent files"
+msgstr "Son dosyalar"
+
 msgid "Maximum recent files"
 msgstr "Son kullanılan dosyaların maksimum sayısı"
 
@@ -11655,18 +11837,61 @@ msgstr "Son dosyaların maksimum sayısı"
 msgid "Add STL/STEP files to recent files list"
 msgstr "STL/STEP dosyalarını son dosyalar listesine ekle"
 
+# AI Translated
+msgid "Folder paths"
+msgstr "Klasör yolları"
+
+msgid "Downloads folder"
+msgstr "İndirilenler klasörü"
+
+msgid "Target folder for downloaded items"
+msgstr "İndirilen öğeler için hedef klasör"
+
+# AI Translated
+msgid "File import"
+msgstr "Dosya içe aktarma"
+
+# AI Translated
+msgid "Ask how to handle unsupported characters in imported names"
+msgstr "İçe aktarılan adlardaki desteklenmeyen karakterlerin nasıl işleneceğini sor"
+
+# AI Translated
+msgid "Show the removal or replacement choices when original names contain unsupported characters."
+msgstr "Orijinal adlar desteklenmeyen karakterler içerdiğinde kaldırma veya değiştirme seçeneklerini gösterir."
+
+# AI Translated
+msgid "3MF import"
+msgstr "3MF içe aktarma"
+
+# AI Translated
+msgid "Show options when importing"
+msgstr "İçe aktarırken seçenekleri göster"
+
+# AI Translated
+msgid "Show original-name and sorting options when importing a 3MF without project settings into the current project."
+msgstr "Proje ayarları olmayan bir 3MF dosyası mevcut projeye içe aktarılırken orijinal ad ve sıralama seçeneklerini gösterir."
+
+# AI Translated
+msgid "Keep original names"
+msgstr "Orijinal adları koru"
+
+# AI Translated
+msgid "Use the body names stored in the imported file when it contains them."
+msgstr "İçe aktarılan dosyada gövde adları saklanıyorsa bu adları kullanır."
+
 msgid "Don't warn when loading 3MF with modified G-code"
 msgstr "Değiştirilmiş G-kodları içeren 3MF dosyalarını yüklerken uyarma"
 
-msgid "Show options when importing STEP file"
-msgstr "STEP dosyasını içe aktarırken seçenekleri göster"
+# AI Translated
+msgid "STEP import"
+msgstr "STEP içe aktarma"
 
 msgid "If enabled, a parameter settings dialog will appear during STEP file import."
 msgstr "Etkinleştirilirse, STEP dosyası içe aktarılırken bir parametre ayarları iletişim kutusu görüntülenir."
 
 # AI Translated
-msgid "STEP importing: linear deflection"
-msgstr "STEP içe aktarma: doğrusal sapma"
+msgid "Linear deflection"
+msgstr "Doğrusal sapma"
 
 # AI Translated
 msgid ""
@@ -11681,8 +11906,8 @@ msgstr ""
 "Varsayılan: 0,003 mm."
 
 # AI Translated
-msgid "STEP importing: angle deflection"
-msgstr "STEP içe aktarma: açısal sapma"
+msgid "Angle deflection"
+msgstr "Açı sapması"
 
 # AI Translated
 msgid ""
@@ -11697,18 +11922,30 @@ msgstr ""
 "Varsayılan: 0,5."
 
 # AI Translated
-msgid "STEP importing: Split into multiple objects"
-msgstr "STEP içe aktarma: Birden çok nesneye ayır"
+msgid "Split into multiple objects"
+msgstr "Birden çok nesneye ayır"
 
 # AI Translated
 msgid ""
 "If enabled, compound and compsolid shapes in imported STEP files are split into multiple objects.\n"
 "Used as the default in the import dialog, or directly when the import dialog is disabled.\n"
-"Default: disabled."
+"Default: enabled."
 msgstr ""
 "Etkinleştirildiğinde, içe aktarılan STEP dosyalarındaki bileşik (compound) ve compsolid şekiller birden çok nesneye ayrılır.\n"
 "İçe aktarma iletişim kutusunda varsayılan olarak, iletişim kutusu devre dışıysa doğrudan kullanılır.\n"
-"Varsayılan: devre dışı."
+"Varsayılan: etkin."
+
+# AI Translated
+msgid "AMF import"
+msgstr "AMF içe aktarma"
+
+# AI Translated
+msgid "Show body grouping, original-name and sorting options when importing geometry into the current project."
+msgstr "Geometri mevcut projeye içe aktarılırken gövde gruplama, orijinal ad ve sıralama seçeneklerini gösterir."
+
+# AI Translated
+msgid "DRC export"
+msgstr "DRC dışa aktarma"
 
 msgid "Quality level for Draco export"
 msgstr "Draco dışa aktarımı için kalite düzeyi"
@@ -11725,13 +11962,161 @@ msgstr ""
 "0 = kayıpsız sıkıştırma (geometri tam hassasiyetle korunur). Geçerli kayıplı değerler 8 ile 30 arasında değişir.\n"
 "Daha düşük değerler daha küçük dosyalar oluşturur ancak daha fazla geometrik ayrıntıyı kaybeder; daha yüksek değerler, daha büyük dosyalar pahasına daha fazla ayrıntıyı korur."
 
-# AI Translated
-msgid "Store full source file paths in projects"
-msgstr "Projelerde tam kaynak dosya yollarını sakla"
+msgid "Associate files to Snapmaker Orca"
+msgstr "Dosyaları Snapmaker Orca ile ilişkilendirin"
 
 # AI Translated
-msgid "If enabled, saved projects store the absolute path to imported source files (STEP/STL/...), so \"Reload from disk\" still works when the source file is kept in a different folder than the project. If disabled, only the filename is stored, which keeps projects portable and avoids embedding absolute paths."
-msgstr "Etkinleştirildiğinde kaydedilen projeler, içe aktarılan kaynak dosyaların (STEP/STL/...) mutlak yolunu saklar; böylece kaynak dosya projeden farklı bir klasörde tutulsa bile \"Diskten yeniden yükle\" çalışmayı sürdürür. Devre dışı bırakıldığında yalnızca dosya adı saklanır; bu da projeleri taşınabilir tutar ve mutlak yolların gömülmesini önler."
+msgid "File associations for the Microsoft Store version are managed by Windows Settings."
+msgstr "Microsoft Store sürümü için dosya ilişkilendirmeleri Windows Ayarları tarafından yönetilir."
+
+# AI Translated
+msgid "Open Windows Default Apps Settings"
+msgstr "Windows Varsayılan Uygulamalar Ayarlarını Aç"
+
+msgid "Associate 3MF files to Snapmaker Orca"
+msgstr ""
+
+msgid "If enabled, this sets Snapmaker Orca as the default application to open 3MF files."
+msgstr ""
+
+msgid "Associate DRC files to Snapmaker Orca"
+msgstr ""
+
+msgid "If enabled, sets Snapmaker Orca as default application to open DRC files."
+msgstr ""
+
+msgid "Associate STL files to Snapmaker Orca"
+msgstr ""
+
+msgid "If enabled, this sets Snapmaker Orca as the default application to open STL files."
+msgstr ""
+
+msgid "Associate STEP files to Snapmaker Orca"
+msgstr ""
+
+msgid "If enabled, this sets Snapmaker Orca as the default application to open STEP files."
+msgstr ""
+
+msgid "Associate web links to Snapmaker Orca"
+msgstr "Web bağlantılarını Snapmaker Orca ile ilişkilendirin"
+
+msgid "Behaviour"
+msgstr "Davranış"
+
+msgid "Auto flush after changing..."
+msgstr "Değiştirdikten sonra otomatik temizleme..."
+
+msgid "Auto calculate flushing volumes when selected values changed"
+msgstr "Seçilen değerler değiştiğinde yıkama hacimlerini otomatik olarak hesapla"
+
+msgid "Auto arrange plate after cloning"
+msgstr "Klonlamadan sonra plakayı otomatik düzenle"
+
+msgid "Auto slice after changes"
+msgstr "Değişikliklerden sonra otomatik dilimleme"
+
+msgid "If enabled, Snapmaker Orca will re-slice automatically whenever slicing-related settings change."
+msgstr ""
+
+msgid "Delay in seconds before auto slicing starts, allowing multiple edits to be grouped. Use 0 to slice immediately."
+msgstr "Otomatik dilimleme başlamadan önceki saniye cinsinden gecikme, birden fazla düzenlemenin gruplandırılmasına olanak tanır. Hemen dilimlemek için 0'ı kullanın."
+
+# AI Translated
+msgid "Show options when adding a primitive"
+msgstr "Şekil eklerken seçenekleri göster"
+
+# AI Translated
+msgid "If enabled, a dialog asks for the dimensions of a primitive shape before it is added."
+msgstr "Etkinleştirilirse, bir şekil eklenmeden önce bir iletişim kutusu şeklin boyutlarını sorar."
+
+msgid "Remove mixed temperature restriction"
+msgstr "Karışık sıcaklık sınırlamasını kaldırın"
+
+msgid "With this option enabled, you can print materials with a large temperature difference together."
+msgstr "Bu seçenek etkinleştirildiğinde, sıcaklık farkı büyük olan malzemeleri bir arada yazdırabilirsiniz."
+
+msgid "Allow high/low temperature filament mixing"
+msgstr ""
+
+msgid "If enabled, allows printing with both high-temperature and low-temperature filaments simultaneously."
+msgstr ""
+
+msgid ""
+"Mixing materials with significantly different printing temperatures may result in:\n"
+"· Extruder clogging\n"
+"· Nozzle damage\n"
+"· Layer adhesion issues\n"
+"\n"
+"Do you want to enable this feature?"
+msgstr ""
+
+msgid "High and Low Temperature Material Mixing Risk"
+msgstr ""
+
+# AI Translated
+msgid "Remember last print action"
+msgstr "Son yazdırma eylemini hatırla"
+
+msgid "If enabled, Snapmaker Orca will remember the last selected option in the print button's dropdown (e.g. Print, Export plate sliced file, Export G-code file) and use it as the default on next startup."
+msgstr ""
+
+msgid "Show a dialog asking whether to continue slicing when memory is low"
+msgstr ""
+
+# AI Translated
+msgid "Default view type"
+msgstr "Varsayılan görünüm türü"
+
+# AI Translated
+msgid ""
+"The color scheme the sliced preview opens with.\n"
+"Automatic: Filament for multi material prints, Line Type for single material ones.\n"
+"Last used: the view type you selected last.\n"
+"Any other value always opens that view type.\n"
+"You can still switch the view type in the preview afterwards."
+msgstr ""
+"Dilimlenmiş ön izlemenin açıldığı renk şeması.\n"
+"Otomatik: çok malzemeli baskılar için Filament, tek malzemeli baskılar için Çizgi Tipi.\n"
+"Son kullanılan: en son seçtiğiniz görünüm türü.\n"
+"Diğer herhangi bir değer her zaman o görünüm türünü açar.\n"
+"Görünüm türünü daha sonra ön izlemede yine değiştirebilirsiniz."
+
+msgid "Simplify preview while dragging"
+msgstr ""
+
+msgid ""
+"What the sliced preview draws while you drag the camera or a preview slider, or zoom with the mouse wheel, so that large prints stay responsive. The full toolpaths are restored as soon as you let go.\n"
+"Off: the full toolpaths.\n"
+"Solid model: the sliced objects and the prime tower as solid shapes in the colors of the current view, cut to the visible layer range, with its bottom and top layers and the supports drawn as toolpaths. Negative volumes are not cut out. A print made object by object, or one on a belt printer, keeps its full toolpaths.\n"
+"Shell only: every layer without its sparse infill, internal solid infill, internal bridges and gap fill, which lie under the walls and skins. Walls, top and bottom surfaces, bridges, supports and the prime tower are drawn whole, so the print looks the same from outside.\n"
+"The bottom and top layers of the visible range are always drawn whole; a layer with no infill of its own, as with infill combination, takes the layers down to the nearest one with infill along."
+msgstr ""
+
+msgid "Solid model"
+msgstr ""
+
+msgid "Shell only"
+msgstr ""
+
+# AI Translated
+msgid "Dim lower layers"
+msgstr "Alt katmanları karart"
+
+# AI Translated
+msgid "When scrubbing the layer slider in the sliced preview, render the layers below the current one darkened so that only the layer being viewed is shown at full brightness."
+msgstr "Dilimlenmiş önizlemede katman kaydırıcısı gezdirilirken, geçerli katmanın altındaki katmanları koyulaştırarak yalnızca görüntülenen katmanın tam parlaklıkta gösterilmesini sağlar."
+
+# AI Translated
+msgid "Dimmed layer brightness"
+msgstr "Karartılmış katman parlaklığı"
+
+# AI Translated
+msgid ""
+"How brightly the dimmed layers are rendered when \"Dim lower layers\" is enabled.\n"
+"99% is barely darkened, 0% renders them black. Capped at 99% because 100% would be the same as disabling the option."
+msgstr ""
+"\"Alt katmanları karart\" etkinleştirildiğinde karartılmış katmanların ne kadar parlak görüntüleneceği.\n"
+"%99 neredeyse hiç karartmaz, %0 ise tamamen siyah gösterir. Üst sınır %99 olarak belirlenmiştir, çünkü %100 seçeneği devre dışı bırakmakla aynı olurdu."
 
 msgid "Preset"
 msgstr "Ön ayar"
@@ -11771,14 +12156,37 @@ msgstr "Paylaşılan profil bildirimini göster"
 msgid "Show a notification with a link to browse shared profiles when the selected printer is changed."
 msgstr "Seçili yazıcı değiştirildiğinde, paylaşılan profillere göz atma bağlantısı içeren bir bildirim gösterir."
 
-msgid "Features"
-msgstr "Özellikler"
+# AI Translated
+msgid "Visible plugin pages"
+msgstr "Görünür eklenti sayfaları"
 
-msgid "Multi device management"
-msgstr "Çoklu cihaz yönetimi"
+# AI Translated
+msgid "pages"
+msgstr "sayfa"
 
-msgid "With this option enabled, you can send a task to multiple devices at the same time and manage multiple devices."
-msgstr "Bu seçenek etkinleştirildiğinde, aynı anda birden fazla cihaza bir görev gönderebilir ve birden fazla cihazı yönetebilirsiniz."
+# AI Translated
+msgid "Number of plugin pages shown as fixed tabs before the remaining pages collapse into a dropdown on the last tab."
+msgstr "Kalan sayfalar son sekmedeki açılır listeye toplanmadan önce sabit sekme olarak gösterilen eklenti sayfalarının sayısı."
+
+# AI Translated
+msgid "Draw mate connectors as a face"
+msgstr "Montaj bağlayıcılarını yüz olarak çiz"
+
+# AI Translated
+msgid "In the Design tab, draw a mate connector as a small face instead of the conventional disc with a roll quadrant. A face shows its orientation at a glance, without learning the disc convention. Turn this off for the conventional CAD representation."
+msgstr "Tasarım sekmesinde montaj bağlayıcısını, dönüş çeyreği olan geleneksel disk yerine küçük bir yüz olarak çizer. Bir yüz, disk kuralını öğrenmeye gerek kalmadan yönünü bir bakışta gösterir. Geleneksel CAD gösterimi için bunu kapatın."
+
+# AI Translated
+msgid "Auto-close sketch loops"
+msgstr "Eskiz döngülerini otomatik kapat"
+
+# AI Translated
+msgid "Treat sketch endpoints within 0.001 mm as one joint and weld the loop shut. Off: only exactly coincident endpoints join, so a loop with a tiny gap is shown as open instead of being closed for you. Saved with each design; applies to designs started after the change."
+msgstr "Birbirine 0,001 mm'den yakın eskiz uç noktalarını tek bir birleşim noktası sayar ve döngüyü kaynaklayarak kapatır. Kapalı: yalnızca tam çakışan uç noktalar birleşir; bu nedenle küçük bir boşluğu olan döngü sizin için kapatılmak yerine açık olarak gösterilir. Her tasarımla birlikte kaydedilir; değişiklikten sonra başlatılan tasarımlara uygulanır."
+
+# AI Translated
+msgid "Speed dial"
+msgstr "Hızlı Erişim"
 
 # AI Translated
 msgid "Open the Speed Dial from the keyboard"
@@ -11800,92 +12208,6 @@ msgstr "eylem"
 # AI Translated
 msgid "How many recently launched actions to show at the top of the Speed Dial. Set to 0 to hide recent actions."
 msgstr "Hızlı Erişim'in en üstünde gösterilecek, son çalıştırılan eylem sayısı. Son eylemleri gizlemek için 0 olarak ayarlayın."
-
-# AI Translated
-msgid "CAD feature (experimental)"
-msgstr "CAD özelliği (deneysel)"
-
-# AI Translated
-msgid "With this option enabled, the Design tab is shown, where models can be built and edited parametrically. This feature is experimental and still under development."
-msgstr "Bu seçenek etkinleştirildiğinde, modellerin parametrik olarak oluşturulup düzenlenebildiği Tasarım sekmesi gösterilir. Bu özellik deneyseldir ve hâlâ geliştirilmektedir."
-
-msgid "Pop up to select filament grouping mode"
-msgstr "Filament gruplama modunu seçmek için açılır pencere"
-
-# AI Translated
-msgid "Visible plugin pages"
-msgstr "Görünür eklenti sayfaları"
-
-# AI Translated
-msgid "pages"
-msgstr "sayfa"
-
-# AI Translated
-msgid "Number of plugin pages shown as fixed tabs before the remaining pages collapse into a dropdown on the last tab."
-msgstr "Kalan sayfalar son sekmedeki açılır listeye toplanmadan önce sabit sekme olarak gösterilen eklenti sayfalarının sayısı."
-
-msgid "Behavior"
-msgstr "Davranış"
-
-msgid "Auto flush after changing..."
-msgstr "Değiştirdikten sonra otomatik temizleme..."
-
-msgid "Auto calculate flushing volumes when selected values changed"
-msgstr "Seçilen değerler değiştiğinde yıkama hacimlerini otomatik olarak hesapla"
-
-msgid "Auto arrange plate after cloning"
-msgstr "Klonlamadan sonra plakayı otomatik düzenle"
-
-# AI Translated
-msgid "Show options when adding a primitive"
-msgstr "Şekil eklerken seçenekleri göster"
-
-# AI Translated
-msgid "If enabled, a dialog asks for the dimensions of a primitive shape before it is added."
-msgstr "Etkinleştirilirse, bir şekil eklenmeden önce bir iletişim kutusu şeklin boyutlarını sorar."
-
-msgid "Auto slice after changes"
-msgstr "Değişikliklerden sonra otomatik dilimleme"
-
-msgid "If enabled, Snapmaker Orca will re-slice automatically whenever slicing-related settings change."
-msgstr ""
-
-msgid "Delay in seconds before auto slicing starts, allowing multiple edits to be grouped. Use 0 to slice immediately."
-msgstr "Otomatik dilimleme başlamadan önceki saniye cinsinden gecikme, birden fazla düzenlemenin gruplandırılmasına olanak tanır. Hemen dilimlemek için 0'ı kullanın."
-
-msgid "Remove mixed temperature restriction"
-msgstr "Karışık sıcaklık sınırlamasını kaldırın"
-
-msgid "With this option enabled, you can print materials with a large temperature difference together."
-msgstr "Bu seçenek etkinleştirildiğinde, sıcaklık farkı büyük olan malzemeleri bir arada yazdırabilirsiniz."
-
-msgid "Allow high/low temperature filament mixing"
-msgstr ""
-
-msgid "If enabled, allows printing with both high-temperature and low-temperature filaments simultaneously."
-msgstr ""
-
-msgid ""
-"Mixing materials with significantly different printing temperatures may result in:\n"
-"· Extruder clogging\n"
-"· Nozzle damage\n"
-"· Layer adhesion issues\n"
-"\n"
-"Do you want to enable this feature?"
-msgstr ""
-
-msgid "High and Low Temperature Material Mixing Risk"
-msgstr ""
-
-# AI Translated
-msgid "Remember last print action"
-msgstr "Son yazdırma eylemini hatırla"
-
-msgid "If enabled, Snapmaker Orca will remember the last selected option in the print button's dropdown (e.g. Print, Export plate sliced file, Export G-code file) and use it as the default on next startup."
-msgstr ""
-
-msgid "Show a dialog asking whether to continue slicing when memory is low"
-msgstr ""
 
 msgid "Camera"
 msgstr "Kamera"
@@ -11930,22 +12252,6 @@ msgid "If enabled, reverses the direction of zoom with mouse wheel."
 msgstr "Etkinleştirilirse, mouse tekerleğiyle yakınlaştırmanın yönü tersine çevrilir."
 
 # AI Translated
-msgid "Draw mate connectors as a face"
-msgstr "Montaj bağlayıcılarını yüz olarak çiz"
-
-# AI Translated
-msgid "In the Design tab, draw a mate connector as a small face instead of the conventional disc with a roll quadrant. A face shows its orientation at a glance, without learning the disc convention. Turn this off for the conventional CAD representation."
-msgstr "Tasarım sekmesinde montaj bağlayıcısını, dönüş çeyreği olan geleneksel disk yerine küçük bir yüz olarak çizer. Bir yüz, disk kuralını öğrenmeye gerek kalmadan yönünü bir bakışta gösterir. Geleneksel CAD gösterimi için bunu kapatın."
-
-# AI Translated
-msgid "Auto-close sketch loops"
-msgstr "Eskiz döngülerini otomatik kapat"
-
-# AI Translated
-msgid "Treat sketch endpoints within 0.001 mm as one joint and weld the loop shut. Off: only exactly coincident endpoints join, so a loop with a tiny gap is shown as open instead of being closed for you. Saved with each design; applies to designs started after the change."
-msgstr "Birbirine 0,001 mm'den yakın eskiz uç noktalarını tek bir birleşim noktası sayar ve döngüyü kaynaklayarak kapatır. Kapalı: yalnızca tam çakışan uç noktalar birleşir; bu nedenle küçük bir boşluğu olan döngü sizin için kapatılmak yerine açık olarak gösterilir. Her tasarımla birlikte kaydedilir; değişiklikten sonra başlatılan tasarımlara uygulanır."
-
-# AI Translated
 msgid "Pan"
 msgstr "Kaydır"
 
@@ -11985,27 +12291,6 @@ msgstr "Klavye kısayolları"
 msgid "Choose the key for each action."
 msgstr "Her eylem için tuşu seçin."
 
-msgid "Clear my choice on..."
-msgstr "Seçimimi Temizle"
-
-msgid "Unsaved projects"
-msgstr "Kaydedilmemiş projeler"
-
-msgid "Clear my choice on the unsaved projects."
-msgstr "Kaydedilmemiş projelerdeki seçimimi temizle."
-
-msgid "Unsaved presets"
-msgstr "Kaydedilmemiş ön ayarlar"
-
-msgid "Clear my choice on the unsaved presets."
-msgstr "Kaydedilmemiş ön ayarlardaki seçimimi temizle."
-
-msgid "Synchronizing printer preset"
-msgstr "Yazıcı ön ayarı senkronize ediliyor"
-
-msgid "Clear my choice for synchronizing printer preset after loading the file."
-msgstr "Dosyayı yükledikten sonra yazıcı ön ayarını senkronize etmek için seçimimi temizleyin."
-
 # AI Translated
 msgid "Graphics"
 msgstr "Grafikler"
@@ -12035,6 +12320,14 @@ msgstr ""
 
 msgid "Render soft shadows of objects on the build plate in the Prepare view. Requires OpenGL 3.3 or later."
 msgstr ""
+
+# AI Translated
+msgid "Translucent filaments"
+msgstr "Yarı saydam filamentler"
+
+# AI Translated
+msgid "Draw the toolpaths of filaments whose color is partly transparent as see-through, as the 3D view draws their objects. Turn it off to draw every filament opaque."
+msgstr "Rengi kısmen saydam olan filamentlerin takımyollarını, 3D görünümde nesnelerinin çizildiği gibi saydam çizer. Her filamenti opak çizmek için kapatın."
 
 # AI Translated
 msgid "Phong shading"
@@ -12100,6 +12393,27 @@ msgid ""
 msgstr ""
 "Gerçekçi görünümde Ön İzleme'deki takımyollarını parlak plastik gibi vurgular.\n"
 "Kapalıyken yarı saydam bir filament mat olur, opak olan ise sade görünümün vurgusunu korur."
+
+msgid "Persistent"
+msgstr ""
+
+msgid "When Outline is enabled in the 3D canvas menu, outlines visible objects even when they are not selected."
+msgstr ""
+
+msgid "The configured outline color is invalid."
+msgstr ""
+
+msgid "Persistent color"
+msgstr ""
+
+msgid "Choose the color of the persistent outlines of unselected objects."
+msgstr ""
+
+msgid "Selection color"
+msgstr ""
+
+msgid "Choose the color of the outlines of selected objects."
+msgstr ""
 
 msgid "Anti-aliasing"
 msgstr "Anti-Aliasing"
@@ -12247,56 +12561,6 @@ msgstr "Çalıştır"
 msgid "Replaces the current project with the OrcaSliced Combo, then measures the frame rate and render timings while the camera turns around it in Prepare and Preview, and while the layer slider moves through the sliced layers."
 msgstr "Geçerli projeyi OrcaSliced Combo ile değiştirir, ardından kamera Hazırlık ve Ön İzleme'de modelin etrafında dönerken ve katman kaydırıcısı dilimlenmiş katmanlar boyunca ilerlerken kare hızını ve render sürelerini ölçer."
 
-# AI Translated
-msgid "G-code Preview"
-msgstr "G-code Önizleme"
-
-# AI Translated
-msgid "Default view type"
-msgstr "Varsayılan görünüm türü"
-
-# AI Translated
-msgid ""
-"The color scheme the sliced preview opens with.\n"
-"Automatic: Filament for multi material prints, Line Type for single material ones.\n"
-"Last used: the view type you selected last.\n"
-"Any other value always opens that view type.\n"
-"You can still switch the view type in the preview afterwards."
-msgstr ""
-"Dilimlenmiş ön izlemenin açıldığı renk şeması.\n"
-"Otomatik: çok malzemeli baskılar için Filament, tek malzemeli baskılar için Çizgi Tipi.\n"
-"Son kullanılan: en son seçtiğiniz görünüm türü.\n"
-"Diğer herhangi bir değer her zaman o görünüm türünü açar.\n"
-"Görünüm türünü daha sonra ön izlemede yine değiştirebilirsiniz."
-
-# AI Translated
-msgid "Dim lower layers"
-msgstr "Alt katmanları karart"
-
-# AI Translated
-msgid "When scrubbing the layer slider in the sliced preview, render the layers below the current one darkened so that only the layer being viewed is shown at full brightness."
-msgstr "Dilimlenmiş önizlemede katman kaydırıcısı gezdirilirken, geçerli katmanın altındaki katmanları koyulaştırarak yalnızca görüntülenen katmanın tam parlaklıkta gösterilmesini sağlar."
-
-# AI Translated
-msgid "Dimmed layer brightness"
-msgstr "Karartılmış katman parlaklığı"
-
-# AI Translated
-msgid ""
-"How brightly the dimmed layers are rendered when \"Dim lower layers\" is enabled.\n"
-"99% is barely darkened, 0% renders them black. Capped at 99% because 100% would be the same as disabling the option."
-msgstr ""
-"\"Alt katmanları karart\" etkinleştirildiğinde karartılmış katmanların ne kadar parlak görüntüleneceği.\n"
-"%99 neredeyse hiç karartmaz, %0 ise tamamen siyah gösterir. Üst sınır %99 olarak belirlenmiştir, çünkü %100 seçeneği devre dışı bırakmakla aynı olurdu."
-
-# AI Translated
-msgid "Translucent filaments"
-msgstr "Yarı saydam filamentler"
-
-# AI Translated
-msgid "Draw the toolpaths of filaments whose color is partly transparent as see-through, as the 3D view draws their objects. Turn it off to draw every filament opaque."
-msgstr "Rengi kısmen saydam olan filamentlerin takımyollarını, 3D görünümde nesnelerinin çizildiği gibi saydam çizer. Her filamenti opak çizmek için kapatın."
-
 msgid "Connection"
 msgstr "Bağlantı"
 
@@ -12367,44 +12631,6 @@ msgstr ""
 
 msgid "Sends slicing results, printer connection steps and error messages to the Snapmaker cloud while signed in to a Snapmaker account. Sent in readable form: the account ID, the MQTT client ID, and the printer's network address and MQTT topics. Printer serial numbers and device IDs are sent as one-way hashes. Only active while the Customer Experience Improvement Program is joined."
 msgstr ""
-
-msgid "Associate files to Snapmaker Orca"
-msgstr "Dosyaları Snapmaker Orca ile ilişkilendirin"
-
-# AI Translated
-msgid "File associations for the Microsoft Store version are managed by Windows Settings."
-msgstr "Microsoft Store sürümü için dosya ilişkilendirmeleri Windows Ayarları tarafından yönetilir."
-
-# AI Translated
-msgid "Open Windows Default Apps Settings"
-msgstr "Windows Varsayılan Uygulamalar Ayarlarını Aç"
-
-msgid "Associate 3MF files to Snapmaker Orca"
-msgstr ""
-
-msgid "If enabled, this sets Snapmaker Orca as the default application to open 3MF files."
-msgstr ""
-
-msgid "Associate DRC files to Snapmaker Orca"
-msgstr ""
-
-msgid "If enabled, sets Snapmaker Orca as default application to open DRC files."
-msgstr ""
-
-msgid "Associate STL files to Snapmaker Orca"
-msgstr ""
-
-msgid "If enabled, this sets Snapmaker Orca as the default application to open STL files."
-msgstr ""
-
-msgid "Associate STEP files to Snapmaker Orca"
-msgstr ""
-
-msgid "If enabled, this sets Snapmaker Orca as the default application to open STEP files."
-msgstr ""
-
-msgid "Associate web links to Snapmaker Orca"
-msgstr "Web bağlantılarını Snapmaker Orca ile ilişkilendirin"
 
 msgid "Developer"
 msgstr "Geliştirici"
@@ -12695,12 +12921,6 @@ msgstr "Yazdırma sırası"
 msgid "Same as Global"
 msgstr "Küresel ile aynı"
 
-msgid "Enable"
-msgstr "Aktif et"
-
-msgid "Disable"
-msgstr "Devre dışı bırak"
-
 msgid "Spiral vase"
 msgstr "Spiral vazo"
 
@@ -12803,16 +13023,16 @@ msgstr "Kullanıcı Ön Ayarı"
 msgid "Preset Inside Project"
 msgstr "Ön ayar içerisinde proje"
 
-# AI Translated
-msgid "Copies all inherited values from the parent into this preset and removes the parent relationship. Presets compatible only with the parent may become unsupported."
-msgstr "Üst ön ayardan devralınan tüm değerleri bu ön ayara kopyalar ve üst ön ayarla olan ilişkiyi kaldırır. Yalnızca üst ön ayarla uyumlu olan ön ayarlar desteklenmeyebilir."
-
 msgid "Detach from parent"
 msgstr "Ebeveynden ayrıl"
 
 # AI Translated
 msgid "Save without parent"
 msgstr "Ebeveyn olmadan kaydet"
+
+# AI Translated
+msgid "Copies all inherited values from the parent into this preset and removes the parent relationship. Presets compatible only with the parent may become unsupported."
+msgstr "Üst ön ayardan devralınan tüm değerleri bu ön ayara kopyalar ve üst ön ayarla olan ilişkiyi kaldırır. Yalnızca üst ön ayarla uyumlu olan ön ayarlar desteklenmeyebilir."
 
 # AI Translated
 msgid "Unique preset"
@@ -13037,10 +13257,6 @@ msgstr "Favorilere sabitle (%s)"
 #, c-format, boost-format
 msgid "Unpin from favorites (%s)"
 msgstr "Favorilerdeki sabitlemeyi kaldır (%s)"
-
-# AI Translated
-msgid "Remove from favorites"
-msgstr "Favorilerden kaldır"
 
 # AI Translated
 msgid "Move left"
@@ -15016,7 +15232,13 @@ msgctxt "Nozzle flow type"
 msgid "XHF"
 msgstr "EYA"
 
+#. TRN An entry of the speed selector in a narrow sidebar (short for "Extruder 2")
+#, boost-format
+msgid "E%1%"
+msgstr ""
+
 # AI Translated
+#. TRN Printer settings extruder tab: the extruder's name, e.g. "Extruder 2", and its nozzle flow tag, e.g. "HF".
 #, c-format, boost-format
 msgid "%s: %s"
 msgstr "%s: %s"
@@ -15039,11 +15261,6 @@ msgstr ""
 msgid "Extruder %1%"
 msgstr ""
 
-#. TRN An entry of the speed selector in a narrow sidebar (short for "Extruder 2")
-#, boost-format
-msgid "E%1%"
-msgstr ""
-
 # AI Translated
 msgid "No modifications need to be copied."
 msgstr "Kopyalanması gereken değişiklik yok."
@@ -15061,6 +15278,11 @@ msgstr "%s parametrelerini değiştir"
 #, c-format, boost-format
 msgid "Do you want to modify the following parameters of the %s to that of the %s?"
 msgstr "%s öğesinin aşağıdaki parametrelerini %s öğesininkilerle değiştirmek istiyor musunuz?"
+
+#. TRN %1% is the extruder (or nozzle variant) the values are copied from, %2% the list of those they are copied to, as the switch names them, e.g. "T2 HF, T3 HF".
+#, boost-format
+msgid "Do you want to copy the following parameters of %1% to %2%?"
+msgstr ""
 
 msgid "Click to reset current value and attach to the global value."
 msgstr "Geçerli değeri sıfırlamak ve genel değere eklemek için tıklayın."
@@ -15209,6 +15431,15 @@ msgid ""
 msgstr ""
 "\n"
 "Değiştirdiğiniz ön ayar değerlerini atabilir veya değiştirilen değerleri yeni projeye aktarmayı seçebilirsiniz"
+
+msgid "Click the compare button to see the full value."
+msgstr ""
+
+msgid "Process settings"
+msgstr ""
+
+msgid "Compare the full values"
+msgstr ""
 
 msgid "Extruder count"
 msgstr "Ekstruder sayısı"
@@ -15960,10 +16191,6 @@ msgstr "CA sertifika dosyasını aç"
 msgid "HTTPS CA file is optional. It is only needed if you use HTTPS with a self-signed certificate."
 msgstr "HTTPS CA dosyası isteğe bağlıdır. Yalnızca HTTPS'yi kendinden imzalı bir sertifikayla kullanıyorsanız gereklidir."
 
-# AI Translated
-msgid "This system uses HTTPS certificates from the system Certificate Store or Keychain. To use a custom CA file, import it there."
-msgstr "Bu sistem, sistem Sertifika Deposu veya Anahtar Zincirindeki HTTPS sertifikalarını kullanır. Özel bir CA dosyası kullanmak için onu oraya içe aktarın."
-
 msgid "Printer model"
 msgstr "Yazıcı modeli"
 
@@ -15982,6 +16209,10 @@ msgstr "Bağlan"
 
 msgid "Manual Setup"
 msgstr "Manuel Kurulum"
+
+# AI Translated
+msgid "This system uses HTTPS certificates from the system Certificate Store or Keychain. To use a custom CA file, import it there."
+msgstr "Bu sistem, sistem Sertifika Deposu veya Anahtar Zincirindeki HTTPS sertifikalarını kullanır. Özel bir CA dosyası kullanmak için onu oraya içe aktarın."
 
 msgid "IP and Access Code Verified! You may close the window"
 msgstr "IP ve Erişim Kodu Doğrulandı! Pencereyi kapatabilirsin"
@@ -16584,6 +16815,9 @@ msgstr "Prime Kulesi hariç tutma alanına çok yakın. Yazdırma sırasında ç
 msgid "Prime tower is too close to the clumping detection area. There may be collisions when printing."
 msgstr "Prime Kulesi topaklanma algılama alanına çok yakın. Yazdırma sırasında çarpışmalar olabilir."
 
+msgid "The extruder printable areas share no common area, so the prime tower cannot be printed.\n"
+msgstr ""
+
 # AI Translated
 # Needs human review: Glossary row Prime tower / Wipe tower is unsettled; 'Prime Kulesi' is used as in the catalog.
 msgid "Prime tower is partially outside the printable area, and it cannot be printed.\n"
@@ -16600,6 +16834,24 @@ msgstr "Geçersiz önerilen nozul sıcaklığı aralığı. Alt sınır, üst s�
 # AI Translated
 msgid "If you still want to print, you can enable the option in Preferences / Control / Slicing / Remove mixed temperature restriction."
 msgstr "Yine de yazdırmak istiyorsanız Tercihler / Denetim / Dilimleme / Karışık sıcaklık kısıtlamasını kaldır seçeneğini etkinleştirebilirsiniz."
+
+msgid "A prime tower with printing by object is not supported together with the dynamic filament map. Print by layer, or disable the dynamic filament map."
+msgstr ""
+
+msgid "A prime tower requires that all objects have the same layer height."
+msgstr "Prime tower, tüm nesnelerin aynı katman yüksekliğine sahip olmasını gerektirir."
+
+msgid "A prime tower requires that all objects are printed over the same number of raft layers."
+msgstr "Ana kule, tüm nesnelerin aynı sayıda sal katmanı üzerine yazdırılmasını gerektirir."
+
+msgid "The prime tower is only supported for multiple objects if they are printed with the same support_top_z_distance."
+msgstr "Prime kulesi yalnızca aynı destek üst z mesafesi ile yazdırılırlarsa birden fazla nesne için desteklenir."
+
+msgid "A prime tower requires that all objects are sliced with the same layer height."
+msgstr "Prime tower, tüm nesnelerin aynı katman yüksekliğinde dilimlenmesini gerektirir."
+
+msgid "The prime tower is only supported if all objects have the same variable layer height."
+msgstr "Prime tower yalnızca tüm nesnelerin aynı değişken katman yüksekliğine sahip olması durumunda desteklenir."
 
 msgid "No extrusions under current settings."
 msgstr "Mevcut ayarlarda ekstrüzyon yok."
@@ -16689,6 +16941,10 @@ msgstr "Bant yıkama kulesi etkin ancak projede yıkama kulesi nesnesi yok; fila
 msgid "The project contains multiple managed belt purge towers. Reload the plate or toggle the belt purge tower off and on to regenerate it."
 msgstr "Proje, yönetilen birden fazla bant yıkama kulesi içeriyor. Kuleyi yeniden oluşturmak için plakayı yeniden yükleyin veya bant yıkama kulesini kapatıp yeniden açın."
 
+#. TRN "Precise Z height" is a print setting, "prime tower" the tower that purges the nozzle between filaments.
+msgid "Precise Z height is not applied: with the prime tower, objects of different heights that use variable layer height have to share their layers."
+msgstr ""
+
 msgid "Enabling both precise Z height and the prime tower may cause slicing errors."
 msgstr "Hem hassas Z yüksekliğini hem de hazırlık kulesini etkinleştirmek dilimleme hatalarına neden olabilir."
 
@@ -16700,6 +16956,12 @@ msgstr "Birden fazla nesneyi spiral vazo modunda yazdırmak için lütfen \"Nesn
 
 msgid "Spiral (vase) mode does not work when an object contains more than one material."
 msgstr "Bir nesne birden fazla malzeme içerdiğinde spiral vazo modu çalışmaz."
+
+# AI Translated
+#. TRN %1% is the object name.
+#, boost-format
+msgid "Spiral vase mode needs no sparse infill, one wall loop and no top shell layers, but the object %1% uses other values, so it will not print as a continuous spiral."
+msgstr "Spiral vazo modu dolgu olmamasını, tek duvar döngüsünü ve üst katman olmamasını gerektirir, ancak %1% nesnesi farklı değerler kullandığından sürekli bir spiral olarak yazdırılmayacaktır."
 
 #, boost-format
 msgid "While the object %1% itself fits the build volume, it exceeds the maximum build volume height because of material shrinkage compensation."
@@ -16746,24 +17008,6 @@ msgstr "Uyarlanabilir katman yüksekliği açıkken ana kule desteklenmez. Tüm 
 
 msgid "A prime tower requires any “support gap” to be a multiple of layer height."
 msgstr "Ana kule \"destek boşluğunun\" katman yüksekliğinin katı olmasını gerektirir."
-
-msgid "A prime tower with printing by object is not supported together with the dynamic filament map. Print by layer, or disable the dynamic filament map."
-msgstr ""
-
-msgid "A prime tower requires that all objects have the same layer height."
-msgstr "Prime tower, tüm nesnelerin aynı katman yüksekliğine sahip olmasını gerektirir."
-
-msgid "A prime tower requires that all objects are printed over the same number of raft layers."
-msgstr "Ana kule, tüm nesnelerin aynı sayıda sal katmanı üzerine yazdırılmasını gerektirir."
-
-msgid "The prime tower is only supported for multiple objects if they are printed with the same support_top_z_distance."
-msgstr "Prime kulesi yalnızca aynı destek üst z mesafesi ile yazdırılırlarsa birden fazla nesne için desteklenir."
-
-msgid "A prime tower requires that all objects are sliced with the same layer height."
-msgstr "Prime tower, tüm nesnelerin aynı katman yüksekliğinde dilimlenmesini gerektirir."
-
-msgid "The prime tower is only supported if all objects have the same variable layer height."
-msgstr "Prime tower yalnızca tüm nesnelerin aynı değişken katman yüksekliğine sahip olması durumunda desteklenir."
 
 msgid "One or more object were assigned an extruder that the printer does not have."
 msgstr "Bir veya daha fazla nesneye yazıcının sahip olmadığı bir ekstruder atandı."
@@ -21711,17 +21955,17 @@ msgstr "İçeri temizleme"
 
 # AI Translated
 msgid ""
-"Applies only to external walls, including hole boundaries. Moves the hot nozzle toward printed inner walls during wiping to reduce reheating of freshly printed plastic and seam marks.\n"
+"Applies only to external walls, including hole boundaries. Moves the hot nozzle toward the inner walls during wiping to reduce reheating of freshly printed plastic and seam marks.\n"
 "\n"
 "Especially useful at layer heights below 0.1 mm, where wipe marks are more visible.\n"
 "\n"
-"Uses the regular wipe if no adjacent inner wall is already printed (single-wall areas or Outer/Inner wall order), or if no supported inward path can be found, for example at tight corners or seam gaps."
+"Uses the regular wipe where the outer wall has no adjacent inner wall, such as in single-wall areas, or if no supported inward path can be found, for example at tight corners or seam gaps."
 msgstr ""
-"Yalnızca delik sınırları dahil olmak üzere dış duvarlara uygulanır. Temizleme sırasında sıcak nozulu yazdırılmış iç duvarlara doğru hareket ettirerek yeni yazdırılmış plastiğin yeniden ısınmasını ve dikiş izlerini azaltır.\n"
+"Yalnızca delik sınırları dahil olmak üzere dış duvarlara uygulanır. Temizleme sırasında sıcak nozulu iç duvarlara doğru hareket ettirerek yeni yazdırılmış plastiğin yeniden ısınmasını ve dikiş izlerini azaltır.\n"
 "\n"
 "Özellikle temizleme izlerinin daha belirgin olduğu 0,1 mm'nin altındaki katman yüksekliklerinde yararlıdır.\n"
 "\n"
-"Yazdırılmış bitişik bir iç duvar yoksa (tek duvarlı alanlar veya Dış/İç duvar sırası) ya da örneğin dar köşelerde veya dikiş boşluklarında desteklenen bir içeri yol bulunamazsa normal temizlemeyi kullanır."
+"Tek duvarlı alanlar gibi dış duvarın bitişiğinde iç duvar bulunmayan yerlerde ya da örneğin dar köşelerde veya dikiş boşluklarında desteklenen bir içeri yol bulunamazsa normal temizlemeyi kullanır."
 
 # AI Translated
 msgid "Wipe inward distance"
@@ -21732,11 +21976,15 @@ msgstr "İçeri temizleme mesafesi"
 msgid ""
 "The distance the wipe path is shifted away from the external perimeter, specified in millimeters or as a percentage of the actual outer-wall extrusion width.\n"
 "\n"
-"For example, 50% shifts the path by half of the outer-wall width. The effective offset is limited by both the actual outer-wall width and the available spacing to the adjacent wall, so values above 100% or an equivalent absolute distance have no additional effect. Set to 0 to disable the offset."
+"For example, 50% shifts the path by half of the outer-wall width. The effective offset is limited by both the actual outer-wall width and the available spacing to the adjacent wall, so values above 100% or an equivalent absolute distance have no additional effect. Set to 0 to disable the offset.\n"
+"\n"
+"With Outer/Inner or Inner/Outer/Inner wall order, the offset is limited to 50% of the actual outer-wall width because the adjacent inner wall is printed after the outer wall. This also applies to equivalent distances specified in millimeters."
 msgstr ""
 "Temizleme yolunun dış çevreden uzağa kaydırıldığı mesafe; milimetre cinsinden veya dış duvarın gerçek ekstrüzyon genişliğinin yüzdesi olarak belirtilir.\n"
 "\n"
-"Örneğin 50%, yolu dış duvar genişliğinin yarısı kadar kaydırır. Etkin kaydırma, hem dış duvarın gerçek genişliğiyle hem de bitişik duvara olan mevcut boşlukla sınırlıdır; bu nedenle 100% üzerindeki değerlerin veya buna denk bir mutlak mesafenin ek bir etkisi olmaz. Kaydırmayı devre dışı bırakmak için 0 girin."
+"Örneğin 50%, yolu dış duvar genişliğinin yarısı kadar kaydırır. Etkin kaydırma, hem dış duvarın gerçek genişliğiyle hem de bitişik duvara olan mevcut boşlukla sınırlıdır; bu nedenle 100% üzerindeki değerlerin veya buna denk bir mutlak mesafenin ek bir etkisi olmaz. Kaydırmayı devre dışı bırakmak için 0 girin.\n"
+"\n"
+"Dış/İç veya İç/Dış/İç duvar sırasında bitişik iç duvar dış duvardan sonra yazdırıldığı için kaydırma, dış duvarın gerçek genişliğinin 50%'si ile sınırlanır. Bu, milimetre cinsinden belirtilen eşdeğer mesafeler için de geçerlidir."
 
 msgid "Wipe before external loop"
 msgstr "Harici döngüden önce silin"
@@ -21749,6 +21997,15 @@ msgstr ""
 "Dış/İç veya İç/Dış/İç duvar baskı sırası ile yazdırırken, dış çevrenin başlangıcında olası aşırı çıkıntının görünürlüğünü en aza indirmek için, kaldırma işlemi dış çevrenin başlangıcından itibaren biraz içeride gerçekleştirilir. Bu şekilde herhangi bir aşırı ekstrüzyon potansiyeli dış yüzeyden gizlenir.\n"
 "\n"
 "Bu, Dış/İç veya İç/Dış/İç duvar yazdırma sırası ile yazdırırken kullanışlıdır, çünkü bu modlarda, bir geri çekilme hareketinin hemen ardından bir dış çevrenin yazdırılması daha olasıdır."
+
+msgid "Retract after outer wall"
+msgstr ""
+
+msgid ""
+"Always retract when the nozzle leaves an outer wall, even if the travel is shorter than the travel distance threshold.\n"
+"\n"
+"Without a retraction, a very short travel, for example to gap infill inside a thin wall, can drag the end of the outer wall inward and leave a visible dent at the seam."
+msgstr ""
 
 msgid "Wipe speed"
 msgstr "Temizleme hızı"
@@ -22266,6 +22523,12 @@ msgstr "Tek çift"
 
 msgid "Close holes"
 msgstr "Delikleri kapat"
+
+msgid "Carve overlaps by per-layer slice area"
+msgstr ""
+
+msgid "When enabled, overlaps between multi-extruder parts are carved with the new algorithm: on each layer, the part with the smaller slice area owns the overlap, keeping small details intact inside larger bodies. Developer option."
+msgstr ""
 
 msgid "Z offset"
 msgstr "Z ofseti"
@@ -25345,8 +25608,8 @@ msgid "Expecting a regular expression."
 msgstr "Bir düzenli ifade bekleniyordu."
 
 # AI Translated
-msgid "Invalid utf8 sequence"
-msgstr "Geçersiz utf8 dizisi"
+msgid "Invalid UTF-8 sequence"
+msgstr "Geçersiz UTF-8 dizisi"
 
 # AI Translated
 msgid "Non-ASCII7 characters are only allowed inside text blocks and string literals, not inside code blocks."
@@ -26168,7 +26431,7 @@ msgid "Klipper version => 0.9.0"
 msgstr "Klipper sürümü => 0.9.0"
 
 msgid ""
-"RepRap firmware version => 3.4.0\n"
+"RepRapFirmware version => 3.4.0\n"
 "Check your firmware documentation for supported shaper types."
 msgstr ""
 "RepRap ürün yazılımı sürümü => 3.4.0\n"
@@ -26188,7 +26451,7 @@ msgstr "Y Başlangıç / Bitiş: "
 msgid "Frequency settings"
 msgstr "Frekans ayarları"
 
-msgid "RepRap firmware uses the same frequency range for both axes."
+msgid "RepRapFirmware uses the same frequency range for both axes."
 msgstr "RepRap ürün yazılımı her iki eksen için aynı frekans aralığını kullanır."
 
 msgid "Damp: "
@@ -26228,7 +26491,7 @@ msgstr "Frekans X / Y: "
 msgid "Damp (Start / End): "
 msgstr "Sönümleme (Başlangıç / Bitiş): "
 
-msgid "RepRap firmware uses the same frequency for both axes."
+msgid "RepRapFirmware uses the same frequency for both axes."
 msgstr "RepRap ürün yazılımı her iki eksen için de aynı frekansı kullanır."
 
 msgid "Note: Use previously calculated frequencies."
@@ -26458,6 +26721,18 @@ msgid "Smooth Build Plate (Side B)"
 msgstr "Smooth Build Plate (B Tarafı)"
 
 # AI Translated
+msgid "Reading the printer's filament slots..."
+msgstr "Yazıcının filament yuvaları okunuyor..."
+
+# AI Translated
+msgid "Could not read the printer. Close this dialog and try again."
+msgstr "Yazıcı bilgileri okunamadı. Bu iletişim kutusunu kapatıp yeniden deneyin."
+
+# AI Translated
+msgid "Could not connect to the printer. Check that it is on, then reopen this dialog."
+msgstr "Yazıcıya bağlanılamadı. Yazıcının açık olduğunu kontrol edin, ardından bu iletişim kutusunu yeniden açın."
+
+# AI Translated
 #, c-format, boost-format
 msgid "Printer: %s"
 msgstr "Yazıcı: %s"
@@ -26475,6 +26750,16 @@ msgstr "Filament Eşlemesi:"
 #, c-format, boost-format
 msgid "Ext - %s"
 msgstr "Harici - %s"
+
+# AI Translated
+#. TRN Creality send dialog. CFS is Creality's multi-filament unit.
+msgid "The printer reports no CFS connected, so the print will use the external spool."
+msgstr "Yazıcı bağlı CFS olmadığını bildiriyor, bu nedenle yazdırmada harici makara kullanılacak."
+
+# AI Translated
+#. TRN Creality send dialog, when the printer lists no CFS slots or does not answer
+msgid "The printer did not report any filament slots, so the print will use the external spool."
+msgstr "Yazıcı herhangi bir filament yuvası bildirmedi, bu nedenle yazdırmada harici makara kullanılacak."
 
 msgid "Unable to perform boolean operation on selected parts"
 msgstr "Seçilen parçalarda bölme işlemi gerçekleştirilemiyor"
@@ -28218,7 +28503,7 @@ msgstr "s"
 msgid "Volumetric speed"
 msgstr "Hacimsel hız"
 
-msgid "Step file import parameters"
+msgid "STEP file import parameters"
 msgstr "Adım dosyası içe aktarma parametreleri"
 
 msgid "Smaller linear and angular deflections result in higher-quality transformations but increase the processing time."
@@ -28239,6 +28524,34 @@ msgstr "Lütfen geçerli bir değer girin (0,01 < açı sapması < 1,0)"
 msgid "Split compound and compsolid into multiple objects"
 msgstr "Bileşiği ve birleştirmeyi birden fazla nesneye ayırın"
 
+# AI Translated
+msgid "Loads each body of a multi-body part separately. Needed to keep the bodies' original names."
+msgstr "Çok gövdeli bir parçanın her gövdesini ayrı ayrı yükler. Gövdelerin orijinal adlarını korumak için gereklidir."
+
+# AI Translated
+msgid "Load as an assembly"
+msgstr "Montaj olarak yükle"
+
+# AI Translated
+msgid "Load as a single object (can be split later)"
+msgstr "Tek nesne olarak yükle (sonradan bölünebilir)"
+
+# AI Translated
+msgid "The original bodies and names are kept inside the object. Use Split to parts to show them as separate parts."
+msgstr "Orijinal gövdeler ve adlar nesnenin içinde korunur. Bunları ayrı parçalar olarak göstermek için “Parçalara bölme” seçeneğini kullanın."
+
+# AI Translated
+msgid "Use the body names stored in the file, when there are any. Needs Split compound for parts with several bodies."
+msgstr "Dosyada saklanan gövde adları varsa bunları kullanır. Çok gövdeli parçalar için “Bileşiği ayırın” seçeneği gerekir."
+
+# AI Translated
+msgid "Sort parts by name"
+msgstr "Parçaları ada göre sırala"
+
+# AI Translated
+msgid "Sort the parts inside each imported assembly in the object list. This does not change the order used for slicing. Available when Keep original names is on."
+msgstr "İçe aktarılan her montajın içindeki parçaları nesne listesinde sıralar. Bu, dilimleme için kullanılan sırayı değiştirmez. “Orijinal adları koru” açıkken kullanılabilir."
+
 msgid "Number of triangular facets"
 msgstr "Üçgen yüzeylerin sayısı"
 
@@ -28248,6 +28561,96 @@ msgstr "Hesaplanıyor, lütfen bekleyin..."
 # AI Translated
 msgid "If enabled, the values above are stored as the defaults used for future STEP imports (and shown in Preferences)."
 msgstr "Etkinleştirildiğinde yukarıdaki değerler, gelecekteki STEP içe aktarmalarında kullanılacak varsayılanlar olarak saklanır (ve Tercihler'de gösterilir)."
+
+# AI Translated
+msgid "Don't ask again"
+msgstr "Bir daha sorma"
+
+# AI Translated
+msgid "Save these choices and apply them without asking next time. You can show this dialog again in Preferences."
+msgstr "Bu seçimleri kaydeder ve bir dahaki sefere sormadan uygular. Bu iletişim kutusunu Tercihler'den yeniden gösterebilirsiniz."
+
+# AI Translated
+msgid "3MF geometry import options"
+msgstr "3MF geometri içe aktarma seçenekleri"
+
+# AI Translated
+msgid "AMF geometry import options"
+msgstr "AMF geometri içe aktarma seçenekleri"
+
+# AI Translated
+msgid "Choose how to name and order the parts of this file."
+msgstr "Bu dosyanın parçalarının nasıl adlandırılacağını ve sıralanacağını seçin."
+
+# AI Translated
+msgid "Choose how to load the bodies in this file."
+msgstr "Bu dosyadaki gövdelerin nasıl yükleneceğini seçin."
+
+# AI Translated
+msgid "Load as separate objects"
+msgstr "Ayrı nesneler olarak yükle"
+
+# AI Translated
+msgid "Each object in the file is loaded on its own, as OrcaSlicer always loaded AMF files."
+msgstr "Dosyadaki her nesne, OrcaSlicer'ın AMF dosyalarını her zaman yüklediği gibi ayrı ayrı yüklenir."
+
+# AI Translated
+msgid "The bodies of each group in the file become parts of one object, in their relative positions."
+msgstr "Dosyadaki her grubun gövdeleri, göreli konumlarını koruyarak tek bir nesnenin parçaları olur."
+
+# AI Translated
+msgid "Use the body names stored in the file, when there are any. When disabled, the usual OrcaSlicer names are used; existing project names are kept."
+msgstr "Dosyada saklanan gövde adları varsa bunları kullanır. Devre dışı bırakıldığında olağan OrcaSlicer adları kullanılır; projedeki mevcut adlar korunur."
+
+# AI Translated
+msgid "Use these choices as defaults next time. The dialog still opens."
+msgstr "Bir dahaki sefere bu seçimleri varsayılan olarak kullanır. İletişim kutusu yine de açılır."
+
+# AI Translated
+msgid "A name in the file is not valid Unicode. The geometry was not imported."
+msgstr "Dosyadaki bir ad geçerli Unicode değil. Geometri içe aktarılmadı."
+
+# AI Translated
+msgid "Invalid name"
+msgstr "Geçersiz ad"
+
+# AI Translated
+msgid "Unsupported characters in names"
+msgstr "Adlarda desteklenmeyen karakterler"
+
+# AI Translated
+msgid "Some original names contain characters that OrcaSlicer cannot use. Choose how to change them before importing."
+msgstr "Bazı orijinal adlar OrcaSlicer'ın kullanamadığı karakterler içeriyor. İçe aktarmadan önce bunların nasıl değiştirileceğini seçin."
+
+# AI Translated
+msgid "Remove unsupported characters"
+msgstr "Desteklenmeyen karakterleri kaldır"
+
+# AI Translated
+msgid "Replace with:"
+msgstr "Şununla değiştir:"
+
+# AI Translated
+msgid "Each unsupported character is replaced with this text. It may be longer than one character."
+msgstr "Desteklenmeyen her karakter bu metinle değiştirilir. Metin birden fazla karakter uzunluğunda olabilir."
+
+# AI Translated
+msgid "Use this rule as the default next time. The dialog still opens."
+msgstr "Bir dahaki sefere bu kuralı varsayılan olarak kullanır. İletişim kutusu yine de açılır."
+
+# AI Translated
+msgid "Save this rule and apply it without asking next time. You can show this dialog again in Preferences."
+msgstr "Bu kuralı kaydeder ve bir dahaki sefere sormadan uygular. Bu iletişim kutusunu Tercihler'den yeniden gösterebilirsiniz."
+
+# AI Translated
+msgid "Enter a non-empty replacement containing only supported characters, or choose removal."
+msgstr "Yalnızca desteklenen karakterlerden oluşan, boş olmayan bir değiştirme metni girin ya da kaldırmayı seçin."
+
+# AI Translated
+#. TRN The placeholders are the original name and its imported replacement.
+#, boost-format
+msgid "%1% → %2%"
+msgstr "%1% → %2%"
 
 # AI Translated
 msgid "PresetBundle"
@@ -30460,6 +30863,18 @@ msgid "Constraints"
 msgstr "Kısıtlamalar"
 
 # AI Translated
+msgid "No constraints yet"
+msgstr "Henüz kısıtlama yok"
+
+# AI Translated
+msgid "Zoom to selection"
+msgstr "Seçime yakınlaştır"
+
+# AI Translated
+msgid "Delete constraint"
+msgstr "Kısıtlamayı sil"
+
+# AI Translated
 msgid "Feature tree"
 msgstr "Unsur ağacı"
 
@@ -30492,10 +30907,6 @@ msgstr "Aşağı taşı"
 # AI Translated
 msgid "Show / hide"
 msgstr "Göster / gizle"
-
-# AI Translated
-msgid "Zoom to selection"
-msgstr "Seçime yakınlaştır"
 
 # AI Translated
 msgid "Check interference — find overlapping bodies"
@@ -30676,6 +31087,11 @@ msgstr[1] "%d serbestlik derecesi"
 #, c-format, boost-format
 msgid "Sketch %d"
 msgstr "Eskiz %d"
+
+#. TRN %1% is the name of the sketch being edited, as its Feature tree row shows it.
+#, boost-format
+msgid "Editing: %1%   ·   N = look normal to the plane   ·   Confirm or Cancel in the toolbar"
+msgstr ""
 
 # AI Translated
 #, c-format, boost-format
@@ -31377,9 +31793,8 @@ msgstr "Ölçeklendirmek için bir köşeyi, taşımak için merkezi sürükleyi
 msgid "  ·  Esc goes back to Select"
 msgstr "  ·  Esc ile Seç aracına dönülür"
 
-# AI Translated
-msgid "  ·  click a constraint badge to remove it"
-msgstr "  ·  kaldırmak için bir kısıtlama rozetine tıklayın"
+msgid "  ·  click a constraint badge to select it"
+msgstr ""
 
 # AI Translated
 #, c-format, boost-format
@@ -31844,13 +32259,10 @@ msgstr "Kısıtlama"
 msgid "Constraints (%d)"
 msgstr "Kısıtlamalar (%d)"
 
-# AI Translated
-msgid "No constraints yet"
-msgstr "Henüz kısıtlama yok"
-
-# AI Translated
-msgid "Delete constraint"
-msgstr "Kısıtlamayı sil"
+#. TRN Design tab status line. %1% names the selected sketch constraint, e.g. "Horizontal E0·P0 — E0·P1".
+#, boost-format
+msgid "%1% selected — Delete removes it"
+msgstr ""
 
 # AI Translated
 msgid "Constraint deleted"
@@ -37617,6 +38029,66 @@ msgid "Plugin file: %s"
 msgstr "Eklenti dosyası: %s"
 
 # AI Translated
+msgid "A file system permission cannot be empty."
+msgstr "Dosya sistemi izni boş olamaz."
+
+# AI Translated
+msgid "A file system permission cannot contain a null character."
+msgstr "Dosya sistemi izni null karakter içeremez."
+
+# AI Translated
+msgid "A file system permission may use \"*\" only as the final \"/*\" of a folder tree."
+msgstr "Dosya sistemi izni \"*\" karakterini yalnızca bir klasör ağacının sonundaki \"/*\" olarak kullanabilir."
+
+# AI Translated
+msgid "A file system permission cannot contain a \"..\" path component."
+msgstr "Dosya sistemi izni \"..\" yol bileşeni içeremez."
+
+# AI Translated
+msgid "A file system permission must be an absolute path on this computer."
+msgstr "Dosya sistemi izni bu bilgisayardaki mutlak bir yol olmalıdır."
+
+# AI Translated
+msgid "A network permission cannot be empty."
+msgstr "Ağ izni boş olamaz."
+
+# AI Translated
+msgid "A network permission cannot contain control characters."
+msgstr "Ağ izni kontrol karakterleri içeremez."
+
+# AI Translated
+msgid "Network permissions do not support wildcards. Enter one full http:// or https:// URL."
+msgstr "Ağ izinleri joker karakterleri desteklemez. Tek bir tam http:// veya https:// URL'si girin."
+
+# AI Translated
+msgid "Enter a full http:// or https:// URL with a host name or IP address. Bare domain names are not accepted."
+msgstr "Ana bilgisayar adı veya IP adresi içeren tam bir http:// veya https:// URL'si girin. Yalın alan adları kabul edilmez."
+
+# AI Translated
+msgid "Only http:// and https:// URLs are supported for network permissions."
+msgstr "Ağ izinleri için yalnızca http:// ve https:// URL'leri desteklenir."
+
+# AI Translated
+msgid "Enter a full http:// or https:// URL with a host name or IP address."
+msgstr "Ana bilgisayar adı veya IP adresi içeren tam bir http:// veya https:// URL'si girin."
+
+# AI Translated
+msgid "Network permissions cannot include a username or password. Enter a URL with only a scheme and host."
+msgstr "Ağ izinleri kullanıcı adı veya parola içeremez. Yalnızca şema ve ana bilgisayar içeren bir URL girin."
+
+# AI Translated
+msgid "Enter a valid bracketed IPv6 address."
+msgstr "Köşeli parantez içinde geçerli bir IPv6 adresi girin."
+
+# AI Translated
+msgid "Network permissions do not support wildcards."
+msgstr "Ağ izinleri joker karakterleri desteklemez."
+
+# AI Translated
+msgid "Enter a host name or IP address, optionally with a port, or a full http:// or https:// URL."
+msgstr "Ana bilgisayar adı veya IP adresi (isteğe bağlı olarak portla birlikte) ya da tam bir http:// veya https:// URL'si girin."
+
+# AI Translated
 msgid "Process plugins"
 msgstr "İşlem eklentileri"
 
@@ -37954,6 +38426,206 @@ msgid "Capabilities"
 msgstr "Yetenekler"
 
 # AI Translated
+msgid "Permissions"
+msgstr "İzinler"
+
+# AI Translated
+msgid "Permissions are unavailable."
+msgstr "İzinler kullanılamıyor."
+
+# AI Translated
+msgid "File system read"
+msgstr "Dosya sistemi okuma"
+
+# AI Translated
+msgid "File system read and write"
+msgstr "Dosya sistemi okuma ve yazma"
+
+# AI Translated
+msgid "HTTP network"
+msgstr "HTTP ağı"
+
+# AI Translated
+msgid "Network sockets"
+msgstr "Ağ soketleri"
+
+# AI Translated
+#. TRN Operating system processes a plugin may start, not print process presets.
+msgctxt "Permission category"
+msgid "Processes"
+msgstr "İşlemler"
+
+# AI Translated
+msgid "Threading"
+msgstr "İş parçacıkları"
+
+# AI Translated
+msgctxt "Permission category"
+msgid "Events"
+msgstr "Olaylar"
+
+# AI Translated
+msgid "Enter an absolute path on this computer. Add /* at the end to include the folder and everything below it; no other wildcard is accepted. A read/write grant can create files through open(), but it does not cover create or delete events such as os.mkdir and os.remove. Without Full access, each such event outside allowed folders needs its own approval, which is never saved. When a plugin runs in the background, these events are denied without asking."
+msgstr "Bu bilgisayardaki mutlak bir yol girin. Klasörü ve altındaki her şeyi dahil etmek için sonuna /* ekleyin; başka hiçbir joker karakter kabul edilmez. Okuma/yazma izni open() ile dosya oluşturmaya olanak tanır, ancak os.mkdir ve os.remove gibi oluşturma veya silme olaylarını kapsamaz. \"Tam erişim\" olmadan, izin verilen klasörlerin dışındaki bu tür her olay ayrı bir onay gerektirir ve bu onay asla kaydedilmez. Bir eklenti arka planda çalışırken bu olaylar sorulmadan reddedilir."
+
+# AI Translated
+msgid "C:\\path\\to\\directory\\*"
+msgstr "C:\\path\\to\\directory\\*"
+
+# AI Translated
+msgid "/path/to/directory/*"
+msgstr "/path/to/directory/*"
+
+# AI Translated
+msgid "Enter a full http:// or https:// URL; only its scheme and host are saved, so the grant covers every port, path, and query on that host. A network socket grant also accepts a bare host name or IP address, with or without a port, and covers every port on that host. Other schemes are not accepted. Grants in either list are checked for HTTP and socket access."
+msgstr "Tam bir http:// veya https:// URL'si girin; yalnızca şeması ve ana bilgisayarı kaydedilir, bu nedenle izin o ana bilgisayardaki tüm portları, yolları ve sorguları kapsar. Ağ soketi izni ayrıca portlu veya portsuz yalın bir ana bilgisayar adını ya da IP adresini kabul eder ve o ana bilgisayardaki tüm portları kapsar. Diğer şemalar kabul edilmez. Her iki listedeki izinler de HTTP ve soket erişimi için denetlenir."
+
+# AI Translated
+msgid "Enter the exact value recorded by the audit. It may be a Python representation of the command."
+msgstr "Denetimin kaydettiği değeri tam olarak girin. Bu değer, komutun bir Python gösterimi olabilir."
+
+# AI Translated
+msgid "Exact audited value"
+msgstr "Denetlenen tam değer"
+
+# AI Translated
+msgid "Allow this plugin to create threads."
+msgstr "Bu eklentinin iş parçacıkları oluşturmasına izin verin."
+
+# AI Translated
+msgid "Enter a category and event separated by a colon, such as Socket:socket.__new__."
+msgstr "Kategori ve olayı Socket:socket.__new__ örneğindeki gibi iki nokta üst üste ile ayırarak girin."
+
+# AI Translated
+msgid "Socket:socket.__new__"
+msgstr "Socket:socket.__new__"
+
+# AI Translated
+msgid "Full access"
+msgstr "Tam erişim"
+
+# AI Translated
+msgid "File system"
+msgstr "Dosya sistemi"
+
+# AI Translated
+msgid "Network access"
+msgstr "Ağ erişimi"
+
+# AI Translated
+msgid "Execution"
+msgstr "Yürütme"
+
+# AI Translated
+msgid "Audit events"
+msgstr "Denetim olayları"
+
+# AI Translated
+msgid "Files and folders"
+msgstr "Dosyalar ve klasörler"
+
+# AI Translated
+msgctxt "Permission access"
+msgid "Read"
+msgstr "Okuma"
+
+# AI Translated
+msgctxt "Permission access"
+msgid "Read and write"
+msgstr "Okuma ve yazma"
+
+# AI Translated
+msgid "Read permissions are unavailable."
+msgstr "Okuma izinleri kullanılamıyor."
+
+# AI Translated
+msgid "Read and write permissions are unavailable."
+msgstr "Okuma ve yazma izinleri kullanılamıyor."
+
+# AI Translated
+msgid "File system: Read"
+msgstr "Dosya sistemi: Okuma"
+
+# AI Translated
+msgid "File system: Read and write"
+msgstr "Dosya sistemi: Okuma ve yazma"
+
+# AI Translated
+msgid "Full access bypasses permission checks. The plugin can read and write most files you can access; modifying startup or application files can let code run outside these checks. Direct Python access to OrcaSlicer's configuration, secret, certificate and install-state paths stays blocked, but subprocesses are not restricted."
+msgstr "\"Tam erişim\" izin denetimlerini atlar. Eklenti, erişebildiğiniz çoğu dosyayı okuyup yazabilir; başlangıç veya uygulama dosyalarının değiştirilmesi, kodun bu denetimlerin dışında çalışmasına olanak verebilir. OrcaSlicer'ın yapılandırma, gizli bilgi, sertifika ve yükleme durumu yollarına doğrudan Python erişimi engelli kalır, ancak alt işlemler kısıtlanmaz."
+
+# AI Translated
+msgid "Permission list editing is disabled while full access is on."
+msgstr "\"Tam erişim\" açıkken izin listesini düzenleme devre dışıdır."
+
+# AI Translated
+msgid "Full access status is unavailable."
+msgstr "\"Tam erişim\" durumu kullanılamıyor."
+
+# AI Translated
+msgid "No values added."
+msgstr "Değer eklenmedi."
+
+# AI Translated
+msgctxt "Permission value"
+msgid "Apply"
+msgstr "Uygula"
+
+# AI Translated
+#, c-format, boost-format
+msgid "Apply value for %s"
+msgstr "%s için değeri uygula"
+
+# AI Translated
+msgid "Install this plugin to edit its permissions."
+msgstr "İzinlerini düzenlemek için bu eklentiyi yükleyin."
+
+# AI Translated
+#, c-format, boost-format
+msgid "New value for %s"
+msgstr "%s için yeni değer"
+
+# AI Translated
+#, c-format, boost-format
+msgid "Edit value for %s"
+msgstr "%s için değeri düzenle"
+
+# AI Translated
+msgctxt "Permission value"
+msgid "Add"
+msgstr "Ekle"
+
+# AI Translated
+#, c-format, boost-format
+msgid "Add value to %s"
+msgstr "%s öğesine değer ekle"
+
+#. TRN %s is the original permission value that was removed outside this dialog.
+#, c-format, boost-format
+msgid "The original value is no longer granted: %s. Add the edited value or discard it."
+msgstr ""
+
+#. TRN %s is the original permission value before the user's unsaved edit.
+#, c-format, boost-format
+msgid "Unsaved edit of: %s"
+msgstr ""
+
+#. TRN %s is the original permission value whose unsaved edit will be discarded.
+#, c-format, boost-format
+msgid "Discard edit of %s"
+msgstr ""
+
+# AI Translated
+msgctxt "Permission value"
+msgid "Remove"
+msgstr "Kaldır"
+
+# AI Translated
+#, c-format, boost-format
+msgid "Remove %s"
+msgstr "%s öğesini kaldır"
+
+# AI Translated
 #, c-format, boost-format
 msgid "Run \"%s\""
 msgstr "\"%s\" öğesini çalıştır"
@@ -38056,6 +38728,39 @@ msgstr "Eksik Eklentiler"
 # AI Translated
 msgid "Refreshing plugins data"
 msgstr "Eklenti verileri yenileniyor"
+
+# AI Translated
+#, c-format, boost-format
+msgid ""
+"Enable full access for \"%s\"?\n"
+"\n"
+"Full access turns off permission auditing for this plugin: its file system, network, process, thread and event permissions are no longer checked. The plugin can read and write most files your user account can access, including startup scripts, SSH keys and a writable OrcaSlicer installation. Modifying startup or application files can let code run outside these checks. Direct Python access to OrcaSlicer's configuration, secret, certificate and install-state paths stays blocked, but subprocesses are not restricted. Full access is not a sandbox.\n"
+"\n"
+"Only enable this for a plugin you trust."
+msgstr ""
+"\"%s\" için \"Tam erişim\" etkinleştirilsin mi?\n"
+"\n"
+"\"Tam erişim\" bu eklenti için izin denetimini kapatır: eklentinin dosya sistemi, ağ, işlem, iş parçacığı ve olay izinleri artık denetlenmez. Eklenti, kullanıcı hesabınızın erişebildiği çoğu dosyayı okuyup yazabilir; buna başlangıç betikleri, SSH anahtarları ve yazılabilir bir OrcaSlicer kurulumu da dahildir. Başlangıç veya uygulama dosyalarının değiştirilmesi, kodun bu denetimlerin dışında çalışmasına olanak verebilir. OrcaSlicer'ın yapılandırma, gizli bilgi, sertifika ve yükleme durumu yollarına doğrudan Python erişimi engelli kalır, ancak alt işlemler kısıtlanmaz. \"Tam erişim\" bir korumalı alan değildir.\n"
+"\n"
+"Bunu yalnızca güvendiğiniz bir eklenti için etkinleştirin."
+
+# AI Translated
+msgid "Invalid permission save request."
+msgstr "Geçersiz izin kaydetme isteği."
+
+# AI Translated
+#, boost-format
+msgid "Cannot save \"%1%\": %2%"
+msgstr "\"%1%\" kaydedilemiyor: %2%"
+
+# AI Translated
+msgid "Failed to save permissions."
+msgstr "İzinler kaydedilemedi."
+
+# AI Translated
+#, c-format, boost-format
+msgid "Permissions saved for \"%s\"."
+msgstr "\"%s\" için izinler kaydedildi."
 
 # AI Translated
 msgid "Failed to unload plugin."
@@ -38901,6 +39606,14 @@ msgid "unknown name"
 msgstr "bilinmeyen ad"
 
 # AI Translated
+msgid "Don't show this tip again"
+msgstr "Bu ipucunu bir daha gösterme"
+
+# AI Translated
+msgid "Tip: You can review and change this plugin's saved permissions in the Plugins dialog, on the Permissions tab."
+msgstr "İpucu: Bu eklentinin kaydedilmiş izinlerini Eklentiler iletişim kutusunun \"İzinler\" sekmesinde inceleyip değiştirebilirsiniz."
+
+# AI Translated
 #, c-format, boost-format
 msgid ""
 "Plugin \"%s\" is requesting permission for the Python audit event \"%s\".\n"
@@ -38945,31 +39658,47 @@ msgstr[1] ""
 #, c-format, boost-format
 msgid ""
 "Plugin \"%s\" is requesting to create the following file:\n"
-"%s"
+"%s\n"
+"\n"
+"This approval applies only to this operation and is not remembered."
 msgid_plural ""
 "Plugin \"%s\" is requesting to create the following files:\n"
-"%s"
+"%s\n"
+"\n"
+"This approval applies only to this operation and is not remembered."
 msgstr[0] ""
 "\"%s\" eklentisi aşağıdaki dosyayı oluşturmak istiyor:\n"
-"%s"
+"%s\n"
+"\n"
+"Bu onay yalnızca bu işlem için geçerlidir ve hatırlanmaz."
 msgstr[1] ""
 "\"%s\" eklentisi aşağıdaki dosyaları oluşturmak istiyor:\n"
-"%s"
+"%s\n"
+"\n"
+"Bu onay yalnızca bu işlem için geçerlidir ve hatırlanmaz."
 
 # AI Translated
 #, c-format, boost-format
 msgid ""
 "Plugin \"%s\" is requesting to delete the following file:\n"
-"%s"
+"%s\n"
+"\n"
+"This approval applies only to this operation and is not remembered."
 msgid_plural ""
 "Plugin \"%s\" is requesting to delete the following files:\n"
-"%s"
+"%s\n"
+"\n"
+"This approval applies only to this operation and is not remembered."
 msgstr[0] ""
 "\"%s\" eklentisi aşağıdaki dosyayı silmek istiyor:\n"
-"%s"
+"%s\n"
+"\n"
+"Bu onay yalnızca bu işlem için geçerlidir ve hatırlanmaz."
 msgstr[1] ""
 "\"%s\" eklentisi aşağıdaki dosyaları silmek istiyor:\n"
-"%s"
+"%s\n"
+"\n"
+"Bu onay yalnızca bu işlem için geçerlidir ve hatırlanmaz."
 
 #, c-format, boost-format
 msgid ""
@@ -39036,6 +39765,67 @@ msgstr "Eklenti izin isteği"
 # AI Translated
 msgid "Plugin permissions"
 msgstr "Eklenti izinleri"
+
+# AI Translated
+#, c-format, boost-format
+msgid ""
+"Plugin \"%s\" tried to perform a file operation that requires permission.\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgstr ""
+"\"%s\" eklentisi izin gerektiren bir dosya işlemi gerçekleştirmeye çalıştı.\n"
+"\n"
+"İşlem reddedildi. İzin verilen bir konum kullanın veya bu eklentiye güveniyorsanız eklenti için \"Tam erişim\" seçeneğini etkinleştirin."
+
+# AI Translated
+#, c-format, boost-format
+msgid ""
+"Plugin \"%s\" tried to create the following file:\n"
+"%s\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgid_plural ""
+"Plugin \"%s\" tried to create the following files:\n"
+"%s\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgstr[0] ""
+"\"%s\" eklentisi aşağıdaki dosyayı oluşturmaya çalıştı:\n"
+"%s\n"
+"\n"
+"İşlem reddedildi. İzin verilen bir konum kullanın veya bu eklentiye güveniyorsanız eklenti için \"Tam erişim\" seçeneğini etkinleştirin."
+msgstr[1] ""
+"\"%s\" eklentisi aşağıdaki dosyaları oluşturmaya çalıştı:\n"
+"%s\n"
+"\n"
+"İşlem reddedildi. İzin verilen bir konum kullanın veya bu eklentiye güveniyorsanız eklenti için \"Tam erişim\" seçeneğini etkinleştirin."
+
+# AI Translated
+#, c-format, boost-format
+msgid ""
+"Plugin \"%s\" tried to delete the following file:\n"
+"%s\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgid_plural ""
+"Plugin \"%s\" tried to delete the following files:\n"
+"%s\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgstr[0] ""
+"\"%s\" eklentisi aşağıdaki dosyayı silmeye çalıştı:\n"
+"%s\n"
+"\n"
+"İşlem reddedildi. İzin verilen bir konum kullanın veya bu eklentiye güveniyorsanız eklenti için \"Tam erişim\" seçeneğini etkinleştirin."
+msgstr[1] ""
+"\"%s\" eklentisi aşağıdaki dosyaları silmeye çalıştı:\n"
+"%s\n"
+"\n"
+"İşlem reddedildi. İzin verilen bir konum kullanın veya bu eklentiye güveniyorsanız eklenti için \"Tam erişim\" seçeneğini etkinleştirin."
+
+# AI Translated
+msgid "Plugin operation denied"
+msgstr "Eklenti işlemi reddedildi"
 
 # AI Translated
 msgid "The preset stores invalid plugin capability configuration JSON."
@@ -39449,6 +40239,11 @@ msgstr "Eklenti yerel olarak tutulamıyor: yerel eklenti anahtarı zaten mevcut:
 
 # AI Translated
 #, boost-format
+msgid "Failed to read plugin install state: %1%"
+msgstr "Eklenti yükleme durumu okunamadı: %1%"
+
+# AI Translated
+#, boost-format
 msgid "Failed to update plugin install state: %1%"
 msgstr "Eklenti yükleme durumu güncellenemedi: %1%"
 
@@ -39736,18 +40531,18 @@ msgstr "%1% dosyasından çıkarılan yapılandırma değerlerinin sayısı şü
 
 # AI Translated
 msgid ""
-"Load step file failed.\n"
+"Load STEP file failed.\n"
 "Cannot open file for reading.\n"
 msgstr ""
 "STEP dosyası yüklenemedi.\n"
 "Dosya okuma için açılamıyor.\n"
 
 # AI Translated
-msgid "import svg failed: could not open svg."
+msgid "import SVG failed: could not open SVG."
 msgstr "SVG içe aktarma başarısız oldu: SVG açılamadı."
 
 # AI Translated
-msgid "import svg failed: could not parse imported svg data."
+msgid "import SVG failed: could not parse imported SVG data."
 msgstr "SVG içe aktarma başarısız oldu: içe aktarılan SVG verileri ayrıştırılamadı."
 
 # AI Translated
@@ -40190,6 +40985,143 @@ msgid ""
 "Did you know that when printing materials that are prone to warping such as ABS, appropriately increasing the heatbed temperature can reduce the probability of warping."
 msgstr ""
 
+#~ msgid "Reset cutting plane and remove connectors"
+#~ msgstr "Kesme düzlemini sıfırlayın ve bağlayıcıları çıkarın"
+
+#~ msgid "Component name(s) inside step file not in UTF-8 format!"
+#~ msgstr "Step dosyasındaki bileşenlerin adı UTF-8 formatında değil!"
+
+#~ msgid "Show options when importing STEP file"
+#~ msgstr "STEP dosyasını içe aktarırken seçenekleri göster"
+
+# AI Translated
+#~ msgid "STEP importing: linear deflection"
+#~ msgstr "STEP içe aktarma: doğrusal sapma"
+
+# AI Translated
+#~ msgid "STEP importing: angle deflection"
+#~ msgstr "STEP içe aktarma: açısal sapma"
+
+# AI Translated
+#~ msgid "STEP importing: Split into multiple objects"
+#~ msgstr "STEP içe aktarma: Birden çok nesneye ayır"
+
+# AI Translated
+#~ msgid ""
+#~ "If enabled, compound and compsolid shapes in imported STEP files are split into multiple objects.\n"
+#~ "Used as the default in the import dialog, or directly when the import dialog is disabled.\n"
+#~ "Default: disabled."
+#~ msgstr ""
+#~ "Etkinleştirildiğinde, içe aktarılan STEP dosyalarındaki bileşik (compound) ve compsolid şekiller birden çok nesneye ayrılır.\n"
+#~ "İçe aktarma iletişim kutusunda varsayılan olarak, iletişim kutusu devre dışıysa doğrudan kullanılır.\n"
+#~ "Varsayılan: devre dışı."
+
+#~ msgid "Behavior"
+#~ msgstr "Davranış"
+
+# AI Translated
+#~ msgid "G-code Preview"
+#~ msgstr "G-code Önizleme"
+
+# AI Translated
+#~ msgid "Remove from favorites"
+#~ msgstr "Favorilerden kaldır"
+
+# AI Translated
+#~ msgid ""
+#~ "Applies only to external walls, including hole boundaries. Moves the hot nozzle toward printed inner walls during wiping to reduce reheating of freshly printed plastic and seam marks.\n"
+#~ "\n"
+#~ "Especially useful at layer heights below 0.1 mm, where wipe marks are more visible.\n"
+#~ "\n"
+#~ "Uses the regular wipe if no adjacent inner wall is already printed (single-wall areas or Outer/Inner wall order), or if no supported inward path can be found, for example at tight corners or seam gaps."
+#~ msgstr ""
+#~ "Yalnızca delik sınırları dahil olmak üzere dış duvarlara uygulanır. Temizleme sırasında sıcak nozulu yazdırılmış iç duvarlara doğru hareket ettirerek yeni yazdırılmış plastiğin yeniden ısınmasını ve dikiş izlerini azaltır.\n"
+#~ "\n"
+#~ "Özellikle temizleme izlerinin daha belirgin olduğu 0,1 mm'nin altındaki katman yüksekliklerinde yararlıdır.\n"
+#~ "\n"
+#~ "Yazdırılmış bitişik bir iç duvar yoksa (tek duvarlı alanlar veya Dış/İç duvar sırası) ya da örneğin dar köşelerde veya dikiş boşluklarında desteklenen bir içeri yol bulunamazsa normal temizlemeyi kullanır."
+
+# AI Translated
+#, no-c-format, no-boost-format
+#~ msgid ""
+#~ "The distance the wipe path is shifted away from the external perimeter, specified in millimeters or as a percentage of the actual outer-wall extrusion width.\n"
+#~ "\n"
+#~ "For example, 50% shifts the path by half of the outer-wall width. The effective offset is limited by both the actual outer-wall width and the available spacing to the adjacent wall, so values above 100% or an equivalent absolute distance have no additional effect. Set to 0 to disable the offset."
+#~ msgstr ""
+#~ "Temizleme yolunun dış çevreden uzağa kaydırıldığı mesafe; milimetre cinsinden veya dış duvarın gerçek ekstrüzyon genişliğinin yüzdesi olarak belirtilir.\n"
+#~ "\n"
+#~ "Örneğin 50%, yolu dış duvar genişliğinin yarısı kadar kaydırır. Etkin kaydırma, hem dış duvarın gerçek genişliğiyle hem de bitişik duvara olan mevcut boşlukla sınırlıdır; bu nedenle 100% üzerindeki değerlerin veya buna denk bir mutlak mesafenin ek bir etkisi olmaz. Kaydırmayı devre dışı bırakmak için 0 girin."
+
+# AI Translated
+#~ msgid "Invalid utf8 sequence"
+#~ msgstr "Geçersiz utf8 dizisi"
+
+#~ msgid ""
+#~ "RepRap firmware version => 3.4.0\n"
+#~ "Check your firmware documentation for supported shaper types."
+#~ msgstr ""
+#~ "RepRap ürün yazılımı sürümü => 3.4.0\n"
+#~ "Desteklenen şekillendirici türleri için ürün yazılımı belgelerinize bakın."
+
+#~ msgid "RepRap firmware uses the same frequency range for both axes."
+#~ msgstr "RepRap ürün yazılımı her iki eksen için aynı frekans aralığını kullanır."
+
+#~ msgid "RepRap firmware uses the same frequency for both axes."
+#~ msgstr "RepRap ürün yazılımı her iki eksen için de aynı frekansı kullanır."
+
+#~ msgid "Step file import parameters"
+#~ msgstr "Adım dosyası içe aktarma parametreleri"
+
+# AI Translated
+#~ msgid "  ·  click a constraint badge to remove it"
+#~ msgstr "  ·  kaldırmak için bir kısıtlama rozetine tıklayın"
+
+# AI Translated
+#, c-format, boost-format
+#~ msgid ""
+#~ "Plugin \"%s\" is requesting to create the following file:\n"
+#~ "%s"
+#~ msgid_plural ""
+#~ "Plugin \"%s\" is requesting to create the following files:\n"
+#~ "%s"
+#~ msgstr[0] ""
+#~ "\"%s\" eklentisi aşağıdaki dosyayı oluşturmak istiyor:\n"
+#~ "%s"
+#~ msgstr[1] ""
+#~ "\"%s\" eklentisi aşağıdaki dosyaları oluşturmak istiyor:\n"
+#~ "%s"
+
+# AI Translated
+#, c-format, boost-format
+#~ msgid ""
+#~ "Plugin \"%s\" is requesting to delete the following file:\n"
+#~ "%s"
+#~ msgid_plural ""
+#~ "Plugin \"%s\" is requesting to delete the following files:\n"
+#~ "%s"
+#~ msgstr[0] ""
+#~ "\"%s\" eklentisi aşağıdaki dosyayı silmek istiyor:\n"
+#~ "%s"
+#~ msgstr[1] ""
+#~ "\"%s\" eklentisi aşağıdaki dosyaları silmek istiyor:\n"
+#~ "%s"
+
+# AI Translated
+#~ msgid ""
+#~ "Load step file failed.\n"
+#~ "Cannot open file for reading.\n"
+#~ msgstr ""
+#~ "STEP dosyası yüklenemedi.\n"
+#~ "Dosya okuma için açılamıyor.\n"
+
+# AI Translated
+#~ msgid "import svg failed: could not open svg."
+#~ msgstr "SVG içe aktarma başarısız oldu: SVG açılamadı."
+
+# AI Translated
+#~ msgid "import svg failed: could not parse imported svg data."
+#~ msgstr "SVG içe aktarma başarısız oldu: içe aktarılan SVG verileri ayrıştırılamadı."
+
 # AI Translated
 #~ msgid ""
 #~ "\n"
@@ -40506,9 +41438,6 @@ msgstr ""
 
 #~ msgid "By vendor"
 #~ msgstr "Satıcıya göre"
-
-#~ msgid "Behaviour"
-#~ msgstr "Davranış"
 
 # AI Translated
 #~ msgid "Renders cast shadows on the plate, other objects, and each object onto itself in realistic view."
@@ -41450,12 +42379,6 @@ msgstr ""
 #~ msgid "Hostname or IP"
 #~ msgstr "Ana bilgisayar adı veya IP"
 
-#~ msgid "Custom camera source"
-#~ msgstr "Özel kamera kaynağı"
-
-#~ msgid "Switch Camera View"
-#~ msgstr "Kamera Görünümünü Değiştir"
-
 #~ msgid "Organic support tree tip diameter must not be smaller than support material extrusion width."
 #~ msgstr "Organik destek ağacı uç çapı, destek malzemesi ekstrüzyon genişliğinden daha küçük olamaz."
 
@@ -42331,9 +43254,6 @@ msgstr ""
 
 #~ msgid "Check for Update"
 #~ msgstr "Güncellemeleri kontrol et"
-
-#~ msgid "Recent files"
-#~ msgstr "Son dosyalar"
 
 #~ msgid "Import Zip Archive"
 #~ msgstr "Zip Arşivini İçe Aktar"

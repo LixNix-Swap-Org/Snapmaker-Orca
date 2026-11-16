@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-09 13:41+0100\n"
+"POT-Creation-Date: 2026-11-16 21:34+0100\n"
 "PO-Revision-Date: 2025-03-21 21:00+0200\n"
 "Last-Translator: Gintaras Kučinskas <sharanchius@gmail.com>\n"
 "Language-Team: \n"
@@ -521,6 +521,7 @@ msgstr "Blokuoti atramas"
 msgid "Erase"
 msgstr "Ištrinti"
 
+#. TRN Variable layer height tool: the plain wheel resizes the edit area only with the cursor on a layer height bar.
 msgid "Mouse wheel"
 msgstr "Pelės ratukas"
 
@@ -701,6 +702,47 @@ msgstr "Išjungiamas grublėto paviršiaus piešimas"
 
 msgid "Paint-on fuzzy skin editing"
 msgstr "Grublėto paviršiaus piešimo redagavimas"
+
+msgid "Painted modifier"
+msgstr ""
+
+msgid "Modifier"
+msgstr "Modifikatorius"
+
+msgid "New painted modifier"
+msgstr ""
+
+#. TRN - Input label. Be short as possible
+#. Size in emboss direction
+#. TRN - Input label. Be short as possible
+msgid "Depth"
+msgstr "Gyliai"
+
+msgid ""
+"How far the painted area reaches into the part, measured from the painted surface.\n"
+"0 reaches across the whole part, up to the nearest unpainted surface."
+msgstr ""
+
+msgid "The part this modifier was painted on has been removed."
+msgstr ""
+
+msgid "Paint the modifier area"
+msgstr ""
+
+msgid "Erase the modifier area"
+msgstr ""
+
+msgid "Change painted modifier depth"
+msgstr ""
+
+msgid "Entering painted modifier"
+msgstr ""
+
+msgid "Leaving painted modifier"
+msgstr ""
+
+msgid "Painted modifier editing"
+msgstr ""
 
 msgid "Move"
 msgstr "Perkelti"
@@ -956,12 +998,6 @@ msgid "Shape"
 msgstr "Figūra"
 
 #. TRN - Input label. Be short as possible
-#. Size in emboss direction
-#. TRN - Input label. Be short as possible
-msgid "Depth"
-msgstr "Gyliai"
-
-#. TRN - Input label. Be short as possible
 #. Angle between Y axis and text line direction.
 #. TRN - Input label. Be short as possible
 msgid "Rotation"
@@ -1112,8 +1148,9 @@ msgstr "Po pjovimo"
 msgid "Cut to parts"
 msgstr "Supjaustyti į dalis"
 
-msgid "Reset cutting plane and remove connectors"
-msgstr "Atstatyti pjovimo plokštumą ir pašalinti jungtis"
+#. TRN: Part assignments are the upper/lower cut groups changed by right-clicking parts.
+msgid "Reset the cutting plane, remove connectors, and clear part assignments."
+msgstr ""
 
 # AI Translated
 msgid "Reset Cut"
@@ -1395,9 +1432,6 @@ msgstr "Pjauti"
 
 msgid "Click to change part type into negative volume."
 msgstr "Spustelėkite, kad dalies tipą pakeistumėte į neigiamą tūrį (ertmę)."
-
-msgid "Modifier"
-msgstr "Modifikatorius"
 
 msgid "Click to change part type into modifier."
 msgstr "Spustelėkite, kad dalies tipą pakeistumėte į modifikatorių."
@@ -2823,6 +2857,9 @@ msgstr "Pridėti priverstines atramas"
 msgid "Add Precise Seam"
 msgstr "Pridėti tikslią siūlę"
 
+msgid "Add Painted Modifier"
+msgstr ""
+
 msgid "Add text"
 msgstr "Pridėti tekstą"
 
@@ -2926,6 +2963,9 @@ msgstr "Rekomendacija"
 
 msgid "Text"
 msgstr "Teskstas"
+
+msgid "Add a modifier whose shape is painted on the part"
+msgstr ""
 
 msgid "Height Range Modifier"
 msgstr "Aukščio diapazono modifikatorius"
@@ -3176,6 +3216,15 @@ msgstr "Automatiškai nustatoma padėtis spausdinimo kokybės pagerinimui"
 
 msgid "Paste Process Settings"
 msgstr "Įklijuoti proceso nustatymus"
+
+msgid "Edit Painting"
+msgstr ""
+
+msgid "Paint the area of the selected painted modifier"
+msgstr ""
+
+msgid "Delete the selected painted modifier"
+msgstr ""
 
 msgid "Edit"
 msgstr "Redaguoti"
@@ -3522,11 +3571,11 @@ msgstr "Neleidžiama ištrinti paskutinės ištisinės dalies."
 msgid "Delete part"
 msgstr "Ištrinti dalį"
 
-msgid "The target object contains only one part and can not be split."
-msgstr "Tikslinis objektas turi tik vieną detalę ir negali būti išskaidytas."
-
 msgid "Split to parts"
 msgstr "Padalinti į dalis"
+
+msgid "The target object contains only one part and can not be split."
+msgstr "Tikslinis objektas turi tik vieną detalę ir negali būti išskaidytas."
 
 msgid "Assembly"
 msgstr "Surinkimas"
@@ -3587,6 +3636,13 @@ msgstr "Jei pirmasis pasirinktas elementas yra objektas, tuomet ir antrasis priv
 
 msgid "If the first selected item is a part, the second should be a part in the same object."
 msgstr "Jei pirmasis pasirinktas elementas ira dalis, tuomet antrasis taip pat privalo būti to paties objekto dalis."
+
+#, boost-format
+msgid "Painted modifier %1%"
+msgstr ""
+
+msgid "Add painted modifier"
+msgstr ""
 
 msgid "The type of the last solid object part cannot be changed."
 msgstr "Paskutinės vientisos objekto detalės tipo keisti negalima."
@@ -6560,6 +6616,9 @@ msgstr "Neteisingas šablonas. Naudokite N, N#K arba kableliais atskirtą sąra�
 msgid "Invalid format. Expected vector format: \"%1%\""
 msgstr "Netinkamas formatas. Tinkamas vektorinis formatas: \"%1%\""
 
+msgid "The excluded bed area is invalid. It must be a simple, non-self-intersecting polygon."
+msgstr ""
+
 # AI Translated
 msgid "System agents"
 msgstr "Sisteminiai agentai"
@@ -6994,6 +7053,16 @@ msgstr "Spindulys"
 msgid "Keep min"
 msgstr "Laikyti min"
 
+#. TRN Variable layer height tool, checkbox shown with several objects selected: give each object its own
+#. layer heights instead of one profile they all share.
+msgid "Each object separately"
+msgstr ""
+
+#. TRN Variable layer height tool: each selected object has a layer height bar at the right edge of the 3D view.
+#. Painting over an object in the 3D view, or over its bar, edits the layer heights of that object.
+msgid "Paint over an object or its bar to edit its layers."
+msgstr ""
+
 msgid "Add detail"
 msgstr "Pridėti elementą"
 
@@ -7008,6 +7077,13 @@ msgstr "Glotninimas"
 
 msgid "Increase/decrease edit area"
 msgstr "Padidinti / sumažinti redagavimo sritį"
+
+msgid "Increase/decrease edit area on the bar"
+msgstr ""
+
+#. TRN "Adaptive", "Smooth" and "Reset" are the buttons of the variable layer height tool.
+msgid "Variable layer height: only the three tallest selected objects have a bar. The others still take Adaptive, Smooth and Reset."
+msgstr ""
 
 msgid "Sequence"
 msgstr "Seka"
@@ -7335,6 +7411,9 @@ msgstr "Vidurinis spustelėjimas ant piktogramos"
 msgid "Set viewing angle"
 msgstr "Nustatyti žiūrėjimo kampą"
 
+msgid "Follow camera"
+msgstr ""
+
 msgid "Paint Toolbar"
 msgstr "Piešimo įrankių juosta"
 
@@ -7479,8 +7558,25 @@ msgstr "Pakartoti stebėjimą realiu laiku"
 msgid "Resolution"
 msgstr "Skiriamoji geba"
 
+msgid "Custom camera source"
+msgstr "Pasirinktinės kameros šaltinis"
+
+# AI Translated
+msgid "Camera stream URL"
+msgstr "Kameros srauto URL"
+
+# AI Translated
+msgid "URL of an MJPEG stream or of a web page that shows the camera, for example http://192.168.1.10:8080/?action=stream"
+msgstr "MJPEG srauto arba kamerą rodančio tinklalapio URL, pavyzdžiui, http://192.168.1.10:8080/?action=stream"
+
+msgid "Enable"
+msgstr "Įgalinti"
+
 msgid "Show \"Live Video\" guide page."
 msgstr "Rodyti tiesioginio vaizdo vadovo puslapį."
+
+msgid "Disable"
+msgstr "Išjungti"
 
 msgid "Connect Printer (LAN)"
 msgstr "Prijungti spausdintuvą (LAN)"
@@ -8535,6 +8631,9 @@ msgstr "Laikmena"
 msgid "Camera Setting"
 msgstr "Kameros nustatymai"
 
+msgid "Switch Camera View"
+msgstr "Perjungti kameros vaizdą"
+
 msgid "Control"
 msgstr "Valdyti"
 
@@ -9242,6 +9341,10 @@ msgstr "Galimas naujas tinklo papildinys."
 msgid "Details"
 msgstr "Smulkiau"
 
+# AI Translated
+msgid "Updates are available for your OrcaCloud plugins."
+msgstr "Yra jūsų „OrcaCloud“ papildinių atnaujinimų."
+
 msgid "New printer config available."
 msgstr "Pasiekiama nauja spausdintuvo konfigūracija."
 
@@ -9402,6 +9505,24 @@ msgstr ""
 
 msgid "Error loading shaders"
 msgstr "Įkeliant šeiderius įvyko klaida"
+
+#. TRN The OpenGL context could not be made current, so nothing can be drawn in the 3D view.
+msgid "OpenGL could not be activated for the 3D view, so it cannot be shown."
+msgstr ""
+
+#. TRN %1% is the name of a graphics card or display adapter as Windows reports it, such as "Microsoft Basic Display Adapter".
+#, boost-format
+msgid "The window is on a display driven by \"%1%\"."
+msgstr ""
+
+msgid "Make sure the display adapter driving this window's display is enabled and its driver is installed and up to date."
+msgstr ""
+
+msgid "If the computer has more than one graphics card, connecting the monitor to another one may help."
+msgstr ""
+
+msgid "If the problem remains, close any overlay or screen capture software and try again."
+msgstr ""
 
 msgctxt "Layers"
 msgid "Top"
@@ -10429,10 +10550,6 @@ msgstr "Gijos tipo ir spalvos informacija buvo sinchronizuota, tačiau lizdų in
 msgid "Do you want to save changes to \"%1%\"?"
 msgstr "Ar norite išsaugoti \"%1%\" pakeitimus?"
 
-# AI Translated
-msgid "UV Editor"
-msgstr "UV redaktorius"
-
 #, c-format, boost-format
 msgid "Successfully unmounted. The device %s (%s) can now be safely removed from the computer."
 msgstr "Sėkmingai atjungtas. Įrenginį %s(%s) dabar galima saugiai išimti iš kompiuterio."
@@ -10465,6 +10582,17 @@ msgstr "Sutraukti šoninę juostą"
 #, c-format, boost-format
 msgid "Loading file: %s"
 msgstr "Įkeliamas failas: %s"
+
+# AI Translated
+msgid "Some imported objects contain modifiers or parts with individual settings. They are shown as assemblies so that these settings remain visible."
+msgstr "Kai kuriuose importuotuose objektuose yra modifikatorių arba dalių su atskirais nustatymais. Jie rodomi kaip surinkiniai, kad šie nustatymai liktų matomi."
+
+# AI Translated
+msgid "Geometry import"
+msgstr "Geometrijos importavimas"
+
+msgid "The file does not contain any geometry data."
+msgstr "Faile nėra jokių geometrinių duomenų."
 
 msgid "Load 3MF"
 msgstr "Įkelti 3MF"
@@ -10533,7 +10661,7 @@ msgstr "Kai kurių patalpintų parametrų pritaikyti nepavyko:"
 msgid "Some filament slots were changed:"
 msgstr "Kai kurie gijų lizdai buvo pakeisti:"
 
-msgid "Component name(s) inside step file not in UTF-8 format!"
+msgid "Component name(s) inside STEP file not in UTF-8 format!"
 msgstr "Komponentų pavadinimai STEP faile nėra UTF-8 formato!"
 
 msgid "Because of unsupported text encoding, garbage characters may appear!"
@@ -10603,8 +10731,8 @@ msgstr "Ar norite sinchronizuoti spausdintuvo informaciją ir automatiškai perj
 msgid "This project contains a model made in the Design tab and no other geometry. Enable \"CAD feature (experimental)\" in Preferences and restart to see and edit it; it is kept when the project is saved."
 msgstr "Šiame projekte yra skirtuke „Projektavimas“ sukurtas modelis ir jokios kitos geometrijos. Įjunkite \"CAD funkcija (eksperimentinė)\" skiltyje „Parinktys“ ir paleiskite programą iš naujo, kad galėtumėte jį matyti ir redaguoti; išsaugant projektą jis išlaikomas."
 
-msgid "The file does not contain any geometry data."
-msgstr "Faile nėra jokių geometrinių duomenų."
+msgid "The invalid area has been removed, so please define it again using a valid polygon."
+msgstr ""
 
 msgid "Your object appears to be too large, do you want to scale it down to fit the print bed automatically?"
 msgstr "Jūsų objektas per didelis. Ar norite jį sumažinti automatiškai, kad tilptų ant spausdinimo plokštės?"
@@ -10859,6 +10987,10 @@ msgid ""
 msgstr ""
 "Aptiktos šios IDEX/IQEX lygiagretaus režimo problemos:\n"
 "\n"
+
+# AI Translated
+msgid "UV Editor"
+msgstr "UV redaktorius"
 
 #, c-format, boost-format
 msgid ""
@@ -11724,11 +11856,50 @@ msgstr "Pradėjus rodyti pranešimą „Dienos patarimas“"
 msgid "If enabled, useful hints are displayed at startup."
 msgstr "Jei įjungta, paleidžiant rodomi naudingi patarimai."
 
-msgid "Downloads folder"
-msgstr "Atsisiuntimų aplankas"
+msgid "Features"
+msgstr "Funkcijos"
 
-msgid "Target folder for downloaded items"
-msgstr "Atsisiunčiamų failų paskirties aplankas"
+msgid "Multi device management"
+msgstr "Kelių įrenginių valdymas"
+
+msgid "With this option enabled, you can send a task to multiple devices at the same time and manage multiple devices."
+msgstr "Kai įjungta ši funkcija, jūs galite siųsti užduotį keliems įrenginiams vienu metu, taip apt kontroliuoti keletą įrenginių."
+
+# AI Translated
+msgid "CAD feature (experimental)"
+msgstr "CAD funkcija (eksperimentinė)"
+
+# AI Translated
+msgid "With this option enabled, the Design tab is shown, where models can be built and edited parametrically. This feature is experimental and still under development."
+msgstr "Įjungus šią parinktį, rodomas skirtukas „Projektavimas“, kuriame modelius galima kurti ir redaguoti parametriškai. Ši funkcija yra eksperimentinė ir vis dar kuriama."
+
+msgid "Pop up to select filament grouping mode"
+msgstr "Iššokantis langas gijų grupavimo režimui pasirinkti"
+
+msgid "Clear my choice on..."
+msgstr "Išvalyti mano pasirinkimą..."
+
+msgid "Unsaved projects"
+msgstr "Neišsaugoti projektai"
+
+msgid "Clear my choice on the unsaved projects."
+msgstr "Išvalyti mano pasirinkimus neišsaugotuose projektuose."
+
+msgid "Unsaved presets"
+msgstr "Neišsaugoti profiliai"
+
+msgid "Clear my choice on the unsaved presets."
+msgstr "Išvalyti mano pasirinkimą neišsaugotuose nustatymuose."
+
+msgid "Synchronizing printer preset"
+msgstr "Spausdintuvo profilio sinchronizavimas"
+
+msgid "Clear my choice for synchronizing printer preset after loading the file."
+msgstr "Išvalyti mano pasirinkimą dėl spausdintuvo profilio sinchronizavimo įkėlus failą."
+
+# AI Translated
+msgid "Files"
+msgstr "Failai"
 
 msgid "Load All"
 msgstr "Įkelti viską"
@@ -11754,6 +11925,15 @@ msgstr "Automatinis atsarginis kopijavimas"
 msgid "Backup your project periodically to help with restoring from an occasional crash."
 msgstr "Periodiškai saugoti jūsų projekto atsargines kopijas kad programos gedimo atveju jį būtų galima atkurti."
 
+msgid "Store full source file paths in projects"
+msgstr "Projekte saugoti visus šaltinio failų kelius"
+
+msgid "If enabled, saved projects store the absolute path to imported source files (STEP/STL/...), so \"Reload from disk\" still works when the source file is kept in a different folder than the project. If disabled, only the filename is stored, which keeps projects portable and avoids embedding absolute paths."
+msgstr "Jei įjungta, išsaugotuose projektuose saugomas absoliutus kelias iki importuotų šaltinio failų (STEP/STL/...), todėl funkcija „Įkelti iš naujo iš disko“ (Reload from disk) veikia ir tada, kai šaltinio failas laikomas kitame aplanke nei projektas. Jei išjungta, saugomas tik failo pavadinimas, todėl projektai išlieka lengvai perkeliami ir išvengiama absoliučių kelių įtraukimo."
+
+msgid "Recent files"
+msgstr "Paskutinieji failai"
+
 msgid "Maximum recent files"
 msgstr "Maksimalus naujausių failų skaičius"
 
@@ -11763,17 +11943,61 @@ msgstr "Maksimalus naujausių failų skaičius"
 msgid "Add STL/STEP files to recent files list"
 msgstr "Pridėti STL/STEP failus į naujausių failų sąrašą"
 
+# AI Translated
+msgid "Folder paths"
+msgstr "Aplankų keliai"
+
+msgid "Downloads folder"
+msgstr "Atsisiuntimų aplankas"
+
+msgid "Target folder for downloaded items"
+msgstr "Atsisiunčiamų failų paskirties aplankas"
+
+# AI Translated
+msgid "File import"
+msgstr "Failų importavimas"
+
+# AI Translated
+msgid "Ask how to handle unsupported characters in imported names"
+msgstr "Klausti, ką daryti su nepalaikomais simboliais importuojamuose pavadinimuose"
+
+# AI Translated
+msgid "Show the removal or replacement choices when original names contain unsupported characters."
+msgstr "Rodyti šalinimo arba pakeitimo pasirinkimus, kai originaliuose pavadinimuose yra nepalaikomų simbolių."
+
+# AI Translated
+msgid "3MF import"
+msgstr "3MF importavimas"
+
+# AI Translated
+msgid "Show options when importing"
+msgstr "Rodyti parinktis importuojant"
+
+# AI Translated
+msgid "Show original-name and sorting options when importing a 3MF without project settings into the current project."
+msgstr "Rodyti originalių pavadinimų ir rikiavimo parinktis, kai į dabartinį projektą importuojamas 3MF be projekto nustatymų."
+
+# AI Translated
+msgid "Keep original names"
+msgstr "Išlaikyti originalius pavadinimus"
+
+# AI Translated
+msgid "Use the body names stored in the imported file when it contains them."
+msgstr "Naudoti importuojamame faile išsaugotus kūnų pavadinimus, jei jų yra."
+
 msgid "Don't warn when loading 3MF with modified G-code"
 msgstr "Nerodyti perspėjimų įkeliant 3MF su modifikuotais G-kodais"
 
-msgid "Show options when importing STEP file"
-msgstr "Rodyti parinktis importuojant STEP failą"
+# AI Translated
+msgid "STEP import"
+msgstr "STEP importavimas"
 
 msgid "If enabled, a parameter settings dialog will appear during STEP file import."
 msgstr "Jei įjungta, STEP failo importavimo metu atsiras parametrų nustatymų dialogas."
 
-msgid "STEP importing: linear deflection"
-msgstr "STEP importavimas: tiesinis nukrypimas"
+# AI Translated
+msgid "Linear deflection"
+msgstr "Linijinis nuokrypis"
 
 msgid ""
 "Linear deflection used when meshing imported STEP files.\n"
@@ -11786,8 +12010,9 @@ msgstr ""
 "Naudojamas kaip numatytoji vertė importavimo lange arba tiesiogiai, kai importavimo langas išjungtas.\n"
 "Numatytoji vertė: 0,003 mm."
 
-msgid "STEP importing: angle deflection"
-msgstr "STEP importavimas: kampinis nukrypimas"
+# AI Translated
+msgid "Angle deflection"
+msgstr "Kampinis nuokrypis"
 
 msgid ""
 "Angle deflection used when meshing imported STEP files.\n"
@@ -11800,17 +12025,31 @@ msgstr ""
 "Naudojamas kaip numatytoji vertė importavimo lange arba tiesiogiai, kai importavimo langas išjungtas.\n"
 "Numatytoji vertė: 0,5."
 
-msgid "STEP importing: Split into multiple objects"
-msgstr "STEP importavimas: išskaidyti į kelis objektus"
+# AI Translated
+msgid "Split into multiple objects"
+msgstr "Išskaidyti į kelis objektus"
 
+# AI Translated
 msgid ""
 "If enabled, compound and compsolid shapes in imported STEP files are split into multiple objects.\n"
 "Used as the default in the import dialog, or directly when the import dialog is disabled.\n"
-"Default: disabled."
+"Default: enabled."
 msgstr ""
 "Jei įjungta, sudėtinės („compound“) ir „compsolid“ formos importuotuose STEP failuose yra išskaidomos į kelis objektus.\n"
 "Naudojama kaip numatytoji nuostata importavimo lange arba tiesiogiai, kai importavimo langas išjungtas.\n"
-"Numatytoji būsena: išjungta."
+"Numatytoji būsena: įjungta."
+
+# AI Translated
+msgid "AMF import"
+msgstr "AMF importavimas"
+
+# AI Translated
+msgid "Show body grouping, original-name and sorting options when importing geometry into the current project."
+msgstr "Rodyti kūnų grupavimo, originalių pavadinimų ir rikiavimo parinktis, kai į dabartinį projektą importuojama geometrija."
+
+# AI Translated
+msgid "DRC export"
+msgstr "DRC eksportavimas"
 
 msgid "Quality level for Draco export"
 msgstr "„Draco“ eksporto kokybės lygis"
@@ -11827,11 +12066,159 @@ msgstr ""
 "0 = suspaudimas be praradimų (geometrija išsaugoma visu tikslumu). Leistinos prarandamos vertės yra nuo 8 iki 30.\n"
 "Mažesnės vertės sukuria mažesnius failus, bet prarandama daugiau geometrinių detalių; didesnės vertės išsaugo daugiau detalių, tačiau failai būna didesni."
 
-msgid "Store full source file paths in projects"
-msgstr "Projekte saugoti visus šaltinio failų kelius"
+msgid "Associate files to Snapmaker Orca"
+msgstr "Susieti failus su Snapmaker Orca"
 
-msgid "If enabled, saved projects store the absolute path to imported source files (STEP/STL/...), so \"Reload from disk\" still works when the source file is kept in a different folder than the project. If disabled, only the filename is stored, which keeps projects portable and avoids embedding absolute paths."
-msgstr "Jei įjungta, išsaugotuose projektuose saugomas absoliutus kelias iki importuotų šaltinio failų (STEP/STL/...), todėl funkcija „Įkelti iš naujo iš disko“ (Reload from disk) veikia ir tada, kai šaltinio failas laikomas kitame aplanke nei projektas. Jei išjungta, saugomas tik failo pavadinimas, todėl projektai išlieka lengvai perkeliami ir išvengiama absoliučių kelių įtraukimo."
+msgid "File associations for the Microsoft Store version are managed by Windows Settings."
+msgstr "„Microsoft Store“ versijos failų susiejimai valdomi „Windows“ nustatymuose."
+
+msgid "Open Windows Default Apps Settings"
+msgstr "Atidaryti „Windows“ numatytųjų programų nustatymus"
+
+msgid "Associate 3MF files to Snapmaker Orca"
+msgstr ""
+
+msgid "If enabled, this sets Snapmaker Orca as the default application to open 3MF files."
+msgstr ""
+
+msgid "Associate DRC files to Snapmaker Orca"
+msgstr ""
+
+msgid "If enabled, sets Snapmaker Orca as default application to open DRC files."
+msgstr ""
+
+msgid "Associate STL files to Snapmaker Orca"
+msgstr ""
+
+msgid "If enabled, this sets Snapmaker Orca as the default application to open STL files."
+msgstr ""
+
+msgid "Associate STEP files to Snapmaker Orca"
+msgstr ""
+
+msgid "If enabled, this sets Snapmaker Orca as the default application to open STEP files."
+msgstr ""
+
+msgid "Associate web links to Snapmaker Orca"
+msgstr "Susieti interneto nuorodas su Snapmaker Orca"
+
+msgid "Behaviour"
+msgstr "Elgsena"
+
+msgid "Auto flush after changing..."
+msgstr "Automatinis išvalymas pakeitus..."
+
+msgid "Auto calculate flushing volumes when selected values changed"
+msgstr "Automatiškai apskaičiuoti išvalymo tūrius, kai pasikeičia pasirinktos vertės"
+
+msgid "Auto arrange plate after cloning"
+msgstr "Automatinis plokštės sutvarkymas po klonavimo"
+
+msgid "Auto slice after changes"
+msgstr "Automatinis sluoksniavimas po pakeitimų"
+
+msgid "If enabled, Snapmaker Orca will re-slice automatically whenever slicing-related settings change."
+msgstr ""
+
+msgid "Delay in seconds before auto slicing starts, allowing multiple edits to be grouped. Use 0 to slice immediately."
+msgstr "Delsiama sekundėmis prieš pradedant automatinį sluoksniavimą, kad būtų galima sugrupuoti kelis pakeitimus. Įveskite 0, jei norite sluoksniuoti iš karto."
+
+# AI Translated
+msgid "Show options when adding a primitive"
+msgstr "Rodyti parinktis pridedant primityvą"
+
+# AI Translated
+msgid "If enabled, a dialog asks for the dimensions of a primitive shape before it is added."
+msgstr "Jei įjungta, prieš pridedant primityvą dialogo lange prašoma nurodyti jo matmenis."
+
+msgid "Remove mixed temperature restriction"
+msgstr "Pašalinti mišrios temperatūros ribojimą"
+
+msgid "With this option enabled, you can print materials with a large temperature difference together."
+msgstr "Įjungus šią parinktį, galite kartu spausdinti medžiagas, turinčias didelį temperatūrų skirtumą."
+
+msgid "Allow high/low temperature filament mixing"
+msgstr ""
+
+msgid "If enabled, allows printing with both high-temperature and low-temperature filaments simultaneously."
+msgstr ""
+
+msgid ""
+"Mixing materials with significantly different printing temperatures may result in:\n"
+"· Extruder clogging\n"
+"· Nozzle damage\n"
+"· Layer adhesion issues\n"
+"\n"
+"Do you want to enable this feature?"
+msgstr ""
+
+msgid "High and Low Temperature Material Mixing Risk"
+msgstr ""
+
+# AI Translated
+msgid "Remember last print action"
+msgstr "Prisiminti paskutinį spausdinimo veiksmą"
+
+msgid "If enabled, Snapmaker Orca will remember the last selected option in the print button's dropdown (e.g. Print, Export plate sliced file, Export G-code file) and use it as the default on next startup."
+msgstr ""
+
+msgid "Show a dialog asking whether to continue slicing when memory is low"
+msgstr ""
+
+# AI Translated
+msgid "Default view type"
+msgstr "Numatytasis rodinio tipas"
+
+# AI Translated
+msgid ""
+"The color scheme the sliced preview opens with.\n"
+"Automatic: Filament for multi material prints, Line Type for single material ones.\n"
+"Last used: the view type you selected last.\n"
+"Any other value always opens that view type.\n"
+"You can still switch the view type in the preview afterwards."
+msgstr ""
+"Spalvų schema, kuria atidaroma sluoksniuota peržiūra.\n"
+"Automatinis: „Gija“ kelių medžiagų spaudiniams, „Linijos tipas“ vienos medžiagos spaudiniams.\n"
+"Paskutinis naudotas: paskutinį kartą pasirinktas rodinio tipas.\n"
+"Bet kuri kita reikšmė visada atidaro tą rodinio tipą.\n"
+"Vėliau peržiūroje rodinio tipą vis tiek galima pakeisti."
+
+msgid "Simplify preview while dragging"
+msgstr ""
+
+msgid ""
+"What the sliced preview draws while you drag the camera or a preview slider, or zoom with the mouse wheel, so that large prints stay responsive. The full toolpaths are restored as soon as you let go.\n"
+"Off: the full toolpaths.\n"
+"Solid model: the sliced objects and the prime tower as solid shapes in the colors of the current view, cut to the visible layer range, with its bottom and top layers and the supports drawn as toolpaths. Negative volumes are not cut out. A print made object by object, or one on a belt printer, keeps its full toolpaths.\n"
+"Shell only: every layer without its sparse infill, internal solid infill, internal bridges and gap fill, which lie under the walls and skins. Walls, top and bottom surfaces, bridges, supports and the prime tower are drawn whole, so the print looks the same from outside.\n"
+"The bottom and top layers of the visible range are always drawn whole; a layer with no infill of its own, as with infill combination, takes the layers down to the nearest one with infill along."
+msgstr ""
+
+msgid "Solid model"
+msgstr ""
+
+msgid "Shell only"
+msgstr ""
+
+# AI Translated
+msgid "Dim lower layers"
+msgstr "Pritemdyti apatinius sluoksnius"
+
+# AI Translated
+msgid "When scrubbing the layer slider in the sliced preview, render the layers below the current one darkened so that only the layer being viewed is shown at full brightness."
+msgstr "Slenkant sluoksnių slankiklį pjaustytoje peržiūroje, atvaizduoti žemiau esančius sluoksnius pritemdytus, kad visu ryškumu būtų rodomas tik peržiūrimas sluoksnis."
+
+# AI Translated
+msgid "Dimmed layer brightness"
+msgstr "Pritemdytų sluoksnių ryškumas"
+
+# AI Translated
+msgid ""
+"How brightly the dimmed layers are rendered when \"Dim lower layers\" is enabled.\n"
+"99% is barely darkened, 0% renders them black. Capped at 99% because 100% would be the same as disabling the option."
+msgstr ""
+"Kaip ryškiai atvaizduojami pritemdyti sluoksniai, kai įjungta parinktis „Pritemdyti apatinius sluoksnius“.\n"
+"99 % – pritemdymas vos pastebimas, 0 % – sluoksniai atvaizduojami juodai. Riba yra 99 %, nes 100 % prilygtų parinkties išjungimui."
 
 msgid "Preset"
 msgstr "Profilis"
@@ -11869,14 +12256,37 @@ msgstr "Rodyti pranešimus apie bendrinamus profilius"
 msgid "Show a notification with a link to browse shared profiles when the selected printer is changed."
 msgstr "Pakeitus pasirinktą spausdintuvą, rodyti pranešimą su nuoroda, leidžiančia peržiūrėti bendrinamus profilius."
 
-msgid "Features"
-msgstr "Funkcijos"
+# AI Translated
+msgid "Visible plugin pages"
+msgstr "Matomi papildinių puslapiai"
 
-msgid "Multi device management"
-msgstr "Kelių įrenginių valdymas"
+# AI Translated
+msgid "pages"
+msgstr "puslapiai"
 
-msgid "With this option enabled, you can send a task to multiple devices at the same time and manage multiple devices."
-msgstr "Kai įjungta ši funkcija, jūs galite siųsti užduotį keliems įrenginiams vienu metu, taip apt kontroliuoti keletą įrenginių."
+# AI Translated
+msgid "Number of plugin pages shown as fixed tabs before the remaining pages collapse into a dropdown on the last tab."
+msgstr "Papildinių puslapių, rodomų kaip fiksuotos kortelės, skaičius; likę puslapiai sutraukiami į išskleidžiamąjį sąrašą paskutinėje kortelėje."
+
+# AI Translated
+msgid "Draw mate connectors as a face"
+msgstr "Rodyti sąryšio jungtis kaip paviršių"
+
+# AI Translated
+msgid "In the Design tab, draw a mate connector as a small face instead of the conventional disc with a roll quadrant. A face shows its orientation at a glance, without learning the disc convention. Turn this off for the conventional CAD representation."
+msgstr "Skirtuke „Projektavimas“ rodyti sąryšio jungtį kaip mažą paviršių, o ne kaip įprastą diską su posvyrio ketvirčiu. Paviršiaus orientacija matoma iš pirmo žvilgsnio, nereikia mokytis disko žymėjimo taisyklių. Išjunkite, jei norite įprasto CAD vaizdavimo."
+
+# AI Translated
+msgid "Auto-close sketch loops"
+msgstr "Automatiškai uždaryti eskizo kontūrus"
+
+# AI Translated
+msgid "Treat sketch endpoints within 0.001 mm as one joint and weld the loop shut. Off: only exactly coincident endpoints join, so a loop with a tiny gap is shown as open instead of being closed for you. Saved with each design; applies to designs started after the change."
+msgstr "Eskizo galinius taškus, esančius ne didesniu kaip 0,001 mm atstumu, laikyti viena jungtimi ir kontūrą sujungti. Išjungta: sujungiami tik tiksliai sutampantys galiniai taškai, todėl kontūras su mažyčiu tarpu rodomas kaip atviras, užuot jį uždarius automatiškai. Išsaugoma kartu su kiekvienu modeliu; taikoma modeliams, pradėtiems po pakeitimo."
+
+# AI Translated
+msgid "Speed dial"
+msgstr "Greitieji veiksmai"
 
 # AI Translated
 msgid "Open the Speed Dial from the keyboard"
@@ -11898,92 +12308,6 @@ msgstr "veiksmai"
 # AI Translated
 msgid "How many recently launched actions to show at the top of the Speed Dial. Set to 0 to hide recent actions."
 msgstr "Kiek paskutinių paleistų veiksmų rodyti greitųjų veiksmų lango viršuje. Nustatykite 0, kad paskutiniai veiksmai būtų paslėpti."
-
-# AI Translated
-msgid "CAD feature (experimental)"
-msgstr "CAD funkcija (eksperimentinė)"
-
-# AI Translated
-msgid "With this option enabled, the Design tab is shown, where models can be built and edited parametrically. This feature is experimental and still under development."
-msgstr "Įjungus šią parinktį, rodomas skirtukas „Projektavimas“, kuriame modelius galima kurti ir redaguoti parametriškai. Ši funkcija yra eksperimentinė ir vis dar kuriama."
-
-msgid "Pop up to select filament grouping mode"
-msgstr "Iššokantis langas gijų grupavimo režimui pasirinkti"
-
-# AI Translated
-msgid "Visible plugin pages"
-msgstr "Matomi papildinių puslapiai"
-
-# AI Translated
-msgid "pages"
-msgstr "puslapiai"
-
-# AI Translated
-msgid "Number of plugin pages shown as fixed tabs before the remaining pages collapse into a dropdown on the last tab."
-msgstr "Papildinių puslapių, rodomų kaip fiksuotos kortelės, skaičius; likę puslapiai sutraukiami į išskleidžiamąjį sąrašą paskutinėje kortelėje."
-
-msgid "Behavior"
-msgstr "Elgsena"
-
-msgid "Auto flush after changing..."
-msgstr "Automatinis išvalymas pakeitus..."
-
-msgid "Auto calculate flushing volumes when selected values changed"
-msgstr "Automatiškai apskaičiuoti išvalymo tūrius, kai pasikeičia pasirinktos vertės"
-
-msgid "Auto arrange plate after cloning"
-msgstr "Automatinis plokštės sutvarkymas po klonavimo"
-
-# AI Translated
-msgid "Show options when adding a primitive"
-msgstr "Rodyti parinktis pridedant primityvą"
-
-# AI Translated
-msgid "If enabled, a dialog asks for the dimensions of a primitive shape before it is added."
-msgstr "Jei įjungta, prieš pridedant primityvą dialogo lange prašoma nurodyti jo matmenis."
-
-msgid "Auto slice after changes"
-msgstr "Automatinis sluoksniavimas po pakeitimų"
-
-msgid "If enabled, Snapmaker Orca will re-slice automatically whenever slicing-related settings change."
-msgstr ""
-
-msgid "Delay in seconds before auto slicing starts, allowing multiple edits to be grouped. Use 0 to slice immediately."
-msgstr "Delsiama sekundėmis prieš pradedant automatinį sluoksniavimą, kad būtų galima sugrupuoti kelis pakeitimus. Įveskite 0, jei norite sluoksniuoti iš karto."
-
-msgid "Remove mixed temperature restriction"
-msgstr "Pašalinti mišrios temperatūros ribojimą"
-
-msgid "With this option enabled, you can print materials with a large temperature difference together."
-msgstr "Įjungus šią parinktį, galite kartu spausdinti medžiagas, turinčias didelį temperatūrų skirtumą."
-
-msgid "Allow high/low temperature filament mixing"
-msgstr ""
-
-msgid "If enabled, allows printing with both high-temperature and low-temperature filaments simultaneously."
-msgstr ""
-
-msgid ""
-"Mixing materials with significantly different printing temperatures may result in:\n"
-"· Extruder clogging\n"
-"· Nozzle damage\n"
-"· Layer adhesion issues\n"
-"\n"
-"Do you want to enable this feature?"
-msgstr ""
-
-msgid "High and Low Temperature Material Mixing Risk"
-msgstr ""
-
-# AI Translated
-msgid "Remember last print action"
-msgstr "Prisiminti paskutinį spausdinimo veiksmą"
-
-msgid "If enabled, Snapmaker Orca will remember the last selected option in the print button's dropdown (e.g. Print, Export plate sliced file, Export G-code file) and use it as the default on next startup."
-msgstr ""
-
-msgid "Show a dialog asking whether to continue slicing when memory is low"
-msgstr ""
 
 msgid "Camera"
 msgstr "Kamera"
@@ -12027,22 +12351,6 @@ msgstr "Apversti pelės didinimą"
 msgid "If enabled, reverses the direction of zoom with mouse wheel."
 msgstr "Jei įjungta, apverčia didinimo ar mažinimo kryptį pelės ratuku."
 
-# AI Translated
-msgid "Draw mate connectors as a face"
-msgstr "Rodyti sąryšio jungtis kaip paviršių"
-
-# AI Translated
-msgid "In the Design tab, draw a mate connector as a small face instead of the conventional disc with a roll quadrant. A face shows its orientation at a glance, without learning the disc convention. Turn this off for the conventional CAD representation."
-msgstr "Skirtuke „Projektavimas“ rodyti sąryšio jungtį kaip mažą paviršių, o ne kaip įprastą diską su posvyrio ketvirčiu. Paviršiaus orientacija matoma iš pirmo žvilgsnio, nereikia mokytis disko žymėjimo taisyklių. Išjunkite, jei norite įprasto CAD vaizdavimo."
-
-# AI Translated
-msgid "Auto-close sketch loops"
-msgstr "Automatiškai uždaryti eskizo kontūrus"
-
-# AI Translated
-msgid "Treat sketch endpoints within 0.001 mm as one joint and weld the loop shut. Off: only exactly coincident endpoints join, so a loop with a tiny gap is shown as open instead of being closed for you. Saved with each design; applies to designs started after the change."
-msgstr "Eskizo galinius taškus, esančius ne didesniu kaip 0,001 mm atstumu, laikyti viena jungtimi ir kontūrą sujungti. Išjungta: sujungiami tik tiksliai sutampantys galiniai taškai, todėl kontūras su mažyčiu tarpu rodomas kaip atviras, užuot jį uždarius automatiškai. Išsaugoma kartu su kiekvienu modeliu; taikoma modeliams, pradėtiems po pakeitimo."
-
 msgid "Pan"
 msgstr "Slinkimas"
 
@@ -12076,27 +12384,6 @@ msgstr "Spartieji klavišai"
 msgid "Choose the key for each action."
 msgstr "Pasirinkite kiekvieno veiksmo klavišą."
 
-msgid "Clear my choice on..."
-msgstr "Išvalyti mano pasirinkimą..."
-
-msgid "Unsaved projects"
-msgstr "Neišsaugoti projektai"
-
-msgid "Clear my choice on the unsaved projects."
-msgstr "Išvalyti mano pasirinkimus neišsaugotuose projektuose."
-
-msgid "Unsaved presets"
-msgstr "Neišsaugoti profiliai"
-
-msgid "Clear my choice on the unsaved presets."
-msgstr "Išvalyti mano pasirinkimą neišsaugotuose nustatymuose."
-
-msgid "Synchronizing printer preset"
-msgstr "Spausdintuvo profilio sinchronizavimas"
-
-msgid "Clear my choice for synchronizing printer preset after loading the file."
-msgstr "Išvalyti mano pasirinkimą dėl spausdintuvo profilio sinchronizavimo įkėlus failą."
-
 msgid "Graphics"
 msgstr "Grafika"
 
@@ -12124,6 +12411,15 @@ msgstr ""
 
 msgid "Render soft shadows of objects on the build plate in the Prepare view. Requires OpenGL 3.3 or later."
 msgstr ""
+
+# AI Translated
+# Needs human review: Preview option label. The glossary has no entry for translucent; chose 'peršviečiamos' (how the catalog renders translucent) over 'pusiau skaidrios' (semi-transparent).
+msgid "Translucent filaments"
+msgstr "Peršviečiamos gijos"
+
+# AI Translated
+msgid "Draw the toolpaths of filaments whose color is partly transparent as see-through, as the 3D view draws their objects. Turn it off to draw every filament opaque."
+msgstr "Gijų, kurių spalva iš dalies skaidri, įrankių trajektorijos piešiamos peršviečiamos, kaip 3D vaizde piešiami jų objektai. Išjunkite, kad visos gijos būtų piešiamos nepermatomos."
 
 msgid "Phong shading"
 msgstr "Phong šešėliavimas"
@@ -12183,6 +12479,27 @@ msgid ""
 msgstr ""
 "Realistiškame vaizde peržiūroje paryškina įrankių trajektorijas kaip blizgų plastiką.\n"
 "Kai išjungta, peršviečiama gija būna matinė, o nepermatoma išlaiko paprasto vaizdo paryškinimą."
+
+msgid "Persistent"
+msgstr ""
+
+msgid "When Outline is enabled in the 3D canvas menu, outlines visible objects even when they are not selected."
+msgstr ""
+
+msgid "The configured outline color is invalid."
+msgstr ""
+
+msgid "Persistent color"
+msgstr ""
+
+msgid "Choose the color of the persistent outlines of unselected objects."
+msgstr ""
+
+msgid "Selection color"
+msgstr ""
+
+msgid "Choose the color of the outlines of selected objects."
+msgstr ""
 
 msgid "Anti-aliasing"
 msgstr "Išlyginimas"
@@ -12320,57 +12637,6 @@ msgstr "Paleisti"
 msgid "Replaces the current project with the OrcaSliced Combo, then measures the frame rate and render timings while the camera turns around it in Prepare and Preview, and while the layer slider moves through the sliced layers."
 msgstr "Pakeičia dabartinį projektą modeliu „OrcaSliced Combo“, tada matuoja kadrų dažnį ir atvaizdavimo trukmes, kol kamera sukasi aplink jį skirtukuose „Paruošimas“ ir „Peržiūra“ bei kol sluoksnių slankiklis juda per sluoksniuotus sluoksnius."
 
-# AI Translated
-msgid "G-code Preview"
-msgstr "G-code peržiūra"
-
-# AI Translated
-msgid "Default view type"
-msgstr "Numatytasis rodinio tipas"
-
-# AI Translated
-msgid ""
-"The color scheme the sliced preview opens with.\n"
-"Automatic: Filament for multi material prints, Line Type for single material ones.\n"
-"Last used: the view type you selected last.\n"
-"Any other value always opens that view type.\n"
-"You can still switch the view type in the preview afterwards."
-msgstr ""
-"Spalvų schema, kuria atidaroma sluoksniuota peržiūra.\n"
-"Automatinis: „Gija“ kelių medžiagų spaudiniams, „Linijos tipas“ vienos medžiagos spaudiniams.\n"
-"Paskutinis naudotas: paskutinį kartą pasirinktas rodinio tipas.\n"
-"Bet kuri kita reikšmė visada atidaro tą rodinio tipą.\n"
-"Vėliau peržiūroje rodinio tipą vis tiek galima pakeisti."
-
-# AI Translated
-msgid "Dim lower layers"
-msgstr "Pritemdyti apatinius sluoksnius"
-
-# AI Translated
-msgid "When scrubbing the layer slider in the sliced preview, render the layers below the current one darkened so that only the layer being viewed is shown at full brightness."
-msgstr "Slenkant sluoksnių slankiklį pjaustytoje peržiūroje, atvaizduoti žemiau esančius sluoksnius pritemdytus, kad visu ryškumu būtų rodomas tik peržiūrimas sluoksnis."
-
-# AI Translated
-msgid "Dimmed layer brightness"
-msgstr "Pritemdytų sluoksnių ryškumas"
-
-# AI Translated
-msgid ""
-"How brightly the dimmed layers are rendered when \"Dim lower layers\" is enabled.\n"
-"99% is barely darkened, 0% renders them black. Capped at 99% because 100% would be the same as disabling the option."
-msgstr ""
-"Kaip ryškiai atvaizduojami pritemdyti sluoksniai, kai įjungta parinktis „Pritemdyti apatinius sluoksnius“.\n"
-"99 % – pritemdymas vos pastebimas, 0 % – sluoksniai atvaizduojami juodai. Riba yra 99 %, nes 100 % prilygtų parinkties išjungimui."
-
-# AI Translated
-# Needs human review: Preview option label. The glossary has no entry for translucent; chose 'peršviečiamos' (how the catalog renders translucent) over 'pusiau skaidrios' (semi-transparent).
-msgid "Translucent filaments"
-msgstr "Peršviečiamos gijos"
-
-# AI Translated
-msgid "Draw the toolpaths of filaments whose color is partly transparent as see-through, as the 3D view draws their objects. Turn it off to draw every filament opaque."
-msgstr "Gijų, kurių spalva iš dalies skaidri, įrankių trajektorijos piešiamos peršviečiamos, kaip 3D vaizde piešiami jų objektai. Išjunkite, kad visos gijos būtų piešiamos nepermatomos."
-
 msgid "Connection"
 msgstr "Ryšys"
 
@@ -12439,42 +12705,6 @@ msgstr ""
 
 msgid "Sends slicing results, printer connection steps and error messages to the Snapmaker cloud while signed in to a Snapmaker account. Sent in readable form: the account ID, the MQTT client ID, and the printer's network address and MQTT topics. Printer serial numbers and device IDs are sent as one-way hashes. Only active while the Customer Experience Improvement Program is joined."
 msgstr ""
-
-msgid "Associate files to Snapmaker Orca"
-msgstr "Susieti failus su Snapmaker Orca"
-
-msgid "File associations for the Microsoft Store version are managed by Windows Settings."
-msgstr "„Microsoft Store“ versijos failų susiejimai valdomi „Windows“ nustatymuose."
-
-msgid "Open Windows Default Apps Settings"
-msgstr "Atidaryti „Windows“ numatytųjų programų nustatymus"
-
-msgid "Associate 3MF files to Snapmaker Orca"
-msgstr ""
-
-msgid "If enabled, this sets Snapmaker Orca as the default application to open 3MF files."
-msgstr ""
-
-msgid "Associate DRC files to Snapmaker Orca"
-msgstr ""
-
-msgid "If enabled, sets Snapmaker Orca as default application to open DRC files."
-msgstr ""
-
-msgid "Associate STL files to Snapmaker Orca"
-msgstr ""
-
-msgid "If enabled, this sets Snapmaker Orca as the default application to open STL files."
-msgstr ""
-
-msgid "Associate STEP files to Snapmaker Orca"
-msgstr ""
-
-msgid "If enabled, this sets Snapmaker Orca as the default application to open STEP files."
-msgstr ""
-
-msgid "Associate web links to Snapmaker Orca"
-msgstr "Susieti interneto nuorodas su Snapmaker Orca"
 
 msgid "Developer"
 msgstr "Kūrėjas"
@@ -12759,12 +12989,6 @@ msgstr "Spausdinimo eiga"
 msgid "Same as Global"
 msgstr "Kaip ir bendra"
 
-msgid "Enable"
-msgstr "Įgalinti"
-
-msgid "Disable"
-msgstr "Išjungti"
-
 msgid "Spiral vase"
 msgstr "Spiralinė vaza"
 
@@ -12867,16 +13091,16 @@ msgstr "Naudotojo nustatymai"
 msgid "Preset Inside Project"
 msgstr "Nustatymai projekto viduje"
 
-# AI Translated
-msgid "Copies all inherited values from the parent into this preset and removes the parent relationship. Presets compatible only with the parent may become unsupported."
-msgstr "Nukopijuoja į šį profilį visas iš pirminio profilio paveldėtas reikšmes ir pašalina paveldėjimo ryšį. Profiliai, suderinami tik su pirminiu profiliu, gali tapti nepalaikomi."
-
 msgid "Detach from parent"
 msgstr "Atskirti nuo tėvinio profilio"
 
 # AI Translated
 msgid "Save without parent"
 msgstr "Išsaugoti be tėvinio profilio"
+
+# AI Translated
+msgid "Copies all inherited values from the parent into this preset and removes the parent relationship. Presets compatible only with the parent may become unsupported."
+msgstr "Nukopijuoja į šį profilį visas iš pirminio profilio paveldėtas reikšmes ir pašalina paveldėjimo ryšį. Profiliai, suderinami tik su pirminiu profiliu, gali tapti nepalaikomi."
 
 # AI Translated
 msgid "Unique preset"
@@ -13100,10 +13324,6 @@ msgstr "Prisegti prie mėgstamiausių (%s)"
 #, c-format, boost-format
 msgid "Unpin from favorites (%s)"
 msgstr "Atsegti nuo mėgstamiausių (%s)"
-
-# AI Translated
-msgid "Remove from favorites"
-msgstr "Pašalinti iš mėgstamiausių"
 
 # AI Translated
 msgid "Move left"
@@ -15132,7 +15352,13 @@ msgctxt "Nozzle flow type"
 msgid "XHF"
 msgstr "XHF"
 
+#. TRN An entry of the speed selector in a narrow sidebar (short for "Extruder 2")
+#, boost-format
+msgid "E%1%"
+msgstr ""
+
 # AI Translated
+#. TRN Printer settings extruder tab: the extruder's name, e.g. "Extruder 2", and its nozzle flow tag, e.g. "HF".
 #, c-format, boost-format
 msgid "%s: %s"
 msgstr "%s: %s"
@@ -15155,11 +15381,6 @@ msgstr ""
 msgid "Extruder %1%"
 msgstr ""
 
-#. TRN An entry of the speed selector in a narrow sidebar (short for "Extruder 2")
-#, boost-format
-msgid "E%1%"
-msgstr ""
-
 msgid "No modifications need to be copied."
 msgstr "Nereikia kopijuoti jokių modifikacijų"
 
@@ -15173,6 +15394,11 @@ msgstr "Modifikuoti %s parametrus"
 #, c-format, boost-format
 msgid "Do you want to modify the following parameters of the %s to that of the %s?"
 msgstr "Ar norite pakeisti šiuos %s parametrus į %s parametrus?"
+
+#. TRN %1% is the extruder (or nozzle variant) the values are copied from, %2% the list of those they are copied to, as the switch names them, e.g. "T2 HF, T3 HF".
+#, boost-format
+msgid "Do you want to copy the following parameters of %1% to %2%?"
+msgstr ""
 
 msgid "Click to reset current value and attach to the global value."
 msgstr "Spustelėkite , jei norite iš naujo nustatyti dabartinę reikšmę ir prijungti ją prie bendros reikšmės."
@@ -15318,6 +15544,15 @@ msgid ""
 msgstr ""
 "\n"
 "Galite atsisakyti pakeistų iš anksto nustatytų reikšmių arba nuspręsti perkelti pakeistas reikšmes į naują projektą"
+
+msgid "Click the compare button to see the full value."
+msgstr ""
+
+msgid "Process settings"
+msgstr ""
+
+msgid "Compare the full values"
+msgstr ""
 
 msgid "Extruder count"
 msgstr "Ekstruderių skaičius"
@@ -16064,10 +16299,6 @@ msgstr "Atidaryti CA sertifikato failą"
 msgid "HTTPS CA file is optional. It is only needed if you use HTTPS with a self-signed certificate."
 msgstr "HTTPS CA failas yra neprivalomas. Jis reikalingas tik tuo atveju, jei naudojate HTTPS su savarankiškai pasirašytu sertifikatu."
 
-# AI Translated
-msgid "This system uses HTTPS certificates from the system Certificate Store or Keychain. To use a custom CA file, import it there."
-msgstr "Ši sistema naudoja HTTPS sertifikatus iš sisteminės sertifikatų saugyklos (Certificate Store) arba raktinės (Keychain). Norėdami naudoti pasirinktinį CA failą, importuokite jį ten."
-
 msgid "Printer model"
 msgstr "Spausdintuvo modelis"
 
@@ -16086,6 +16317,10 @@ msgstr "Jungtis"
 
 msgid "Manual Setup"
 msgstr "Rankinė sąranka"
+
+# AI Translated
+msgid "This system uses HTTPS certificates from the system Certificate Store or Keychain. To use a custom CA file, import it there."
+msgstr "Ši sistema naudoja HTTPS sertifikatus iš sisteminės sertifikatų saugyklos (Certificate Store) arba raktinės (Keychain). Norėdami naudoti pasirinktinį CA failą, importuokite jį ten."
 
 msgid "IP and Access Code Verified! You may close the window"
 msgstr "Patikrintas IP ir prieigos kodas! Galite uždaryti langą"
@@ -16671,6 +16906,9 @@ msgstr "Valymo bokštas yra per arti uždraustos srities, spausdinant gali įvyk
 msgid "Prime tower is too close to the clumping detection area. There may be collisions when printing."
 msgstr "Valymo bokštas yra per arti sulipimo aptikimo (clumping detection) srities, spausdinant gali įvykti susidūrimų."
 
+msgid "The extruder printable areas share no common area, so the prime tower cannot be printed.\n"
+msgstr ""
+
 # AI Translated
 msgid "Prime tower is partially outside the printable area, and it cannot be printed.\n"
 msgstr "Valymo bokštas yra iš dalies už spausdinimo srities ribų ir negali būti atspausdintas.\n"
@@ -16683,6 +16921,24 @@ msgstr "Neteisingas rekomenduojamas purkštuko temperatūros diapazonas. Žemuti
 
 msgid "If you still want to print, you can enable the option in Preferences / Control / Slicing / Remove mixed temperature restriction."
 msgstr "Jei vis tiek norite spausdinti, galite įjungti šią parinktį skiltyje Nuostatos (Preferences) / Valdymas / Pjaustymas / Pašalinti mišrios temperatūros ribojimą."
+
+msgid "A prime tower with printing by object is not supported together with the dynamic filament map. Print by layer, or disable the dynamic filament map."
+msgstr ""
+
+msgid "A prime tower requires that all objects have the same layer height."
+msgstr "Valymo bokštui reikia, kad visų objektų sluoksnio aukštis būtų vienodas"
+
+msgid "A prime tower requires that all objects are printed over the same number of raft layers."
+msgstr "Valymo bokštui reikia, kad visi objektai būtų spausdinami ant vienodo skaičiaus platformos sluoksnių."
+
+msgid "The prime tower is only supported for multiple objects if they are printed with the same support_top_z_distance."
+msgstr "Pirminis bokštas palaikomas keliems objektams tik tuo atveju, jei jie spausdinami tuo pačiu atramų z aukščio atstumu."
+
+msgid "A prime tower requires that all objects are sliced with the same layer height."
+msgstr "Valymo bokštui reikia, kad visi objektai būtų supjaustyti vienodu sluoksnių aukščiu."
+
+msgid "The prime tower is only supported if all objects have the same variable layer height."
+msgstr "Pagrindinis bokštas palaikomas tik tuo atveju, jei visi objektai turi tą patį kintamą sluoksnio aukštį"
 
 msgid "No extrusions under current settings."
 msgstr "Pagal dabartinius nustatymus nėra išspaudimų."
@@ -16771,6 +17027,10 @@ msgstr "Juostos valymo bokštas įjungtas, tačiau projekte nėra valymo bokšto
 msgid "The project contains multiple managed belt purge towers. Reload the plate or toggle the belt purge tower off and on to regenerate it."
 msgstr "Projekte yra keli automatiškai valdomi juostos valymo bokštai. Iš naujo įkelkite plokštę arba išjunkite ir vėl įjunkite juostos valymo bokštą, kad jis būtų sugeneruotas iš naujo."
 
+#. TRN "Precise Z height" is a print setting, "prime tower" the tower that purges the nozzle between filaments.
+msgid "Precise Z height is not applied: with the prime tower, objects of different heights that use variable layer height have to share their layers."
+msgstr ""
+
 msgid "Enabling both precise Z height and the prime tower may cause slicing errors."
 msgstr "Vienu metu įjungus tikslų Z aukštį ir valymo bokštą, gali kilti pjaustymo klaidų."
 
@@ -16782,6 +17042,12 @@ msgstr "Pasirinkite spausdinimo seką \"Pagal objektą\", jei norite spausdinti 
 
 msgid "Spiral (vase) mode does not work when an object contains more than one material."
 msgstr "Spiralinės vazos režimas neveikia, kai objekte yra daugiau nei viena medžiaga."
+
+# AI Translated
+#. TRN %1% is the object name.
+#, boost-format
+msgid "Spiral vase mode needs no sparse infill, one wall loop and no top shell layers, but the object %1% uses other values, so it will not print as a continuous spiral."
+msgstr "Spiralinės vazos režimui reikia, kad nebūtų reto užpildo, būtų vienas sienelės kontūras ir nebūtų viršutinio apvalkalo sluoksnių, tačiau objektas %1% naudoja kitas reikšmes, todėl jis nebus spausdinamas kaip ištisinė spiralė."
 
 #, boost-format
 msgid "While the object %1% itself fits the build volume, it exceeds the maximum build volume height because of material shrinkage compensation."
@@ -16828,24 +17094,6 @@ msgstr "Valymo bokštas nepalaikomas, kai įjungtas adaptyvusis sluoksnio aukšt
 
 msgid "A prime tower requires any “support gap” to be a multiple of layer height."
 msgstr "Valymo bokštui reikia, kad „atramos tarpas“ (support gap) būtų sluoksnio aukščio kartotinis."
-
-msgid "A prime tower with printing by object is not supported together with the dynamic filament map. Print by layer, or disable the dynamic filament map."
-msgstr ""
-
-msgid "A prime tower requires that all objects have the same layer height."
-msgstr "Valymo bokštui reikia, kad visų objektų sluoksnio aukštis būtų vienodas"
-
-msgid "A prime tower requires that all objects are printed over the same number of raft layers."
-msgstr "Valymo bokštui reikia, kad visi objektai būtų spausdinami ant vienodo skaičiaus platformos sluoksnių."
-
-msgid "The prime tower is only supported for multiple objects if they are printed with the same support_top_z_distance."
-msgstr "Pirminis bokštas palaikomas keliems objektams tik tuo atveju, jei jie spausdinami tuo pačiu atramų z aukščio atstumu."
-
-msgid "A prime tower requires that all objects are sliced with the same layer height."
-msgstr "Valymo bokštui reikia, kad visi objektai būtų supjaustyti vienodu sluoksnių aukščiu."
-
-msgid "The prime tower is only supported if all objects have the same variable layer height."
-msgstr "Pagrindinis bokštas palaikomas tik tuo atveju, jei visi objektai turi tą patį kintamą sluoksnio aukštį"
 
 msgid "One or more object were assigned an extruder that the printer does not have."
 msgstr "Vienas ar daugiau objektų buvo priskirti ekstruderiui, kurio spausdintuvas neturi."
@@ -21692,17 +21940,17 @@ msgstr "Valymas į vidų"
 
 # AI Translated
 msgid ""
-"Applies only to external walls, including hole boundaries. Moves the hot nozzle toward printed inner walls during wiping to reduce reheating of freshly printed plastic and seam marks.\n"
+"Applies only to external walls, including hole boundaries. Moves the hot nozzle toward the inner walls during wiping to reduce reheating of freshly printed plastic and seam marks.\n"
 "\n"
 "Especially useful at layer heights below 0.1 mm, where wipe marks are more visible.\n"
 "\n"
-"Uses the regular wipe if no adjacent inner wall is already printed (single-wall areas or Outer/Inner wall order), or if no supported inward path can be found, for example at tight corners or seam gaps."
+"Uses the regular wipe where the outer wall has no adjacent inner wall, such as in single-wall areas, or if no supported inward path can be found, for example at tight corners or seam gaps."
 msgstr ""
-"Taikoma tik išorinėms sienelėms, įskaitant skylių kontūrus. Valymo metu karštą purkštuką patraukia link jau atspausdintų vidinių sienelių, kad sumažintų ką tik atspausdinto plastiko pakartotinį įkaitimą ir siūlės žymes.\n"
+"Taikoma tik išorinėms sienelėms, įskaitant skylių kontūrus. Valymo metu karštą purkštuką patraukia link vidinių sienelių, kad sumažintų ką tik atspausdinto plastiko pakartotinį įkaitimą ir siūlės žymes.\n"
 "\n"
 "Ypač naudinga esant mažesniam nei 0,1 mm sluoksnio aukščiui, kai valymo žymės labiau matomos.\n"
 "\n"
-"Naudoja įprastą valymą, jei nėra jau atspausdintos gretimos vidinės sienelės (vienos sienelės sritys arba sienelių eiliškumas Išorinis / vidinis) arba jei nepavyksta rasti atremto kelio į vidų, pavyzdžiui, ankštuose kampuose ar siūlės tarpuose."
+"Naudoja įprastą valymą ten, kur išorinė sienelė neturi gretimos vidinės sienelės, kaip vienos sienelės srityse, arba jei nepavyksta rasti atremto kelio į vidų, pavyzdžiui, ankštuose kampuose ar siūlės tarpuose."
 
 # AI Translated
 msgid "Wipe inward distance"
@@ -21713,11 +21961,15 @@ msgstr "Valymo į vidų atstumas"
 msgid ""
 "The distance the wipe path is shifted away from the external perimeter, specified in millimeters or as a percentage of the actual outer-wall extrusion width.\n"
 "\n"
-"For example, 50% shifts the path by half of the outer-wall width. The effective offset is limited by both the actual outer-wall width and the available spacing to the adjacent wall, so values above 100% or an equivalent absolute distance have no additional effect. Set to 0 to disable the offset."
+"For example, 50% shifts the path by half of the outer-wall width. The effective offset is limited by both the actual outer-wall width and the available spacing to the adjacent wall, so values above 100% or an equivalent absolute distance have no additional effect. Set to 0 to disable the offset.\n"
+"\n"
+"With Outer/Inner or Inner/Outer/Inner wall order, the offset is limited to 50% of the actual outer-wall width because the adjacent inner wall is printed after the outer wall. This also applies to equivalent distances specified in millimeters."
 msgstr ""
 "Atstumas, kuriuo valymo kelias pastumiamas nuo išorinio kontūro, nurodomas milimetrais arba procentais nuo faktinio išorinės sienelės išspaudimo pločio.\n"
 "\n"
-"Pavyzdžiui, 50% pastumia kelią per pusę išorinės sienelės pločio. Faktinį poslinkį riboja tiek tikrasis išorinės sienelės plotis, tiek laisvas tarpas iki gretimos sienelės, todėl didesnės nei 100% reikšmės ar joms lygiavertis absoliutus atstumas papildomo poveikio neturi. Nustatykite 0, kad poslinkis būtų išjungtas."
+"Pavyzdžiui, 50% pastumia kelią per pusę išorinės sienelės pločio. Faktinį poslinkį riboja tiek tikrasis išorinės sienelės plotis, tiek laisvas tarpas iki gretimos sienelės, todėl didesnės nei 100% reikšmės ar joms lygiavertis absoliutus atstumas papildomo poveikio neturi. Nustatykite 0, kad poslinkis būtų išjungtas.\n"
+"\n"
+"Kai sienelių eiliškumas yra Išorinis / vidinis arba Vidinis / išorinis / vidinis, poslinkis ribojamas iki 50% faktinio išorinės sienelės pločio, nes gretima vidinė sienelė spausdinama po išorinės sienelės. Tai taikoma ir lygiaverčiams atstumams, nurodytiems milimetrais."
 
 msgid "Wipe before external loop"
 msgstr "Nuvalyti prieš išorinę kilpą"
@@ -21730,6 +21982,15 @@ msgstr ""
 "Siekiant sumažinti galimo perteklinio išspaudimo matomumą išorinio perimetro pradžioje, kai spausdinama išorinės / vidinės arba vidinės / išorinės / išorinės / vidinės sienos spausdinimo tvarka, ištraukimas atliekamas šiek tiek į vidų nuo išorinio perimetro pradžios. Taip bet koks galimas perteklinis išspaudimas paslepiamas nuo išorinio paviršiaus.\n"
 "\n"
 "Tai naudinga, kai spausdinama naudojant išorinės / vidinės arba vidinės / išorinės / išorinės / vidinės sienos spausdinimo tvarką, nes šiuose režimuose didesnė tikimybė, kad išorinis perimetras bus išspausdintas iš karto po ištraukimo pašalinimo judesio."
+
+msgid "Retract after outer wall"
+msgstr ""
+
+msgid ""
+"Always retract when the nozzle leaves an outer wall, even if the travel is shorter than the travel distance threshold.\n"
+"\n"
+"Without a retraction, a very short travel, for example to gap infill inside a thin wall, can drag the end of the outer wall inward and leave a visible dent at the seam."
+msgstr ""
 
 msgid "Wipe speed"
 msgstr "Valymo greitis"
@@ -22237,6 +22498,12 @@ msgstr "Lyginis-nelyginis"
 
 msgid "Close holes"
 msgstr "Uždaryti skyles"
+
+msgid "Carve overlaps by per-layer slice area"
+msgstr ""
+
+msgid "When enabled, overlaps between multi-extruder parts are carved with the new algorithm: on each layer, the part with the smaller slice area owns the overlap, keeping small details intact inside larger bodies. Developer option."
+msgstr ""
 
 msgid "Z offset"
 msgstr "Z poslinkis"
@@ -25284,8 +25551,8 @@ msgid "Expecting a regular expression."
 msgstr "Tikimasi reguliariosios išraiškos."
 
 # AI Translated
-msgid "Invalid utf8 sequence"
-msgstr "Netinkama utf8 seka"
+msgid "Invalid UTF-8 sequence"
+msgstr "Netinkama UTF-8 seka"
 
 # AI Translated
 msgid "Non-ASCII7 characters are only allowed inside text blocks and string literals, not inside code blocks."
@@ -26107,7 +26374,7 @@ msgid "Klipper version => 0.9.0"
 msgstr "Klipper versija => 0.9.0 (Klipper)"
 
 msgid ""
-"RepRap firmware version => 3.4.0\n"
+"RepRapFirmware version => 3.4.0\n"
 "Check your firmware documentation for supported shaper types."
 msgstr ""
 "RepRap programinės aparatinės įrangos versija => 3.4.0\n"
@@ -26127,7 +26394,7 @@ msgstr "Y pradžia / pabaiga: "
 msgid "Frequency settings"
 msgstr "Dažnio nustatymai"
 
-msgid "RepRap firmware uses the same frequency range for both axes."
+msgid "RepRapFirmware uses the same frequency range for both axes."
 msgstr "RepRap programinė aparatinė įranga naudoja tą patį dažnių diapazoną abiem ašims."
 
 msgid "Damp: "
@@ -26167,7 +26434,7 @@ msgstr "Dažnis X / Y: "
 msgid "Damp (Start / End): "
 msgstr "Slopinimas (pradžia / pabaiga): "
 
-msgid "RepRap firmware uses the same frequency for both axes."
+msgid "RepRapFirmware uses the same frequency for both axes."
 msgstr "RepRap programinė aparatinė įranga naudoja tą patį dažnį abiem ašims."
 
 msgid "Note: Use previously calculated frequencies."
@@ -26378,6 +26645,18 @@ msgstr "Tekstūruota pagrindo plokštė (A pusė)"
 msgid "Smooth Build Plate (Side B)"
 msgstr "Lygi pagrindo plokštė (B pusė)"
 
+# AI Translated
+msgid "Reading the printer's filament slots..."
+msgstr "Nuskaitomi spausdintuvo gijų lizdai..."
+
+# AI Translated
+msgid "Could not read the printer. Close this dialog and try again."
+msgstr "Nepavyko nuskaityti spausdintuvo duomenų. Uždarykite šį dialogo langą ir bandykite dar kartą."
+
+# AI Translated
+msgid "Could not connect to the printer. Check that it is on, then reopen this dialog."
+msgstr "Nepavyko prisijungti prie spausdintuvo. Patikrinkite, ar jis įjungtas, tada vėl atidarykite šį dialogo langą."
+
 #, c-format, boost-format
 msgid "Printer: %s"
 msgstr "Spausdintuvas: %s"
@@ -26393,6 +26672,16 @@ msgstr "Gijų priskyrimas:"
 #, c-format, boost-format
 msgid "Ext - %s"
 msgstr "Išor. - %s"
+
+# AI Translated
+#. TRN Creality send dialog. CFS is Creality's multi-filament unit.
+msgid "The printer reports no CFS connected, so the print will use the external spool."
+msgstr "Spausdintuvas praneša, kad CFS neprijungtas, todėl spausdinant bus naudojama išorinė ritė."
+
+# AI Translated
+#. TRN Creality send dialog, when the printer lists no CFS slots or does not answer
+msgid "The printer did not report any filament slots, so the print will use the external spool."
+msgstr "Spausdintuvas nepranešė apie jokius gijų lizdus, todėl spausdinant bus naudojama išorinė ritė."
 
 msgid "Unable to perform boolean operation on selected parts"
 msgstr "Nepavyksta atlikti loginės operacijos su pasirinktomis dalimis"
@@ -28047,7 +28336,7 @@ msgstr "s"
 msgid "Volumetric speed"
 msgstr "Tūrinis greitis"
 
-msgid "Step file import parameters"
+msgid "STEP file import parameters"
 msgstr "STEP failų importavimo parametrai"
 
 msgid "Smaller linear and angular deflections result in higher-quality transformations but increase the processing time."
@@ -28068,6 +28357,34 @@ msgstr "Įveskite galiojančią reikšmę (0,01 < kampinis nuokrypis < 1,0)"
 msgid "Split compound and compsolid into multiple objects"
 msgstr "Skaidyti „compound“ ir „compsolid“ darinius į kelis objektus"
 
+# AI Translated
+msgid "Loads each body of a multi-body part separately. Needed to keep the bodies' original names."
+msgstr "Kiekvieną kelių kūnų dalies kūną įkelia atskirai. Reikia, kad būtų išlaikyti originalūs kūnų pavadinimai."
+
+# AI Translated
+msgid "Load as an assembly"
+msgstr "Įkelti kaip surinkinį"
+
+# AI Translated
+msgid "Load as a single object (can be split later)"
+msgstr "Įkelti kaip vieną objektą (vėliau galima išskaidyti)"
+
+# AI Translated
+msgid "The original bodies and names are kept inside the object. Use Split to parts to show them as separate parts."
+msgstr "Originalūs kūnai ir pavadinimai išlaikomi objekto viduje. Naudokite „Padalinti į dalis“, kad jie būtų rodomi kaip atskiros dalys."
+
+# AI Translated
+msgid "Use the body names stored in the file, when there are any. Needs Split compound for parts with several bodies."
+msgstr "Naudoti faile išsaugotus kūnų pavadinimus, jei jų yra. Dalims su keliais kūnais reikia įjungti parinktį Skaidyti „compound“."
+
+# AI Translated
+msgid "Sort parts by name"
+msgstr "Rikiuoti dalis pagal pavadinimą"
+
+# AI Translated
+msgid "Sort the parts inside each imported assembly in the object list. This does not change the order used for slicing. Available when Keep original names is on."
+msgstr "Rikiuoti dalis kiekviename importuotame surinkinyje objektų sąraše. Tai nekeičia sluoksniavimo tvarkos. Galima, kai įjungta „Išlaikyti originalius pavadinimus“."
+
 msgid "Number of triangular facets"
 msgstr "Trikampių briaunų skaičius"
 
@@ -28076,6 +28393,98 @@ msgstr "Skaičiuojama, palaukite..."
 
 msgid "If enabled, the values above are stored as the defaults used for future STEP imports (and shown in Preferences)."
 msgstr "Jei įjungta, aukščiau nurodytos vertės yra išsaugomos kaip numatytosios, naudojamos būsimiems STEP importams (ir rodomos nustatymuose)."
+
+# AI Translated
+msgid "Don't ask again"
+msgstr "Daugiau neklausti"
+
+# AI Translated
+# Needs human review: The glossary cell for Preferences is marked unsettled. This uses „Parinktys“, the catalog's label for the dialog; check it once the term is settled.
+msgid "Save these choices and apply them without asking next time. You can show this dialog again in Preferences."
+msgstr "Išsaugoti šiuos pasirinkimus ir kitą kartą juos taikyti neklausiant. Šį dialogo langą vėl galite parodyti skiltyje „Parinktys“."
+
+# AI Translated
+msgid "3MF geometry import options"
+msgstr "3MF geometrijos importavimo parinktys"
+
+# AI Translated
+msgid "AMF geometry import options"
+msgstr "AMF geometrijos importavimo parinktys"
+
+# AI Translated
+msgid "Choose how to name and order the parts of this file."
+msgstr "Pasirinkite, kaip pavadinti ir rikiuoti šio failo dalis."
+
+# AI Translated
+msgid "Choose how to load the bodies in this file."
+msgstr "Pasirinkite, kaip įkelti šio failo kūnus."
+
+# AI Translated
+msgid "Load as separate objects"
+msgstr "Įkelti kaip atskirus objektus"
+
+# AI Translated
+msgid "Each object in the file is loaded on its own, as OrcaSlicer always loaded AMF files."
+msgstr "Kiekvienas failo objektas įkeliamas atskirai, kaip „OrcaSlicer“ visada įkeldavo AMF failus."
+
+# AI Translated
+msgid "The bodies of each group in the file become parts of one object, in their relative positions."
+msgstr "Kiekvienos failo grupės kūnai tampa vieno objekto dalimis, išlaikant jų tarpusavio padėtį."
+
+# AI Translated
+msgid "Use the body names stored in the file, when there are any. When disabled, the usual OrcaSlicer names are used; existing project names are kept."
+msgstr "Naudoti faile išsaugotus kūnų pavadinimus, jei jų yra. Kai išjungta, naudojami įprasti „OrcaSlicer“ pavadinimai; esami projekto pavadinimai išlaikomi."
+
+# AI Translated
+msgid "Use these choices as defaults next time. The dialog still opens."
+msgstr "Kitą kartą naudoti šiuos pasirinkimus kaip numatytuosius. Dialogo langas vis tiek bus atidarytas."
+
+# AI Translated
+msgid "A name in the file is not valid Unicode. The geometry was not imported."
+msgstr "Faile esantis pavadinimas nėra tinkamas Unicode tekstas. Geometrija neimportuota."
+
+# AI Translated
+msgid "Invalid name"
+msgstr "Netinkamas pavadinimas"
+
+# AI Translated
+msgid "Unsupported characters in names"
+msgstr "Nepalaikomi simboliai pavadinimuose"
+
+# AI Translated
+msgid "Some original names contain characters that OrcaSlicer cannot use. Choose how to change them before importing."
+msgstr "Kai kuriuose originaliuose pavadinimuose yra simbolių, kurių „OrcaSlicer“ negali naudoti. Prieš importuodami pasirinkite, kaip juos pakeisti."
+
+# AI Translated
+msgid "Remove unsupported characters"
+msgstr "Pašalinti nepalaikomus simbolius"
+
+# AI Translated
+msgid "Replace with:"
+msgstr "Pakeisti į:"
+
+# AI Translated
+msgid "Each unsupported character is replaced with this text. It may be longer than one character."
+msgstr "Kiekvienas nepalaikomas simbolis pakeičiamas šiuo tekstu. Jis gali būti ilgesnis nei vienas simbolis."
+
+# AI Translated
+msgid "Use this rule as the default next time. The dialog still opens."
+msgstr "Kitą kartą naudoti šią taisyklę kaip numatytąją. Dialogo langas vis tiek bus atidarytas."
+
+# AI Translated
+# Needs human review: The glossary cell for Preferences is marked unsettled. This uses „Parinktys“, the catalog's label for the dialog; check it once the term is settled.
+msgid "Save this rule and apply it without asking next time. You can show this dialog again in Preferences."
+msgstr "Išsaugoti šią taisyklę ir kitą kartą ją taikyti neklausiant. Šį dialogo langą vėl galite parodyti skiltyje „Parinktys“."
+
+# AI Translated
+msgid "Enter a non-empty replacement containing only supported characters, or choose removal."
+msgstr "Įveskite netuščią pakaitalą tik iš palaikomų simbolių arba pasirinkite pašalinimą."
+
+# AI Translated
+#. TRN The placeholders are the original name and its imported replacement.
+#, boost-format
+msgid "%1% → %2%"
+msgstr "%1% → %2%"
 
 msgid "PresetBundle"
 msgstr "ProfiliųRinkinys"
@@ -30265,6 +30674,18 @@ msgid "Constraints"
 msgstr "Apribojimai"
 
 # AI Translated
+msgid "No constraints yet"
+msgstr "Apribojimų dar nėra"
+
+# AI Translated
+msgid "Zoom to selection"
+msgstr "Priartinti prie pasirinkimo"
+
+# AI Translated
+msgid "Delete constraint"
+msgstr "Ištrinti apribojimą"
+
+# AI Translated
 msgid "Feature tree"
 msgstr "Elementų medis"
 
@@ -30297,10 +30718,6 @@ msgstr "Perkelti žemyn"
 # AI Translated
 msgid "Show / hide"
 msgstr "Rodyti / slėpti"
-
-# AI Translated
-msgid "Zoom to selection"
-msgstr "Priartinti prie pasirinkimo"
 
 # AI Translated
 msgid "Check interference — find overlapping bodies"
@@ -30485,6 +30902,11 @@ msgstr[2] "%d laisvės laipsnių"
 #, c-format, boost-format
 msgid "Sketch %d"
 msgstr "Eskizas %d"
+
+#. TRN %1% is the name of the sketch being edited, as its Feature tree row shows it.
+#, boost-format
+msgid "Editing: %1%   ·   N = look normal to the plane   ·   Confirm or Cancel in the toolbar"
+msgstr ""
 
 # AI Translated
 #, c-format, boost-format
@@ -31197,9 +31619,8 @@ msgstr "Vilkite kampą, kad pakeistumėte mastelį, centrą – kad perkeltumėt
 msgid "  ·  Esc goes back to Select"
 msgstr "  ·  Esc – grįžti į įrankį „Pasirinkti“"
 
-# AI Translated
-msgid "  ·  click a constraint badge to remove it"
-msgstr "  ·  spustelėkite apribojimo ženklelį, kad jį pašalintumėte"
+msgid "  ·  click a constraint badge to select it"
+msgstr ""
 
 # AI Translated
 #, c-format, boost-format
@@ -31667,13 +32088,10 @@ msgstr "Apribojimas"
 msgid "Constraints (%d)"
 msgstr "Apribojimai (%d)"
 
-# AI Translated
-msgid "No constraints yet"
-msgstr "Apribojimų dar nėra"
-
-# AI Translated
-msgid "Delete constraint"
-msgstr "Ištrinti apribojimą"
+#. TRN Design tab status line. %1% names the selected sketch constraint, e.g. "Horizontal E0·P0 — E0·P1".
+#, boost-format
+msgid "%1% selected — Delete removes it"
+msgstr ""
 
 # AI Translated
 msgid "Constraint deleted"
@@ -37460,6 +37878,66 @@ msgid "Plugin file: %s"
 msgstr "Papildinio failas: %s"
 
 # AI Translated
+msgid "A file system permission cannot be empty."
+msgstr "Failų sistemos leidimas negali būti tuščias."
+
+# AI Translated
+msgid "A file system permission cannot contain a null character."
+msgstr "Failų sistemos leidime negali būti nulinio simbolio."
+
+# AI Translated
+msgid "A file system permission may use \"*\" only as the final \"/*\" of a folder tree."
+msgstr "Failų sistemos leidime \"*\" galima naudoti tik kaip baigiamąjį aplankų medžio \"/*\"."
+
+# AI Translated
+msgid "A file system permission cannot contain a \"..\" path component."
+msgstr "Failų sistemos leidime negali būti kelio komponento \"..\"."
+
+# AI Translated
+msgid "A file system permission must be an absolute path on this computer."
+msgstr "Failų sistemos leidimas turi būti absoliutus kelias šiame kompiuteryje."
+
+# AI Translated
+msgid "A network permission cannot be empty."
+msgstr "Tinklo leidimas negali būti tuščias."
+
+# AI Translated
+msgid "A network permission cannot contain control characters."
+msgstr "Tinklo leidime negali būti valdymo simbolių."
+
+# AI Translated
+msgid "Network permissions do not support wildcards. Enter one full http:// or https:// URL."
+msgstr "Tinklo leidimai nepalaiko pakaitos simbolių. Įveskite vieną visą http:// arba https:// URL."
+
+# AI Translated
+msgid "Enter a full http:// or https:// URL with a host name or IP address. Bare domain names are not accepted."
+msgstr "Įveskite visą http:// arba https:// URL su mazgo pavadinimu arba IP adresu. Domenų vardai be schemos nepriimami."
+
+# AI Translated
+msgid "Only http:// and https:// URLs are supported for network permissions."
+msgstr "Tinklo leidimams palaikomi tik http:// ir https:// URL."
+
+# AI Translated
+msgid "Enter a full http:// or https:// URL with a host name or IP address."
+msgstr "Įveskite visą http:// arba https:// URL su mazgo pavadinimu arba IP adresu."
+
+# AI Translated
+msgid "Network permissions cannot include a username or password. Enter a URL with only a scheme and host."
+msgstr "Tinklo leidimuose negali būti naudotojo vardo ar slaptažodžio. Įveskite URL tik su schema ir serveriu."
+
+# AI Translated
+msgid "Enter a valid bracketed IPv6 address."
+msgstr "Įveskite tinkamą IPv6 adresą laužtiniuose skliaustuose."
+
+# AI Translated
+msgid "Network permissions do not support wildcards."
+msgstr "Tinklo leidimai nepalaiko pakaitos simbolių."
+
+# AI Translated
+msgid "Enter a host name or IP address, optionally with a port, or a full http:// or https:// URL."
+msgstr "Įveskite mazgo pavadinimą arba IP adresą, jei reikia, su prievadu, arba visą http:// ar https:// URL."
+
+# AI Translated
 msgid "Process plugins"
 msgstr "Proceso papildiniai"
 
@@ -37797,6 +38275,206 @@ msgid "Capabilities"
 msgstr "Galimybės"
 
 # AI Translated
+msgid "Permissions"
+msgstr "Leidimai"
+
+# AI Translated
+msgid "Permissions are unavailable."
+msgstr "Leidimai nepasiekiami."
+
+# AI Translated
+msgid "File system read"
+msgstr "Failų sistemos skaitymas"
+
+# AI Translated
+msgid "File system read and write"
+msgstr "Failų sistemos skaitymas ir rašymas"
+
+# AI Translated
+msgid "HTTP network"
+msgstr "HTTP tinklas"
+
+# AI Translated
+msgid "Network sockets"
+msgstr "Tinklo lizdai"
+
+# AI Translated
+#. TRN Operating system processes a plugin may start, not print process presets.
+msgctxt "Permission category"
+msgid "Processes"
+msgstr "Procesai"
+
+# AI Translated
+msgid "Threading"
+msgstr "Vykdymo gijos"
+
+# AI Translated
+msgctxt "Permission category"
+msgid "Events"
+msgstr "Įvykiai"
+
+# AI Translated
+msgid "Enter an absolute path on this computer. Add /* at the end to include the folder and everything below it; no other wildcard is accepted. A read/write grant can create files through open(), but it does not cover create or delete events such as os.mkdir and os.remove. Without Full access, each such event outside allowed folders needs its own approval, which is never saved. When a plugin runs in the background, these events are denied without asking."
+msgstr "Įveskite absoliutų kelią šiame kompiuteryje. Pabaigoje pridėkite /*, kad būtų įtrauktas aplankas ir viskas, kas jame yra; kiti pakaitos simboliai nepriimami. Skaitymo ir rašymo leidimas leidžia kurti failus per open(), bet neapima kūrimo ar trynimo įvykių, tokių kaip os.mkdir ir os.remove. Jei „Visiška prieiga“ neįjungta, kiekvienam tokiam įvykiui už leidžiamų aplankų ribų reikia atskiro leidimo, kuris niekada neišsaugomas. Kai papildinys veikia fone, šie įvykiai atmetami neklausiant."
+
+# AI Translated
+msgid "C:\\path\\to\\directory\\*"
+msgstr "C:\\path\\to\\directory\\*"
+
+# AI Translated
+msgid "/path/to/directory/*"
+msgstr "/path/to/directory/*"
+
+# AI Translated
+msgid "Enter a full http:// or https:// URL; only its scheme and host are saved, so the grant covers every port, path, and query on that host. A network socket grant also accepts a bare host name or IP address, with or without a port, and covers every port on that host. Other schemes are not accepted. Grants in either list are checked for HTTP and socket access."
+msgstr "Įveskite visą http:// arba https:// URL; išsaugomi tik jo schema ir serveris, todėl leidimas apima visus to serverio prievadus, kelius ir užklausas. Tinklo lizdo leidimas taip pat priima vien mazgo pavadinimą ar IP adresą, su prievadu arba be jo, ir apima visus to serverio prievadus. Kitos schemos nepriimamos. Bet kurio sąrašo leidimai tikrinami HTTP ir lizdų prieigai."
+
+# AI Translated
+msgid "Enter the exact value recorded by the audit. It may be a Python representation of the command."
+msgstr "Įveskite tikslią audito užfiksuotą reikšmę. Tai gali būti komandos atvaizdavimas Python formatu."
+
+# AI Translated
+msgid "Exact audited value"
+msgstr "Tiksli audito reikšmė"
+
+# AI Translated
+msgid "Allow this plugin to create threads."
+msgstr "Leisti šiam papildiniui kurti vykdymo gijas."
+
+# AI Translated
+msgid "Enter a category and event separated by a colon, such as Socket:socket.__new__."
+msgstr "Įveskite kategoriją ir įvykį, atskirtus dvitaškiu, pavyzdžiui, Socket:socket.__new__."
+
+# AI Translated
+msgid "Socket:socket.__new__"
+msgstr "Socket:socket.__new__"
+
+# AI Translated
+msgid "Full access"
+msgstr "Visiška prieiga"
+
+# AI Translated
+msgid "File system"
+msgstr "Failų sistema"
+
+# AI Translated
+msgid "Network access"
+msgstr "Tinklo prieiga"
+
+# AI Translated
+msgid "Execution"
+msgstr "Vykdymas"
+
+# AI Translated
+msgid "Audit events"
+msgstr "Audito įvykiai"
+
+# AI Translated
+msgid "Files and folders"
+msgstr "Failai ir aplankai"
+
+# AI Translated
+msgctxt "Permission access"
+msgid "Read"
+msgstr "Skaitymas"
+
+# AI Translated
+msgctxt "Permission access"
+msgid "Read and write"
+msgstr "Skaitymas ir rašymas"
+
+# AI Translated
+msgid "Read permissions are unavailable."
+msgstr "Skaitymo leidimai nepasiekiami."
+
+# AI Translated
+msgid "Read and write permissions are unavailable."
+msgstr "Skaitymo ir rašymo leidimai nepasiekiami."
+
+# AI Translated
+msgid "File system: Read"
+msgstr "Failų sistema: skaitymas"
+
+# AI Translated
+msgid "File system: Read and write"
+msgstr "Failų sistema: skaitymas ir rašymas"
+
+# AI Translated
+msgid "Full access bypasses permission checks. The plugin can read and write most files you can access; modifying startup or application files can let code run outside these checks. Direct Python access to OrcaSlicer's configuration, secret, certificate and install-state paths stays blocked, but subprocesses are not restricted."
+msgstr "„Visiška prieiga“ apeina leidimų patikras. Papildinys gali skaityti ir rašyti daugumą jums prieinamų failų; pakeitus paleisties arba programų failus, kodas gali būti vykdomas už šių patikrų ribų. Tiesioginė prieiga iš Python prie OrcaSlicer konfigūracijos, paslapčių, sertifikatų ir diegimo būsenos kelių lieka užblokuota, tačiau antriniai procesai neribojami."
+
+# AI Translated
+msgid "Permission list editing is disabled while full access is on."
+msgstr "Leidimų sąrašo redagavimas išjungtas, kol įjungta „Visiška prieiga“."
+
+# AI Translated
+msgid "Full access status is unavailable."
+msgstr "Parinkties „Visiška prieiga“ būsena nepasiekiama."
+
+# AI Translated
+msgid "No values added."
+msgstr "Neįtraukta jokių reikšmių."
+
+# AI Translated
+msgctxt "Permission value"
+msgid "Apply"
+msgstr "Taikyti"
+
+# AI Translated
+#, c-format, boost-format
+msgid "Apply value for %s"
+msgstr "Taikyti „%s“ reikšmę"
+
+# AI Translated
+msgid "Install this plugin to edit its permissions."
+msgstr "Įdiekite šį papildinį, kad galėtumėte redaguoti jo leidimus."
+
+# AI Translated
+#, c-format, boost-format
+msgid "New value for %s"
+msgstr "Nauja „%s“ reikšmė"
+
+# AI Translated
+#, c-format, boost-format
+msgid "Edit value for %s"
+msgstr "Redaguoti „%s“ reikšmę"
+
+# AI Translated
+msgctxt "Permission value"
+msgid "Add"
+msgstr "Įtraukti"
+
+# AI Translated
+#, c-format, boost-format
+msgid "Add value to %s"
+msgstr "Įtraukti reikšmę į „%s“"
+
+#. TRN %s is the original permission value that was removed outside this dialog.
+#, c-format, boost-format
+msgid "The original value is no longer granted: %s. Add the edited value or discard it."
+msgstr ""
+
+#. TRN %s is the original permission value before the user's unsaved edit.
+#, c-format, boost-format
+msgid "Unsaved edit of: %s"
+msgstr ""
+
+#. TRN %s is the original permission value whose unsaved edit will be discarded.
+#, c-format, boost-format
+msgid "Discard edit of %s"
+msgstr ""
+
+# AI Translated
+msgctxt "Permission value"
+msgid "Remove"
+msgstr "Pašalinti"
+
+# AI Translated
+#, c-format, boost-format
+msgid "Remove %s"
+msgstr "Pašalinti %s"
+
+# AI Translated
 #, c-format, boost-format
 msgid "Run \"%s\""
 msgstr "Paleisti „%s“"
@@ -37899,6 +38577,39 @@ msgstr "Trūkstami papildiniai"
 # AI Translated
 msgid "Refreshing plugins data"
 msgstr "Atnaujinami papildinių duomenys"
+
+# AI Translated
+#, c-format, boost-format
+msgid ""
+"Enable full access for \"%s\"?\n"
+"\n"
+"Full access turns off permission auditing for this plugin: its file system, network, process, thread and event permissions are no longer checked. The plugin can read and write most files your user account can access, including startup scripts, SSH keys and a writable OrcaSlicer installation. Modifying startup or application files can let code run outside these checks. Direct Python access to OrcaSlicer's configuration, secret, certificate and install-state paths stays blocked, but subprocesses are not restricted. Full access is not a sandbox.\n"
+"\n"
+"Only enable this for a plugin you trust."
+msgstr ""
+"Įjungti parinktį „Visiška prieiga“ papildiniui „%s“?\n"
+"\n"
+"„Visiška prieiga“ išjungia šio papildinio leidimų auditą: jo failų sistemos, tinklo, procesų, vykdymo gijų ir įvykių leidimai nebetikrinami. Papildinys gali skaityti ir rašyti daugumą failų, prieinamų jūsų naudotojo paskyrai, įskaitant paleisties scenarijus, SSH raktus ir OrcaSlicer diegimą, į kurį galima rašyti. Pakeitus paleisties arba programų failus, kodas gali būti vykdomas už šių patikrų ribų. Tiesioginė prieiga iš Python prie OrcaSlicer konfigūracijos, paslapčių, sertifikatų ir diegimo būsenos kelių lieka užblokuota, tačiau antriniai procesai neribojami. „Visiška prieiga“ nėra izoliuota aplinka.\n"
+"\n"
+"Įjunkite tai tik papildiniui, kuriuo pasitikite."
+
+# AI Translated
+msgid "Invalid permission save request."
+msgstr "Netinkama leidimų išsaugojimo užklausa."
+
+# AI Translated
+#, boost-format
+msgid "Cannot save \"%1%\": %2%"
+msgstr "Negalima išsaugoti „%1%“: %2%"
+
+# AI Translated
+msgid "Failed to save permissions."
+msgstr "Nepavyko išsaugoti leidimų."
+
+# AI Translated
+#, c-format, boost-format
+msgid "Permissions saved for \"%s\"."
+msgstr "Papildinio „%s“ leidimai išsaugoti."
 
 # AI Translated
 msgid "Failed to unload plugin."
@@ -38749,6 +39460,15 @@ msgid "unknown name"
 msgstr "nežinomas pavadinimas"
 
 # AI Translated
+# Needs human review: Patched from the person's translation of "Don't show this dialog again", with dialog replaced by tip. The tool's similarity check needed this note.
+msgid "Don't show this tip again"
+msgstr "Daugiau nerodyti šio patarimo"
+
+# AI Translated
+msgid "Tip: You can review and change this plugin's saved permissions in the Plugins dialog, on the Permissions tab."
+msgstr "Patarimas: šio papildinio išsaugotus leidimus galite peržiūrėti ir pakeisti dialogo lange „Papildiniai“, skirtuke „Leidimai“."
+
+# AI Translated
 #, c-format, boost-format
 msgid ""
 "Plugin \"%s\" is requesting permission for the Python audit event \"%s\".\n"
@@ -38799,37 +39519,57 @@ msgstr[2] ""
 #, c-format, boost-format
 msgid ""
 "Plugin \"%s\" is requesting to create the following file:\n"
-"%s"
+"%s\n"
+"\n"
+"This approval applies only to this operation and is not remembered."
 msgid_plural ""
 "Plugin \"%s\" is requesting to create the following files:\n"
-"%s"
+"%s\n"
+"\n"
+"This approval applies only to this operation and is not remembered."
 msgstr[0] ""
 "Papildinys „%s“ prašo leidimo sukurti šį failą:\n"
-"%s"
+"%s\n"
+"\n"
+"Šis leidimas galioja tik šiai operacijai ir neįsimenamas."
 msgstr[1] ""
 "Papildinys „%s“ prašo leidimo sukurti šiuos failus:\n"
-"%s"
+"%s\n"
+"\n"
+"Šis leidimas galioja tik šiai operacijai ir neįsimenamas."
 msgstr[2] ""
 "Papildinys „%s“ prašo leidimo sukurti šiuos failus:\n"
-"%s"
+"%s\n"
+"\n"
+"Šis leidimas galioja tik šiai operacijai ir neįsimenamas."
 
 # AI Translated
 #, c-format, boost-format
 msgid ""
 "Plugin \"%s\" is requesting to delete the following file:\n"
-"%s"
+"%s\n"
+"\n"
+"This approval applies only to this operation and is not remembered."
 msgid_plural ""
 "Plugin \"%s\" is requesting to delete the following files:\n"
-"%s"
+"%s\n"
+"\n"
+"This approval applies only to this operation and is not remembered."
 msgstr[0] ""
 "Papildinys „%s“ prašo leidimo ištrinti šį failą:\n"
-"%s"
+"%s\n"
+"\n"
+"Šis leidimas galioja tik šiai operacijai ir neįsimenamas."
 msgstr[1] ""
 "Papildinys „%s“ prašo leidimo ištrinti šiuos failus:\n"
-"%s"
+"%s\n"
+"\n"
+"Šis leidimas galioja tik šiai operacijai ir neįsimenamas."
 msgstr[2] ""
 "Papildinys „%s“ prašo leidimo ištrinti šiuos failus:\n"
-"%s"
+"%s\n"
+"\n"
+"Šis leidimas galioja tik šiai operacijai ir neįsimenamas."
 
 # AI Translated
 #, c-format, boost-format
@@ -38901,6 +39641,77 @@ msgstr "Papildinio leidimo užklausa"
 # AI Translated
 msgid "Plugin permissions"
 msgstr "Papildinio leidimai"
+
+# AI Translated
+#, c-format, boost-format
+msgid ""
+"Plugin \"%s\" tried to perform a file operation that requires permission.\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgstr ""
+"Papildinys „%s“ bandė atlikti failo operaciją, kuriai reikia leidimo.\n"
+"\n"
+"Operacija atmesta. Naudokite leidžiamą vietą arba, jei pasitikite šiuo papildiniu, įjunkite jam parinktį „Visiška prieiga“."
+
+# AI Translated
+#, c-format, boost-format
+msgid ""
+"Plugin \"%s\" tried to create the following file:\n"
+"%s\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgid_plural ""
+"Plugin \"%s\" tried to create the following files:\n"
+"%s\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgstr[0] ""
+"Papildinys „%s“ bandė sukurti šį failą:\n"
+"%s\n"
+"\n"
+"Operacija atmesta. Naudokite leidžiamą vietą arba, jei pasitikite šiuo papildiniu, įjunkite jam parinktį „Visiška prieiga“."
+msgstr[1] ""
+"Papildinys „%s“ bandė sukurti šiuos failus:\n"
+"%s\n"
+"\n"
+"Operacija atmesta. Naudokite leidžiamą vietą arba, jei pasitikite šiuo papildiniu, įjunkite jam parinktį „Visiška prieiga“."
+msgstr[2] ""
+"Papildinys „%s“ bandė sukurti šiuos failus:\n"
+"%s\n"
+"\n"
+"Operacija atmesta. Naudokite leidžiamą vietą arba, jei pasitikite šiuo papildiniu, įjunkite jam parinktį „Visiška prieiga“."
+
+# AI Translated
+#, c-format, boost-format
+msgid ""
+"Plugin \"%s\" tried to delete the following file:\n"
+"%s\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgid_plural ""
+"Plugin \"%s\" tried to delete the following files:\n"
+"%s\n"
+"\n"
+"The operation was denied. Use an allowed location or enable Full access for this plugin if you trust it."
+msgstr[0] ""
+"Papildinys „%s“ bandė ištrinti šį failą:\n"
+"%s\n"
+"\n"
+"Operacija atmesta. Naudokite leidžiamą vietą arba, jei pasitikite šiuo papildiniu, įjunkite jam parinktį „Visiška prieiga“."
+msgstr[1] ""
+"Papildinys „%s“ bandė ištrinti šiuos failus:\n"
+"%s\n"
+"\n"
+"Operacija atmesta. Naudokite leidžiamą vietą arba, jei pasitikite šiuo papildiniu, įjunkite jam parinktį „Visiška prieiga“."
+msgstr[2] ""
+"Papildinys „%s“ bandė ištrinti šiuos failus:\n"
+"%s\n"
+"\n"
+"Operacija atmesta. Naudokite leidžiamą vietą arba, jei pasitikite šiuo papildiniu, įjunkite jam parinktį „Visiška prieiga“."
+
+# AI Translated
+msgid "Plugin operation denied"
+msgstr "Papildinio operacija atmesta"
 
 # AI Translated
 msgid "The preset stores invalid plugin capability configuration JSON."
@@ -39315,6 +40126,11 @@ msgstr "Papildinio palikti vietinio negalima: vietinis papildinio raktas jau yra
 
 # AI Translated
 #, boost-format
+msgid "Failed to read plugin install state: %1%"
+msgstr "Nepavyko perskaityti papildinio diegimo būsenos: %1%"
+
+# AI Translated
+#, boost-format
 msgid "Failed to update plugin install state: %1%"
 msgstr "Nepavyko atnaujinti papildinio diegimo būsenos: %1%"
 
@@ -39602,18 +40418,18 @@ msgstr "Įtartinai mažai konfigūracijos verčių išgauta iš %1%: %2%"
 
 # AI Translated
 msgid ""
-"Load step file failed.\n"
+"Load STEP file failed.\n"
 "Cannot open file for reading.\n"
 msgstr ""
 "STEP failo įkėlimas nepavyko.\n"
 "Nepavyksta atidaryti failo skaitymui.\n"
 
 # AI Translated
-msgid "import svg failed: could not open svg."
+msgid "import SVG failed: could not open SVG."
 msgstr "SVG importas nepavyko: nepavyko atidaryti SVG."
 
 # AI Translated
-msgid "import svg failed: could not parse imported svg data."
+msgid "import SVG failed: could not parse imported SVG data."
 msgstr "SVG importas nepavyko: nepavyko išanalizuoti importuotų SVG duomenų."
 
 # AI Translated
@@ -40062,6 +40878,145 @@ msgstr ""
 "Išvengti deformacijos\n"
 "Ar žinojote, kad spausdinant medžiagas, kurios linkusios deformuotis, pavyzdžiui, ABS, tinkamai padidinus kaitinimo pagrindo temperatūrą galima sumažinti deformavimosi tikimybę."
 
+#~ msgid "Reset cutting plane and remove connectors"
+#~ msgstr "Atstatyti pjovimo plokštumą ir pašalinti jungtis"
+
+#~ msgid "Component name(s) inside step file not in UTF-8 format!"
+#~ msgstr "Komponentų pavadinimai STEP faile nėra UTF-8 formato!"
+
+#~ msgid "Show options when importing STEP file"
+#~ msgstr "Rodyti parinktis importuojant STEP failą"
+
+#~ msgid "STEP importing: linear deflection"
+#~ msgstr "STEP importavimas: tiesinis nukrypimas"
+
+#~ msgid "STEP importing: angle deflection"
+#~ msgstr "STEP importavimas: kampinis nukrypimas"
+
+#~ msgid "STEP importing: Split into multiple objects"
+#~ msgstr "STEP importavimas: išskaidyti į kelis objektus"
+
+#~ msgid ""
+#~ "If enabled, compound and compsolid shapes in imported STEP files are split into multiple objects.\n"
+#~ "Used as the default in the import dialog, or directly when the import dialog is disabled.\n"
+#~ "Default: disabled."
+#~ msgstr ""
+#~ "Jei įjungta, sudėtinės („compound“) ir „compsolid“ formos importuotuose STEP failuose yra išskaidomos į kelis objektus.\n"
+#~ "Naudojama kaip numatytoji nuostata importavimo lange arba tiesiogiai, kai importavimo langas išjungtas.\n"
+#~ "Numatytoji būsena: išjungta."
+
+#~ msgid "Behavior"
+#~ msgstr "Elgsena"
+
+# AI Translated
+#~ msgid "G-code Preview"
+#~ msgstr "G-code peržiūra"
+
+# AI Translated
+#~ msgid "Remove from favorites"
+#~ msgstr "Pašalinti iš mėgstamiausių"
+
+# AI Translated
+#~ msgid ""
+#~ "Applies only to external walls, including hole boundaries. Moves the hot nozzle toward printed inner walls during wiping to reduce reheating of freshly printed plastic and seam marks.\n"
+#~ "\n"
+#~ "Especially useful at layer heights below 0.1 mm, where wipe marks are more visible.\n"
+#~ "\n"
+#~ "Uses the regular wipe if no adjacent inner wall is already printed (single-wall areas or Outer/Inner wall order), or if no supported inward path can be found, for example at tight corners or seam gaps."
+#~ msgstr ""
+#~ "Taikoma tik išorinėms sienelėms, įskaitant skylių kontūrus. Valymo metu karštą purkštuką patraukia link jau atspausdintų vidinių sienelių, kad sumažintų ką tik atspausdinto plastiko pakartotinį įkaitimą ir siūlės žymes.\n"
+#~ "\n"
+#~ "Ypač naudinga esant mažesniam nei 0,1 mm sluoksnio aukščiui, kai valymo žymės labiau matomos.\n"
+#~ "\n"
+#~ "Naudoja įprastą valymą, jei nėra jau atspausdintos gretimos vidinės sienelės (vienos sienelės sritys arba sienelių eiliškumas Išorinis / vidinis) arba jei nepavyksta rasti atremto kelio į vidų, pavyzdžiui, ankštuose kampuose ar siūlės tarpuose."
+
+# AI Translated
+#, no-c-format, no-boost-format
+#~ msgid ""
+#~ "The distance the wipe path is shifted away from the external perimeter, specified in millimeters or as a percentage of the actual outer-wall extrusion width.\n"
+#~ "\n"
+#~ "For example, 50% shifts the path by half of the outer-wall width. The effective offset is limited by both the actual outer-wall width and the available spacing to the adjacent wall, so values above 100% or an equivalent absolute distance have no additional effect. Set to 0 to disable the offset."
+#~ msgstr ""
+#~ "Atstumas, kuriuo valymo kelias pastumiamas nuo išorinio kontūro, nurodomas milimetrais arba procentais nuo faktinio išorinės sienelės išspaudimo pločio.\n"
+#~ "\n"
+#~ "Pavyzdžiui, 50% pastumia kelią per pusę išorinės sienelės pločio. Faktinį poslinkį riboja tiek tikrasis išorinės sienelės plotis, tiek laisvas tarpas iki gretimos sienelės, todėl didesnės nei 100% reikšmės ar joms lygiavertis absoliutus atstumas papildomo poveikio neturi. Nustatykite 0, kad poslinkis būtų išjungtas."
+
+# AI Translated
+#~ msgid "Invalid utf8 sequence"
+#~ msgstr "Netinkama utf8 seka"
+
+#~ msgid ""
+#~ "RepRap firmware version => 3.4.0\n"
+#~ "Check your firmware documentation for supported shaper types."
+#~ msgstr ""
+#~ "RepRap programinės aparatinės įrangos versija => 3.4.0\n"
+#~ "Palaikomus formavimo (shaper) tipus rasite savo programinės aparatinės įrangos dokumentacijoje."
+
+#~ msgid "RepRap firmware uses the same frequency range for both axes."
+#~ msgstr "RepRap programinė aparatinė įranga naudoja tą patį dažnių diapazoną abiem ašims."
+
+#~ msgid "RepRap firmware uses the same frequency for both axes."
+#~ msgstr "RepRap programinė aparatinė įranga naudoja tą patį dažnį abiem ašims."
+
+#~ msgid "Step file import parameters"
+#~ msgstr "STEP failų importavimo parametrai"
+
+# AI Translated
+#~ msgid "  ·  click a constraint badge to remove it"
+#~ msgstr "  ·  spustelėkite apribojimo ženklelį, kad jį pašalintumėte"
+
+# AI Translated
+#, c-format, boost-format
+#~ msgid ""
+#~ "Plugin \"%s\" is requesting to create the following file:\n"
+#~ "%s"
+#~ msgid_plural ""
+#~ "Plugin \"%s\" is requesting to create the following files:\n"
+#~ "%s"
+#~ msgstr[0] ""
+#~ "Papildinys „%s“ prašo leidimo sukurti šį failą:\n"
+#~ "%s"
+#~ msgstr[1] ""
+#~ "Papildinys „%s“ prašo leidimo sukurti šiuos failus:\n"
+#~ "%s"
+#~ msgstr[2] ""
+#~ "Papildinys „%s“ prašo leidimo sukurti šiuos failus:\n"
+#~ "%s"
+
+# AI Translated
+#, c-format, boost-format
+#~ msgid ""
+#~ "Plugin \"%s\" is requesting to delete the following file:\n"
+#~ "%s"
+#~ msgid_plural ""
+#~ "Plugin \"%s\" is requesting to delete the following files:\n"
+#~ "%s"
+#~ msgstr[0] ""
+#~ "Papildinys „%s“ prašo leidimo ištrinti šį failą:\n"
+#~ "%s"
+#~ msgstr[1] ""
+#~ "Papildinys „%s“ prašo leidimo ištrinti šiuos failus:\n"
+#~ "%s"
+#~ msgstr[2] ""
+#~ "Papildinys „%s“ prašo leidimo ištrinti šiuos failus:\n"
+#~ "%s"
+
+# AI Translated
+#~ msgid ""
+#~ "Load step file failed.\n"
+#~ "Cannot open file for reading.\n"
+#~ msgstr ""
+#~ "STEP failo įkėlimas nepavyko.\n"
+#~ "Nepavyksta atidaryti failo skaitymui.\n"
+
+# AI Translated
+#~ msgid "import svg failed: could not open svg."
+#~ msgstr "SVG importas nepavyko: nepavyko atidaryti SVG."
+
+# AI Translated
+#~ msgid "import svg failed: could not parse imported svg data."
+#~ msgstr "SVG importas nepavyko: nepavyko išanalizuoti importuotų SVG duomenų."
+
 # AI Translated
 #~ msgid ""
 #~ "\n"
@@ -40376,9 +41331,6 @@ msgstr ""
 
 #~ msgid "By vendor"
 #~ msgstr "Pagal gamintoją"
-
-#~ msgid "Behaviour"
-#~ msgstr "Elgsena"
 
 # AI Translated
 #~ msgid "Renders cast shadows on the plate, other objects, and each object onto itself in realistic view."
@@ -41304,12 +42256,6 @@ msgstr ""
 #~ msgid "Hostname or IP"
 #~ msgstr "Hosto vardas arba IP"
 
-#~ msgid "Custom camera source"
-#~ msgstr "Pasirinktinės kameros šaltinis"
-
-#~ msgid "Switch Camera View"
-#~ msgstr "Perjungti kameros vaizdą"
-
 #~ msgid "Organic support tree tip diameter must not be smaller than support material extrusion width."
 #~ msgstr "Organinio atraminio medžio viršūnės skersmuo turi būti ne mažesnis už atraminės medžiagos ekstruzijos plotį."
 
@@ -42146,9 +43092,6 @@ msgstr ""
 
 #~ msgid "Check for Update"
 #~ msgstr "Patikrinti ar nėra atnaujinimų"
-
-#~ msgid "Recent files"
-#~ msgstr "Paskutinieji failai"
 
 #~ msgid "Import Zip Archive"
 #~ msgstr "Importuoti Zip archyvą"
