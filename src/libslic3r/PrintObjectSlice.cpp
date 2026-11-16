@@ -2555,7 +2555,7 @@ static std::vector<double> build_local_z_alternating_pass_heights(double base_he
         if (h_a_min > h_a_max + EPSILON)
             continue;
 
-        const double h_a = std::clamp(pair_h * ratio_a, h_a_min, h_a_max);
+        const double h_a = std::clamp(pair_h * ratio_a, h_a_min, std::max(h_a_min, h_a_max));
         const double h_b = pair_h - h_a;
 
         std::vector<double> out;
@@ -2618,7 +2618,7 @@ static std::vector<double> build_local_z_two_pass_heights(double base_height,
     if (h_a_min > h_a_max + EPSILON)
         return { base_height };
 
-    const double h_a = std::clamp(base_height * ratio_a, h_a_min, h_a_max);
+    const double h_a = std::clamp(base_height * ratio_a, h_a_min, std::max(h_a_min, h_a_max));
     const double h_b = base_height - h_a;
 
     std::vector<double> out { h_a, h_b };
@@ -3172,7 +3172,7 @@ static std::vector<double> build_local_z_direct_multicolor_pass_heights(const Mi
         const double value = *it;
         if (value < 2.0 * lo - EPSILON)
             break;
-        double first = std::clamp(value * 0.5, lo, value - lo);
+        double first = std::clamp(value * 0.5, lo, std::max(lo, value - lo));
         double second = value - first;
         if (first < lo - EPSILON || second < lo - EPSILON)
             break;

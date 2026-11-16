@@ -7350,7 +7350,7 @@ std::vector<double> MixedFilamentConfigPanel::build_local_z_preview_pass_heights
             if (h_a_min > h_a_max + EPSILON)
                 continue;
 
-            const double h_a = std::clamp(pair_h * ratio_a, h_a_min, h_a_max);
+            const double h_a = std::clamp(pair_h * ratio_a, h_a_min, std::max(h_a_min, h_a_max));
             const double h_b = pair_h - h_a;
 
             std::vector<double> out;

@@ -218,7 +218,7 @@ OBSOLETE_KEYS = {
     "retraction_distance_when_cut", "internal_bridge_support_thickness",
     "top_area_threshold", "reduce_wall_solid_infill",
     "filament_load_time", "filament_unload_time", "smooth_coefficient",
-    "overhang_totally_speed", "silent_mode", "overhang_speed_classic",
+    "silent_mode", "overhang_speed_classic",
     "anisotropic_surfaces",
     # Belt printer options retired before the feature shipped (#16236).
     "belt_slice_rotation_global", "preslice_remap_x", "preslice_remap_y", "preslice_remap_z",

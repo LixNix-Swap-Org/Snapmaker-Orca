@@ -480,8 +480,7 @@ bool PresetUpdater::priv::extract_file(const fs::path &source_path, const fs::pa
         }
     }
 
-    // Unlike extract_archive_confined, the parent directory of every file is created (a Snapmaker OTA
-    // archive may hold no directory entries) and Windows falls back to a wide path.
+    // Unlike extract_archive_confined, parent directories are created: OTA archives may lack directory entries.
     for (mz_uint i = 0; i < num_entries; ++i)
     {
         if (mz_zip_reader_file_stat(&archive, i, &stat))
@@ -506,14 +505,7 @@ bool PresetUpdater::priv::extract_file(const fs::path &source_path, const fs::pa
                 if (fs::is_symlink(fs::symlink_status(full_dest)))
                     fs::remove(full_dest);
 
-                std::string dest_file_encoded = encode_path(full_dest.string().c_str());
-                res = mz_zip_reader_extract_to_file(&archive, stat.m_file_index, dest_file_encoded.c_str(), 0);
-#ifdef _WIN32
-                if (!res) {
-                    std::wstring dest_file_w = boost::nowide::widen(full_dest.generic_string());
-                    res = mz_zip_reader_extract_to_file_w(&archive, stat.m_file_index, dest_file_w.c_str(), 0);
-                }
-#endif
+                res = extract_zip_entry_to_file(&archive, stat.m_file_index, full_dest);
                 if (!res) {
                     mz_zip_error zip_err = mz_zip_get_last_error(&archive);
                     BOOST_LOG_TRIVIAL(error) << "[Orca Updater]extract file "<<stat.m_filename<<" to dest "<<full_dest.string()

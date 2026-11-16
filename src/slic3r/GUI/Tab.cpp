@@ -5038,15 +5038,20 @@ void TabPrint::toggle_options()
         m_config_manipulation.set_is_BBL_Printer(is_BBL_printer);
     }
 
-    // Snapmaker Orca: on a page of the speed selector (Speed, Quality) the scalar fields a selected
+    // Snapmaker Orca: on a page of the speed selector (Speed, Quality) the scalar and uniform fields a selected
     // tool head made read-only are enabled again before the manipulation decides their state under
     // All tool heads; the manipulation does not touch every scalar of the Quality page.
     const bool selector_page = m_head_selector && head_selector_page(m_active_page->title());
     if (selector_page && selected_head() < 0)
         for (ConfigOptionsGroupShp &group : m_active_page->m_optgroups)
-            for (const auto &kvp : group->opt_map())
-                if (kvp.second.second < 0)
-                    toggle_option(kvp.second.first, true);
+            for (const auto &kvp : group->opt_map()) {
+                const std::string &key   = kvp.second.first;
+                const int          index = kvp.second.second;
+                if (index < 0)
+                    toggle_option(key, true);
+                else if (PerHeadProcess::head_editable_keys().count(key) == 0 && print_options_with_variant.count(key) > 0)
+                    toggle_option(key, true, index + 256);
+            }
     if (selector_page && m_head_fields_locked) {
         for (ConfigOptionsGroupShp &group : m_active_page->m_optgroups)
             for (const auto &kvp : group->opt_map())
